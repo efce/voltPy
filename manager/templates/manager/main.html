@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+	<title>{% block title %}{% endblock %}</title> 
+	<meta http-equiv="content-type" content="text/html;charset=utf-8" />
+</head>
+
+<body>
+
+{% block content %}
+<div id="content">
+
+{% block navigation %}
+<ul id="top">
+	<li><a class="li_menu" href="{% url 'index' %}">Index</a></li>
+	<li><a class="li_menu" href="{% url 'browse' 0 %}">Browse</a></li>
+	<li><a class="li_menu" href="{% url 'upload' 0 %}">Upload</a></li>
+</ul>
+{% endblock %}
+
+{% block real_content %} {% endblock %}
+
+</div> <!-- end content -->
+{% endblock %} 
+
+{% block footer %}{% endblock %}
+
+</body> 
+</html>

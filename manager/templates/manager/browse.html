@@ -1,0 +1,18 @@
+{% extends "manager/main.html" %}
+
+{% block title %} Browse {% endblock %}
+
+{% block real_content %}
+<p>Browsing by {{ browse_by }}:
+{% if files %}
+    <ul>
+    {% for file in files %}
+    <li><a href="{% url 'show' user_id file.id %}">{{ file }}</a></li>
+    {% endfor %}
+    </ul>
+{% else %}
+<p>You have no files uploaded. <a href="{{ url_upload }}">Upload one</a>.</p>
+{% endif %}
+</p>
+{% endblock %}
+
