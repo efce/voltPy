@@ -50,12 +50,12 @@ class ProcessUpload:
 
         if ( __debug__ ):
             for v in self._curves:
-                print(v.getName())
+                print(v.name)
 
 
     def _createModels(self):
         try:
-            group = Group.objects.get(pk=3)
+            group = Group.objects.get(pk=0)
         except Group.DoesNotExist:
             group = Group(name=random.choice("abcdeBERWdasKI"))
             group.save()
@@ -80,24 +80,24 @@ class ProcessUpload:
             cb = CurveBasic(        
                     curveFile=cf,    
                     orderInFile=order,  
-                    name=c.getName(),  
-                    comment=c.getComment(), 
-                    params=c.getParams(), 
+                    name=c.name,  
+                    comment=c.comment, 
+                    params=c.vec_params, 
                     date=c.getDate() )
             cb.save()
 
-            if ( c.getParams()[60] == 0 ):
+            if ( c.vec_params[60] == 0 ):
                 pr = ""
             else:
-                pr = c.getProbingData()
+                pr = c.vec_probing
 
             cv = CurveVectors(  
                     curve = cb, 
                     date = c.getDate(), 
                     method = 'DPV',
-                    time = c.getTime(), 
-                    potential = c.getPotential(),
-                    current = c.getCurrent(), 
+                    time = c.vec_time, 
+                    potential = c.vec_potential,
+                    current = c.vec_current, 
                     concentration = "",
                     concentrationUnits = "",
                     probingData = pr )
@@ -105,16 +105,16 @@ class ProcessUpload:
 
             ci = CurveIndexing( 
                     curveBasic = cb, 
-                    potential_min = min(c.getPotential()), 
-                    potential_max = max(c.getPotential()), 
-                    potential_step = c.getPotential()[1] - c.getPotential()[0], 
-                    time_min = min(c.getTime()), 
-                    time_max = max(c.getTime()), 
-                    time_step = c.getTime()[1] - c.getTime()[0], 
-                    current_min = min(c.getCurrent()), 
-                    current_max = max(c.getCurrent()), 
-                    current_range = max(c.getCurrent()) - min(c.getCurrent()), 
-                    probingRate = c.getParams()[60] )
+                    potential_min = min(c.vec_potential), 
+                    potential_max = max(c.vec_potential), 
+                    potential_step = c.vec_potential[1] - c.vec_potential[0], 
+                    time_min = min(c.vec_time), 
+                    time_max = max(c.vec_time), 
+                    time_step = c.vec_time[1] - c.vec_time[0], 
+                    current_min = min(c.vec_current), 
+                    current_max = max(c.vec_current), 
+                    current_range = max(c.vec_current) - min(c.vec_current), 
+                    probingRate = c.vec_params[60] )
             ci.save()
             order+=1
 
