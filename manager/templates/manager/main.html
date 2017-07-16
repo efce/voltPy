@@ -5,6 +5,13 @@
 	<title>{% block title %}{% endblock %}</title> 
 	<meta http-equiv="content-type" content="text/html;charset=utf-8" />
 </head>
+<style>
+#topmenu div { margin: auto; }
+#topmenu ul { list-style-type: none; margin: 0; padding: 0; overflow: hidden; background-color: #333; }
+#topmenu li { float: left; } 
+#topmenu li a { display: block; color: white; text-align: center; padding: 12px 14px; text-decoration: none; }
+#topmenu li a:hover { background-color: #111; }
+</style>
 
 <body>
 
@@ -12,11 +19,13 @@
 <div id="content">
 
 {% block navigation %}
-<ul id="top">
-	<li><a class="li_menu" href="{% url 'index' %}">Index</a></li>
-	<li><a class="li_menu" href="{% url 'browse' 0 %}">Browse</a></li>
-	<li><a class="li_menu" href="{% url 'upload' 0 %}">Upload</a></li>
+<div id="topmenu">
+<ul>
+	<li><a href="{% url 'index' %}">Index</a></li>
+	<li><a href="{% url 'browse' 0 %}">Browse</a></li>
+	<li><a href="{% url 'upload' 0 %}">Upload</a></li>
 </ul>
+</div>
 {% endblock %}
 
 {% block real_content %} {% endblock %}
