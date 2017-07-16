@@ -4,6 +4,7 @@ import random
 from stat import *
 from .curvevolt import CurveVolt
 from django.utils import timezone
+from django.db import transaction
 from .models import *
 
 class ProcessUpload:
@@ -12,7 +13,9 @@ class ProcessUpload:
     _fname = ""
     _fcomment = ""
     _user_id = ""
+    status = False
 
+    @transaction.atomic 
     def __init__(self, user_id, ufile, name, comment):
         self._user_id = user_id
         self._fname = name
@@ -21,11 +24,27 @@ class ProcessUpload:
 
         if ( ufile.name.endswith(".volt") or ufile.name.endswith(".voltc") ):
             self._parseVolt()
-            self._createModels()
+            sid=transaction.savepoint()
+            try:
+                self._createModels()
+            except:
+                transaction.savepoint_rollback(sid)
+                status = False
+                return
+            transaction.savepoint_commit(sid)
+            status = True
         
         elif ( ufile.name.endswith(".vol") ):
             self._parseVol()
-            self._createModels()
+            sid=transaction.savepoint()
+            try:
+                self._createModels()
+            except:
+                transaction.savepoint_rollback(sid)
+                status = False
+                return
+            transaction.savepoint_commit(sid)
+            status = True
         
         else:
             if ( __debug__ ):
@@ -54,18 +73,11 @@ class ProcessUpload:
 
 
     def _createModels(self):
-        try:
-            group = Group.objects.get(pk=0)
-        except Group.DoesNotExist:
-            group = Group(name=random.choice("abcdeBERWdasKI"))
-            group.save()
         try: 
             user = User.objects.get(pk=self._user_id)
         except User.DoesNotExist:
             user = User(id=self._user_id, name=random.choice("abcdeBERWdasKI"))
             user.save()
-            user.groups.add(group)
-
 
         cf = CurveFile(
                 owner=user, 
@@ -117,7 +129,6 @@ class ProcessUpload:
                     probingRate = c.vec_params[60] )
             ci.save()
             order+=1
-
 
 if __name__ == '__main__':
     p = Parse(sys.argv[1])

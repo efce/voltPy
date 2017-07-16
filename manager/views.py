@@ -14,7 +14,7 @@ def index(request):
 
 def browse(request, user_id):
     try:
-        files = CurveFile.objects.filter(owner=user_id)
+        files = CurveFile.objects.get(owner=user_id)
     except:
         files = None
 

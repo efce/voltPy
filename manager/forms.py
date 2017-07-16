@@ -7,4 +7,5 @@ class UploadFileForm(forms.Form):
     file = forms.FileField()
 
     def process(self, user_id, request):
-        ProcessUpload(user_id, request.FILES['file'], request.POST['name'], request.POST['comment'])
+        p=ProcessUpload(user_id, request.FILES['file'], request.POST['name'], request.POST['comment'])
+        return p.status
