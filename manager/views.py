@@ -14,10 +14,11 @@ def index(request):
 
 def browse(request, user_id):
     try:
-        files = CurveFile.objects.get(owner=user_id)
+        files = CurveFile.objects.filter(owner=user_id)
     except:
         files = None
 
+    print(files)
     template = loader.get_template('manager/browse.html')
     context = {
             'browse_by' : 'files',

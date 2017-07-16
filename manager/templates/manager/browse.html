@@ -4,7 +4,7 @@
 
 {% block real_content %}
 <p>Browsing by {{ browse_by }}:
-{% if var in files %}
+{% if files != None %}
     <ul>
     {% for file in files %}
     <li><a href="{% url 'show' user_id file.id %}">{{ file }}</a></li>
