@@ -7,7 +7,7 @@
 {% if files != None %}
     <ul>
     {% for file in files %}
-    <li><a href="{% url 'show' user_id file.id %}">{{ file }}</a></li>
+    <li><a href="{% url 'showFile' user_id file.id %}">{{ file }}</a></li>
     {% endfor %}
     </ul>
 {% else %}

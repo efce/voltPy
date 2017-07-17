@@ -3,8 +3,10 @@ from django.http import HttpResponse
 from django.http import HttpResponseRedirect
 from django.template import loader
 from django.core.urlresolvers import reverse
+from django.views.decorators.cache import never_cache
 from .models import *
 from .forms import UploadFileForm
+from .voltplot import VoltPlot
 
 
 def index(request):
@@ -38,22 +40,6 @@ def browseByCalibration(request, user_id):
     pass
 
 
-def show(request, user_id, curvevectors_id):
-    try:
-        vec = CurveVectors.objects.get(pk=curvevectors_id)
-    except:
-        vec = None
-
-    if ( __debug__): 
-        print(vec)
-    template = loader.get_template('manager/show.html')
-    context = {
-            'user_id' : user_id,
-            'vectors_id': curvevectors_id
-    }
-    return HttpResponse(template.render(context, request))
-
-
 def upload(request, user_id):
     if request.method == 'POST':
         form = UploadFileForm(request.POST, request.FILES)
@@ -65,12 +51,32 @@ def upload(request, user_id):
     return render(request, 'manager/upload_auto.html', {'form': form})
 
 
-def plot(request, user_id, curvevector_id):
+def showFile(request, user_id, curvefile_id):
     try:
-        with open(valid_image, "rb") as f:
-            return HttpResponse(f.read(), content_type="image/jpeg")
-    except IOError:
-        red = Image.new('RGBA', (1, 1), (255,0,0,0))
-        response = HttpResponse(content_type="image/jpeg")
-        red.save(response, "JPEG")
-        return response
+        cf = CurveFile.objects.get(pk=curvefile_id)
+    except:
+        cf = None
+
+    if ( __debug__): 
+        print(cf)
+    template = loader.get_template('manager/show.html')
+    context = {
+            'user_id' : user_id,
+            'curvefile_id': curvefile_id
+    }
+    return HttpResponse(template.render(context, request))
+
+
+@never_cache
+def plotFile(request, user_id, curvefile_id):
+    vp = VoltPlot()
+    return HttpResponse(vp.getImageFromFile(user_id, curvefile_id), content_type="image/png")
+
+    #    try:
+    #        with open(valid_image, "rb") as f:
+    #            return HttpResponse(f.read(), content_type="image/jpeg")
+    #    except IOError:
+    #        red = Image.new('RGBA', (1, 1), (255,0,0,0))
+    #        response = HttpResponse(content_type="image/jpeg")
+    #        red.save(response, "JPEG")
+    #        return response
