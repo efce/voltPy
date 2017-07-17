@@ -44,12 +44,12 @@ class ProcessUpload:
                 if ( __debug__ ):
                     print("Query failed, rolling back transaction. Exception:" + "%s" % e)
                 transaction.savepoint_rollback(sid)
-                status = False
+                self.status = False
                 return
             if ( __debug__ ):
                 print("Query succesful, commiting.")
             transaction.savepoint_commit(sid)
-            status = True
+            self.status = True
         
         elif ( ufile.name.endswith(".vol") ):
             self._parseVol()
@@ -58,10 +58,10 @@ class ProcessUpload:
                 self._createModels()
             except:
                 transaction.savepoint_rollback(sid)
-                status = False
+                self.status = False
                 return
             transaction.savepoint_commit(sid)
-            status = True
+            self.status = True
         
         else:
             if ( __debug__ ):

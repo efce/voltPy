@@ -18,7 +18,8 @@ def browse(request, user_id):
     except:
         files = None
 
-    print(files)
+    if ( __debug__ ):
+        print(files)
     template = loader.get_template('manager/browse.html')
     context = {
             'browse_by' : 'files',
@@ -38,16 +39,38 @@ def browseByCalibration(request, user_id):
 
 
 def show(request, user_id, curvevectors_id):
-    return HttpResponse("Showing plot %s of user %s" % (curvevectors_id, user_id))
+    try:
+        vec = CurveVectors.objects.get(pk=curvevectors_id)
+    except:
+        vec = None
+
+    if ( __debug__): 
+        print(vec)
+    template = loader.get_template('manager/show.html')
+    context = {
+            'user_id' : user_id,
+            'vectors_id': curvevectors_id
+    }
+    return HttpResponse(template.render(context, request))
 
 
 def upload(request, user_id):
     if request.method == 'POST':
         form = UploadFileForm(request.POST, request.FILES)
         if form.is_valid():
-            form.process(user_id, request)
-            return HttpResponseRedirect(reverse('browse', args=[user_id]))
+            if ( form.process(user_id, request) == True ):
+                return HttpResponseRedirect(reverse('browse', args=[user_id]))
     else:
         form = UploadFileForm()
     return render(request, 'manager/upload_auto.html', {'form': form})
 
+
+def plot(request, user_id, curvevector_id):
+    try:
+        with open(valid_image, "rb") as f:
+            return HttpResponse(f.read(), content_type="image/jpeg")
+    except IOError:
+        red = Image.new('RGBA', (1, 1), (255,0,0,0))
+        response = HttpResponse(content_type="image/jpeg")
+        red.save(response, "JPEG")
+        return response
