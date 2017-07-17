@@ -22,14 +22,13 @@ class CurveVolt:
         index = 0
         while True:
             cc=struct.unpack('<B', data[index:index+1])
-            #print("index: %i, cc: %s" % (index, cc[0]))
             index += 1
             if (cc[0] == 0):
                 break
             bytename.append(cc[0])
-        self._name = bytename.decode('utf8')
+        self.name = bytename.decode('utf8')
         if ( __debug__ ):
-            print("The name is: %s" % self._name)
+            print("The name is: %s" % self.name)
         
         # Decode comment 
         bytename = bytearray()
@@ -46,7 +45,7 @@ class CurveVolt:
         # Decode param:
         paramNum = struct.unpack('<i', data[index:index+4])[0]
         if ( __debug__ ):
-            print('Params # %i' % paramNum)
+            print('Number of params: %i' % paramNum)
         index += 4
         self.vec_params =struct.unpack('<'+paramNum*'i', data[index:index+4*paramNum])
         index+= (4*paramNum)

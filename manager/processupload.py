@@ -15,6 +15,19 @@ class ProcessUpload:
     _user_id = ""
     status = False
 
+    def _getMethod(self, num):
+        methods = {
+                0 : 'SCV',
+                1 : 'NPV',
+                2 : 'DPV',
+                3 : 'SWV',
+                4 : 'LSV',
+                }
+        if ( num >= 0 and num < len(methods) ):
+            return methods[num]
+        else:
+            return ''
+
     @transaction.atomic 
     def __init__(self, user_id, ufile, name, comment):
         self._user_id = user_id
@@ -27,10 +40,14 @@ class ProcessUpload:
             sid=transaction.savepoint()
             try:
                 self._createModels()
-            except:
+            except Exception as e:
+                if ( __debug__ ):
+                    print("Query failed, rolling back transaction. Exception:" + "%s" % e)
                 transaction.savepoint_rollback(sid)
                 status = False
                 return
+            if ( __debug__ ):
+                print("Query succesful, commiting.")
             transaction.savepoint_commit(sid)
             status = True
         
@@ -69,13 +86,16 @@ class ProcessUpload:
 
         if ( __debug__ ):
             for v in self._curves:
-                print(v.name)
+                print("name: %s" % v.name)
 
 
     def _createModels(self):
+        if ( __debug__ ):
+            print("Getting user...")
         try: 
             user = User.objects.get(pk=self._user_id)
         except User.DoesNotExist:
+            #TODO: tempormary
             user = User(id=self._user_id, name=random.choice("abcdeBERWdasKI"))
             user.save()
 
@@ -86,6 +106,8 @@ class ProcessUpload:
                 filename = self._ufile.name,
                 fileDate=timezone.now(), 
                 uploadDate=timezone.now() )
+        if ( __debug__ ):
+            print("saving CurveFile")
         cf.save()
         order=0
         for c in self._curves:
@@ -96,6 +118,8 @@ class ProcessUpload:
                     comment=c.comment, 
                     params=c.vec_params, 
                     date=c.getDate() )
+            if ( __debug__ ):
+                print("saving CurveBasic")
             cb.save()
 
             if ( c.vec_params[60] == 0 ):
@@ -106,13 +130,15 @@ class ProcessUpload:
             cv = CurveVectors(  
                     curve = cb, 
                     date = c.getDate(), 
-                    method = 'DPV',
+                    method = self._getMethod(c.vec_params[0]),
                     time = c.vec_time, 
                     potential = c.vec_potential,
                     current = c.vec_current, 
                     concentration = "",
                     concentrationUnits = "",
                     probingData = pr )
+            if ( __debug__ ):
+                print("saving CurveVectors")
             cv.save()
 
             ci = CurveIndexing( 
@@ -127,8 +153,12 @@ class ProcessUpload:
                     current_max = max(c.vec_current), 
                     current_range = max(c.vec_current) - min(c.vec_current), 
                     probingRate = c.vec_params[60] )
+            if ( __debug__ ):
+                print("saving CurveIndexing")
             ci.save()
             order+=1
+            
+
 
 if __name__ == '__main__':
     p = Parse(sys.argv[1])
