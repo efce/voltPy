@@ -88,4 +88,13 @@ class CurveCalibrations(models.Model):
     class META:
         ordering = ('date')
 
+class OnXAxis(models.Model):
+    AVAILABLE = (
+            ( 'P', 'Potential'), 
+            ( 'T', 'Time'), 
+            ( 'S', 'Samples'))
+    selected = models.CharField(max_length=1, choices=AVAILABLE, default='P')
+    user = models.IntegerField(User)
     
+    def __str__(self):
+        return self.selected;

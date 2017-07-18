@@ -5,7 +5,7 @@ from django.template import loader
 from django.core.urlresolvers import reverse
 from django.views.decorators.cache import never_cache
 from .models import *
-from .forms import UploadFileForm
+from .forms import UploadFileForm, SelectXForm
 from .voltplot import VoltPlot
 
 
@@ -52,6 +52,14 @@ def upload(request, user_id):
 
 
 def showFile(request, user_id, curvefile_id):
+    if request.method == 'POST':
+        form = SelectXForm(user_id, request.POST, request.FILES)
+        if form.is_valid():
+            if ( form.process(user_id, request) == True ):
+                return HttpResponseRedirect(reverse('showFile', args=[user_id, curvefile_id]))
+    else:
+        form = SelectXForm(user_id)
+
     try:
         cf = CurveFile.objects.get(pk=curvefile_id)
     except:
@@ -62,7 +70,8 @@ def showFile(request, user_id, curvefile_id):
     template = loader.get_template('manager/show.html')
     context = {
             'user_id' : user_id,
-            'curvefile_id': curvefile_id
+            'curvefile_id': curvefile_id,
+            'form' : form
     }
     return HttpResponse(template.render(context, request))
 
@@ -70,7 +79,7 @@ def showFile(request, user_id, curvefile_id):
 @never_cache
 def plotFile(request, user_id, curvefile_id):
     vp = VoltPlot()
-    return HttpResponse(vp.getImageFromFile(user_id, curvefile_id), content_type="image/png")
+    return HttpResponse(vp.getImageFromFile(request, user_id, curvefile_id), content_type="image/png")
 
     #    try:
     #        with open(valid_image, "rb") as f:
