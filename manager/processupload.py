@@ -3,6 +3,7 @@ import struct
 import random
 from stat import *
 from .curvevolt import CurveVolt
+from .curvevol import CurveVol
 from django.utils import timezone
 from django.db import transaction
 from .models import *
@@ -14,19 +15,6 @@ class ProcessUpload:
     _fcomment = ""
     _user_id = ""
     status = False
-
-    def _getMethod(self, num):
-        methods = {
-                0 : 'SCV',
-                1 : 'NPV',
-                2 : 'DPV',
-                3 : 'SWV',
-                4 : 'LSV',
-                }
-        if ( num >= 0 and num < len(methods) ):
-            return methods[num]
-        else:
-            return ''
 
     @transaction.atomic 
     def __init__(self, user_id, ufile, name, comment):
@@ -67,6 +55,27 @@ class ProcessUpload:
             if ( __debug__ ):
                 print("Unknown extension")
     
+
+    def _parseVol(self):
+        fileContent = self._ufile.read();
+        index = 0
+        curvesNum = struct.unpack('<i', fileContent[index:index+4])[0]
+        index += 4
+        if ( __debug__ ):
+            print("Number of curves in file: %i" % curvesNum)
+
+        for i in range(0, curvesNum):
+            curveSize = struct.unpack('I', fileContent[index:index+4])[0]
+            index+=4
+            c = CurveVol()
+            c.unserialize(fileContent[index:index+curveSize]) 
+            self._curves.append(c)
+            index+=curveSize-4 # 4 was added earlier
+
+        if ( __debug__ ):
+            for v in self._curves:
+                print("name: %s" % v.name)
+
 
     def _parseVolt(self):
         fileContent = self._ufile.read();
@@ -130,7 +139,7 @@ class ProcessUpload:
             cv = CurveVectors(  
                     curve = cb, 
                     date = c.getDate(), 
-                    method = self._getMethod(c.vec_params[0]),
+                    method = c.getMethod(),
                     time = c.vec_time, 
                     potential = c.vec_potential,
                     current = c.vec_current, 

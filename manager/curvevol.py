@@ -1,7 +1,7 @@
 import struct
 import datetime
 
-class CurveVolt:
+class CurveVol:
     vec_params = []
     vec_current = []
     vec_potential = []
