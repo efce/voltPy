@@ -1,0 +1,17 @@
+{% extends "manager/main.html" %}
+
+{% block title %} Show {% endblock %}
+
+{% block real_content %}
+<p>File ID: {{ curvefile_id }} </p>
+<img src="{% url 'plotFile' user_id curvefile_id %}/{{ user_id }}_{{ curvefile_id }}.png">
+
+<form method="post" action="{{ url }}" enctype="multipart/form-data">
+	<table>
+	{% csrf_token %}
+	{{ form.as_table }}
+	<tr><td><input type="submit" value="Update" /></td></tr>
+	</table>
+</form>
+
+{% endblock %}
