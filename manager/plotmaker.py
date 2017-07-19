@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 from .models import *
 import io
 
-class VoltPlot:
+class PlotMaker:
 
     def __init__(self):
         plt.switch_backend("gtk3agg")

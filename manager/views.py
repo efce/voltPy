@@ -6,7 +6,7 @@ from django.core.urlresolvers import reverse
 from django.views.decorators.cache import never_cache
 from .models import *
 from .forms import UploadFileForm, SelectXForm
-from .voltplot import VoltPlot
+from .plotmaker import PlotMaker
 
 
 def index(request):
@@ -78,8 +78,8 @@ def showFile(request, user_id, curvefile_id):
 
 @never_cache
 def plotFile(request, user_id, curvefile_id):
-    vp = VoltPlot()
-    return HttpResponse(vp.getImageFromFile(request, user_id, curvefile_id), content_type="image/png")
+    pm = PlotMaker()
+    return HttpResponse(pm.getImageFromFile(request, user_id, curvefile_id), content_type="image/png")
 
     #    try:
     #        with open(valid_image, "rb") as f:
