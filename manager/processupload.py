@@ -59,18 +59,40 @@ class ProcessUpload:
     def _parseVol(self):
         fileContent = self._ufile.read();
         index = 0
-        curvesNum = struct.unpack('<i', fileContent[index:index+4])[0]
-        index += 4
+        curvesNum = struct.unpack('<s', fileContent[index:index+2])[0]
+        index += 2
         if ( __debug__ ):
             print("Number of curves in file: %i" % curvesNum)
 
-        for i in range(0, curvesNum):
-            curveSize = struct.unpack('I', fileContent[index:index+4])[0]
-            index+=4
-            c = CurveVol()
-            c.unserialize(fileContent[index:index+curveSize]) 
-            self._curves.append(c)
-            index+=curveSize-4 # 4 was added earlier
+        offsets = []
+        names = []
+        params = []
+        if ( curvesNum > 0 and curvesNum <= 50 ):
+            for i in range(0, curvesNum):
+                offset = struct.unpack('<s', fileContent[index:index+2])[0]
+                index+=2
+                offsets.append(offset)
+                name = struct.unpack('c'*10, fileContent[index:index+10])[0]
+                index+=10 
+                names.append(name)
+
+        index = 2 + 50*12 # The dictionary of .vol always reseves the place for
+                          # names and offsets of 50 curves
+        params = struct.unpack('i'*60, fileContent[index:index+4*60])[0]
+        index += 4*60
+        fileSize = len(fileContent)
+
+        if ( len(offsets) > 0 ):
+            for i in range(0,len(offsets)):
+                index_start = offsets[i]
+                if ( i < len(offsets)-1 ):
+                    index_end = offsets[i+1]-1
+                else:
+                    index_end = fileSize
+                c = CurveVol(name[i],params)
+                c.unserialize(fileContent[index_start:index_end]) 
+                self._curves.append(c)
+                index+=curveSize # 4 was added earlier
 
         if ( __debug__ ):
             for v in self._curves:

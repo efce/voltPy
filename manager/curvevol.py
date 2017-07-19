@@ -10,8 +10,9 @@ class CurveVol:
     name = ""
     comment = ""
     
-    def __init__(self):
-        self._name = ""
+    def __init__(self, name, params):
+        self.name = name
+        self.vec_params = params
 
 
     def _getMethod(self):
@@ -33,37 +34,36 @@ class CurveVol:
     
     def unserialize(self, data):
         # Decode name
-        bytename = bytearray()
         index = 0
-        while True:
-            cc=struct.unpack('<B', data[index:index+1])
-            index += 1
-            if (cc[0] == 0):
-                break
-            bytename.append(cc[0])
-        self.name = bytename.decode('utf8')
+        curveNum = struct.unpack('<s',data[index:index+2])
+        bytename = bytearray()
+        cc=struct.unpack('c'*10, data[index:index+10])
+        index+=10
+        bytename.append(cc[0])
+        self.name = bytename.decode('latin1')
         if ( __debug__ ):
             print("The name is: %s" % self.name)
         
         # Decode comment 
         bytename = bytearray()
-        while True:
-            cc=struct.unpack('<B', data[index:index+1])
-            index += 1
-            if (cc[0] == 0):
-                break
-            bytename.append(cc[0])
-        self._comment = bytename.decode('utf8')
+        cc=struct.unpack('c'*10, data[index:index+50])
+        index+=50
+        bytename.append(cc[0])
+        self.comment = bytename.decode('latin1')
         if ( __debug__ ):
             print("The comment is: %s" % self._comment)
 
         # Decode param:
-        paramNum = struct.unpack('<i', data[index:index+4])[0]
+        paramNum = struct.unpack('<s', data[index:index+2])[0]
         if ( __debug__ ):
             print('Number of params: %i' % paramNum)
-        index += 4
-        self.vec_params =struct.unpack('<'+paramNum*'i', data[index:index+4*paramNum])
-        index+= (4*paramNum)
+        index += 2
+        for i in range(0,paramNum):
+            paramId = struct.unpack('<s', data[index:index+2])[0]
+            index+=2
+            paramVal = struct.unpack('<i', data[index:index+4])[0]
+            index+=4
+            self.vec_params[paramId] = paramVal
 
         #Decode vectors
         vectorSize = self.vec_params[16] #16 = ptnr

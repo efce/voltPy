@@ -11,7 +11,7 @@ class CurveVolt:
     comment = ""
     
     def __init__(self):
-        self._name = ""
+        self.name = ""
 
 
     def _getMethod(self):
