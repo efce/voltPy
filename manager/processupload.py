@@ -130,6 +130,7 @@ class ProcessUpload:
             user = User(id=self._user_id, name=random.choice("abcdeBERWdasKI"))
             user.save()
 
+
         cf = CurveFile(
                 owner=user, 
                 name=self._fname,
@@ -147,13 +148,13 @@ class ProcessUpload:
                     orderInFile=order,  
                     name=c.name,  
                     comment=c.comment, 
-                    params=c.vec_params, 
+                    params=c.vec_param, 
                     date=c.getDate() )
             if ( __debug__ ):
                 print("saving CurveBasic")
             cb.save()
 
-            if ( c.vec_params[60] == 0 ):
+            if ( c.vec_param[60] == 0 ):
                 pr = ""
             else:
                 pr = c.vec_probing
@@ -183,7 +184,7 @@ class ProcessUpload:
                     current_min = min(c.vec_current), 
                     current_max = max(c.vec_current), 
                     current_range = max(c.vec_current) - min(c.vec_current), 
-                    probingRate = c.vec_params[60] )
+                    probingRate = c.vec_param[60] )
             if ( __debug__ ):
                 print("saving CurveIndexing")
             ci.save()

@@ -1,36 +1,13 @@
 import struct
 import datetime
+from .curveea import *
 
-class CurveVol:
-    vec_params = []
-    vec_current = []
-    vec_potential = []
-    vec_time = []
-    vec_probing = [] 
-    name = ""
-    comment = ""
+class CurveVol(CurveEA):
     
     def __init__(self, name, params):
         self.name = name
-        self.vec_params = params
+        self.vec_param = params
 
-
-    def _getMethod(self):
-        methods = {
-                0 : 'SCV',
-                1 : 'NPV',
-                2 : 'DPV',
-                3 : 'SWV',
-                4 : 'LSV',
-                }
-        if ( num >= 0 and num < len(methods) ):
-            return methods[vec_params[60]]
-        else:
-            return ''
-
-
-    def getDate(self):
-        return datetime.datetime(self.vec_params[56],self.vec_params[55],self.vec_params[54],self.vec_params[57],self.vec_params[58],self.vec_params[59])
     
     def unserialize(self, data):
         # Decode name
@@ -40,6 +17,7 @@ class CurveVol:
         cc=struct.unpack('c'*10, data[index:index+10])
         index+=10
         bytename.append(cc[0])
+        #TODO: verify with initial name
         self.name = bytename.decode('latin1')
         if ( __debug__ ):
             print("The name is: %s" % self.name)
@@ -54,19 +32,25 @@ class CurveVol:
             print("The comment is: %s" % self._comment)
 
         # Decode param:
-        paramNum = struct.unpack('<s', data[index:index+2])[0]
+        paramDiffNum = struct.unpack('<s', data[index:index+2])[0]
         if ( __debug__ ):
             print('Number of params: %i' % paramNum)
         index += 2
-        for i in range(0,paramNum):
+        for i in range(0,paramDiffNum):
             paramId = struct.unpack('<s', data[index:index+2])[0]
             index+=2
             paramVal = struct.unpack('<i', data[index:index+4])[0]
             index+=4
-            self.vec_params[paramId] = paramVal
+            self.vec_param[paramId] = paramVal
+
+        timeStep = 0
+        if ( self.vec_param[Param.method] != Param.method_lsv ):
+            timeStep = 2 * (self.vec_param[Param.tp] + self.vec_param[Param.tw])
+        else:
+            timeStep = LSV.LSVtime[self.vec_param[Param.dEdt]]
 
         #Decode vectors
-        vectorSize = self.vec_params[16] #16 = ptnr
+        vectorSize = self.vec_param[Param.ptnr] 
         self.vec_time = [0.0] * vectorSize
         self.vec_potential = [0.0] * vectorSize
         self.vec_current = [0.0] * vectorSize
@@ -79,7 +63,7 @@ class CurveVol:
             index+=8
 
         # Decode probing data
-        if (self.vec_params[60] != 0): ##60 = nonaveraged
+        if (self.vec_param[60] != 0): ##60 = nonaveraged
             probingNum = struct.unpack('<i', data[index:index+4])[0]
             index+=4
             self.vec_probing = struct.unpack('f'*probingNum, data[index:index+probingNum*4])
