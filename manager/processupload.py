@@ -4,6 +4,7 @@ import random
 from stat import *
 from .curvevolt import CurveVolt
 from .curvevol import CurveVol
+from .curveea import *
 from django.utils import timezone
 from django.db import transaction
 from .models import *
@@ -23,7 +24,7 @@ class ProcessUpload:
         self._fcomment = comment
         self._ufile = ufile
 
-        if ( ufile.name.endswith(".volt") or ufile.name.endswith(".voltc") ):
+        if ( ufile.name.lower().endswith(".volt") or ufile.name.lower().endswith(".voltc") ):
             self._parseVolt()
             sid=transaction.savepoint()
             try:
@@ -39,15 +40,19 @@ class ProcessUpload:
             transaction.savepoint_commit(sid)
             self.status = True
         
-        elif ( ufile.name.endswith(".vol") ):
+        elif ( ufile.name.lower().endswith(".vol") ):
             self._parseVol()
             sid=transaction.savepoint()
             try:
                 self._createModels()
             except:
+                if ( __debug__ ):
+                    print("Query failed, rolling back transaction. Exception:" + "%s" % e)
                 transaction.savepoint_rollback(sid)
                 self.status = False
                 return
+            if ( __debug__ ):
+                print("Query succesful, commiting.")
             transaction.savepoint_commit(sid)
             self.status = True
         
@@ -59,40 +64,42 @@ class ProcessUpload:
     def _parseVol(self):
         fileContent = self._ufile.read();
         index = 0
-        curvesNum = struct.unpack('<s', fileContent[index:index+2])[0]
+        curvesNum = struct.unpack('<h', fileContent[index:index+2])[0]
         index += 2
         if ( __debug__ ):
             print("Number of curves in file: %i" % curvesNum)
 
-        offsets = []
+        offsets=[]
         names = []
-        params = []
+        start_addr = 2 + (60*4) + (50*12)#num of curves (int16) + 60 params (int32[60]) + 50 curves names char[10] 
         if ( curvesNum > 0 and curvesNum <= 50 ):
             for i in range(0, curvesNum):
-                offset = struct.unpack('<s', fileContent[index:index+2])[0]
-                index+=2
-                offsets.append(offset)
-                name = struct.unpack('c'*10, fileContent[index:index+10])[0]
+                name = str(struct.unpack('{}s'.format(10), fileContent[index:index+10])[0])
                 index+=10 
+                offset = struct.unpack('<h', fileContent[index:index+2])[0]
+                index+=2
                 names.append(name)
+                offsets.append(offset)
 
         index = 2 + 50*12 # The dictionary of .vol always reseves the place for
                           # names and offsets of 50 curves
-        params = struct.unpack('i'*60, fileContent[index:index+4*60])[0]
+        params = struct.unpack('i'*60, fileContent[index:index+4*60])
         index += 4*60
         fileSize = len(fileContent)
 
         if ( len(offsets) > 0 ):
-            for i in range(0,len(offsets)):
-                index_start = offsets[i]
-                if ( i < len(offsets)-1 ):
-                    index_end = offsets[i+1]-1
-                else:
-                    index_end = fileSize
-                c = CurveVol(name[i],params)
-                c.unserialize(fileContent[index_start:index_end]) 
+            for i, offset in enumerate(offsets):
+                index_start = start_addr
+                for a in range(0,i):
+                    index_start += offsets[a]
+                index_end = index_start + offsets[i]
+                if ( __debug__):
+                    print("start %i ; end %i" % (index_start, index_end))
+                c = CurveVol(names[i],params)
+                retIndex = c.unserialize(fileContent[index_start:index_end]) 
                 self._curves.append(c)
-                index+=curveSize # 4 was added earlier
+                if ( retIndex < (index_end-index_start) ):
+                    print("WARNING!: last index lower than data end cyclic curve not processed ?")
 
         if ( __debug__ ):
             for v in self._curves:
@@ -141,6 +148,8 @@ class ProcessUpload:
         if ( __debug__ ):
             print("saving CurveFile")
         cf.save()
+        if ( __debug__ ):
+            print("saved")
         order=0
         for c in self._curves:
             cb = CurveBasic(        
@@ -153,9 +162,12 @@ class ProcessUpload:
             if ( __debug__ ):
                 print("saving CurveBasic")
             cb.save()
+            if ( __debug__ ):
+                print("saved")
+                print(c.vec_param)
 
-            if ( c.vec_param[60] == 0 ):
-                pr = ""
+            if ( c.vec_param[Param.nonaveragedsampling] == 0 ):
+                pr = []
             else:
                 pr = c.vec_probing
 
@@ -172,6 +184,8 @@ class ProcessUpload:
             if ( __debug__ ):
                 print("saving CurveVectors")
             cv.save()
+            if ( __debug__ ):
+                print("saved")
 
             ci = CurveIndexing( 
                     curveBasic = cb, 
@@ -184,10 +198,12 @@ class ProcessUpload:
                     current_min = min(c.vec_current), 
                     current_max = max(c.vec_current), 
                     current_range = max(c.vec_current) - min(c.vec_current), 
-                    probingRate = c.vec_param[60] )
+                    probingRate = c.vec_param[Param.nonaveragedsampling] )
             if ( __debug__ ):
                 print("saving CurveIndexing")
             ci.save()
+            if ( __debug__ ):
+                print("saved")
             order+=1
             
 

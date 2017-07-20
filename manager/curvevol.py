@@ -6,38 +6,37 @@ class CurveVol(CurveEA):
     
     def __init__(self, name, params):
         self.name = name
-        self.vec_param = params
+        self.vec_param = Param.PARAMNUM * [0]
+        for i, val in enumerate(params):
+            self.vec_param[i] = val
 
     
     def unserialize(self, data):
         # Decode name
         index = 0
-        curveNum = struct.unpack('<s',data[index:index+2])
-        bytename = bytearray()
-        cc=struct.unpack('c'*10, data[index:index+10])
+        curveNum = struct.unpack('<h',data[index:index+2])[0]
+        index+=2
+        cc=struct.unpack('{}s'.format(10), data[index:index+10])
         index+=10
-        bytename.append(cc[0])
         #TODO: verify with initial name
-        self.name = bytename.decode('latin1')
+        self.name = str(cc[0])
         if ( __debug__ ):
             print("The name is: %s" % self.name)
         
         # Decode comment 
-        bytename = bytearray()
-        cc=struct.unpack('c'*10, data[index:index+50])
+        cc=struct.unpack('{}s'.format(50), data[index:index+50])
         index+=50
-        bytename.append(cc[0])
-        self.comment = bytename.decode('latin1')
+        self.comment = str(cc[0])
         if ( __debug__ ):
-            print("The comment is: %s" % self._comment)
+            print("The comment is: %s" % self.comment)
 
         # Decode param:
-        paramDiffNum = struct.unpack('<s', data[index:index+2])[0]
+        paramDiffNum = struct.unpack('<h', data[index:index+2])[0]
         if ( __debug__ ):
-            print('Number of params: %i' % paramNum)
+            print('Number of params: %i' % paramDiffNum)
         index += 2
         for i in range(0,paramDiffNum):
-            paramId = struct.unpack('<s', data[index:index+2])[0]
+            paramId = struct.unpack('<h', data[index:index+2])[0]
             index+=2
             paramVal = struct.unpack('<i', data[index:index+4])[0]
             index+=4
@@ -49,22 +48,21 @@ class CurveVol(CurveEA):
         else:
             timeStep = LSV.LSVtime[self.vec_param[Param.dEdt]]
 
+        eStep = (self.vec_param[Param.Ek] - self.vec_param[Param.Ep]) / self.vec_param[Param.ptnr]
+
         #Decode vectors
         vectorSize = self.vec_param[Param.ptnr] 
         self.vec_time = [0.0] * vectorSize
         self.vec_potential = [0.0] * vectorSize
         self.vec_current = [0.0] * vectorSize
+        time = timeStep
+        potential = self.vec_param[Param.Ep]
         for i in range(0,vectorSize):
-            self.vec_time[i] =struct.unpack('d', data[index:index+8])[0]
-            index+=8
-            self.vec_potential[i] =struct.unpack('d', data[index:index+8])[0]
-            index+=8
             self.vec_current[i] =struct.unpack('d', data[index:index+8])[0]
             index+=8
-
-        # Decode probing data
-        if (self.vec_param[60] != 0): ##60 = nonaveraged
-            probingNum = struct.unpack('<i', data[index:index+4])[0]
-            index+=4
-            self.vec_probing = struct.unpack('f'*probingNum, data[index:index+probingNum*4])
-
+            self.vec_time[i] = time
+            time += timeStep
+            self.vec_potential[i] = potential
+            potential += eStep
+    
+        return index
