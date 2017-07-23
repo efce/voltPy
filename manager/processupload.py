@@ -25,7 +25,10 @@ class ProcessUpload:
         self._ufile = ufile
 
         if ( ufile.name.lower().endswith(".volt") or ufile.name.lower().endswith(".voltc") ):
-            self._parseVolt()
+            isCompressed = False
+            if ( ufile.name.lower().endswith(".voltc") ):
+                isCompressed = True
+            self._parseVolt(isCompressed)
             sid=transaction.savepoint()
             try:
                 self._createModels()
@@ -106,7 +109,7 @@ class ProcessUpload:
                 print("name: %s" % v.name)
 
 
-    def _parseVolt(self):
+    def _parseVolt(self, isCompressed):
         fileContent = self._ufile.read();
         index = 0
         curvesNum = struct.unpack('<i', fileContent[index:index+4])[0]
@@ -118,7 +121,7 @@ class ProcessUpload:
             curveSize = struct.unpack('I', fileContent[index:index+4])[0]
             index+=4
             c = CurveVolt()
-            c.unserialize(fileContent[index:index+curveSize]) 
+            c.unserialize(fileContent[index:index+curveSize], isCompressed) 
             self._curves.append(c)
             index+=curveSize-4 # 4 was added earlier
 

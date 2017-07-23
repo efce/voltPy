@@ -1,6 +1,7 @@
 import struct
 import datetime
 from .curveea import *
+import zlib
 
 class CurveVolt(CurveEA):
     
@@ -8,7 +9,7 @@ class CurveVolt(CurveEA):
         self.name = ""
 
     
-    def unserialize(self, data):
+    def unserialize(self, data, isCompressed):
         # Decode name
         bytename = bytearray()
         index = 0
@@ -21,11 +22,19 @@ class CurveVolt(CurveEA):
         self.name = bytename.decode('utf8')
         if ( __debug__ ):
             print("The name is: %s" % self.name)
+
+        if ( isCompressed ):
+            dataUnc = zlib.decompress(data[index+4:]) #QT qCompress add 4 bytes 
+            # src: http://bohdan-danishevsky.blogspot.com/2013/11/qt-51-zlib-compression-compatible-with.html
+        else:
+            dataUnc = data[index:]
+
+        index = 0
         
         # Decode comment 
         bytename = bytearray()
         while True:
-            cc=struct.unpack('<B', data[index:index+1])
+            cc=struct.unpack('<B', dataUnc[index:index+1])
             index += 1
             if (cc[0] == 0):
                 break
@@ -35,11 +44,11 @@ class CurveVolt(CurveEA):
             print("The comment is: %s" % self.comment)
 
         # Decode param:
-        paramNum = struct.unpack('<i', data[index:index+4])[0]
+        paramNum = struct.unpack('<i', dataUnc[index:index+4])[0]
         if ( __debug__ ):
             print('Number of params: %i' % paramNum)
         index += 4
-        self.vec_param =struct.unpack('<'+paramNum*'i', data[index:index+4*paramNum])
+        self.vec_param =struct.unpack('<'+paramNum*'i', dataUnc[index:index+4*paramNum])
         index+= (4*paramNum)
 
         #Decode vectors
@@ -48,18 +57,18 @@ class CurveVolt(CurveEA):
         self.vec_potential = [0.0] * vectorSize
         self.vec_current = [0.0] * vectorSize
         for i in range(0,vectorSize):
-            self.vec_time[i] =struct.unpack('d', data[index:index+8])[0]
+            self.vec_time[i] =struct.unpack('d', dataUnc[index:index+8])[0]
             index+=8
-            self.vec_potential[i] =struct.unpack('d', data[index:index+8])[0]
+            self.vec_potential[i] =struct.unpack('d', dataUnc[index:index+8])[0]
             index+=8
-            self.vec_current[i] =struct.unpack('d', data[index:index+8])[0]
+            self.vec_current[i] =struct.unpack('d', dataUnc[index:index+8])[0]
             index+=8
 
         return index
 
         # Decode probing data
         if (self.vec_param[60] != 0): ##60 = nonaveraged
-            probingNum = struct.unpack('<i', data[index:index+4])[0]
+            probingNum = struct.unpack('<i', dataUnc[index:index+4])[0]
             index+=4
-            self.vec_probing = struct.unpack('f'*probingNum, data[index:index+probingNum*4])
+            self.vec_probing = struct.unpack('f'*probingNum, dataUnc[index:index+probingNum*4])
 
