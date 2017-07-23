@@ -15,14 +15,21 @@ class ProcessUpload:
     _fname = ""
     _fcomment = ""
     _user_id = ""
+    _analyte = ""
+    _analyte_conc = ""
+    _analyte_conc_list = []
     status = False
 
     @transaction.atomic 
-    def __init__(self, user_id, ufile, name, comment):
+    def __init__(self, user_id, ufile, name, comment, analyte, analyte_conc):
         self._user_id = user_id
         self._fname = name
         self._fcomment = comment
         self._ufile = ufile
+        self._analyte = analyte
+        self._analyte_conc = analyte_conc
+
+        self._processAnalyte()
 
         if ( ufile.name.lower().endswith(".volt") or ufile.name.lower().endswith(".voltc") ):
             isCompressed = False
@@ -131,6 +138,9 @@ class ProcessUpload:
 
 
     def _createModels(self):
+        if ( len(self._analyte_conc_list) != len(self._curves) ):
+            raise 3
+
         if ( __debug__ ):
             print("Getting user...")
         try: 
@@ -139,7 +149,6 @@ class ProcessUpload:
             #TODO: tempormary
             user = User(id=self._user_id, name=random.choice("abcdeBERWdasKI"))
             user.save()
-
 
         cf = CurveFile(
                 owner=user, 
@@ -153,6 +162,14 @@ class ProcessUpload:
         cf.save()
         if ( __debug__ ):
             print("saved")
+
+        analyte = Analytes(name=self._analyte)
+        if ( __debug__ ):
+            print("saving Analytes")
+        analyte.save()
+        if ( __debug__ ):
+            print("saved")
+
         order=0
         for c in self._curves:
             cb = CurveBasic(        
@@ -168,6 +185,18 @@ class ProcessUpload:
             if ( __debug__ ):
                 print("saved")
                 print(c.vec_param)
+
+
+            an_conc = self._analyte_conc_list[order]
+            aic = AnalytesInCurve(
+                    curve=cb,
+                    analyte=analyte,
+                    concentration=an_conc)
+            if ( __debug__ ):
+                print("saving AnalytesInCurve")
+            aic.save()
+            if ( __debug__ ):
+                print("saved")
 
             if ( c.vec_param[Param.nonaveragedsampling] == 0 ):
                 pr = []
@@ -208,7 +237,18 @@ class ProcessUpload:
             if ( __debug__ ):
                 print("saved")
             order+=1
-            
+
+    def _processAnalyte(self):
+        if not self._analyte:
+            raise 1
+        if not self._analyte_conc:
+            raise 2
+
+        self._analyte_conc.replace(" ","")
+
+        acl = self._analyte_conc.split(",")
+        for conc in acl:
+            self._analyte_conc_list.append(float(conc))
 
 
 if __name__ == '__main__':

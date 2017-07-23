@@ -71,6 +71,19 @@ class CurveVectors(models.Model):
     probingData = JSONField()# JSON List 
 
 
+class Analytes(models.Model):
+    name=models.CharField(max_length=124)
+
+    def __str__(self):
+        return self.name
+    
+
+class AnalytesInCurve(models.Model):
+    curve=models.ForeignKey(CurveBasic)
+    analyte=models.ForeignKey(Analytes)
+    concentration=models.FloatField()
+
+
 class CurveCalibrations(models.Model):
     curves = models.ManyToManyField(CurveVectors)
     date = models.DateField()
@@ -81,12 +94,14 @@ class CurveCalibrations(models.Model):
     corrCoeff = models.FloatField()
     vector = JSONField() # JSON List: This can be simple x vs y plot, but also multidimensional
     fitEquation =JSONField()
+    analyte=models.ManyToManyField(Analytes)
 
     def __str__(self):
         return "%s: %s" % (date, name);
 
     class META:
         ordering = ('date')
+
 
 class OnXAxis(models.Model):
     AVAILABLE = (
