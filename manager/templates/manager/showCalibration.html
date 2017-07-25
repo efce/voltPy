@@ -1,0 +1,9 @@
+{% extends "manager/main.html" %}
+
+{% block title %} Show {% endblock %}
+
+{% block real_content %}
+<p>Calibration ID: {{ calibration_id }} </p>
+<img src="{% url 'generatePlot' user_id 'c' calibration_id %}{{ user_id }}_{{ calibration_id }}.png">
+
+{% endblock %}

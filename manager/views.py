@@ -67,7 +67,20 @@ def prepareCalibration(request, user_id):
     pass
 
 def showCalibration(request,user_id, calibration_id):
-    pass
+    try:
+        cf = CurveCalibrations.objects.get(pk=calibration_id)
+    except:
+        cf = None
+
+    if ( __debug__): 
+        print(cf)
+    template = loader.get_template('manager/showCalibration.html')
+    context = {
+            'user_id' : user_id,
+            'calibration_id': calibration_id,
+            #'form' : form
+    }
+    return HttpResponse(template.render(context, request))
 
 def upload(request, user_id):
     if request.method == 'POST':
@@ -97,7 +110,7 @@ def showFile(request, user_id, curvefile_id):
 
     if ( __debug__): 
         print(cf)
-    template = loader.get_template('manager/show.html')
+    template = loader.get_template('manager/showFile.html')
     context = {
             'user_id' : user_id,
             'curvefile_id': curvefile_id,
