@@ -14,7 +14,7 @@ def index(request):
     return HttpResponse(template.render({}, request))
 
 
-def browse(request, user_id):
+def browseFiles(request, user_id):
     try:
         files = CurveFile.objects.filter(owner=user_id)
     except:
@@ -32,13 +32,14 @@ def browse(request, user_id):
     return HttpResponse(template.render(context, request))
 
 
-def broseByFile(request, user_id):
+def browseCalibrations(request, user_id):
     pass
 
-
-def browseByCalibration(request, user_id):
+def prepareCalibration(request, user_id):
     pass
 
+def showCalibration(request,user_id, calibration_id):
+    pass
 
 def upload(request, user_id):
     if request.method == 'POST':
@@ -77,15 +78,19 @@ def showFile(request, user_id, curvefile_id):
 
 
 @never_cache
-def plotFile(request, user_id, curvefile_id):
+def generatePlot(request, user_id, plot_type, value_id):
+    """
+    Allowed types are:
+    f - whole file
+    c - calibration
+    s - sigle curve
+    """
+    allowedTypes = {
+            'f' : 'File',
+            'c' : 'Calibration',
+            's' : 'SignleCurve'
+            }
+    if not ( plot_type in allowedTypes ):
+        return
     pm = PlotMaker()
-    return HttpResponse(pm.getImageFromFile(request, user_id, curvefile_id), content_type="image/png")
-
-    #    try:
-    #        with open(valid_image, "rb") as f:
-    #            return HttpResponse(f.read(), content_type="image/jpeg")
-    #    except IOError:
-    #        red = Image.new('RGBA', (1, 1), (255,0,0,0))
-    #        response = HttpResponse(content_type="image/jpeg")
-    #        red.save(response, "JPEG")
-    #        return response
+    return HttpResponse(pm.getImage(request, user_id, allowedTypes[plot_type],value_id), content_type="image/png")

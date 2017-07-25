@@ -21,6 +21,7 @@ class CurveFile(models.Model):
     filename = models.TextField()
     fileDate = models.DateField()
     uploadDate = models.DateField()
+    deleted = models.BooleanField(default=0)
 
     def __str__(self):
         return self.name + ": " + self.filename
@@ -36,6 +37,7 @@ class CurveBasic(models.Model):
     comment = models.TextField()
     params  = JSONField()# JSON List 
     date = models.DateField()
+    deleted = models.BooleanField(default=0)
 
     def __str__(self):
         return self.curveFile + ": " + self.name
@@ -95,6 +97,7 @@ class CurveCalibrations(models.Model):
     vector = JSONField() # JSON List: This can be simple x vs y plot, but also multidimensional
     fitEquation =JSONField()
     analyte=models.ManyToManyField(Analytes)
+    deleted = models.BooleanField(default=0)
 
     def __str__(self):
         return "%s: %s" % (date, name);

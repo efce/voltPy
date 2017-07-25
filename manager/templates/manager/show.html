@@ -4,7 +4,7 @@
 
 {% block real_content %}
 <p>File ID: {{ curvefile_id }} </p>
-<img src="{% url 'plotFile' user_id curvefile_id %}/{{ user_id }}_{{ curvefile_id }}.png">
+<img src="{% url 'generatePlot' user_id 'f' curvefile_id %}{{ user_id }}_{{ curvefile_id }}.png">
 
 <form method="post" action="{{ url }}" enctype="multipart/form-data">
 	<table>
