@@ -21,9 +21,16 @@
 {% block navigation %}
 <div id="topmenu">
 <ul>
-	<li><a href="{% url 'index' %}">Index</a></li>
-	<li><a href="{% url 'browseFiles' 0 %}">Browse</a></li>
-	<li><a href="{% url 'upload' 0 %}">Upload</a></li>
+{% if user_id != None %}
+	<li><a href="{% url 'index' user_id %}">Index</a></li>
+	<li><a href="{% url 'browseFiles' user_id %}">Browse Files</a></li>
+	<li><a href="{% url 'upload' user_id %}">Upload File</a></li>
+	<li><a href="{% url 'browseCalibrations' user_id %}">Browse Calibrations</a></li>
+	<li><a href="{% url 'prepareCalibration' user_id %}">Prepare Calibration</a></li>
+{% else %}
+	<li><a href="{% url 'indexNoUser' %}">Index</a></li>
+	<li><a href="{% url 'login' %}">Login</a></li>
+{% endif%}
 </ul>
 </div>
 {% endblock %}

@@ -9,9 +9,18 @@ from .forms import UploadFileForm, SelectXForm
 from .plotmaker import PlotMaker
 
 
-def index(request):
+def indexNoUser(request):
     template = loader.get_template('manager/index.html')
     return HttpResponse(template.render({}, request))
+
+
+def login(request):
+    return HttpResponseRedirect(reverse('index', args=[ 0 ]))
+
+
+def index(request, user_id):
+    template = loader.get_template('manager/index.html')
+    return HttpResponse(template.render({ 'user_id': user_id }, request))
 
 
 def browseFiles(request, user_id):
@@ -26,13 +35,32 @@ def browseFiles(request, user_id):
     context = {
             'browse_by' : 'files',
             'user_id' : user_id,
-            'files' : files,
-            'url_upload' : reverse('upload', args=[ user_id ]),
+            'disp' : files,
+            'action': "showFile",
+            'whenEmpty' : "You have no files uploaded. <a href=" + 
+                                reverse('upload', args=[user_id]) + ">Upload one</a>."
     }
     return HttpResponse(template.render(context, request))
 
 
 def browseCalibrations(request, user_id):
+    try:
+        calibs = CurveCalibrations.objects.filter(owner=user_id)
+    except:
+        calibs = None
+
+    if ( __debug__ ):
+        print(calibs)
+    template = loader.get_template('manager/browse.html')
+    context = {
+            'browse_by' : 'calibrations',
+            'user_id' : user_id,
+            'disp' : calibs,
+            'action': "showCalibration",
+            'whenEmpty' : "You have no calibrations. <a href=" +
+                                reverse('prepareCalibration', args=[user_id]) + ">Prepare one</a>."
+    }
+    return HttpResponse(template.render(context, request))
     pass
 
 def prepareCalibration(request, user_id):
@@ -46,10 +74,11 @@ def upload(request, user_id):
         form = UploadFileForm(request.POST, request.FILES)
         if form.is_valid():
             if ( form.process(user_id, request) == True ):
-                return HttpResponseRedirect(reverse('browse', args=[user_id]))
+                return HttpResponseRedirect(reverse('browseFiles', args=[user_id]))
     else:
         form = UploadFileForm()
-    return render(request, 'manager/upload_auto.html', {'form': form})
+    return render(request, 'manager/upload_auto.html', {'form': form,
+        'user_id': user_id})
 
 
 def showFile(request, user_id, curvefile_id):

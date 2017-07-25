@@ -4,14 +4,14 @@
 
 {% block real_content %}
 <p>Browsing by {{ browse_by }}:
-{% if files != None %}
+{% if disp != None %}
     <ul>
-    {% for file in files %}
-    <li><a href="{% url 'showFile' user_id file.id %}">{{ file }}</a></li>
+    {% for d in disp %}
+    <li><a href="{% url action user_id d.id %}">{{ d }}</a></li>
     {% endfor %}
     </ul>
 {% else %}
-<p>You have no files uploaded. <a href="{{ url_upload }}">Upload one</a>.</p>
+<p>{% autoescape off %}{{ whenEmpty }}{% endautoescape %}</p>
 {% endif %}
 </p>
 {% endblock %}
