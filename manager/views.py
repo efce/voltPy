@@ -5,7 +5,7 @@ from django.template import loader
 from django.core.urlresolvers import reverse
 from django.views.decorators.cache import never_cache
 from .models import *
-from .forms import UploadFileForm, SelectXForm
+from .forms import UploadFileForm, SelectXForm, SelectCurvesForCalibrationForm
 from .plotmaker import PlotMaker
 
 
@@ -64,7 +64,15 @@ def browseCalibrations(request, user_id):
     pass
 
 def prepareCalibration(request, user_id):
-    pass
+    if request.method == 'POST':
+        form = SelectCurvesForCalibrationForm(user_id, request.POST)
+        if form.is_valid:
+            if ( form.process(user_id, request) == True ):
+                return HttpResponseRedirect(reverse('browseCalibrations', args=[user_id]))
+    else:
+        form = SelectCurvesForCalibrationForm(user_id)
+    return render(request, 'manager/prepareCalibration.html', {'form': form,
+                                                        'user_id': user_id})
 
 def showCalibration(request,user_id, calibration_id):
     try:
