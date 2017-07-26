@@ -1,7 +1,7 @@
 from django import forms
 from django.db.models import Q
 from .processupload import ProcessUpload
-from .models import OnXAxis, CurveFile, CurveBasic
+from .models import OnXAxis, CurveFile, Curve
 
 class UploadFileForm(forms.Form):
     name = forms.CharField(label="Name", max_length=128)
@@ -47,7 +47,7 @@ class SelectCurvesForCalibrationForm(forms.Form):
         user_files_filter_qs = Q()
         for f in files:
             user_files_filter_qs = user_files_filter_qs | Q(curveFile=f)
-        user_curves = CurveBasic.objects.filter(user_files_filter_qs)
+        user_curves = Curve.objects.filter(user_files_filter_qs)
 
         super(SelectCurvesForCalibrationForm, self).__init__(*args, **kwargs)
         for cb in user_curves:
