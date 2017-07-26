@@ -1,5 +1,5 @@
 from django.db import models
-from jsonfield import JSONField
+from .compressedjsonfield import CompressedJSONField
 
 
 class Group(models.Model):
@@ -30,12 +30,12 @@ class CurveFile(models.Model):
         ordering = ('uploadDate')
 
 
-class CurveBasic(models.Model):
+class Curve(models.Model):
     curveFile = models.ForeignKey(CurveFile, on_delete=models.CASCADE)
     orderInFile = models.IntegerField()
     name    = models.TextField()
     comment = models.TextField()
-    params  = JSONField()# JSON List 
+    params  = CompressedJSONField()# JSON List 
     date = models.DateField()
     deleted = models.BooleanField(default=0)
 
@@ -46,8 +46,8 @@ class CurveBasic(models.Model):
         ordering = ('curveFile', 'orderInFile')
 
 
-class CurveIndexing(models.Model):
-    curveBasic = models.ForeignKey(CurveBasic, on_delete=models.CASCADE)
+class CurveIndex(models.Model):
+    curve = models.ForeignKey(Curve, on_delete=models.CASCADE)
     potential_min = models.FloatField()
     potential_max = models.FloatField()
     potential_step = models.FloatField()
@@ -60,43 +60,43 @@ class CurveIndexing(models.Model):
     probingRate = models.IntegerField()
 
 
-class CurveVectors(models.Model):
-    curve = models.ForeignKey(CurveBasic, on_delete=models.CASCADE)
+class CurveData(models.Model):
+    curve = models.ForeignKey(Curve, on_delete=models.CASCADE)
     date = models.DateField()
     name      = models.TextField()# Name of transformation (empty for unaltered)
     method    = models.TextField()# Field empty when data unaltered
-    time = JSONField()
-    potential = JSONField()# JSON List 
-    current   = JSONField()# JSON List 
-    concentration = JSONField()# JSON List
-    concentrationUnits = JSONField()#JSON List
-    probingData = JSONField()# JSON List 
+    time = CompressedJSONField()
+    potential = CompressedJSONField()# JSON List 
+    current   = CompressedJSONField()# JSON List 
+    concentration = CompressedJSONField()# JSON List
+    concentrationUnits = CompressedJSONField()#JSON List
+    probingData = CompressedJSONField()# JSON List 
 
 
-class Analytes(models.Model):
+class Analyte(models.Model):
     name=models.CharField(max_length=124)
 
     def __str__(self):
         return self.name
     
 
-class AnalytesInCurve(models.Model):
-    curve=models.ForeignKey(CurveBasic)
-    analyte=models.ForeignKey(Analytes)
+class AnalyteInCurve(models.Model):
+    curve=models.ForeignKey(Curve)
+    analyte=models.ForeignKey(Analyte)
     concentration=models.FloatField()
 
 
-class CurveCalibrations(models.Model):
-    curves = models.ManyToManyField(CurveVectors)
+class Calibration(models.Model):
+    curves = models.ManyToManyField(CurveData)
     date = models.DateField()
     name = models.TextField()
     method = models.TextField()
     result = models.FloatField()
     resultStdDev = models.FloatField()
     corrCoeff = models.FloatField()
-    vector = JSONField() # JSON List: This can be simple x vs y plot, but also multidimensional
-    fitEquation =JSONField()
-    analyte=models.ManyToManyField(Analytes)
+    vector = CompressedJSONField() # JSON List: This can be simple x vs y plot, but also multidimensional
+    fitEquation =CompressedJSONField()
+    analyte=models.ManyToManyField(Analyte)
     deleted = models.BooleanField(default=0)
 
     def __str__(self):

@@ -5,8 +5,6 @@ from .models import OnXAxis
 class UploadFileForm(forms.Form):
     name = forms.CharField(label="Name", max_length=128)
     comment = forms.CharField(label="Comment", max_length=512)
-    analyte = forms.CharField(label="Analyte", max_length=124)
-    analyte_conc = forms.CharField(label="Conc (comma delimited)", max_length=512)
     file = forms.FileField()
 
     def process(self, user_id, request):
@@ -14,10 +12,14 @@ class UploadFileForm(forms.Form):
                 user_id, 
                 request.FILES['file'], 
                 request.POST['name'],
-                request.POST['comment'], 
-                request.POST['analyte'],
-                request.POST['analyte_conc'])
+                request.POST['comment'])
         return p.status
+
+
+class AddAnalytesForms(forms.Form):
+    #TODO: draw plot of file, provide fields for settings analytes 
+    pass
+
 
 class SelectXForm(forms.Form):
     onXAxis = forms.ChoiceField(choices=OnXAxis.AVAILABLE)

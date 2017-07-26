@@ -21,15 +21,11 @@ class ProcessUpload:
     status = False
 
     @transaction.atomic 
-    def __init__(self, user_id, ufile, name, comment, analyte, analyte_conc):
+    def __init__(self, user_id, ufile, name, comment):
         self._user_id = user_id
         self._fname = name
         self._fcomment = comment
         self._ufile = ufile
-        self._analyte = analyte
-        self._analyte_conc = analyte_conc
-
-        self._processAnalyte()
 
         if ( ufile.name.lower().endswith(".volt") or ufile.name.lower().endswith(".voltc") ):
             isCompressed = False
@@ -138,9 +134,6 @@ class ProcessUpload:
 
 
     def _createModels(self):
-        if ( len(self._analyte_conc_list) != len(self._curves) ):
-            raise 3
-
         if ( __debug__ ):
             print("Getting user...")
         try: 
@@ -163,7 +156,7 @@ class ProcessUpload:
         if ( __debug__ ):
             print("saved")
 
-        analyte = Analytes(name=self._analyte)
+        analyte = Analyte(name=self._analyte)
         if ( __debug__ ):
             print("saving Analytes")
         analyte.save()
@@ -172,7 +165,7 @@ class ProcessUpload:
 
         order=0
         for c in self._curves:
-            cb = CurveBasic(        
+            cb = Curve(        
                     curveFile=cf,    
                     orderInFile=order,  
                     name=c.name,  
@@ -186,24 +179,12 @@ class ProcessUpload:
                 print("saved")
                 print(c.vec_param)
 
-
-            an_conc = self._analyte_conc_list[order]
-            aic = AnalytesInCurve(
-                    curve=cb,
-                    analyte=analyte,
-                    concentration=an_conc)
-            if ( __debug__ ):
-                print("saving AnalytesInCurve")
-            aic.save()
-            if ( __debug__ ):
-                print("saved")
-
             if ( c.vec_param[Param.nonaveragedsampling] == 0 ):
                 pr = []
             else:
                 pr = c.vec_probing
 
-            cv = CurveVectors(  
+            cv = CurveData(
                     curve = cb, 
                     date = c.getDate(), 
                     method = c.getMethod(),
@@ -219,8 +200,8 @@ class ProcessUpload:
             if ( __debug__ ):
                 print("saved")
 
-            ci = CurveIndexing( 
-                    curveBasic = cb, 
+            ci = CurveIndex( 
+                    curve = cb, 
                     potential_min = min(c.vec_potential), 
                     potential_max = max(c.vec_potential), 
                     potential_step = c.vec_potential[1] - c.vec_potential[0], 
