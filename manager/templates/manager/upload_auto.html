@@ -3,7 +3,7 @@
 {% block title %} Browse {% endblock %}
 
 {% block real_content %}
-<form method="post" action="{{ url }}" enctype="multipart/form-data">
+<form method="post" action="" enctype="multipart/form-data">
 	<table>
 	{% csrf_token %}
 	{{ form.as_table }}

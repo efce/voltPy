@@ -5,7 +5,7 @@ from django.template import loader
 from django.core.urlresolvers import reverse
 from django.views.decorators.cache import never_cache
 from .models import *
-from .forms import UploadFileForm, SelectXForm, SelectCurvesForCalibrationForm
+from .forms import UploadFileForm, SelectXForm, SelectCurvesForCalibrationForm, AddAnalytesForm
 from .plotmaker import PlotMaker
 
 
@@ -61,12 +61,11 @@ def browseCalibrations(request, user_id):
                                 reverse('prepareCalibration', args=[user_id]) + ">Prepare one</a>."
     }
     return HttpResponse(template.render(context, request))
-    pass
 
 def prepareCalibration(request, user_id):
     if request.method == 'POST':
         form = SelectCurvesForCalibrationForm(user_id, request.POST)
-        if form.is_valid:
+        if form.is_valid():
             if ( form.process(user_id, request) == True ):
                 return HttpResponseRedirect(reverse('browseCalibrations', args=[user_id]))
     else:
@@ -95,16 +94,28 @@ def upload(request, user_id):
         form = UploadFileForm(request.POST, request.FILES)
         if form.is_valid():
             if ( form.process(user_id, request) == True ):
-                return HttpResponseRedirect(reverse('browseFiles', args=[user_id]))
+                file_id = form.file_id
+                return HttpResponseRedirect(reverse('setConcentrations', args=[user_id, file_id]))
     else:
         form = UploadFileForm()
     return render(request, 'manager/upload_auto.html', {'form': form,
         'user_id': user_id})
 
 
+def setConcentrations(request, user_id, file_id,):
+    if request.method == 'POST':
+        form = AddAnalytesForm(user_id, file_id, request.POST)
+        if form.is_valid():
+            if ( form.process(user_id) == True ):
+                return HttpResponseRedirect(reverse('browseCalibrations', args=[user_id]))
+    else:
+        form = AddAnalytesForm(user_id, file_id)
+    return render(request, 'manager/setConcentrations.html', {'form': form,
+        'user_id' : user_id, 'file_id' : file_id})
+
 def showFile(request, user_id, curvefile_id):
     if request.method == 'POST':
-        form = SelectXForm(user_id, request.POST, request.FILES)
+        form = SelectXForm(user_id, request.POST)
         if form.is_valid():
             if ( form.process(user_id, request) == True ):
                 return HttpResponseRedirect(reverse('showFile', args=[user_id, curvefile_id]))

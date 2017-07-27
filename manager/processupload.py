@@ -10,6 +10,7 @@ from django.db import transaction
 from .models import *
 
 class ProcessUpload:
+    _file_id = -1
     _curves = []
     _ufile = 0
     _fname = ""
@@ -156,6 +157,8 @@ class ProcessUpload:
         if ( __debug__ ):
             print("saved")
 
+        self._file_id = cf.id;
+
         analyte = Analyte(name=self._analyte)
         if ( __debug__ ):
             print("saving Analytes")
@@ -230,6 +233,9 @@ class ProcessUpload:
         acl = self._analyte_conc.split(",")
         for conc in acl:
             self._analyte_conc_list.append(float(conc))
+
+    def getFileId(self):
+        return self._file_id
 
 
 if __name__ == '__main__':
