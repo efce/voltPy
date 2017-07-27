@@ -87,7 +87,7 @@ class SelectXForm(forms.Form):
         super(SelectXForm, self).__init__(*args, **kwargs)
         self.fields['onXAxis'].initial = self.onx.selected
 
-    def process(self, user_id, request):
+    def process(self, user_id):
         self.onx.selected = self.cleaned_data.get('onXAxis')
         self.onx.save()
         return True

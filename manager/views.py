@@ -117,7 +117,7 @@ def showFile(request, user_id, curvefile_id):
     if request.method == 'POST':
         form = SelectXForm(user_id, request.POST)
         if form.is_valid():
-            if ( form.process(user_id, request) == True ):
+            if ( form.process(user_id) == True ):
                 return HttpResponseRedirect(reverse('showFile', args=[user_id, curvefile_id]))
     else:
         form = SelectXForm(user_id)
