@@ -19,14 +19,14 @@ class CurveVol(CurveEA):
         cc=struct.unpack('{}s'.format(10), data[index:index+10])
         index+=10
         #TODO: verify with initial name
-        self.name = str(cc[0])
+        self.name = cc[0].split(b'\0',1)[0].decode("cp1250") 
         if ( __debug__ ):
             print("The name is: %s" % self.name)
         
         # Decode comment 
         cc=struct.unpack('{}s'.format(50), data[index:index+50])
         index+=50
-        self.comment = str(cc[0])
+        self.comment = cc[0].split(b'\0',1)[0].decode("cp1250")
         if ( __debug__ ):
             print("The comment is: %s" % self.comment)
 
