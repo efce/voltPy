@@ -1,0 +1,31 @@
+{% extends "manager/main.html" %}
+
+{% block title %} Show {% endblock %}
+
+{% block style %}
+#concform label { 
+	float: left; 
+	max-width: 400px; 
+	word-wrap: break-word; 
+	display: inline;
+	white-space: pre-line; 
+	margin-bottom: 5px;" 
+}
+
+{% endblock %}
+
+{% block real_content %}
+<p>Concentrations for curves in file: #{{ file_id }} </p>
+<div style="float:left">
+<img src="{% url 'generatePlot' user_id 'f' file_id %}{{ user_id }}_{{ file_id }}.png" />
+</div>
+<div style="float: left">
+<form method="post" action="" enctype="multipart/form-data" id="concform">
+	<table>
+	{% csrf_token %}
+	{{ form.as_table }}
+	<tr><td><input type="submit" value="Save" /></td></tr>
+	</table>
+</form>
+</div>
+{% endblock %}
