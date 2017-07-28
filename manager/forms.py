@@ -20,7 +20,6 @@ class UploadFileForm(forms.Form):
 
 class AddAnalytesForm(forms.Form):
     #TODO: draw plot of file, provide fields for settings analytes 
-    analyte = forms.CharField(label="Analyte", max_length=128)
     UNITS = (
             ('ng/L','ng/L'),
             ('µg/L','µg/L'),
@@ -40,14 +39,32 @@ class AddAnalytesForm(forms.Form):
             raise 3
         curves = Curve.objects.filter(curveFile=cfile)
         self.fields['units'] = forms.ChoiceField(choices=self.UNITS)
+        curves_filter_qs = Q()
         for c in curves:
-            self.fields["curve%d" % c.id] = forms.CharField(
-                    max_length=16,
-                    label = c.name + ":\n" + c.comment , 
-                    #attrs={'class': 'file' + cb.curveFile.name},
-                    required = False )
+            curves_filter_qs = curves_filter_qs | Q(curve=c)
+        aic = AnalyteInCurve.objects.filter(curves_filter_qs)
+
+        self.fields['analyte'] = forms.CharField(label="Analyte", max_length=128)
+        if aic:
+            self.fields['analyte'].initial = aic[0].analyte.name
+
+        for c in curves:
+            ac = aic.filter(curve=c.id)
+            if ac:
+                self.fields["analyte_%d" % ac[0].id] = forms.CharField(
+                        max_length=16,
+                        label = c.name + ":\n" + c.comment , 
+                        required = False,
+                        initial = ac[0].concentration )
+            else:
+                self.fields["curve_%d" % c.id] = forms.CharField(
+                        max_length=16,
+                        label = c.name + ":\n" + c.comment , 
+                        required = False )
+
 
     def process(self, user_id):
+
         try:
             a = Analyte.objects.get(name=self.cleaned_data.get('analyte'))
         except:
@@ -55,22 +72,38 @@ class AddAnalytesForm(forms.Form):
             a.save()
 
         for name,val in self.cleaned_data.items():
-            if "curve" not in name:
-                continue
-            curve_id = int(name[5:])
-            if ( __debug__ ):
-                print("Updateing curve nr: %i with analyte %s, concentration: %s" % (curve_id, a.name, val))
-            try:
-                c = Curve.objects.get(pk=curve_id)
-                f = CurveFile.objects.get(pk=c.curveFile)
-            except:
-                continue
+            if "curve_" in name:
+                curve_id = int(name[6:])
+                if ( __debug__ ):
+                    print("Updateing curve nr: %i with analyte %s, concentration: %s" % (curve_id, a.name, val))
+                try:
+                    c = Curve.objects.get(pk=curve_id)
+                    f = CurveFile.objects.get(pk=c.curveFile.id)
+                except:
+                    continue
 
-            if f.owner.id != int(user_id):
-                raise 3
+                if f.owner.id != int(user_id):
+                    raise 3
 
-            aic = AnalyteInCurve(analyte=a, curve=c, concentration=double(value))
-            aic.save()
+                aic = AnalyteInCurve(analyte=a, curve=c, concentration=float(val))
+                aic.save()
+            elif "analyte_" in name:
+                analyte_in_id= int(name[8:])
+                if ( __debug__ ):
+                    print("Updateing analyte nr: %i, concentration: %s" % (analyte_in_id, val))
+                try:
+                    aic = AnalyteInCurve.objects.get(pk=analyte_in_id)
+                    c = Curve.objects.get(pk=aic.curve.id)
+                    f = CurveFile.objects.get(pk=c.curveFile.id)
+                except:
+                    continue
+
+                if f.owner.id != int(user_id):
+                    raise 3
+
+                aic.concentration=float(val)
+                aic.analyte = a
+                aic.save()
 
 
 class SelectXForm(forms.Form):

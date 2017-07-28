@@ -74,7 +74,7 @@ class CurveData(models.Model):
 
 
 class Analyte(models.Model):
-    name=models.CharField(max_length=124)
+    name=models.CharField(max_length=124, unique=True)
 
     def __str__(self):
         return self.name
