@@ -5,7 +5,7 @@ from django.template import loader
 from django.core.urlresolvers import reverse
 from django.views.decorators.cache import never_cache
 from .models import *
-from .forms import UploadFileForm, SelectXForm, SelectCurvesForCalibrationForm, AddAnalytesForm
+from .forms import *
 from .plotmaker import PlotMaker
 
 
@@ -25,7 +25,7 @@ def index(request, user_id):
 
 def browseFiles(request, user_id):
     try:
-        files = CurveFile.objects.filter(owner=user_id)
+        files = CurveFile.objects.filter(owner=user_id, deleted=False)
     except:
         files = None
 
@@ -36,7 +36,9 @@ def browseFiles(request, user_id):
             'browse_by' : 'files',
             'user_id' : user_id,
             'disp' : files,
-            'action': "setConcentrations",
+            'action1': "setConcentrations",
+            'action2': "deleteFile",
+            'action2_text': '(delete)',
             'whenEmpty' : "You have no files uploaded. <a href=" + 
                                 reverse('upload', args=[user_id]) + ">Upload one</a>."
     }
@@ -56,11 +58,35 @@ def browseCalibrations(request, user_id):
             'browse_by' : 'calibrations',
             'user_id' : user_id,
             'disp' : calibs,
-            'action': "showCalibration",
+            'action1': "showCalibration",
+            'action2': '',
+            'action2_text': '',
             'whenEmpty' : "You have no calibrations. <a href=" +
                                 reverse('prepareCalibration', args=[user_id]) + ">Prepare one</a>."
     }
     return HttpResponse(template.render(context, request))
+
+def deleteFile(request, user_id, file_id):
+    try:
+        file = CurveFile.objects.get(pk=file_id)
+    except:
+        if ( __debug__ ):
+            print("File not found with id: %s" % file_id)
+        return HttpResponseRedirect(reverse('browseFiles',
+            args=[user_id]))
+
+    if request.method == 'POST':
+        form = DeleteFileForm(file_id, request.POST)
+        if form.is_valid():
+            if ( form.process(user_id) == True ):
+                return HttpResponseRedirect(reverse('browseFiles',
+                    args=[user_id]))
+    else:
+        form = DeleteFileForm(file_id)
+    return render(request, 'manager/delete.html', 
+            {'form': form,
+            'file': file,
+            'user_id': user_id})
 
 def prepareCalibration(request, user_id):
     if request.method == 'POST':
@@ -123,7 +149,7 @@ def showFile(request, user_id, curvefile_id):
         form = SelectXForm(user_id)
 
     try:
-        cf = CurveFile.objects.get(pk=curvefile_id)
+        cf = CurveFile.objects.get(pk=curvefile_id, deleted=False)
     except:
         cf = None
 

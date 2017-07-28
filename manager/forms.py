@@ -143,3 +143,23 @@ class SelectCurvesForCalibrationForm(forms.Form):
     def process(self, user_id, request):
         pass
 
+
+class DeleteFileForm(forms.Form):
+    areyousure = forms.BooleanField(label = 'Are you sure?', required=False)
+
+    def __init__(self, file_id,  *args, **kwargs):
+        super(DeleteFileForm, self).__init__(*args, **kwargs)
+        self.fields['file_id'] = forms.CharField(widget=forms.HiddenInput(),
+                initial=file_id)
+
+    def process(self, user_id):
+        if ( self.cleaned_data['areyousure'] ):
+            if ( self.cleaned_data['areyousure'] == True ):
+                #try:
+                file_id = int(self.cleaned_data['file_id'])
+                f=CurveFile.objects.get(pk=file_id, owner=user_id)
+                f.deleted = True
+                f.save()
+                return True
+                #except:
+                #    return False

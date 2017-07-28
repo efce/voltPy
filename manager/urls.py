@@ -13,6 +13,8 @@ urlpatterns = [
         views.browseFiles, name='browseFiles'),
     url(r'^(?P<user_id>[0-9]+)/upload-file/$', 
         views.upload, name='upload'),
+    url(r'^(?P<user_id>[0-9]+)/delete-file/(?P<file_id>[0-9]+)/$', 
+        views.deleteFile, name='deleteFile'),
     url(r'^(?P<user_id>[0-9]+)/set-concentrations/(?P<file_id>[0-9]+)/$', 
         views.setConcentrations, name='setConcentrations'),
     url(r'^(?P<user_id>[0-9]+)/show-file/(?P<curvefile_id>[0-9]+)$', 
