@@ -47,7 +47,7 @@ def browseFiles(request, user_id):
 
 def browseCalibrations(request, user_id):
     try:
-        calibs = CurveCalibrations.objects.filter(owner=user_id)
+        calibs = Calibration.objects.filter(owner=user_id)
     except:
         calibs = None
 
@@ -58,9 +58,9 @@ def browseCalibrations(request, user_id):
             'browse_by' : 'calibrations',
             'user_id' : user_id,
             'disp' : calibs,
-            'action1': "showCalibration",
-            'action2': '',
-            'action2_text': '',
+            'action1': 'showCalibration',
+            'action2': 'editCalibration',
+            'action2_text': ' (edit) ',
             'whenEmpty' : "You have no calibrations. <a href=" +
                                 reverse('prepareCalibration', args=[user_id]) + ">Prepare one</a>."
     }
@@ -92,16 +92,16 @@ def prepareCalibration(request, user_id):
     if request.method == 'POST':
         form = SelectCurvesForCalibrationForm(user_id, request.POST)
         if form.is_valid():
-            if ( form.process(user_id, request) == True ):
+            if ( form.process(user_id) == True ):
                 return HttpResponseRedirect(reverse('browseCalibrations', args=[user_id]))
     else:
         form = SelectCurvesForCalibrationForm(user_id)
     return render(request, 'manager/prepareCalibration.html', {'form': form,
                                                         'user_id': user_id})
 
-def showCalibration(request,user_id, calibration_id):
+def showCalibration(request, user_id, calibration_id):
     try:
-        cf = CurveCalibrations.objects.get(pk=calibration_id)
+        cf = Calibration.objects.get(pk=calibration_id)
     except:
         cf = None
 
@@ -114,6 +114,9 @@ def showCalibration(request,user_id, calibration_id):
             #'form' : form
     }
     return HttpResponse(template.render(context, request))
+
+def editCalibration(request,user_id,calibration_id):
+    pass
 
 def upload(request, user_id):
     if request.method == 'POST':

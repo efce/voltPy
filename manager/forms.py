@@ -1,7 +1,8 @@
 from django import forms
 from django.db.models import Q
+from django.utils import timezone
 from .processupload import ProcessUpload
-from .models import OnXAxis, CurveFile, Curve, Analyte, AnalyteInCurve
+from .models import *
 
 class UploadFileForm(forms.Form):
     name = forms.CharField(label="Name", max_length=128)
@@ -126,6 +127,8 @@ class SelectXForm(forms.Form):
         return True
 
 class SelectCurvesForCalibrationForm(forms.Form):
+    name = forms.CharField(max_length=124, required=True)
+
     def __init__(self, user_id,  *args, **kwargs):
         files = CurveFile.objects.filter(owner=user_id)
         user_files_filter_qs = Q()
@@ -135,13 +138,51 @@ class SelectCurvesForCalibrationForm(forms.Form):
 
         super(SelectCurvesForCalibrationForm, self).__init__(*args, **kwargs)
         for cb in user_curves:
-            self.fields["curve%d" % cb.id] = forms.BooleanField(
+            self.fields["curve_%d" % cb.id] = forms.BooleanField(
                     label = cb.curveFile.name + ": " + cb.name + (" - %i" % cb.id), 
                     #attrs={'class': 'file' + cb.curveFile.name},
                     required = False )
 
-    def process(self, user_id, request):
-        pass
+    def process(self, user_id):
+        curves = []
+        for name,val in self.cleaned_data.items():
+            if "curve_" in name:
+                if ( val == True ) :
+                    curve_id = int(name[6:])
+                    c = Curve.objects.get(pk=curve_id)
+                    if ( c.curveFile.owner.id != int(user_id) ):
+                        print("erro owner id: %d " % c.curveFile.owner.id)
+                        return False
+                    curves.append(c)
+        if (len(curves) > 0):
+            analyte = AnalyteInCurve.objects.filter(curve=curves[0].id)
+            if not analyte:
+                analyte = None
+            else:
+                analyte = analyte[0].analyte.name
+
+            cal = Calibration(
+                    owner = user_id,
+                    date = timezone.now(),
+                    name = self.cleaned_data['name'],
+                    method = "",
+                    result = 0,
+                    resultStdDev = 0,
+                    corrCoeff = 0,
+                    vector = "",
+                    fitEquation = "",
+                    #analyte = analyte,
+                    deleted = False,
+                    complete = False)
+            cal.save()
+            for c in curves:
+                try:
+                    cd = CurveData.objects.filter(curve=c)[0]
+                    cal.usedCurveData.add(cd)
+                except:
+                    return False
+            cal.save()
+            return True
 
 
 class DeleteFileForm(forms.Form):
@@ -155,11 +196,11 @@ class DeleteFileForm(forms.Form):
     def process(self, user_id):
         if ( self.cleaned_data['areyousure'] ):
             if ( self.cleaned_data['areyousure'] == True ):
-                #try:
-                file_id = int(self.cleaned_data['file_id'])
-                f=CurveFile.objects.get(pk=file_id, owner=user_id)
-                f.deleted = True
-                f.save()
-                return True
-                #except:
-                #    return False
+                try:
+                    file_id = int(self.cleaned_data['file_id'])
+                    f=CurveFile.objects.get(pk=file_id, owner=user_id)
+                    f.deleted = True
+                    f.save()
+                    return True
+                except:
+                    return False

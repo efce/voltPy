@@ -40,7 +40,7 @@ class Curve(models.Model):
     deleted = models.BooleanField(default=0)
 
     def __str__(self):
-        return self.curveFile + ": " + self.name
+        return self.curveFile.name + ": " + self.name
 
     class META:
         ordering = ('curveFile', 'orderInFile')
@@ -87,7 +87,8 @@ class AnalyteInCurve(models.Model):
 
 
 class Calibration(models.Model):
-    curves = models.ManyToManyField(CurveData)
+    owner = models.ForeignKey(User)
+    usedCurveData = models.ManyToManyField(CurveData)
     date = models.DateField()
     name = models.TextField()
     method = models.TextField()
@@ -98,9 +99,10 @@ class Calibration(models.Model):
     fitEquation =CompressedJSONField()
     analyte=models.ManyToManyField(Analyte)
     deleted = models.BooleanField(default=0)
+    complete = models.BooleanField(default=0)
 
     def __str__(self):
-        return "%s: %s" % (date, name);
+        return "%s: %s" % (self.date, self.name);
 
     class META:
         ordering = ('date')

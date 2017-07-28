@@ -26,5 +26,7 @@ urlpatterns = [
     url(r'^(?P<user_id>[0-9]+)/prepare-calibration/$', 
         views.prepareCalibration, name='prepareCalibration'),
     url(r'^(?P<user_id>[0-9]+)/show-calibration/(?P<calibration_id>[0-9]+)$', 
-        views.prepareCalibration, name='showCalibration'),
+        views.showCalibration, name='showCalibration'),
+    url(r'^(?P<user_id>[0-9]+)/edit-calibration/(?P<calibration_id>[0-9]+)$', 
+        views.editCalibration, name='editCalibration'),
 ]
