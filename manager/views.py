@@ -36,7 +36,7 @@ def browseFiles(request, user_id):
             'browse_by' : 'files',
             'user_id' : user_id,
             'disp' : files,
-            'action': "showFile",
+            'action': "setConcentrations",
             'whenEmpty' : "You have no files uploaded. <a href=" + 
                                 reverse('upload', args=[user_id]) + ">Upload one</a>."
     }
