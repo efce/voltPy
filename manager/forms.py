@@ -147,7 +147,7 @@ class SelectCurvesForCalibrationForm(forms.Form):
     calid = -1
 
     def __init__(self, user_id,  *args, **kwargs):
-        files = CurveFile.objects.filter(owner=user_id)
+        files = CurveFile.objects.filter(owner=user_id, deleted=False)
         user_files_filter_qs = Q()
         for f in files:
             user_files_filter_qs = user_files_filter_qs | Q(curveFile=f)
