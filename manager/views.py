@@ -119,6 +119,18 @@ def showCalibration(request, user_id, calibration_id):
 
 def editCalibration(request,user_id,calibration_id):
     if request.method == 'POST':
+        if ( 'submitGenerate' in request.POST ):
+            formGenerate = generateCalibrationForm(request.POST)
+            print('gen submitted')
+            if ( formGenerate.is_valid() ):
+                print('gen is valid')
+                formGenerate.process(user_id, calibration_id)
+                print('gen processed')
+                return HttpResponseRedirect(reverse('showCalibration', args=[user_id, calibration_id]))
+        else:
+            formGenerate = generateCalibrationForm()
+
+
         if ( 'submitFormAnalyte' in request.POST ):
             formAnalyte = AddAnalytesForm(user_id, "Calibration", calibration_id, request.POST)
             if formAnalyte.is_valid():
@@ -128,16 +140,17 @@ def editCalibration(request,user_id,calibration_id):
             formAnalyte = AddAnalytesForm(user_id, "Calibration", calibration_id)
 
         if ( 'submitFormRange' in request.POST ):
-            formRange = SelectRange(request.POST)
+            formRange = SelectRange(calibration_id, request.POST)
             if formRange.is_valid():
                 if ( formRange.process(user_id, calibration_id) == True ):
                     return HttpResponseRedirect(reverse('showCalibration', args=[user_id, calibration_id]))
         else:
-            formRange = SelectRange()
+            formRange = SelectRange(calibration_id)
 
     else:
         formAnalyte = AddAnalytesForm(user_id, "Calibration", calibration_id)
-        formRange = SelectRange()
+        formRange = SelectRange(calibration_id)
+        formGenerate = generateCalibrationForm()
 
     cal = Calibration(pk=calibration_id)
     cal_disp = ""
@@ -147,6 +160,7 @@ def editCalibration(request,user_id,calibration_id):
     context = { 
             'formAnalyte': formAnalyte, 
             'formRange': formRange,
+            'formGenerate' : formGenerate,
             'user_id' : user_id, 
             'calibration_id' : calibration_id, 
             'plot_width' : PlotMaker.plot_width,
@@ -228,4 +242,10 @@ def generatePlot(request, user_id, plot_type, value_id):
     if not ( plot_type in allowedTypes ):
         return
     pm = PlotMaker()
-    return HttpResponse(pm.getPage(request, user_id, allowedTypes[plot_type],value_id), content_type="html")
+    return HttpResponse(
+            pm.getPage(
+                request, 
+                user_id, 
+                allowedTypes[plot_type],
+                value_id), 
+            content_type="text/html" )

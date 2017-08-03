@@ -34,5 +34,12 @@
 	<tr><td><input type="submit" name="submitFormAnalyte" value="Save" /></td></tr>
 	</table>
 </form>
+<form method="post" action="" enctype="multipart/form-data" id="concform">
+	<table>
+	{% csrf_token %}
+	{{ formGenerate.as_table }}
+	<tr><td><input type="submit" name="submitGenerate" value="GENERATE" /></td></tr>
+	</table>
+</form>
 </div>
 {% endblock %}

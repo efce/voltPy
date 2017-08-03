@@ -96,7 +96,7 @@ class Calibration(models.Model):
     result = models.FloatField()
     resultStdDev = models.FloatField()
     corrCoeff = models.FloatField()
-    vector = CompressedJSONField() # JSON List: This can be simple x vs y plot, but also multidimensional
+    dataMatrix = CompressedJSONField() # JSON List: This can be simple x vs y plot, but also multidimensional
     fitEquation =CompressedJSONField()
     analyte=models.ManyToManyField(Analyte)
     deleted = models.BooleanField(default=0)

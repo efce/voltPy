@@ -17,6 +17,7 @@ class PlotMaker:
             curvefile_id = value_id
             cf = CurveFile.objects.get(pk=curvefile_id)
             cbs = Curve.objects.filter(curveFile=cf)
+            p=self.preparePlot(cbs, user_id)
 
         elif ( plot_type == "Curves" ):
             ids = value_id.split(",")
@@ -26,13 +27,46 @@ class PlotMaker:
                 curves_filter_qs = curves_filter_qs | Q(id=i)
 
             cbs = Curve.objects.filter(curves_filter_qs)
+            p=self.preparePlot(cbs, user_id)
 
         elif ( plot_type == "Calibration"):
-            pass
+            cal = Calibration.objects.filter(pk=value_id, owner=user_id)
+            if not cal:
+                return
+            else:
+                cal = cal[0]
+            p=self.prepareCalibration(cal)
 
         else:
             return
 
+        return components(p) #script, div = components(p)
+
+    def prepareCalibration(self, cal):
+        p = figure(
+                title=None, 
+                x_axis_label='concentration',
+                y_axis_label='i / µA',
+                height=self.plot_height-10,
+                width=self.plot_width-20)
+
+        p.circle(cal.dataMatrix['x'], cal.dataMatrix['y'], size=5, color="navy")
+        x=max(cal.dataMatrix['x'])
+        print(cal.fitEquation)
+        y=eval(cal.fitEquation) #should result set y if not the equation is wrong
+        if y:
+            vx = []
+            vx.append(-cal.result)
+            vx.append(max(cal.dataMatrix['x']))
+            vy = []
+            vy.append(0)
+            vy.append(y)
+            p.line(vx,vy, line_width=2, color="red")
+        else:
+            return
+        return p
+
+    def preparePlot(self, cbs, user_id):
         # create a new plot with a title and axis labels
 
         try:
@@ -69,7 +103,8 @@ class PlotMaker:
                 for cv in cvs:
                     p.line(cv.potential, cv.current, line_width=2)
 
-        return components(p) #script, div = components(p)
+        return p
+
 
     def getPage(self, request, user_id, plot_type, value_id):
         scr,div = self.getEmbeded(request, user_id, plot_type, value_id)
