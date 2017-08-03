@@ -17,7 +17,7 @@
 {% block real_content %}
 <p>Concentrations for curves in file: #{{ file_id }} </p>
 <div style="float:left">
-<img src="{% url 'generatePlot' user_id 'f' file_id %}{{ user_id }}_{{ file_id }}.png" />
+	<iframe width={{ plot_width }} height={{ plot_height }} src="{% url 'generatePlot' user_id 'f' file_id %}{{ user_id }}_{{ file_id }}.html"></iframe>
 </div>
 <div style="float: left">
 <form method="post" action="" enctype="multipart/form-data" id="concform">

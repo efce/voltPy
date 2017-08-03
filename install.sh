@@ -7,3 +7,5 @@ pip install django
 pip install jsonfield
 pip install matplotlib
 pip install unipath
+pip install bokeh
+pip install numpy

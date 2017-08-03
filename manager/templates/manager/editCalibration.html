@@ -1,0 +1,38 @@
+{% extends "manager/main.html" %}
+
+{% block title %} Show {% endblock %}
+
+{% block style %}
+#concform label { 
+	float: left; 
+	max-width: 400px; 
+	word-wrap: break-word; 
+	display: inline;
+	white-space: pre-line; 
+	margin-bottom: 5px;" 
+}
+
+{% endblock %}
+
+{% block real_content %}
+<div style="float:left">
+	<iframe width={{ plot_width }} height={{ plot_height}} src="{% url 'generatePlot' user_id 's' cal_disp %}{{ user_id }}_{{ calibration_id }}.html"></iframe>
+</div>
+<div style="float: left">
+<form method="post" action="" enctype="multipart/form-data" id="rangeform">
+	<table>
+	{% csrf_token %}
+	{{ formRange.as_table }}
+	<tr><td><input type="submit" name="submitFormRange" value="Save" /></td></tr>
+	</table>
+</form>
+<hr />
+<form method="post" action="" enctype="multipart/form-data" id="concform">
+	<table>
+	{% csrf_token %}
+	{{ formAnalyte.as_table }}
+	<tr><td><input type="submit" name="submitFormAnalyte" value="Save" /></td></tr>
+	</table>
+</form>
+</div>
+{% endblock %}

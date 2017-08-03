@@ -89,6 +89,7 @@ class AnalyteInCurve(models.Model):
 class Calibration(models.Model):
     owner = models.ForeignKey(User)
     usedCurveData = models.ManyToManyField(CurveData)
+    selectedRange = CompressedJSONField(default="")
     date = models.DateField()
     name = models.TextField()
     method = models.TextField()

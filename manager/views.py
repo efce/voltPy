@@ -111,12 +111,49 @@ def showCalibration(request, user_id, calibration_id):
     context = {
             'user_id' : user_id,
             'calibration_id': calibration_id,
+            'plot_width' : PlotMaker.plot_width,
+            'plot_height' : PlotMaker.plot_height,
             #'form' : form
     }
     return HttpResponse(template.render(context, request))
 
 def editCalibration(request,user_id,calibration_id):
-    pass
+    if request.method == 'POST':
+        if ( 'submitFormAnalyte' in request.POST ):
+            formAnalyte = AddAnalytesForm(user_id, "Calibration", calibration_id, request.POST)
+            if formAnalyte.is_valid():
+                if ( formAnalyte.process(user_id) == True ):
+                    return HttpResponseRedirect(reverse('showCalibration', args=[user_id, calibration_id]))
+        else:
+            formAnalyte = AddAnalytesForm(user_id, "Calibration", calibration_id)
+
+        if ( 'submitFormRange' in request.POST ):
+            formRange = SelectRange(request.POST)
+            if formRange.is_valid():
+                if ( formRange.process(user_id, calibration_id) == True ):
+                    return HttpResponseRedirect(reverse('showCalibration', args=[user_id, calibration_id]))
+        else:
+            formRange = SelectRange()
+
+    else:
+        formAnalyte = AddAnalytesForm(user_id, "Calibration", calibration_id)
+        formRange = SelectRange()
+
+    cal = Calibration(pk=calibration_id)
+    cal_disp = ""
+    for c in cal.usedCurveData.all():
+        cal_disp += ("%i," % c.curve.id)
+    cal_disp = cal_disp[:-1]
+    context = { 
+            'formAnalyte': formAnalyte, 
+            'formRange': formRange,
+            'user_id' : user_id, 
+            'calibration_id' : calibration_id, 
+            'plot_width' : PlotMaker.plot_width,
+            'plot_height' : PlotMaker.plot_height,
+            'cal_disp': cal_disp
+            }
+    return render(request, 'manager/editCalibration.html', context)
 
 def upload(request, user_id):
     if request.method == 'POST':
@@ -133,14 +170,20 @@ def upload(request, user_id):
 
 def setConcentrations(request, user_id, file_id,):
     if request.method == 'POST':
-        form = AddAnalytesForm(user_id, file_id, request.POST)
+        form = AddAnalytesForm(user_id, "File", file_id, request.POST)
         if form.is_valid():
             if ( form.process(user_id) == True ):
                 return HttpResponseRedirect(reverse('browseCalibrations', args=[user_id]))
     else:
-        form = AddAnalytesForm(user_id, file_id)
-    return render(request, 'manager/setConcentrations.html', {'form': form,
-        'user_id' : user_id, 'file_id' : file_id})
+        form = AddAnalytesForm(user_id, "File", file_id)
+    context = {
+            'user_id' : user_id, 
+            'file_id' : file_id,
+            'form': form,
+            'plot_width' : PlotMaker.plot_width,
+            'plot_height' : PlotMaker.plot_height
+            }
+    return render(request, 'manager/setConcentrations.html', context)
 
 def showFile(request, user_id, curvefile_id):
     if request.method == 'POST':
@@ -162,6 +205,8 @@ def showFile(request, user_id, curvefile_id):
     context = {
             'user_id' : user_id,
             'curvefile_id': curvefile_id,
+            'plot_width' : PlotMaker.plot_width,
+            'plot_height' : PlotMaker.plot_height,
             'form' : form
     }
     return HttpResponse(template.render(context, request))
@@ -173,14 +218,14 @@ def generatePlot(request, user_id, plot_type, value_id):
     Allowed types are:
     f - whole file
     c - calibration
-    s - sigle curve
+    s - setup curves
     """
     allowedTypes = {
             'f' : 'File',
             'c' : 'Calibration',
-            's' : 'SignleCurve'
+            's' : 'Curves'
             }
     if not ( plot_type in allowedTypes ):
         return
     pm = PlotMaker()
-    return HttpResponse(pm.getImage(request, user_id, allowedTypes[plot_type],value_id), content_type="image/png")
+    return HttpResponse(pm.getPage(request, user_id, allowedTypes[plot_type],value_id), content_type="html")

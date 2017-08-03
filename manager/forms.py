@@ -21,6 +21,7 @@ class UploadFileForm(forms.Form):
 
 class AddAnalytesForm(forms.Form):
     #TODO: draw plot of file, provide fields for settings analytes 
+    isCal = False
     UNITS = (
             ('ng/L','ng/L'),
             ('µg/L','µg/L'),
@@ -32,36 +33,50 @@ class AddAnalytesForm(forms.Form):
             ( 'M'  , 'M'  )
             )
 
-    def __init__(self, user_id, file_id, *args, **kwargs):
+    def __init__(self, user_id, view_type, object_id, *args, **kwargs):
         super(AddAnalytesForm, self).__init__(*args, **kwargs)
-        cfile = CurveFile.objects.get(pk=file_id)
-        print(cfile.owner.id)
-        if ( cfile.owner.id != int(user_id) ):
-            raise 3
-        curves = Curve.objects.filter(curveFile=cfile)
+        if view_type == 'Calibration' :
+            self.isCal = True
+            cal = Calibration.objects.get(pk=object_id)
+            if ( cal.owner.id != int(user_id) ):
+                raise 3
+            cdata = cal.usedCurveData.all()
+            curves_filter_qs = Q()
+            for c in cdata:
+                curves_filter_qs = curves_filter_qs | Q(id=c.curve.id)
+            self.curves = Curve.objects.filter(curves_filter_qs)
+        elif view_type == "File":
+            cfile = CurveFile.objects.get(pk=object_id)
+            print(cfile.owner.id)
+            if ( cfile.owner.id != int(user_id) ):
+                raise 3
+            self.curves = Curve.objects.filter(curveFile=cfile)
+
+        self.generateFields()
+
+
+    def generateFields(self):
         self.fields['units'] = forms.ChoiceField(choices=self.UNITS)
         curves_filter_qs = Q()
-        for c in curves:
+        for c in self.curves:
             curves_filter_qs = curves_filter_qs | Q(curve=c)
         aic = AnalyteInCurve.objects.filter(curves_filter_qs)
 
         self.fields['analyte'] = forms.CharField(label="Analyte", max_length=128)
         if aic:
             self.fields['analyte'].initial = aic[0].analyte.name
-
-        for c in curves:
+        for c in self.curves:
             ac = aic.filter(curve=c.id)
             if ac:
-                self.fields["analyte_%d" % ac[0].id] = forms.CharField(
-                        max_length=16,
+                self.fields["analyte_%d" % ac[0].id] = forms.FloatField(
                         label = c.name + ":\n" + c.comment , 
                         required = False,
                         initial = ac[0].concentration )
             else:
-                self.fields["curve_%d" % c.id] = forms.CharField(
-                        max_length=16,
+                self.fields["curve_%d" % c.id] = forms.FloatField(
                         label = c.name + ":\n" + c.comment , 
                         required = False )
+
 
 
     def process(self, user_id):
@@ -162,7 +177,7 @@ class SelectCurvesForCalibrationForm(forms.Form):
                 analyte = analyte[0].analyte.name
 
             cal = Calibration(
-                    owner = user_id,
+                    owner = User.objects.get(pk=user_id),
                     date = timezone.now(),
                     name = self.cleaned_data['name'],
                     method = "",
@@ -204,3 +219,15 @@ class DeleteFileForm(forms.Form):
                     return True
                 except:
                     return False
+
+class SelectRange(forms.Form):
+    rangeStart = forms.FloatField(label="Select Start")
+    rangeEnd = forms.FloatField(label="Select End")
+    def process(self, user_id, calibration_id):
+        sel_range = [ self.cleaned_data['rangeStart'], self.cleaned_data['rangeEnd'] ]
+        try:
+            cal = Calibration(pk=calibration_id, owner=user_id)
+            cal.selectedRange = sel_range
+            cal.save()
+        except:
+            return

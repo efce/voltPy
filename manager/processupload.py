@@ -159,13 +159,6 @@ class ProcessUpload:
 
         self._file_id = cf.id;
 
-        analyte = Analyte(name=self._analyte)
-        if ( __debug__ ):
-            print("saving Analytes")
-        analyte.save()
-        if ( __debug__ ):
-            print("saved")
-
         order=0
         for c in self._curves:
             cb = Curve(        

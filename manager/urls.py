@@ -19,7 +19,7 @@ urlpatterns = [
         views.setConcentrations, name='setConcentrations'),
     url(r'^(?P<user_id>[0-9]+)/show-file/(?P<curvefile_id>[0-9]+)$', 
         views.showFile, name='showFile'),
-    url(r'^(?P<user_id>[0-9]+)/generate-plot/(?P<plot_type>[a-z]+)/(?P<value_id>[0-9]+)/', 
+    url(r'^(?P<user_id>[0-9]+)/generate-plot/(?P<plot_type>[a-z]+)/(?P<value_id>[0-9,]+)/', 
         views.generatePlot, name='generatePlot'),
     url(r'^(?P<user_id>[0-9]+)/browse-calibrations/$', 
         views.browseCalibrations, name='browseCalibrations'),
