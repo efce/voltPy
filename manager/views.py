@@ -93,7 +93,9 @@ def prepareCalibration(request, user_id):
         form = SelectCurvesForCalibrationForm(user_id, request.POST)
         if form.is_valid():
             if ( form.process(user_id) == True ):
-                return HttpResponseRedirect(reverse('browseCalibrations', args=[user_id]))
+                calid = form.calid
+                if calid and calid > -1:
+                    return HttpResponseRedirect(reverse('editCalibration', args=[user_id, calid]))
     else:
         form = SelectCurvesForCalibrationForm(user_id)
     return render(request, 'manager/prepareCalibration.html', {'form': form,

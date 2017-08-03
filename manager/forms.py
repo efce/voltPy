@@ -144,6 +144,7 @@ class SelectXForm(forms.Form):
 
 class SelectCurvesForCalibrationForm(forms.Form):
     name = forms.CharField(max_length=124, required=True)
+    calid = -1
 
     def __init__(self, user_id,  *args, **kwargs):
         files = CurveFile.objects.filter(owner=user_id)
@@ -191,6 +192,7 @@ class SelectCurvesForCalibrationForm(forms.Form):
                     deleted = False,
                     complete = False)
             cal.save()
+            self.calid = cal.id
             for c in curves:
                 try:
                     cd = CurveData.objects.filter(curve=c)[0]
