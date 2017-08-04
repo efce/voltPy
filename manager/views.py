@@ -210,7 +210,7 @@ def editCalibration(request,user_id,calibration_id):
         if ( 'submitFormAnalyte' in request.POST ):
             formAnalyte = AddAnalytesForm(user, "Calibration", calibration_id, request.POST)
             if formAnalyte.is_valid():
-                if ( formAnalyte.process(user_id) == True ):
+                if ( formAnalyte.process(user) == True ):
                     return HttpResponseRedirect(reverse('showCalibration', args=[user_id, calibration_id]))
         else:
             formAnalyte = AddAnalytesForm(user, "Calibration", calibration_id)

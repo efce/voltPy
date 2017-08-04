@@ -108,11 +108,10 @@ class AddAnalytesForm(forms.Form):
                     print("Updateing analyte nr: %i, concentration: %s" % (analyte_in_id, val))
                 try:
                     aic = AnalyteInCurve.objects.get(id=analyte_in_id)
-                    c = Curve.objects.get(id=aic.curve.id)
                 except:
                     continue
 
-                if not c.canBeUpdatedBy(user):
+                if not aic.canBeUpdatedBy(user):
                     raise 3
 
                 aic.concentration=float(val)

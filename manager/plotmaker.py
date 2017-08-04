@@ -122,16 +122,22 @@ class PlotMaker:
             )
 
         #prepare calibration line
-        x=max(cal.dataMatrix['x'])
-        print(cal.fitEquation)
-        y=eval(cal.fitEquation) #should set y if not the equation is wrong
-        if y:
+        xs = list(cal.dataMatrix['x'])
+        xs.append(-cal.result)
+        x = min(xs) # x variable is used by the fitEquation
+        y1=eval(cal.fitEquation) #should set y if not the equation is wrong
+        x1=x
+
+        x = max(xs)
+        y2=eval(cal.fitEquation) #should set y if not the equation is wrong
+        x2=x
+        if y1:
             vx = []
-            vx.append(-cal.result)
-            vx.append(max(cal.dataMatrix['x']))
+            vx.append(x1)
+            vx.append(x2)
             vy = []
-            vy.append(0)
-            vy.append(y)
+            vy.append(y1)
+            vy.append(y2)
             self._line.append( 
                     dict( 
                         x=vx, 
