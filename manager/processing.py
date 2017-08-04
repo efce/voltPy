@@ -3,6 +3,8 @@ from numpy import polyfit, corrcoef
 class Processing:
     def standardCalibration(self, cal):
         data = cal.dataMatrix
+        if not data:
+            return
         p = polyfit(data['x'], data['y'], 1)
         cal.method = "normal"
         cal.fitEquation = '%f*x+%f' % (p[0],p[1])

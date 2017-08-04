@@ -10,11 +10,16 @@ class Group(models.Model):
 
 
 class User(models.Model):
+    id = models.AutoField(primary_key=True)
     name = models.TextField(unique=True)
     groups = models.ManyToManyField(Group)
 
+    def __str__(self):
+        return self.name
+
 
 class CurveFile(models.Model):
+    id = models.AutoField(primary_key=True)
     owner = models.ForeignKey(User)
     name = models.TextField()
     comment = models.TextField()
@@ -40,6 +45,7 @@ class CurveFile(models.Model):
 
 
 class Curve(models.Model):
+    id = models.AutoField(primary_key=True)
     curveFile = models.ForeignKey(CurveFile, on_delete=models.CASCADE)
     orderInFile = models.IntegerField()
     name    = models.TextField()
@@ -65,6 +71,7 @@ class Curve(models.Model):
 
 
 class CurveIndex(models.Model):
+    id = models.AutoField(primary_key=True)
     curve = models.ForeignKey(Curve, on_delete=models.CASCADE)
     potential_min = models.FloatField()
     potential_max = models.FloatField()
@@ -88,6 +95,7 @@ class CurveIndex(models.Model):
 
 
 class CurveData(models.Model):
+    id = models.AutoField(primary_key=True)
     curve = models.ForeignKey(Curve, on_delete=models.CASCADE)
     date = models.DateField()
     name      = models.TextField()# Name of transformation (empty for unaltered)
@@ -117,6 +125,7 @@ class Analyte(models.Model):
     
 
 class AnalyteInCurve(models.Model):
+    id = models.AutoField(primary_key=True)
     curve=models.ForeignKey(Curve)
     analyte=models.ForeignKey(Analyte)
     concentration=models.FloatField()
@@ -132,6 +141,7 @@ class AnalyteInCurve(models.Model):
 
 
 class Calibration(models.Model):
+    id = models.AutoField(primary_key=True)
     owner = models.ForeignKey(User)
     usedCurveData = models.ManyToManyField(CurveData)
     selectedRange = CompressedJSONField(default="")
@@ -169,7 +179,7 @@ class OnXAxis(models.Model):
             ( 'T', 'Time'), 
             ( 'S', 'Samples'))
     selected = models.CharField(max_length=1, choices=AVAILABLE, default='P')
-    user = models.IntegerField(User)
+    user = models.OneToOneField(User)
     
     def __str__(self):
         return self.selected;

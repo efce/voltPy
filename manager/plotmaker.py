@@ -10,14 +10,16 @@ class PlotMaker:
     plot_height = 700
     required_scripts = '<link href="http://cdn.pydata.org/bokeh/release/bokeh-0.12.6.min.css" rel="stylesheet" type="text/css"> <link href="http://cdn.pydata.org/bokeh/release/bokeh-widgets-0.12.6.min.css" rel="stylesheet" type="text/css"> <script src="http://cdn.pydata.org/bokeh/release/bokeh-0.12.6.min.js"></script> <script src="http://cdn.pydata.org/bokeh/release/bokeh-widgets-0.12.6.min.js"></script> '
 
-    def getEmbeded(self, request, user_id, plot_type, value_id):
+    def getEmbeded(self, request, user, plot_type, value_id):
         cbs = []
 
         if ( plot_type == "File" ):
             curvefile_id = value_id
-            cf = CurveFile.objects.get(pk=curvefile_id)
-            cbs = Curve.objects.filter(curveFile=cf)
-            p=self.preparePlot(cbs, user_id)
+            cf = CurveFile.objects.get(id=curvefile_id)
+            if not cf.canBeReadBy(user):
+                raise 3
+            cbs = Curve.objects.filter(curveFile=cf, deleted=False)
+            p=self.preparePlot(cbs, user)
 
         elif ( plot_type == "Curves" ):
             ids = value_id.split(",")
@@ -27,14 +29,15 @@ class PlotMaker:
                 curves_filter_qs = curves_filter_qs | Q(id=i)
 
             cbs = Curve.objects.filter(curves_filter_qs)
-            p=self.preparePlot(cbs, user_id)
+            for c in cbs:
+                if not c.canBeReadBy(user):
+                    raise 3
+            p=self.preparePlot(cbs, user)
 
         elif ( plot_type == "Calibration"):
-            cal = Calibration.objects.filter(pk=value_id, owner=user_id)
-            if not cal:
-                return
-            else:
-                cal = cal[0]
+            cal = Calibration.objects.get(id=value_id)
+            if not cal.canBeReadBy(user):
+                raise 3
             p=self.prepareCalibration(cal)
 
         else:
@@ -49,6 +52,9 @@ class PlotMaker:
                 y_axis_label='i / µA',
                 height=self.plot_height-10,
                 width=self.plot_width-20)
+
+        if not cal.complete:
+            return p
 
         p.circle(cal.dataMatrix['x'], cal.dataMatrix['y'], size=5, color="navy")
         x=max(cal.dataMatrix['x'])
@@ -66,14 +72,14 @@ class PlotMaker:
             return
         return p
 
-    def preparePlot(self, cbs, user_id):
+    def preparePlot(self, cbs, user):
         # create a new plot with a title and axis labels
 
         try:
-            onxs = OnXAxis.objects.get(user=user_id)
+            onxs = OnXAxis.objects.get(user=user)
             onx = onxs.selected
         except:
-            onxs = OnXAxis(selected='P',user=user_id)
+            onxs = OnXAxis(selected='P',user=user)
             onxs.save()
             onx = onxs.selected
 

@@ -10,9 +10,9 @@ class UploadFileForm(forms.Form):
     comment = forms.CharField(label="Comment", max_length=512)
     file = forms.FileField()
 
-    def process(self, user_id, request):
+    def process(self, user, request):
         p=ProcessUpload(
-                user_id, 
+                user, 
                 request.FILES['file'], 
                 self.cleaned_data.get('name'),
                 self.cleaned_data.get('comment'))
@@ -34,12 +34,12 @@ class AddAnalytesForm(forms.Form):
             ( 'M'  , 'M'  )
             )
 
-    def __init__(self, user_id, view_type, object_id, *args, **kwargs):
+    def __init__(self, user, view_type, object_id, *args, **kwargs):
         super(AddAnalytesForm, self).__init__(*args, **kwargs)
         if view_type == 'Calibration' :
             self.isCal = True
-            cal = Calibration.objects.get(pk=object_id)
-            if ( cal.owner.id != int(user_id) ):
+            cal = Calibration.objects.get(id=object_id)
+            if not cal.canBeReadBy(user):
                 raise 3
             cdata = cal.usedCurveData.all()
             curves_filter_qs = Q()
@@ -47,9 +47,8 @@ class AddAnalytesForm(forms.Form):
                 curves_filter_qs = curves_filter_qs | Q(id=c.curve.id)
             self.curves = Curve.objects.filter(curves_filter_qs)
         elif view_type == "File":
-            cfile = CurveFile.objects.get(pk=object_id)
-            print(cfile.owner.id)
-            if ( cfile.owner.id != int(user_id) ):
+            cfile = CurveFile.objects.get(id=object_id)
+            if not cfile.canBeReadBy(user):
                 raise 3
             self.curves = Curve.objects.filter(curveFile=cfile)
 
@@ -79,8 +78,7 @@ class AddAnalytesForm(forms.Form):
                         required = False )
 
 
-
-    def process(self, user_id):
+    def process(self, user):
 
         try:
             a = Analyte.objects.get(name=self.cleaned_data.get('analyte'))
@@ -94,12 +92,12 @@ class AddAnalytesForm(forms.Form):
                 if ( __debug__ ):
                     print("Updateing curve nr: %i with analyte %s, concentration: %s" % (curve_id, a.name, val))
                 try:
-                    c = Curve.objects.get(pk=curve_id)
-                    f = CurveFile.objects.get(pk=c.curveFile.id)
+                    c = Curve.objects.get(id=curve_id)
+                    f = CurveFile.objects.get(id=c.curveFile.id)
                 except:
                     continue
 
-                if f.owner.id != int(user_id):
+                if not f.canBeUpdatedBy(user):
                     raise 3
 
                 aic = AnalyteInCurve(analyte=a, curve=c, concentration=float(val))
@@ -109,13 +107,12 @@ class AddAnalytesForm(forms.Form):
                 if ( __debug__ ):
                     print("Updateing analyte nr: %i, concentration: %s" % (analyte_in_id, val))
                 try:
-                    aic = AnalyteInCurve.objects.get(pk=analyte_in_id)
-                    c = Curve.objects.get(pk=aic.curve.id)
-                    f = CurveFile.objects.get(pk=c.curveFile.id)
+                    aic = AnalyteInCurve.objects.get(id=analyte_in_id)
+                    c = Curve.objects.get(id=aic.curve.id)
                 except:
                     continue
 
-                if f.owner.id != int(user_id):
+                if not c.canBeUpdatedBy(user):
                     raise 3
 
                 aic.concentration=float(val)
@@ -126,28 +123,29 @@ class AddAnalytesForm(forms.Form):
 class SelectXForm(forms.Form):
     onXAxis = forms.ChoiceField(choices=OnXAxis.AVAILABLE)
 
-    def __init__(self, user_id, *args, **kwargs):
-        self.user_id = user_id
+    def __init__(self, user, *args, **kwargs):
+        self.user = user
         try:
-            self.onx = OnXAxis.objects.get(user=self.user_id)
+            self.onx = OnXAxis.objects.get(user=self.user)
         except:
-            self.onx = OnXAxis(user=user_id)
+            self.onx = OnXAxis(user=user)
             self.onx.save()
 
         super(SelectXForm, self).__init__(*args, **kwargs)
         self.fields['onXAxis'].initial = self.onx.selected
 
-    def process(self, user_id):
+    def process(self, user):
         self.onx.selected = self.cleaned_data.get('onXAxis')
         self.onx.save()
         return True
+
 
 class SelectCurvesForCalibrationForm(forms.Form):
     name = forms.CharField(max_length=124, required=True)
     calid = -1
 
-    def __init__(self, user_id,  *args, **kwargs):
-        files = CurveFile.objects.filter(owner=user_id, deleted=False)
+    def __init__(self, user,  *args, **kwargs):
+        files = CurveFile.objects.filter(owner=user, deleted=False)
         user_files_filter_qs = Q()
         for f in files:
             user_files_filter_qs = user_files_filter_qs | Q(curveFile=f)
@@ -157,21 +155,19 @@ class SelectCurvesForCalibrationForm(forms.Form):
         for cb in user_curves:
             self.fields["curve_%d" % cb.id] = forms.BooleanField(
                     label = cb.curveFile.name + ": " + cb.name + (" - %i" % cb.id), 
-                    #attrs={'class': 'file' + cb.curveFile.name},
                     required = False )
 
-    def process(self, user_id):
+    def process(self, user):
         curves = []
         for name,val in self.cleaned_data.items():
             if "curve_" in name:
                 if ( val == True ) :
                     curve_id = int(name[6:])
-                    c = Curve.objects.get(pk=curve_id)
-                    if ( c.curveFile.owner.id != int(user_id) ):
-                        print("erro owner id: %d " % c.curveFile.owner.id)
+                    c = Curve.objects.get(id=curve_id)
+                    if not c.canBeUpdatedBy(user):
                         return False
                     curves.append(c)
-        if (len(curves) > 0):
+        if curves:
             analyte = AnalyteInCurve.objects.filter(curve=curves[0].id)
             if not analyte:
                 analyte = None
@@ -179,7 +175,7 @@ class SelectCurvesForCalibrationForm(forms.Form):
                 analyte = analyte[0].analyte.name
 
             cal = Calibration(
-                    owner = User.objects.get(pk=user_id),
+                    owner = user,
                     date = timezone.now(),
                     name = self.cleaned_data['name'],
                     method = "",
@@ -211,15 +207,46 @@ class DeleteFileForm(forms.Form):
         self.fields['file_id'] = forms.CharField(widget=forms.HiddenInput(),
                 initial=file_id)
 
-    def process(self, user_id):
+    def process(self, user, file_id):
+        if ( self.cleaned_data['areyousure'] ):
+            if ( self.cleaned_data['areyousure'] == True ):
+                form_file_id = int(self.cleaned_data['file_id'])
+                if ( form_file_id != int(file_id) ):
+                    return False
+                try:
+                    f=CurveFile.objects.get(id=file_id)
+                    if f.canBeUpdatedBy(user):
+                        f.deleted = True
+                        f.save()
+                        return True
+                    else:
+                        return False
+                except:
+                    return False
+
+
+class DeleteCurveForm(forms.Form):
+    areyousure = forms.BooleanField(label = 'Are you sure?', required=False)
+
+    def __init__(self, curve_id,  *args, **kwargs):
+        super(DeleteCurveForm, self).__init__(*args, **kwargs)
+        self.fields['curve_id'] = forms.CharField(widget=forms.HiddenInput(),
+                initial=file_id)
+
+    def process(self, user, curve_id):
         if ( self.cleaned_data['areyousure'] ):
             if ( self.cleaned_data['areyousure'] == True ):
                 try:
-                    file_id = int(self.cleaned_data['file_id'])
-                    f=CurveFile.objects.get(pk=file_id, owner=user_id)
-                    f.deleted = True
-                    f.save()
-                    return True
+                    form_curve_id = int(self.cleaned_data['file_id'])
+                    if ( form_curve_id != int(curve_id) ):
+                        return False
+                    c=Curve.objects.get(id=curve_id)
+                    if c.canBeUpdatedBy(user):
+                        c.deleted = True
+                        c.save()
+                        return True
+                    else:
+                        return False
                 except:
                     return False
 
@@ -229,7 +256,7 @@ class SelectRange(forms.Form):
     def __init__(self, calibration_id, *args, **kwargs):
         super(SelectRange, self).__init__(*args, **kwargs)
         try:
-            cal = Calibration.objects.get(pk=calibration_id)
+            cal = Calibration.objects.get(id=calibration_id)
             rangest = cal.selectedRange['start']
             rangend = cal.selectedRange['end']
         except:
@@ -239,8 +266,7 @@ class SelectRange(forms.Form):
         self.fields['rangeEnd'].initial = rangend
         
 
-    def process(self, user_id, calibration_id):
-        user = User.objects.get(pk=user_id)
+    def process(self, user, calibration_id):
         if self.cleaned_data['rangeStart'] < self.cleaned_data['rangeEnd']:
             sel_range = { 
                     'start' : self.cleaned_data['rangeStart'], 
@@ -253,11 +279,9 @@ class SelectRange(forms.Form):
                     }
 
         try:
-            cal = Calibration.objects.filter(pk=calibration_id, owner=user)
-            if not cal:
+            cal = Calibration.objects.get(id=calibration_id)
+            if not cal.canBeUpdatedBy(user):
                 return
-            else:
-                cal = cal[0]
             cal.selectedRange = sel_range
             cal.save()
         except:
@@ -265,14 +289,12 @@ class SelectRange(forms.Form):
 
 class generateCalibrationForm(forms.Form):
     #TODO: rethink / rework / add method selection
-    def process(self, user_id, calibration_id):
-        user = User.objects.get(pk=user_id)
-        onx = OnXAxis.objects.get(user=user_id).selected
-        cal = Calibration.objects.filter(pk=calibration_id, owner=user)
-        if not cal:
-            return
-        else:
-            cal = cal[0]
+
+    def process(self, user, calibration_id):
+        onx = OnXAxis.objects.get(user=user).selected
+        cal = Calibration.objects.get(id=calibration_id)
+        if not cal.canBeUpdatedBy(user):
+            raise 3
 
         inxstart = 0
         diffst = float('Inf')

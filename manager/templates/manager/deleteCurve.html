@@ -1,0 +1,14 @@
+{% extends "manager/main.html" %}
+
+{% block title %} Delete {% endblock %}
+
+{% block real_content %}
+<p>Deleting curve: {{ curve }}:</p>
+<form method="post" action="" enctype="multipart/form-data">
+	<table>
+	{% csrf_token %}
+	{{ form.as_table }}
+	<tr><td><input type="submit" value="Delete" /></td></tr>
+	</table>
+</form>
+{% endblock %}

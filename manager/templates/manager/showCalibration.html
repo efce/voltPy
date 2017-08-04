@@ -4,6 +4,6 @@
 
 {% block real_content %}
 <p>Calibration ID: {{ calibration_id }} </p>
-<iframe width={{ plot_width }} height={{ plot_height }} src="{% url 'generatePlot' user_id 'c' calibration_id %}{{ user_id }}_{{ calibration_id }}.html"></iframe>
+<iframe width={{ plot_width }} height={{ plot_height }} src="{% url 'generatePlot' user.id 'c' calibration_id %}"></iframe>
 
 {% endblock %}

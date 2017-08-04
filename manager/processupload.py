@@ -15,15 +15,15 @@ class ProcessUpload:
     _ufile = 0
     _fname = ""
     _fcomment = ""
-    _user_id = ""
+    _user = None
     _analyte = ""
     _analyte_conc = ""
     _analyte_conc_list = []
     status = False
 
     @transaction.atomic 
-    def __init__(self, user_id, ufile, name, comment):
-        self._user_id = user_id
+    def __init__(self, user, ufile, name, comment):
+        self._user = user
         self._fname = name
         self._fcomment = comment
         self._ufile = ufile
@@ -135,17 +135,8 @@ class ProcessUpload:
 
 
     def _createModels(self):
-        if ( __debug__ ):
-            print("Getting user...")
-        try: 
-            user = User.objects.get(pk=self._user_id)
-        except User.DoesNotExist:
-            #TODO: tempormary
-            user = User(id=self._user_id, name=random.choice("abcdeBERWdasKI"))
-            user.save()
-
         cf = CurveFile(
-                owner=user, 
+                owner=self._user, 
                 name=self._fname,
                 comment=self._fcomment,
                 filename = self._ufile.name,

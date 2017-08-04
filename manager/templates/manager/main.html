@@ -11,6 +11,8 @@
 #topmenu li { float: left; } 
 #topmenu li a { display: block; color: white; text-align: center; padding: 12px 14px; text-decoration: none; }
 #topmenu li a:hover { background-color: #111; }
+.wht { background: white; color: black ;  text-align: center; padding: 12px 14px; text-decoration: none; }
+#notification { background: #229; color: white; }
 {% block style %} {% endblock %}
 </style>
 
@@ -22,12 +24,14 @@
 {% block navigation %}
 <div id="topmenu">
 <ul>
-{% if user_id != None %}
-	<li><a href="{% url 'index' user_id %}">Index</a></li>
-	<li><a href="{% url 'browseFiles' user_id %}">Browse Files</a></li>
-	<li><a href="{% url 'upload' user_id %}">Upload File</a></li>
-	<li><a href="{% url 'browseCalibrations' user_id %}">Browse Calibrations</a></li>
-	<li><a href="{% url 'prepareCalibration' user_id %}">Prepare Calibration</a></li>
+{% if user %}
+	<li><a href="{% url 'index' user.id %}">Index</a></li>
+	<li><a href="{% url 'browseFiles' user.id %}">Browse Files</a></li>
+	<li><a href="{% url 'upload' user.id %}">Upload File</a></li>
+	<li><a href="{% url 'browseCalibrations' user.id %}">Browse Calibrations</a></li>
+	<li><a href="{% url 'selectCurvesForCalibration' user.id %}">Prepare Calibration</a></li>
+	<li class="wht">Logged in as:</li><li class="wht">{{ user }}</li> 
+	<li><a href="{% url 'logout' %}">Logout</a></li>
 {% else %}
 	<li><a href="{% url 'indexNoUser' %}">Index</a></li>
 	<li><a href="{% url 'login' %}">Login</a></li>
@@ -35,6 +39,9 @@
 </ul>
 </div>
 {% endblock %}
+{% if norification %}
+<p id="notification">{{ notification }}</p>
+{% endif %}
 
 {% block real_content %} {% endblock %}
 

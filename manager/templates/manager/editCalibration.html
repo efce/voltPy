@@ -16,7 +16,7 @@
 
 {% block real_content %}
 <div style="float:left">
-	<iframe width={{ plot_width }} height={{ plot_height}} src="{% url 'generatePlot' user_id 's' cal_disp %}{{ user_id }}_{{ calibration_id }}.html"></iframe>
+	<iframe width={{ plot_width }} height={{ plot_height}} src="{% url 'generatePlot' user.id 's' cal_disp %}"></iframe>
 </div>
 <div style="float: left">
 <form method="post" action="" enctype="multipart/form-data" id="rangeform">
