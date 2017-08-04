@@ -1,6 +1,7 @@
 from numpy import polyfit, corrcoef
 
 class Processing:
+
     def standardCalibration(self, cal):
         data = cal.dataMatrix
         if not data:
@@ -12,3 +13,11 @@ class Processing:
         cal.complete = True
         cal.corrCoeff = corrcoef(data['x'], data['y'])[0,1]
         cal.save()
+
+
+    def slopeStandardAddition(self, cal):
+        pass
+
+
+    def selfReferencing(self,cal):
+        pass

@@ -351,11 +351,14 @@ def generatePlot(request, user_id, plot_type, value_id):
         user=None
 
     pm = PlotMaker()
+    if (plot_type == 'f' ):
+        pm.processFile(user, value_id)
+    elif (plot_type == 's'):
+        pm.processCurves(user, value_id)
+    elif (plot_type == 'c'):
+        pm.processCalibration(user, value_id)
+
     return HttpResponse(
-            pm.getPage(
-                request, 
-                user,
-                allowedTypes[plot_type],
-                value_id
-            ), 
-            content_type="text/html" )
+            pm.getPage(), 
+            content_type="text/html" 
+        )

@@ -23,6 +23,8 @@ class ProcessUpload:
 
     @transaction.atomic 
     def __init__(self, user, ufile, name, comment):
+        if not user:
+            raise 3
         self._user = user
         self._fname = name
         self._fcomment = comment
