@@ -29,6 +29,15 @@ class CurveFile(models.Model):
     class META:
         ordering = ('uploadDate')
 
+    def isOwnedBy(self, user):
+        return (self.owner == user)
+
+    def canBeUpdatedBy(self, user):
+        return self.isOwnedBy(user)
+
+    def canBeReadBy(self, user):
+        return self.isOwnedBy(user)
+
 
 class Curve(models.Model):
     curveFile = models.ForeignKey(CurveFile, on_delete=models.CASCADE)
@@ -45,6 +54,15 @@ class Curve(models.Model):
     class META:
         ordering = ('curveFile', 'orderInFile')
 
+    def isOwnedBy(self, user):
+        return (self.curveFile.owner == user)
+
+    def canBeUpdatedBy(self, user):
+        return self.isOwnedBy(user)
+
+    def canBeReadBy(self, user):
+        return self.isOwnedBy(user)
+
 
 class CurveIndex(models.Model):
     curve = models.ForeignKey(Curve, on_delete=models.CASCADE)
@@ -59,6 +77,15 @@ class CurveIndex(models.Model):
     current_range = models.FloatField()
     probingRate = models.IntegerField()
 
+    def isOwnedBy(self, user):
+        return (self.curve.curveFile.owner == user)
+
+    def canBeUpdatedBy(self, user):
+        return self.isOwnedBy(user)
+
+    def canBeReadBy(self, user):
+        return self.isOwnedBy(user)
+
 
 class CurveData(models.Model):
     curve = models.ForeignKey(Curve, on_delete=models.CASCADE)
@@ -72,6 +99,15 @@ class CurveData(models.Model):
     concentrationUnits = CompressedJSONField()#JSON List
     probingData = CompressedJSONField()# JSON List 
 
+    def isOwnedBy(self, user):
+        return (self.curve.curveFile.owner == user)
+
+    def canBeUpdatedBy(self, user):
+        return self.isOwnedBy(user)
+
+    def canBeReadBy(self, user):
+        return self.isOwnedBy(user)
+
 
 class Analyte(models.Model):
     name=models.CharField(max_length=124, unique=True)
@@ -84,6 +120,15 @@ class AnalyteInCurve(models.Model):
     curve=models.ForeignKey(Curve)
     analyte=models.ForeignKey(Analyte)
     concentration=models.FloatField()
+
+    def isOwnedBy(self, user):
+        return (self.curve.curveFile.owner == user)
+
+    def canBeUpdatedBy(self, user):
+        return self.isOwnedBy(user)
+
+    def canBeReadBy(self, user):
+        return self.isOwnedBy(user)
 
 
 class Calibration(models.Model):
@@ -108,6 +153,15 @@ class Calibration(models.Model):
     class META:
         ordering = ('date')
 
+    def isOwnedBy(self, user):
+        return (self.owner == user)
+
+    def canBeUpdatedBy(self, user):
+        return self.isOwnedBy(user)
+
+    def canBeReadBy(self, user):
+        return self.isOwnedBy(user)
+
 
 class OnXAxis(models.Model):
     AVAILABLE = (
@@ -119,3 +173,12 @@ class OnXAxis(models.Model):
     
     def __str__(self):
         return self.selected;
+
+    def isOwnedBy(self, user):
+        return (self.user == user)
+
+    def canBeUpdatedBy(self, user):
+        return self.isOwnedBy(user)
+
+    def canBeReadBy(self, user):
+        return self.isOwnedBy(user)

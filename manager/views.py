@@ -62,7 +62,7 @@ def browseCalibrations(request, user_id):
             'action2': 'editCalibration',
             'action2_text': ' (edit) ',
             'whenEmpty' : "You have no calibrations. <a href=" +
-                                reverse('prepareCalibration', args=[user_id]) + ">Prepare one</a>."
+                                reverse('selectCurvesForCalibration', args=[user_id]) + ">Prepare one</a>."
     }
     return HttpResponse(template.render(context, request))
 
@@ -83,12 +83,39 @@ def deleteFile(request, user_id, file_id):
                     args=[user_id]))
     else:
         form = DeleteFileForm(file_id)
-    return render(request, 'manager/delete.html', 
-            {'form': form,
-            'file': file,
-            'user_id': user_id})
 
-def prepareCalibration(request, user_id):
+    context = { 
+            'form': form,
+            'file': file,
+            'user_id': user_id}
+    return render(request, 'manager/delete-file.html', context)
+
+
+def deleteFile(request, user_id, file_id):
+    try:
+        file = CurveFile.objects.get(pk=file_id)
+    except:
+        if ( __debug__ ):
+            print("File not found with id: %s" % file_id)
+        return HttpResponseRedirect(reverse('browseFiles',
+            args=[user_id]))
+
+    if request.method == 'POST':
+        form = DeleteFileForm(file_id, request.POST)
+        if form.is_valid():
+            if ( form.process(user_id) == True ):
+                return HttpResponseRedirect(reverse('browseFiles',
+                    args=[user_id]))
+    else:
+        form = DeleteFileForm(file_id)
+
+    context = { 
+            'form': form,
+            'file': file,
+            'user_id': user_id}
+    return render(request, 'manager/delete-file.html', context)
+
+def selectCurvesForCalibration(request, user_id):
     if request.method == 'POST':
         form = SelectCurvesForCalibrationForm(user_id, request.POST)
         if form.is_valid():
@@ -98,8 +125,12 @@ def prepareCalibration(request, user_id):
                     return HttpResponseRedirect(reverse('editCalibration', args=[user_id, calid]))
     else:
         form = SelectCurvesForCalibrationForm(user_id)
-    return render(request, 'manager/prepareCalibration.html', {'form': form,
-                                                        'user_id': user_id})
+
+    context = {
+            'form': form, 
+            'user_id': user_id
+            }
+    return render(request, 'manager/selectCurvesForCalibration.html', context)
 
 def showCalibration(request, user_id, calibration_id):
     try:
@@ -177,19 +208,23 @@ def upload(request, user_id):
         if form.is_valid():
             if ( form.process(user_id, request) == True ):
                 file_id = form.file_id
-                return HttpResponseRedirect(reverse('setConcentrations', args=[user_id, file_id]))
+                return HttpResponseRedirect(reverse('editFile', args=[user_id, file_id]))
     else:
         form = UploadFileForm()
-    return render(request, 'manager/upload_auto.html', {'form': form,
-        'user_id': user_id})
+
+    context = {
+            'form': form, 
+            'user_id': user_id
+            }
+    return render(request, 'manager/upload_auto.html', context)
 
 
-def setConcentrations(request, user_id, file_id,):
+def editFile(request, user_id, file_id,):
     if request.method == 'POST':
         form = AddAnalytesForm(user_id, "File", file_id, request.POST)
         if form.is_valid():
             if ( form.process(user_id) == True ):
-                return HttpResponseRedirect(reverse('browseCalibrations', args=[user_id]))
+                return HttpResponseRedirect(reverse('browseFiles', args=[user_id]))
     else:
         form = AddAnalytesForm(user_id, "File", file_id)
     context = {
@@ -199,19 +234,19 @@ def setConcentrations(request, user_id, file_id,):
             'plot_width' : PlotMaker.plot_width,
             'plot_height' : PlotMaker.plot_height
             }
-    return render(request, 'manager/setConcentrations.html', context)
+    return render(request, 'manager/editFile.html', context)
 
-def showFile(request, user_id, curvefile_id):
+def showFile(request, user_id, file_id):
     if request.method == 'POST':
         form = SelectXForm(user_id, request.POST)
         if form.is_valid():
             if ( form.process(user_id) == True ):
-                return HttpResponseRedirect(reverse('showFile', args=[user_id, curvefile_id]))
+                return HttpResponseRedirect(reverse('showFile', args=[user_id, file_id]))
     else:
         form = SelectXForm(user_id)
 
     try:
-        cf = CurveFile.objects.get(pk=curvefile_id, deleted=False)
+        cf = CurveFile.objects.get(pk=file_id, deleted=False)
     except:
         cf = None
 
@@ -224,7 +259,7 @@ def showFile(request, user_id, curvefile_id):
             'plot_width' : PlotMaker.plot_width,
             'plot_height' : PlotMaker.plot_height,
             'form' : form
-    }
+        }
     return HttpResponse(template.render(context, request))
 
 
