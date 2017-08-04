@@ -19,6 +19,13 @@ class PlotMaker:
     <script src="http://cdn.pydata.org/bokeh/release/bokeh-0.12.6.min.js"></script> 
     <script src="http://cdn.pydata.org/bokeh/release/bokeh-widgets-0.12.6.min.js"></script>
     """
+    def __init__(self):
+        self._line = []
+        self._scatter = []
+        self.xlabel = "x"
+        self.ylabel = "y"
+        self.plot_width = 850
+        self.plot_height = 700
     
 
     def processFile(self, user, value_id):
@@ -169,7 +176,7 @@ class PlotMaker:
             p.line(l['x'], l['y'], color="blue", line_width=2)
 
         for s in self._scatter:
-            p.scatter(s['x'], s['y'], color="red", glyph_size=5)
+            p.scatter(s['x'], s['y'], color="red", size=8)
 
         return components(p) 
 
