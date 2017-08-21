@@ -140,10 +140,32 @@ class AnalyteInCurve(models.Model):
         return self.isOwnedBy(user)
 
 
-class Calibration(models.Model):
+class CurveSet(models.Model):
     id = models.AutoField(primary_key=True)
     owner = models.ForeignKey(User)
+    name = models.CharField(max_length=128)
+    date = models.DateField()
     usedCurveData = models.ManyToManyField(CurveData)
+    locked = models.BooleanField(default=0)
+    deleted = models.BooleanField(default=0)
+
+    def isOwnedBy(self, user):
+        return (self.owner == user)
+
+    def canBeUpdatedBy(self, user):
+        return self.isOwnedBy(user) and not self.locked
+
+    def canBeReadBy(self, user):
+        return self.isOwnedBy(user)
+
+    def __str__(self):
+        return "%s" % self.name
+
+
+class Analysis(models.Model):
+    id = models.AutoField(primary_key=True)
+    owner = models.ForeignKey(User)
+    curveSet = models.ForeignKey(CurveSet)
     selectedRange = CompressedJSONField(default="")
     date = models.DateField()
     name = models.TextField()

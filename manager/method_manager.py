@@ -11,7 +11,7 @@ class MethodManager:
         self.__current_step = -1
 
 
-    def load(self):
+    def loadMethods(self):
         import os
         dir_path = os.path.dirname(os.path.realpath(__file__))
         from os import listdir
@@ -23,15 +23,26 @@ class MethodManager:
             if not fm == '__init__.py':
                 exec('import ' + app + '.methods.' + fm[:-3])
 
+    def loadSession(self, request):
+        if request and request.session:
+            self.session = request.session.get('MethodManager', None)
+            if self.session:
+                self.selectedMethod = self.session.get('selectedMethod', (-1,-1))
+
+    def selectMethod(self, typeId, methodId):
+        self.selectMethod = (typeId, methodId)
+        self.session.set('selectedMethod', self.selectedMethod)
+
+
     def setMethod(self, procOrAnal, methodId):
         if ( procOrAnal == 0 ):#Processing
             if methodId >= 0 and methodId < len(MethodManager._MethodManager__methods[0]):
-                MethodManager.selectedMethod = (0, methodId)
+                MethodManager.selectMethod(0, methodId)
             else:
                 raise 1
         if ( procOrAnal == 1 ):#Analysis
             if methodId >= 0 and methodId < len(MethodManager._MethodManager__methods[1]):
-                MethodManager.selectedMethod = (1, methodId)
+                MethodManager.selectMethod(1, methodId)
             else:
                 raise 1
         else:

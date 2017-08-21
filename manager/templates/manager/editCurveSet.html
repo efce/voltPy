@@ -16,7 +16,7 @@
 
 {% block real_content %}
 <div style="float:left">
-	<iframe width={{ plot_width }} height={{ plot_height}} src="{% url 'generatePlot' user.id 's' cal_disp %}"></iframe>
+	<iframe width={{ plot_width }} height={{ plot_height}} src="{% url 'generatePlot' user.id 's' curveset_id %}"></iframe>
 </div>
 <div style="float: left">
 <form method="post" action="" enctype="multipart/form-data" id="rangeform">
@@ -34,11 +34,11 @@
 	<tr><td><input type="submit" name="submitFormAnalyte" value="Save" /></td></tr>
 	</table>
 </form>
-<form method="post" action="" enctype="multipart/form-data" id="concform">
+<form method="post" action="{% url 'analyze' user.id curveset_id %}" enctype="multipart/form-data" id="concform">
 	<table>
 	{% csrf_token %}
 	{{ formGenerate.as_table }}
-	<tr><td><input type="submit" name="submitGenerate" value="GENERATE" /></td></tr>
+	<tr><td><input type="submit" name="submitGenerate" value="Start Analysis" /></td></tr>
 	</table>
 </form>
 </div>

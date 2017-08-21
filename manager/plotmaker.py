@@ -50,6 +50,47 @@ class PlotMaker:
         self._processCurveArray(user, cbs)
 
 
+    def processCurveSet(self, user, curveset_id):
+        try:
+            onxs = OnXAxis.objects.get(user=user)
+            onx = onxs.selected
+        except:
+            onxs = OnXAxis(selected='P',user=user)
+            onxs.save()
+            onx = onxs.selected
+
+        self.xlabel = self._generateXLabel(onx)
+        self.ylabel = 'i / µA'
+        cs = CurveSet.objects.get(id=curveset_id)
+
+        if onx == 'S':
+            for cv in cs.usedCurveData.all():
+                self._line.append(
+                        dict(
+                            x=range(1, len(cv.probingData)+1),
+                            y=cv.probingData
+                        )
+                    )
+
+        elif onx == 'T':
+            for cv in cs.usedCurveData.all():
+                self._line.append(
+                        dict(
+                            x=cv.time,
+                            y=cv.current
+                        )
+                    )
+
+        else:
+            for cv in cs.usedCurveData.all():
+                self._line.append(
+                        dict(
+                            x=cv.potential,
+                            y=cv.current
+                        )
+                    )
+
+
     def _processCurveArray(self, user, curves):
         try:
             onxs = OnXAxis.objects.get(user=user)

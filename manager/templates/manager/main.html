@@ -28,8 +28,8 @@
 	<li><a href="{% url 'index' user.id %}">Index</a></li>
 	<li><a href="{% url 'browseFiles' user.id %}">Browse Files</a></li>
 	<li><a href="{% url 'upload' user.id %}">Upload File</a></li>
-	<li><a href="{% url 'browseCalibrations' user.id %}">Browse Calibrations</a></li>
-	<li><a href="{% url 'selectCurvesForCalibration' user.id %}">Prepare Calibration</a></li>
+	<li><a href="{% url 'browseCurveSets' user.id %}">Browse Curve Sets</a></li>
+	<li><a href="{% url 'createCurveSet' user.id %}">Create Curve Set</a></li>
 	<li class="wht">Logged in as:</li><li class="wht">{{ user }}</li> 
 	<li><a href="{% url 'logout' %}">Logout</a></li>
 {% else %}

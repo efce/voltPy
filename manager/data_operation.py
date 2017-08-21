@@ -10,46 +10,63 @@ class DataOperation:
         elif ( 'calibration' in kwargs ):
             self.operation = 'analysis'
             self.calibration = kwargs.get('calibration')
+        elif ( 'curveset' in kwargs ):
+            self.operation = 'processing'
+            self.curves = kwargs.get('curveset')
         else:
             raise 33
         self.methodManager = MethodManager()
-        self.methodManager.load()
+        self.methodManager.loadMethods()
+        self.anSelForm = None
 
-
-    def draw(self, calid, request):
+    def process(self, user, request):
+        self.methodManager.loadSession(request)
         if ( self.methodManager.selectedMethod == -1 ):
             if ( request.method == 'POST' ):
-                form = ProcessingSelectForm(self.methodManager, request)
-                if ( form.is_valid() ):
-                    form.process(calid)
+                self.anSelForm = AnalysisSelectForm(self.methodManager, request)
+                if ( self.anSelForm.is_valid() ):
+                    form.process(user, self.methodManager, self.curves)
             else:
-                form = ProcessingSelectForm(self.methodManager)
+                self.anSelForm = AnalysisSelectForm(self.methodManager)
         else:
             if ( request.method == 'POST' ):
                 pass
 
-    def getProcessingSelectForm(self, *args, **kwargs):
-        return ProcessingSelectForm(self.methodManager, *args, **kwargs)
+    def getPage(self):
+        if not self.anSelForm:
+            return ""
+        else:
+            return ""
+
+    def getAnalysisSelectForm(self, *args, **kwargs):
+        return AnalysisSelectForm(self.methodManager, *args, **kwargs)
 
 
-class ProcessingSelectForm(forms.Form):
+class AnalysisSelectForm(forms.Form):
 
     def __init__(self, methodManager, *args, **kwargs):
-        super(ProcessingSelectForm, self).__init__(*args, **kwargs)
-        print("methods:")
-        print(methodManager.getAnalysisMethods())
+        super(AnalysisSelectForm, self).__init__(*args, **kwargs)
         choices = list (
                         zip(
                             range(0,len(methodManager.getAnalysisMethods())),
                             methodManager.getAnalysisMethods()
                         )
                     )
-        print(choices)
         self.fields['method'] = forms.ChoiceField(choices=choices, required=True)
 
-    def process(self, methodManager, calid):
+    def process(self, user, methodManager, curveset_id):
         try:
-            c = Calibration.objects.get(id=calid)
+            c = CurveSet.objects.get(id=curveset_id)
         except:
-            return
-        c.method=methodManager.getAnalysisMethods()[self.cleaned_data.get('method')]
+            raise 404
+        a = Analysis(
+                owner = user,
+                curveSet = c,
+                date = timezone.now(),
+                method = methodManager.getAnalysisMethods()[self.cleaned_data.get('method')],
+                name = "",
+                complete=False,
+                deleted = False
+            )
+        a.save()
+        return a.id
