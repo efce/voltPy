@@ -176,8 +176,8 @@ class Analysis(models.Model):
     dataMatrix = CompressedJSONField() # JSON List: This can be simple x vs y plot, but also multidimensional
     fitEquation =CompressedJSONField()
     analyte=models.ManyToManyField(Analyte)
+    step  = models.IntegerField(default=0)
     deleted = models.BooleanField(default=0)
-    complete = models.BooleanField(default=0)
 
     def __str__(self):
         return "%s: %s" % (self.date, self.name);

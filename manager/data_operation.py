@@ -7,12 +7,12 @@ class DataOperation:
         if ( 'curves' in kwargs ):
             self.operation = 'processing'
             self.curves = kwargs.get('curves')
-        elif ( 'calibration' in kwargs ):
-            self.operation = 'analysis'
-            self.calibration = kwargs.get('calibration')
         elif ( 'curveset' in kwargs ):
             self.operation = 'processing'
             self.curves = kwargs.get('curveset')
+        elif ( 'calibration' in kwargs ):
+            self.operation = 'analysis'
+            self.calibration = kwargs.get('calibration')
         else:
             raise 33
         self.methodManager = MethodManager()
@@ -20,23 +20,29 @@ class DataOperation:
         self.anSelForm = None
 
     def process(self, user, request):
-        self.methodManager.loadSession(request)
-        if ( self.methodManager.selectedMethod == -1 ):
+        if not self.methodManager.isMethodSelected():
             if ( request.method == 'POST' ):
                 self.anSelForm = AnalysisSelectForm(self.methodManager, request)
                 if ( self.anSelForm.is_valid() ):
-                    form.process(user, self.methodManager, self.curves)
+                    analysisid = self.anSelForm.process(user, self.methodManager, self.curves)
+                    if analysisid and analysisid > -1:
+                        pass
+                        #return HttpRedirect
             else:
                 self.anSelForm = AnalysisSelectForm(self.methodManager)
+            return True
+        # Else use the selected method settings:
         else:
-            if ( request.method == 'POST' ):
-                pass
+            self.methodManager.process(request)
+            # Reurn False when processing/analysis complete
+            return self.methodManager.nextStep()
+
 
     def getPage(self):
         if not self.anSelForm:
-            return ""
+            return self.methodManager.draw()
         else:
-            return ""
+            return self.anSelForm.as_table()
 
     def getAnalysisSelectForm(self, *args, **kwargs):
         return AnalysisSelectForm(self.methodManager, *args, **kwargs)
@@ -65,7 +71,7 @@ class AnalysisSelectForm(forms.Form):
                 date = timezone.now(),
                 method = methodManager.getAnalysisMethods()[self.cleaned_data.get('method')],
                 name = "",
-                complete=False,
+                step = 0,
                 deleted = False
             )
         a.save()

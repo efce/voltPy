@@ -1,76 +1,69 @@
+import sys
 from abc import ABC, abstractmethod
 from enum import Enum
 
 class MethodManager:
-    processing = 0
-    analysis = 1
-    __methods = ( list(), list() )
 
     def __init__(self):
-        self.selectedMethod = (-1, -1)
-        self.__current_step = -1
-
+        self.__current_step = None
+        self.__selected_method = None
+        self.methods = {
+                    'processing': dict(), 
+                    'analysis': dict() 
+                }
+        self.loadMethods()
 
     def loadMethods(self):
         import os
         dir_path = os.path.dirname(os.path.realpath(__file__))
         from os import listdir
         from os.path import isfile, join
-        mypath = dir_path + "/methods/"
-        app = self.__module__.split(".")[0]
-        onlyfiles = [f for f in listdir(mypath) if isfile(join(mypath, f))]
+        methodspath = dir_path + "/methods/"
+        onlyfiles = [f for f in listdir(methodspath) if isfile(join(methodspath, f))  and
+            f.endswith('.py')]
+        sys.path.append(methodspath)
         for fm in onlyfiles:
             if not fm == '__init__.py':
-                exec('import ' + app + '.methods.' + fm[:-3])
-
-    def loadSession(self, request):
-        if request and request.session:
-            self.session = request.session.get('MethodManager', None)
-            if self.session:
-                self.selectedMethod = self.session.get('selectedMethod', (-1,-1))
-
-    def selectMethod(self, typeId, methodId):
-        self.selectMethod = (typeId, methodId)
-        self.session.set('selectedMethod', self.selectedMethod)
+                fname = fm[:-3]
+                fimp = __import__(fname)
+                methodInstance = fimp.newInstance()
+                self.register(methodInstance)
+                
 
 
-    def setMethod(self, procOrAnal, methodId):
-        if ( procOrAnal == 0 ):#Processing
-            if methodId >= 0 and methodId < len(MethodManager._MethodManager__methods[0]):
-                MethodManager.selectMethod(0, methodId)
-            else:
-                raise 1
-        if ( procOrAnal == 1 ):#Analysis
-            if methodId >= 0 and methodId < len(MethodManager._MethodManager__methods[1]):
-                MethodManager.selectMethod(1, methodId)
-            else:
-                raise 1
-        else:
-            raise 1
+    def process(self, request):
+        #TODO: is success: self.__current_step += 1
+        pass
+
 
     def nextStep(self):
-        self.__current_step += 1
-        methodWants = MethodManager.methods[MethodManager.selectedMethod].nextStep(self.__current_step)
+        methodWants = self.__selected_method.nextStep(self.__current_step)
         if ( methodWants == MethodStep.end ):
+            self.__current_step = None
+            self.__selectedMethod = None
             return False
         else:
-            self.__current_step = -1
             return True
 
+
+    def draw(self):
+        pass
+
     def getProcessingMethods(self):
-        return MethodManager._MethodManager__methods[0]
+        return MethodManager.methods['processing']
 
     def getAnalysisMethods(self):
-        return MethodManager._MethodManager__methods[1]
+        return MethodManager.methods['analysis']
 
-    @staticmethod
-    def register(m):
-        if isinstance(m,ProcessingMethod):
-            MethodManager._MethodManager__methods[0].append(m)
-        elif isinstance(m,AnalysisMethod):
-            MethodManager._MethodManager__methods[1].append(m)
-        else:
-            raise TypeError('Paramter has to inherent either ProcessingMethod or AnalysisMethod class')
+    def getMethods(self):
+        return self.methods
+
+
+    def register(self,m):
+        if str(m) in self.methods[m.type()]:
+            raise "Name " + m + " already exists in " + m.type()
+        self.methods[m.type()][str(m)] = m
+        print(self.methods)
 
 
 class Method(ABC):
@@ -91,10 +84,12 @@ class Method(ABC):
         pass
 
 class AnalysisMethod(Method):
-    pass
+    def type(self):
+        return 'analysis'
 
 class ProcessingMethod(Method):
-    pass
+    def type(self):
+        return 'processing'
 
 
 class MethodStep(Enum):
@@ -108,4 +103,3 @@ class MethodStep(Enum):
 
 if ( __name__ == '__main__' ):
     mm = MethodManager()
-    mm.load()
