@@ -335,7 +335,7 @@ def analyze(request, user_id, curveset_id):
         user=None
     dataop = DataOperation(curveset = curveset_id)
     dataop.process(user, request)
-    return HttpResponse(dataop.getPage())
+    return HttpResponse(dataop.getContent())
 
 
 @never_cache

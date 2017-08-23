@@ -14,10 +14,16 @@ class RegularStandardAddition2(AnalysisMethod):
         else:
             return MethodStep.end
 
+    def processStep(self, stepnum, data):
+        pass
+
+    def setModel(self, model):
+        pass
+
     def askAdditionalData(self, cal):
         pass
 
-    def process(self, cal):
+    def finalize(self, cal):
         data = cal.dataMatrix
         if not data:
             return

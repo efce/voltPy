@@ -166,7 +166,7 @@ class Analysis(models.Model):
     id = models.AutoField(primary_key=True)
     owner = models.ForeignKey(User)
     curveSet = models.ForeignKey(CurveSet)
-    selectedRange = CompressedJSONField(default="")
+    parameters = CompressedJSONField(default="")
     date = models.DateField()
     name = models.TextField()
     method = models.TextField()
@@ -181,6 +181,31 @@ class Analysis(models.Model):
 
     def __str__(self):
         return "%s: %s" % (self.date, self.name);
+
+    class META:
+        ordering = ('date')
+
+    def isOwnedBy(self, user):
+        return (self.owner == user)
+
+    def canBeUpdatedBy(self, user):
+        return self.isOwnedBy(user)
+
+    def canBeReadBy(self, user):
+        return self.isOwnedBy(user)
+
+
+class Processing(models.Model):
+    id = models.AutoField(primary_key=True)
+    owner = models.ForeignKey(User)
+    date = models.DateField()
+    curves = models.ManyToManyRel(Curve)
+    parameters = CompressedJSONField(default="")
+    method = models.TextField()
+    deleted = models.BooleanField(default=False)
+
+    def __str__(self):
+        return "%s: %s" % (self.date, self.method);
 
     class META:
         ordering = ('date')
