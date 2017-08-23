@@ -1,4 +1,4 @@
-from method_manager import *
+from manager.method_manager import *
 from numpy import polyfit, corrcoef
 
 class RegularStandardAddition(AnalysisMethod):
@@ -6,10 +6,7 @@ class RegularStandardAddition(AnalysisMethod):
         pass
 
     def __str__(self):
-        return "RegularStandardAddition"
-
-    def __repr__(self):
-        return self.__str__()
+        return "Regular Standard Addition"
 
     def nextStep(self, stepNum):
         if ( stepNum == 0 ):

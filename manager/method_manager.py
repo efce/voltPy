@@ -50,18 +50,19 @@ class MethodManager:
         pass
 
     def getProcessingMethods(self):
-        return MethodManager.methods['processing']
+        return self.methods['processing']
 
     def getAnalysisMethods(self):
-        return MethodManager.methods['analysis']
+        return self.methods['analysis']
 
     def getMethods(self):
         return self.methods
 
 
     def register(self,m):
-        if str(m) in self.methods[m.type()]:
-            raise "Name " + m + " already exists in " + m.type()
+        if str(m) == self.methods[m.type()]:
+            raise TypeError("Name " + str(m) + " already exists in " +
+                    m.type())
         self.methods[m.type()][str(m)] = m
         print(self.methods)
 
@@ -82,6 +83,9 @@ class Method(ABC):
     @abstractmethod
     def __str__(self):
         pass
+
+    def __repr__(self):
+        return self.__str__().replace(" ","")
 
 class AnalysisMethod(Method):
     def type(self):
