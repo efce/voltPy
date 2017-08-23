@@ -204,11 +204,11 @@ def editCurveSet(request,user_id,curveset_id):
     dataop = DataOperation(curveset=curveset_id)
 
     if request.method == 'POST':
-        if ( 'submitGenerate' in request.POST ):
+        if ( 'startAnalyze' in request.POST ):
             formGenerate = dataop.getAnalysisSelectForm(request.POST)
             if ( formGenerate.is_valid() ):
-                formGenerate.process(user, curveset_id)
-                return HttpResponseRedirect(reverse('showCurveSet', args=[user_id, curveset_id]))
+                analyzeid = formGenerate.process(user)
+                return HttpResponseRedirect(reverse('analyze', args=[user_id, analyzeid]))
         else:
             formGenerate = dataop.getAnalysisSelectForm()
 
@@ -234,7 +234,7 @@ def editCurveSet(request,user_id,curveset_id):
     cal_disp = ""
     context = { 
             'formAnalyte': formAnalyte, 
-            'formGenerate' : formGenerate,
+            'startAnalyze' : formGenerate,
             'user' : user, 
             'curveset_id' : curveset_id, 
             'plot_width' : PlotMaker.plot_width,

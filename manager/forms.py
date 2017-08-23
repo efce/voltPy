@@ -70,12 +70,12 @@ class AddAnalytesForm(forms.Form):
             if ac:
                 self.fields["analyte_%d" % ac[0].id] = forms.FloatField(
                         label = c.name + ":\n" + c.comment , 
-                        required = False,
+                        required = True,
                         initial = ac[0].concentration )
             else:
                 self.fields["curve_%d" % c.id] = forms.FloatField(
                         label = c.name + ":\n" + c.comment , 
-                        required = False )
+                        required = True )
 
 
     def process(self, user):

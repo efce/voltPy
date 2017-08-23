@@ -170,9 +170,9 @@ class Analysis(models.Model):
     date = models.DateField()
     name = models.TextField()
     method = models.TextField()
-    result = models.FloatField()
-    resultStdDev = models.FloatField()
-    corrCoeff = models.FloatField()
+    result = models.FloatField(null=True)
+    resultStdDev = models.FloatField(null=True)
+    corrCoeff = models.FloatField(null=True)
     dataMatrix = CompressedJSONField() # JSON List: This can be simple x vs y plot, but also multidimensional
     fitEquation =CompressedJSONField()
     analyte=models.ManyToManyField(Analyte)

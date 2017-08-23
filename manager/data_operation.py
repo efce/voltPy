@@ -1,41 +1,30 @@
-from .method_manager import MethodManager
 from django import forms
+from django.utils import timezone
+from .models import *
+from .method_manager import MethodManager
 
 class DataOperation:
 
     def __init__(self, **kwargs):
         if ( 'curves' in kwargs ):
             self.operation = 'processing'
-            self.curves = kwargs.get('curves')
+            self.curves_ids = kwargs.get('curves').split(",")
+            self.curves_ids = [ int(x) for x in self.curves_ids ]
         elif ( 'curveset' in kwargs ):
             self.operation = 'processing'
-            self.curves = kwargs.get('curveset')
-        elif ( 'calibration' in kwargs ):
+            self.curveset_id = int(kwargs.get('curveset'))
+        elif ( 'analysis' in kwargs ):
             self.operation = 'analysis'
-            self.calibration = kwargs.get('calibration')
+            self.calibration_id = int(kwargs.get('analysis'))
         else:
             raise 33
         self.methodManager = MethodManager()
         self.methodManager.loadMethods()
-        self.anSelForm = None
 
     def process(self, user, request):
-        if not self.methodManager.isMethodSelected():
-            if ( request.method == 'POST' ):
-                self.anSelForm = AnalysisSelectForm(self.methodManager, request)
-                if ( self.anSelForm.is_valid() ):
-                    analysisid = self.anSelForm.process(user, self.methodManager, self.curves)
-                    if analysisid and analysisid > -1:
-                        pass
-                        #return HttpRedirect
-            else:
-                self.anSelForm = AnalysisSelectForm(self.methodManager)
-            return True
-        # Else use the selected method settings:
-        else:
-            self.methodManager.process(request)
-            # Reurn False when processing/analysis complete
-            return self.methodManager.nextStep()
+        self.methodManager.process(request)
+
+        return self.methodManager.nextStep()
 
 
     def getPage(self):
@@ -44,35 +33,41 @@ class DataOperation:
         else:
             return self.anSelForm.as_table()
 
+
     def getAnalysisSelectForm(self, *args, **kwargs):
-        return AnalysisSelectForm(self.methodManager, *args, **kwargs)
+        return DataOperation.AnalysisSelectForm(self, *args, **kwargs)
 
 
-class AnalysisSelectForm(forms.Form):
-
-    def __init__(self, methodManager, *args, **kwargs):
-        super(AnalysisSelectForm, self).__init__(*args, **kwargs)
-        choices = list (
-                        zip(
-                            range(0,len(methodManager.getAnalysisMethods())),
-                            methodManager.getAnalysisMethods()
+    class AnalysisSelectForm(forms.Form):
+        """
+        Should not be obtained directly, only by:
+        DataOperation.getAnalysisSelectForm
+        """
+        def __init__(self, parent, *args, **kwargs):
+            self.parent = parent
+            super(DataOperation.AnalysisSelectForm, self).__init__(*args, **kwargs)
+            choices = list(
+                            zip(
+                                range(0,len(parent.methodManager.getAnalysisMethods())),
+                                parent.methodManager.getAnalysisMethods()
+                            )
                         )
-                    )
-        self.fields['method'] = forms.ChoiceField(choices=choices, required=True)
+            self.fields['method'] = forms.ChoiceField(choices=choices, required=True)
 
-    def process(self, user, methodManager, curveset_id):
-        try:
-            c = CurveSet.objects.get(id=curveset_id)
-        except:
-            raise 404
-        a = Analysis(
-                owner = user,
-                curveSet = c,
-                date = timezone.now(),
-                method = methodManager.getAnalysisMethods()[self.cleaned_data.get('method')],
-                name = "",
-                step = 0,
-                deleted = False
-            )
-        a.save()
-        return a.id
+        def process(self, user):
+            print("csid: %i" % self.parent.curveset_id)
+            try:
+                cs = CurveSet.objects.get(id=self.parent.curveset_id, owner=user)
+            except:
+                raise 404
+            a = Analysis(
+                    owner = user,
+                    curveSet = cs,
+                    date = timezone.now(),
+                    method = self.cleaned_data.get('method'),
+                    name = "",
+                    step = 0,
+                    deleted = False
+                )
+            a.save()
+            return a.id
