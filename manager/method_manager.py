@@ -18,13 +18,13 @@ class MethodManager:
         signals processing or analysis. This should be used by
         any class inheriting from Method.
         """
-        selectAnalyte
-        selectPoint
-        selectRange
-        selectTwoRanges
-        additionalData
-        setConcentrations
-        end
+        selectAnalyte = 0
+        selectPoint = 1
+        selectRange = 2
+        selectTwoRanges = 3
+        additionalData = 4 
+        setConcentrations = 5
+        end = 99
 
 
     def __init__(self):
@@ -58,30 +58,41 @@ class MethodManager:
     def setAnalysis(self, analysis):
         self.__selected_method = self.methods['analysis'].get(analysis.method, None)
         self.__selected_method.setModel(analysis)
+        self.__current_step_number = analysis.step
+        self.__current_step = self.__selected_method.getStep(self.__current_step_number)
 
 
     def setProcessing(self, processing):
         self.__selected_method = self.methods['processing'].get(processing.method, None)
         self.__selected_method.setModel(processing)
+        self.__current_step_number = processing.step
+        self.__current_step = self.__selected_method.getStep(self.__current_step_number)
 
 
     def process(self, request):
+        self.request = request
+        print('pr')
         if self.__selected_method:
-            if ( self.__selected_method.processStep(
-                        self.__current_step_number,
-                        request) ):
-                return self.nextStep()
-        return False
+            print('pr1')
+            if self.__current_step['step'] == self.Step.selectRange:
+                print('pr2')
+                from manager.forms import SelectRange
+                form = SelectRange((0,0), request.POST)
+                if ( form.is_valid() ):
+                    startEnd = form.process()
+                    if ( self.__selected_method.processStep(
+                                self.__current_step_number,
+                                startEnd) ):
+                        return self.nextStep()
+        return True
 
 
     def nextStep(self):
         self.__current_step_number += 1
-        self.__current_step  = self.__selected_method.nextStep(self.__current_step_number)
-        if ( self.__current_step == Step.end ):
-            if ( self.__selected_method.type() == 'analysis' ):
-                self.__selected_method.finalize()
-            elif ( self.__selected_method.type() == 'processing' ):
-                self.__selected_method.finalize()
+        self.__current_step  = self.__selected_method.getStep(self.__current_step_number)
+        if not self.__current_step \
+        or ( self.__current_step == self.Step.end ):
+            self.__selected_method.finalize()
             self.__current_step = None
             self.__current_step_number = 0
             self.__selected_method = None
@@ -91,7 +102,16 @@ class MethodManager:
 
 
     def getContent(self):
-        pass
+        switch = {
+                self.Step.selectRange: self.drawSelectRange,
+                self.Step.selectPoint: self.drawSelectPoint,
+                self.Step.selectAnalyte: self.drawSelectAnalyte
+            }
+        print('current step:')
+        print(self.__current_step)
+        print('end current step')
+        contentFun = switch.get(self.__current_step['step'], self.drawEnd)
+        return contentFun()
 
     def getProcessingMethods(self):
         return self.methods['processing']
@@ -102,6 +122,30 @@ class MethodManager:
     def getMethods(self):
         return self.methods
 
+
+    def drawSelectPoint(self):
+        pass
+
+    def drawSelectAnalyte(self):
+        pass
+
+
+    def drawEnd(self):
+        pass
+
+    def drawSelectRange(self):
+        # zmienic na klasy
+        from manager.forms import SelectRange
+        from django.template import loader
+        from django.middleware import csrf
+        form = SelectRange((0,0))
+        template = loader.get_template("manager/analyzeForm.html")
+        context = {
+                'desc': self.__current_step['desc'],
+                'form': form,
+                'csrftoken': csrf.get_token(self.request) 
+                }
+        return template.render(context)
 
     def register(self,m):
         if str(m) == self.methods[m.type()]:
@@ -127,9 +171,9 @@ class Method(ABC):
 
 
     @abstractmethod
-    def nextStep(self, stepNum):
+    def getStep(self, stepNum):
         """
-        This provies next step, according to:
+        Return selected step, according to:
         MethodManager.Step enum.
         """
         pass

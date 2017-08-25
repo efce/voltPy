@@ -8,7 +8,7 @@ class RegularStandardAddition2(AnalysisMethod):
     def __str__(self):
         return "Regular Standard Addition 2"
 
-    def nextStep(self, stepNum):
+    def getStep(self, stepNum):
         if ( stepNum == 0 ):
             return MethodStep.selectRange
         else:

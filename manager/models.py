@@ -199,7 +199,7 @@ class Processing(models.Model):
     id = models.AutoField(primary_key=True)
     owner = models.ForeignKey(User)
     date = models.DateField()
-    curves = models.ManyToManyRel(Curve)
+    curves = models.ManyToManyField(Curve)
     parameters = CompressedJSONField(default="")
     method = models.TextField()
     deleted = models.BooleanField(default=False)

@@ -32,7 +32,6 @@ class DataOperation:
 
     def process(self, user, request):
         self.methodManager.process(request)
-        return self.methodManager.nextStep()
 
 
     def getContent(self):
@@ -53,10 +52,12 @@ class DataOperation:
             super(DataOperation.AnalysisSelectForm, self).__init__(*args, **kwargs)
             choices = list(
                             zip(
-                                range(0,len(parent.methodManager.getAnalysisMethods())),
+                                [ str(x) for x in
+                                    parent.methodManager.getAnalysisMethods() ],
                                 parent.methodManager.getAnalysisMethods()
                             )
                         )
+
             self.fields['method'] = forms.ChoiceField(choices=choices, required=True)
 
         def process(self, user):

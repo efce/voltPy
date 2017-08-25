@@ -33,7 +33,7 @@ urlpatterns = [
         views.showCurveSet, name='showCurveSet'),
     url(r'^(?P<user_id>[0-9]+)/edit-curveset/(?P<curveset_id>[0-9]+)/$', 
         views.editCurveSet, name='editCurveSet'),
-    url(r'^(?P<user_id>[0-9]+)/analyze/(?P<curveset_id>[0-9]+)/$', 
+    url(r'^(?P<user_id>[0-9]+)/analyze/(?P<analysis_id>[0-9]+)/$', 
         views.analyze, name='analyze'),
     url(r'^(?P<user_id>[0-9]+)/process-curveset/(?P<curveset_id>[0-9]+)/$', 
         views.processCurveSet, name='processCurveSet'),

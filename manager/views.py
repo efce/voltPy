@@ -328,14 +328,23 @@ def processFile(request, user_id, file_id):
 def processCurveSet(request, user_id, file_id):
     pass
 
-def analyze(request, user_id, curveset_id):
+def analyze(request, user_id, analysis_id):
     try:
         user = User.objects.get(id=user_id)
     except:
         user=None
-    dataop = DataOperation(curveset = curveset_id)
+    dataop = DataOperation(analysis = analysis_id)
     dataop.process(user, request)
-    return HttpResponse(dataop.getContent())
+    template = loader.get_template('manager/analyze.html')
+    context = {
+            'analyze_content': dataop.getContent(),
+            'user': user,
+            'analysis_id': analysis_id,
+            'curveset_id': Analysis.objects.get(id=analysis_id).curveSet.id,
+            'plot_width' : PlotMaker.plot_width,
+            'plot_height' : PlotMaker.plot_height
+            }
+    return HttpResponse(template.render(context, request))
 
 
 @never_cache
@@ -366,9 +375,9 @@ def generatePlot(request, user_id, plot_type, value_id):
         pm.processFile(user, value_id)
     elif (plot_type == 's'):
         pm.processCurveSet(user, value_id)
+    elif (plot_type == 'a'):
+        pm.processAnalysis(user, value_id)
     elif (plot_type == 'c'):
-        pm.processCalibration(user, value_id)
-    elif (plot_type == 'v'):
         pm.processCurves(user, value_id)
 
     return HttpResponse(

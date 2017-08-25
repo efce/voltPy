@@ -245,12 +245,11 @@ class DeleteCurveForm(forms.Form):
 class SelectRange(forms.Form):
     rangeStart = forms.FloatField(label="Select Start")
     rangeEnd = forms.FloatField(label="Select End")
-    def __init__(self, calibration_id, *args, **kwargs):
+    def __init__(self, defaultRange, *args, **kwargs):
         super(SelectRange, self).__init__(*args, **kwargs)
         try:
-            cal = Calibration.objects.get(id=calibration_id)
-            rangest = cal.selectedRange['start']
-            rangend = cal.selectedRange['end']
+            rangest = defaultRange[0]
+            rangend = defaultRange[1]
         except:
             rangest = 0
             rangend = 0
@@ -258,7 +257,7 @@ class SelectRange(forms.Form):
         self.fields['rangeEnd'].initial = rangend
         
 
-    def process(self, user, calibration_id):
+    def process(self):
         if self.cleaned_data['rangeStart'] < self.cleaned_data['rangeEnd']:
             sel_range = { 
                     'start' : self.cleaned_data['rangeStart'], 
@@ -270,14 +269,8 @@ class SelectRange(forms.Form):
                     'start' : self.cleaned_data['rangeEnd']
                     }
 
-        try:
-            cal = Calibration.objects.get(id=calibration_id)
-            if not cal.canBeUpdatedBy(user):
-                return
-            cal.selectedRange = sel_range
-            cal.save()
-        except:
-            return
+        return ( sel_range['start'], sel_range['end'] )
+
 
 #class generateCalibrationForm(forms.Form):
 #    #TODO: rethink / rework / add method selection

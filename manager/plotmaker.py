@@ -146,31 +146,31 @@ class PlotMaker:
             return "E / mV"
 
 
-    def processCalibration(self, user, value_id):
-        cal = Calibration.objects.get(id=value_id)
-        if not cal.canBeReadBy(user):
+    def processAnalysis(self, user, value_id):
+        analysis = Analysis.objects.get(id=value_id)
+        if not analysis.canBeReadBy(user):
             raise 3
-        if not cal.complete:
+        if not analysis.complete:
             return
         self.xlabel = 'concentration'
         self.ylabel = 'i / µA'
         # prepare data points
         self._scatter.append(
                 dict( 
-                    x=cal.dataMatrix['x'], 
-                    y=cal.dataMatrix['y'] 
+                    x=analysis.dataMatrix['x'], 
+                    y=analysis.dataMatrix['y'] 
                 )
             )
 
         #prepare calibration line
-        xs = list(cal.dataMatrix['x'])
-        xs.append(-cal.result)
+        xs = list(analysis.dataMatrix['x'])
+        xs.append(-analysis.result)
         x = min(xs) # x variable is used by the fitEquation
-        y1=eval(cal.fitEquation) #should set y if not the equation is wrong
+        y1=eval(analysis.fitEquation) #should set y if not the equation is wrong
         x1=x
 
         x = max(xs)
-        y2=eval(cal.fitEquation) #should set y if not the equation is wrong
+        y2=eval(analysis.fitEquation) #should set y if not the equation is wrong
         x2=x
         if y1:
             vx = []
