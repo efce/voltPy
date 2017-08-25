@@ -83,20 +83,21 @@ class MethodManager:
                     if ( self.__selected_method.processStep(
                                 self.__current_step_number,
                                 startEnd) ):
-                        return self.nextStep()
-        return True
+                        self.nextStep(user)
+            else:
+                self.nextStep(user)
 
 
-    def nextStep(self):
+    def nextStep(self, user):
         self.__current_step_number += 1
         self.__current_step  = self.__selected_method.getStep(self.__current_step_number)
         if not self.__current_step \
-        or ( self.__current_step == self.Step.end ):
+        or ( self.__current_step['step'] == self.Step.end ):
             self.__selected_method.finalize()
             if self.__selected_method.type() == 'analysis':
                 self.redirect = reverse( 
                                     'showAnalysis',
-                                     args=[ user.id, self.__selected_method.model['id'] ]
+                                     args=[ user.id, self.__selected_method.analysis['id'] ]
                                     )
             self.__current_step = None
             self.__current_step_number = 0

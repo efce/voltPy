@@ -150,7 +150,7 @@ class PlotMaker:
         analysis = Analysis.objects.get(id=value_id)
         if not analysis.canBeReadBy(user):
             raise 3
-        if not analysis.complete:
+        if not analysis.completed:
             return
         self.xlabel = 'concentration'
         self.ylabel = 'i / µA'

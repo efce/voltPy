@@ -178,6 +178,7 @@ class Analysis(models.Model):
     analyte=models.ManyToManyField(Analyte)
     step  = models.IntegerField(default=0)
     deleted = models.BooleanField(default=0)
+    completed = models.BooleanField(default=0)
 
     def __str__(self):
         return "%s: %s" % (self.date, self.name);
@@ -202,7 +203,8 @@ class Processing(models.Model):
     curves = models.ManyToManyField(Curve)
     parameters = CompressedJSONField(default="")
     method = models.TextField()
-    deleted = models.BooleanField(default=False)
+    deleted = models.BooleanField(default=0)
+    completed = models.BooleanField(default=0)
 
     def __str__(self):
         return "%s: %s" % (self.date, self.method);

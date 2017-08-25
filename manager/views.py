@@ -79,7 +79,7 @@ def browseAnalysis(request, user_id):
             'browse_by' : 'Analysis',
             'user' : user,
             'disp' : files,
-            'action1': "editAnalysis",
+            'action1': "showAnalysis",
             'action2': "deleteAnalysis",
             'action2_text': '(delete)',
             'whenEmpty' : "Analysis can only be performed on the CurveSet" 
@@ -205,14 +205,14 @@ def createCurveSet(request, user_id):
     return render(request, 'manager/createCurveSet.html', context)
 
 
-def showAnalysis(request, analysis_id):
+def showAnalysis(request, user_id, analysis_id):
     try:
         user = User.objects.get(id=user_id)
     except:
         user=None
 
     try:
-        cf = Analysis.objects.get(id=curveset_id, owner=user)
+        cf = Analysis.objects.get(id=analysis_id, owner=user)
     except:
         cf = None
 
@@ -394,13 +394,13 @@ def generatePlot(request, user_id, plot_type, value_id):
     """
     Allowed types are:
     f - whole file
-    c - calibration
+    a - analysis
     s - curveset
     v - selected curves 
     """
     allowedTypes = {
             'f' : 'File',
-            'c' : 'Calibration',
+            'a' : 'Analysis',
             's' : 'CurveSet',
             'v' : 'Curves'
             }

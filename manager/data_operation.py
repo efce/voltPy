@@ -1,10 +1,12 @@
 from django import forms
 from django.utils import timezone
 from django.http import HttpResponseRedirect
+from django.http import HttpResponse
 from django.template import loader
 from django.core.urlresolvers import reverse
 from .models import *
 from .method_manager import MethodManager
+from .plotmaker import PlotMaker
 
 class DataOperation:
     """
@@ -45,12 +47,12 @@ class DataOperation:
         context = {
                 'analyze_content': self.methodManager.getContent(),
                 'user': user,
-                'analysis_id': analysis_id,
-                'curveset_id': Analysis.objects.get(id=analysis_id).curveSet.id,
+                'analysis_id': self.analysis_id,
+                'curveset_id': Analysis.objects.get(id=self.analysis_id).curveSet.id,
                 'plot_width' : PlotMaker.plot_width,
                 'plot_height' : PlotMaker.plot_height
                 }
-        return HttpResponse(template.render(context, request))
+        return HttpResponse(template.render(context))
 
 
     def getAnalysisSelectForm(self, *args, **kwargs):

@@ -66,8 +66,8 @@ class RegularStandardAddition(AnalysisMethod):
         self.analysis.fitEquation = '%f*x+%f' % (p[0],p[1])
         self.analysis.result = p[1]/p[0]
         self.analysis.corrCoeff = corrcoef(data['x'], data['y'])[0,1]
-        self.analysis.complete = True
-        self.analysis.step = MethodManager.Step.end
+        self.analysis.completed = True
+        self.analysis.step = 0
         self.analysis.save()
 
 def newInstance(*args, **kwargs):
