@@ -162,20 +162,22 @@ class CurveSet(models.Model):
         return "%s" % self.name
 
 
+
 class Analysis(models.Model):
+    curveSet = models.ForeignKey(CurveSet)
+    result = models.FloatField(null=True)
+    resultStdDev = models.FloatField(null=True)
+    corrCoeff = models.FloatField(null=True)
+    dataMatrix = CompressedJSONField() 
+    fitEquation =CompressedJSONField()
+    analyte=models.ManyToManyField(Analyte)
+
     id = models.AutoField(primary_key=True)
     owner = models.ForeignKey(User)
-    curveSet = models.ForeignKey(CurveSet)
     parameters = CompressedJSONField(default="")
     date = models.DateField()
     name = models.TextField()
     method = models.TextField()
-    result = models.FloatField(null=True)
-    resultStdDev = models.FloatField(null=True)
-    corrCoeff = models.FloatField(null=True)
-    dataMatrix = CompressedJSONField() # JSON List: This can be simple x vs y plot, but also multidimensional
-    fitEquation =CompressedJSONField()
-    analyte=models.ManyToManyField(Analyte)
     step  = models.IntegerField(default=0)
     deleted = models.BooleanField(default=0)
     completed = models.BooleanField(default=0)
@@ -197,12 +199,15 @@ class Analysis(models.Model):
 
 
 class Processing(models.Model):
+    curves = models.ManyToManyField(Curve)
+
     id = models.AutoField(primary_key=True)
     owner = models.ForeignKey(User)
-    date = models.DateField()
-    curves = models.ManyToManyField(Curve)
     parameters = CompressedJSONField(default="")
+    date = models.DateField()
+    name = models.TextField()
     method = models.TextField()
+    step  = models.IntegerField(default=0)
     deleted = models.BooleanField(default=0)
     completed = models.BooleanField(default=0)
 

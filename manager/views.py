@@ -225,6 +225,28 @@ def showAnalysis(request, user_id, analysis_id):
     }
     return HttpResponse(template.render(context, request))
 
+
+def showProcessed(request, user_id, processing_id):
+    try:
+        user = User.objects.get(id=user_id)
+    except:
+        user=None
+
+    try:
+        cf = Processing.objects.get(id=processing_id, owner=user)
+    except:
+        cf = None
+
+    template = loader.get_template('manager/showAnalysis.html')
+    context = {
+            'user' : user,
+            'processing': processing_id,
+            'plot_width' : PlotMaker.plot_width,
+            'plot_height' : PlotMaker.plot_height,
+    }
+    return HttpResponse(template.render(context, request))
+
+
 def showCurveSet(request, user_id, curveset_id):
     try:
         user = User.objects.get(id=user_id)

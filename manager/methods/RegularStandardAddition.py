@@ -1,5 +1,6 @@
 from manager.method_manager import *
 from numpy import polyfit, corrcoef
+import json
 
 class RegularStandardAddition(AnalysisMethod):
     steps = ( 
@@ -14,16 +15,13 @@ class RegularStandardAddition(AnalysisMethod):
                     'desc': 'No more steps.'
                 }
             )
-    analysis = None
+    model = None
 
     def __init__(self):
         pass
 
     def __str__(self):
         return "Regular Standard Addition"
-
-    def setModel(self, model):
-        self.analysis = model
 
     def getStep(self, stepNum):
         if ( stepNum >= len(self.steps) ):
@@ -33,10 +31,10 @@ class RegularStandardAddition(AnalysisMethod):
     def processStep(self, stepNum, data):
         print('process step: %i' % stepNum)
         print(data)
-        self.analysis.paraters = data
+        self.model.paraters = data
         yvalues = []
         xvalues = []
-        for c in self.analysis.curveSet.usedCurveData.all():
+        for c in self.model.curveSet.usedCurveData.all():
             #TODO: co na X
             diffStart = [ abs(x-data[0]) for x in c.potential ]
             startIndex, startValue = min(enumerate(diffStart), key=lambda p: p[1])
@@ -49,26 +47,26 @@ class RegularStandardAddition(AnalysisMethod):
             conc = AnalyteInCurve.objects.filter(curve=c.curve)[0]
             xvalues.append(conc.concentration)
 
-        dm = {
-                'x': xvalues,
-                'y': yvalues
-            }
-        self.analysis.dataMatrix = dm
-        self.analysis.step += 1
-        self.analysis.save()
+        dm = [
+                [ int(b) for b in xvalues ],
+                [ int(b) for b in yvalues ]
+            ]
+        self.model.dataMatrix = dm
+        self.model.step += 1
+        self.model.save()
         return True
 
     def finalize(self, *args, **kwargs):
-        data = self.analysis.dataMatrix
+        data = self.model.dataMatrix
         if not data:
             return
-        p = polyfit(data['x'], data['y'], 1)
-        self.analysis.fitEquation = '%f*x+%f' % (p[0],p[1])
-        self.analysis.result = p[1]/p[0]
-        self.analysis.corrCoeff = corrcoef(data['x'], data['y'])[0,1]
-        self.analysis.completed = True
-        self.analysis.step = 0
-        self.analysis.save()
+        p = polyfit(data[0], data[1], 1)
+        self.model.fitEquation = '%f*x+%f' % (p[0],p[1])
+        self.model.result = p[1]/p[0]
+        self.model.corrCoeff = corrcoef(data[0], data[1])[0,1]
+        self.model.completed = True
+        self.model.step = 0
+        self.model.save()
 
 def newInstance(*args, **kwargs):
     return RegularStandardAddition(*args, **kwargs)

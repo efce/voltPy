@@ -155,16 +155,22 @@ class PlotMaker:
         self.xlabel = 'concentration'
         self.ylabel = 'i / µA'
         # prepare data points
+        print(analysis.dataMatrix)
+        print(type(analysis.dataMatrix))
+        import json
+        analysis.dataMatrix = json.loads(analysis.dataMatrix)
+
         self._scatter.append(
-                dict( 
-                    x=analysis.dataMatrix['x'], 
-                    y=analysis.dataMatrix['y'] 
-                )
+                {
+                    'x': analysis.dataMatrix[0], 
+                    'y': analysis.dataMatrix[1] 
+                }
             )
 
         #prepare calibration line
-        xs = list(analysis.dataMatrix['x'])
+        xs = list(analysis.dataMatrix[0])
         xs.append(-analysis.result)
+        print(xs)
         x = min(xs) # x variable is used by the fitEquation
         y1=eval(analysis.fitEquation) #should set y if not the equation is wrong
         x1=x

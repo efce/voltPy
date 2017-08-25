@@ -47,4 +47,6 @@ urlpatterns = [
         views.processCurveSet, name='processCurveSet'),
     url(r'^(?P<user_id>[0-9]+)/process-file/(?P<file_id>[0-9]+)/$', 
         views.processFile, name='processFile'),
+    url(r'^(?P<user_id>[0-9]+)/show-processed/(?P<processing_id>[0-9]+)/$', 
+        views.showProcessed, name='showProcessed'),
 ]

@@ -34,6 +34,7 @@ class MethodManager:
         self.__current_step = None
         self.__current_step_number = 0
         self.__selected_method = None
+        self.__selected_type = None
         self.methods = {
                     'processing': dict(), 
                     'analysis': dict() 
@@ -58,23 +59,33 @@ class MethodManager:
                 self.register(methodInstance)
 
 
-    def setAnalysis(self, analysis):
-        self.__selected_method = self.methods['analysis'].get(analysis.method, None)
-        self.__selected_method.setModel(analysis)
-        self.__current_step_number = analysis.step
-        self.__current_step = self.__selected_method.getStep(self.__current_step_number)
+    def setAnalysis(self, model):
+        self.__selected_type = 'analysis'
+        self.__setModel(model)
 
 
-    def setProcessing(self, processing):
-        self.__selected_method = self.methods['processing'].get(processing.method, None)
-        self.__selected_method.setModel(processing)
-        self.__current_step_number = processing.step
+    def setProcessing(self, model):
+        self.__selected_type = 'processing'
+        self.__setModel(model)
+
+
+    def __setModel(self, model):
+        self.__selected_method = self.methods[self.__selected_type].get(model.method, None)
+        self.__selected_method.setModel(model)
+        self.__current_step_number = model.step
         self.__current_step = self.__selected_method.getStep(self.__current_step_number)
 
 
     def process(self, user, request):
         self.request = request
         if self.__selected_method:
+            if self.__selected_type == 'analysis':
+                pass
+            elif self.__selected_type == 'processing':
+                pass
+            else:
+                raise 404
+
             if self.__current_step['step'] == self.Step.selectRange:
                 from manager.forms import SelectRange
                 form = SelectRange((0,0), request.POST)
@@ -91,20 +102,25 @@ class MethodManager:
     def nextStep(self, user):
         self.__current_step_number += 1
         self.__current_step  = self.__selected_method.getStep(self.__current_step_number)
+
         if not self.__current_step \
         or ( self.__current_step['step'] == self.Step.end ):
             self.__selected_method.finalize()
             if self.__selected_method.type() == 'analysis':
                 self.redirect = reverse( 
                                     'showAnalysis',
-                                     args=[ user.id, self.__selected_method.analysis['id'] ]
+                                     args=[ user.id,
+                                         self.__selected_method.model.id ]
+                                    )
+            elif self.__selected_method.type() == 'processing':
+                self.redirect = reverse( 
+                                    'showProcessed',
+                                     args=[ user.id,
+                                     self.__selected_method.model.id ]
                                     )
             self.__current_step = None
             self.__current_step_number = 0
             self.__selected_method = None
-            return False
-        else:
-            return True
 
 
     def getContent(self):
@@ -116,14 +132,23 @@ class MethodManager:
         contentFun = switch.get(self.__current_step['step'], self.drawEnd)
         return contentFun()
 
+
     def getProcessingMethods(self):
         return self.methods['processing']
+
 
     def getAnalysisMethods(self):
         return self.methods['analysis']
 
+
     def getMethods(self):
         return self.methods
+
+
+    def valueToIndex(self, value, vector):
+        diffvec = [ abs(x-value) for x in vector ]
+        index, value = min(enumerate(diffStart), key=lambda p: p[1])
+        return index
 
 
     def drawSelectPoint(self):
@@ -135,6 +160,7 @@ class MethodManager:
 
     def drawEnd(self):
         pass
+
 
     def drawSelectRange(self):
         # zmienic na klasy
@@ -149,6 +175,7 @@ class MethodManager:
                 'csrftoken': csrf.get_token(self.request) 
                 }
         return template.render(context)
+
 
     def register(self,m):
         if str(m) == self.methods[m.type()]:
@@ -168,9 +195,10 @@ class Method(ABC):
     These should be implemented by classes providing
     either processing or analysis procedures.
     """
-    @abstractmethod
+    model = None
+
     def setModel(self, model):
-        pass
+        self.model = model
 
 
     @abstractmethod
