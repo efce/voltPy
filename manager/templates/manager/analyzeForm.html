@@ -1,0 +1,8 @@
+<p>{{ desc }} </p>
+<form method="post" action="" enctype="multipart/form-data">
+	<input type='hidden' name='csrfmiddlewaretoken' value='{{ csrftoken }}' />
+	<table>
+	{{ form.as_table }}
+	<tr><td><input type="button" value="Back" disabled>&nbsp;<input name="submitNext" type="submit" value="Next/Finish" /></td></tr>
+	</table>
+</form>
