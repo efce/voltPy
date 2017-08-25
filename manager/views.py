@@ -2,8 +2,8 @@ from django.shortcuts import render
 from django.http import HttpResponse
 from django.http import HttpResponseRedirect
 from django.template import loader
-from django.core.urlresolvers import reverse
 from django.views.decorators.cache import never_cache
+from django.core.urlresolvers import reverse
 from .models import *
 from .forms import *
 from .plotmaker import PlotMaker
@@ -61,6 +61,37 @@ def browseFiles(request, user_id):
                                 reverse('upload', args=[user_id]) + ">Upload one</a>."
     }
     return HttpResponse(template.render(context, request))
+
+
+def browseAnalysis(request, user_id):
+    try:
+        user = User.objects.get(id=user_id)
+    except:
+        user=None
+
+    try:
+        files = Analysis.objects.filter(owner=user, deleted=False)
+    except:
+        files = None
+
+    template = loader.get_template('manager/browse.html')
+    context = {
+            'browse_by' : 'Analysis',
+            'user' : user,
+            'disp' : files,
+            'action1': "editAnalysis",
+            'action2': "deleteAnalysis",
+            'action2_text': '(delete)',
+            'whenEmpty' : "Analysis can only be performed on the CurveSet" 
+    }
+    return HttpResponse(template.render(context, request))
+
+def deleteAnalysis(request, user_id, analysis_id):
+    pass
+
+
+def editAnalysis(request, user_id, analysis_id):
+    pass
 
 
 def browseCurveSets(request, user_id):
@@ -173,6 +204,26 @@ def createCurveSet(request, user_id):
             }
     return render(request, 'manager/createCurveSet.html', context)
 
+
+def showAnalysis(request, analysis_id):
+    try:
+        user = User.objects.get(id=user_id)
+    except:
+        user=None
+
+    try:
+        cf = Analysis.objects.get(id=curveset_id, owner=user)
+    except:
+        cf = None
+
+    template = loader.get_template('manager/showAnalysis.html')
+    context = {
+            'user' : user,
+            'analysis_id': analysis_id,
+            'plot_width' : PlotMaker.plot_width,
+            'plot_height' : PlotMaker.plot_height,
+    }
+    return HttpResponse(template.render(context, request))
 
 def showCurveSet(request, user_id, curveset_id):
     try:
@@ -335,16 +386,7 @@ def analyze(request, user_id, analysis_id):
         user=None
     dataop = DataOperation(analysis = analysis_id)
     dataop.process(user, request)
-    template = loader.get_template('manager/analyze.html')
-    context = {
-            'analyze_content': dataop.getContent(),
-            'user': user,
-            'analysis_id': analysis_id,
-            'curveset_id': Analysis.objects.get(id=analysis_id).curveSet.id,
-            'plot_width' : PlotMaker.plot_width,
-            'plot_height' : PlotMaker.plot_height
-            }
-    return HttpResponse(template.render(context, request))
+    return dataop.getContent(user) 
 
 
 @never_cache

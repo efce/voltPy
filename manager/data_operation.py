@@ -1,5 +1,8 @@
 from django import forms
 from django.utils import timezone
+from django.http import HttpResponseRedirect
+from django.template import loader
+from django.core.urlresolvers import reverse
 from .models import *
 from .method_manager import MethodManager
 
@@ -31,11 +34,23 @@ class DataOperation:
 
 
     def process(self, user, request):
-        self.methodManager.process(request)
+        self.methodManager.process(user, request)
 
 
-    def getContent(self):
-        return self.methodManager.getContent()
+    def getContent(self, user):
+        if self.methodManager.redirect:
+            return HttpResponseRedirect( self.methodManager.redirect )
+
+        template = loader.get_template('manager/analyze.html')
+        context = {
+                'analyze_content': self.methodManager.getContent(),
+                'user': user,
+                'analysis_id': analysis_id,
+                'curveset_id': Analysis.objects.get(id=analysis_id).curveSet.id,
+                'plot_width' : PlotMaker.plot_width,
+                'plot_height' : PlotMaker.plot_height
+                }
+        return HttpResponse(template.render(context, request))
 
 
     def getAnalysisSelectForm(self, *args, **kwargs):

@@ -1,6 +1,7 @@
 import sys
 from abc import ABC, abstractmethod
 from enum import Enum
+from django.core.urlresolvers import reverse
 
 class MethodManager:
     """
@@ -12,6 +13,8 @@ class MethodManager:
     If procedure meets the requirements it should be immedietly
     avaiable for usage.
     """
+    redirect = '' # reverse() 
+
     class Step(Enum):
         """ 
         Enum provides available step to perform in case of 
@@ -69,13 +72,10 @@ class MethodManager:
         self.__current_step = self.__selected_method.getStep(self.__current_step_number)
 
 
-    def process(self, request):
+    def process(self, user, request):
         self.request = request
-        print('pr')
         if self.__selected_method:
-            print('pr1')
             if self.__current_step['step'] == self.Step.selectRange:
-                print('pr2')
                 from manager.forms import SelectRange
                 form = SelectRange((0,0), request.POST)
                 if ( form.is_valid() ):
@@ -93,6 +93,11 @@ class MethodManager:
         if not self.__current_step \
         or ( self.__current_step == self.Step.end ):
             self.__selected_method.finalize()
+            if self.__selected_method.type() == 'analysis':
+                self.redirect = reverse( 
+                                    'showAnalysis',
+                                     args=[ user.id, self.__selected_method.model['id'] ]
+                                    )
             self.__current_step = None
             self.__current_step_number = 0
             self.__selected_method = None
@@ -107,9 +112,6 @@ class MethodManager:
                 self.Step.selectPoint: self.drawSelectPoint,
                 self.Step.selectAnalyte: self.drawSelectAnalyte
             }
-        print('current step:')
-        print(self.__current_step)
-        print('end current step')
         contentFun = switch.get(self.__current_step['step'], self.drawEnd)
         return contentFun()
 

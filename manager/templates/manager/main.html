@@ -30,6 +30,7 @@
 	<li><a href="{% url 'upload' user.id %}">Upload File</a></li>
 	<li><a href="{% url 'browseCurveSets' user.id %}">Browse Curve Sets</a></li>
 	<li><a href="{% url 'createCurveSet' user.id %}">Create Curve Set</a></li>
+	<li><a href="{% url 'browseAnalysis' user.id %}">Browse Analysis</a></li>
 	<li class="wht">Logged in as:</li><li class="wht">{{ user }}</li> 
 	<li><a href="{% url 'logout' %}">Logout</a></li>
 {% else %}
