@@ -158,7 +158,8 @@ class PlotMaker:
         print(analysis.dataMatrix)
         print(type(analysis.dataMatrix))
         import json
-        analysis.dataMatrix = json.loads(analysis.dataMatrix)
+        analysis.dataMatrix = json.loads(analysis.dataMatrix) #FIXME: WHY??
+        analysis.fitEquation = json.loads(analysis.fitEquation) #FIXME: WHY??
 
         self._scatter.append(
                 {
