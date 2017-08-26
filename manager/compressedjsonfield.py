@@ -17,7 +17,6 @@ class CompressedJSONField(JSONField):
             value = zlib.decompress(b64decode(value))
         except zlib.error:
             return None
-        print('unjsoning')
         return json.loads(value)
 
 

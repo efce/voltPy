@@ -1,6 +1,6 @@
 import sys
 from abc import ABC, abstractmethod
-from enum import Enum
+from enum import IntEnum
 from django.core.urlresolvers import reverse
 
 class MethodManager:
@@ -15,13 +15,14 @@ class MethodManager:
     """
     redirect = '' # reverse() 
 
-    class Step(Enum):
+
+    class Step(IntEnum):
         """ 
         Enum provides available step to perform in case of 
         signals processing or analysis. This should be used by
         any class inheriting from Method.
         """
-        selectAnalyte = 0
+        selectAnalytes = 0
         selectPoint = 1
         selectRange = 2
         selectTwoRanges = 3
@@ -40,6 +41,13 @@ class MethodManager:
                     'analysis': dict() 
                 }
         self.loadMethods()
+        self.operations = dict([
+                    (int(self.Step.selectRange), self.operationSelectRange),
+                    #(int(self.Step.selectPoint), self.operationSelectPoint),
+                    #(int(self.Step.selectTwoRanges), self.operationSelectTwoRanges),
+                    #(int(self.Step.selectAnalytes), self.operationSelectAnalyte),
+                ])
+        self.__current_operation = None
 
 
     def loadMethods(self):
@@ -74,29 +82,22 @@ class MethodManager:
         self.__selected_method.setModel(model)
         self.__current_step_number = model.step
         self.__current_step = self.__selected_method.getStep(self.__current_step_number)
+        self.__current_operation = self.operations[self.__current_step['step']]()
 
 
     def process(self, user, request):
         self.request = request
-        if self.__selected_method:
-            if self.__selected_type == 'analysis':
-                pass
-            elif self.__selected_type == 'processing':
-                pass
-            else:
-                raise 404
-
-            if self.__current_step['step'] == self.Step.selectRange:
-                from manager.forms import SelectRange
-                form = SelectRange((0,0), request.POST)
-                if ( form.is_valid() ):
-                    startEnd = form.process()
-                    if ( self.__selected_method.processStep(
-                                self.__current_step_number,
-                                startEnd) ):
-                        self.nextStep(user)
-            else:
-                self.nextStep(user)
+        if self.__current_operation:
+            self.__current_operation.setData(
+                    self.__current_step['data'],
+                    request)
+            if self.__current_operation.is_valid():
+                if ( self.__selected_method.processStep(
+                            self.__current_step_number,
+                            self.__current_operation.process()) ):
+                    self.nextStep(user)
+        else:
+            self.nextStep(user)
 
 
     def nextStep(self, user):
@@ -121,16 +122,16 @@ class MethodManager:
             self.__current_step = None
             self.__current_step_number = 0
             self.__selected_method = None
+            self.__current_operation = None
+        else:
+            self.__current_operation = self.opetations[self.__current_step['step']]()
 
 
     def getContent(self):
-        switch = {
-                self.Step.selectRange: self.drawSelectRange,
-                self.Step.selectPoint: self.drawSelectPoint,
-                self.Step.selectAnalyte: self.drawSelectAnalyte
-            }
-        contentFun = switch.get(self.__current_step['step'], self.drawEnd)
-        return contentFun()
+        if self.__current_operation:
+            return self.__current_operation.draw()
+        else:
+            return "No operation"
 
 
     def getProcessingMethods(self):
@@ -162,21 +163,6 @@ class MethodManager:
         pass
 
 
-    def drawSelectRange(self):
-        # zmienic na klasy
-        from manager.forms import SelectRange
-        from django.template import loader
-        from django.middleware import csrf
-        form = SelectRange((0,0))
-        template = loader.get_template("manager/analyzeForm.html")
-        context = {
-                'desc': self.__current_step['desc'],
-                'form': form,
-                'csrftoken': csrf.get_token(self.request) 
-                }
-        return template.render(context)
-
-
     def register(self,m):
         if str(m) == self.methods[m.type()]:
             raise TypeError("Name " + str(m) + " already exists in " +
@@ -187,6 +173,39 @@ class MethodManager:
 
     def isMethodSelected(self):
         return (self.__selected_method != None)
+
+
+    class operationSelectRange:
+        def setData(self, data, request):
+            from manager.forms import SelectRange
+            self.request = request
+            self.data = data
+            print('setting starting: self.starting')
+            if request and request.POST:
+                self.form = SelectRange(self.data.get('starting',(0,0)), request.POST)
+            else:
+                self.form = SelectRange(self.data.get('starting',(0,0)))
+
+
+        def draw(self):
+            from manager.forms import SelectRange
+            from django.template import loader
+            from django.middleware import csrf
+            template = loader.get_template("manager/analyzeForm.html")
+            context = {
+                    'desc': self.data.get('desc',""),
+                    'form': self.form,
+                    'csrftoken': csrf.get_token(self.request) 
+                    }
+            return template.render(context)
+
+
+        def is_valid(self):
+            return self.form.is_valid()
+
+
+        def process(self):
+            return { 'range1': self.form.process() }
 
 
 

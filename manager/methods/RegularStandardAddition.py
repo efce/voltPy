@@ -7,12 +7,14 @@ class RegularStandardAddition(AnalysisMethod):
                 { 
                     'step': MethodManager.Step.selectRange, 
                     'title': 'Select range',
-                    'desc': 'Select range containing peak.'
+                    'desc': 'Select range containing peak.',
+                    'data': { 'starting': (0,0) }
                 },
                 {
                     'step': MethodManager.Step.end,
                     'title': 'End',
-                    'desc': 'No more steps.'
+                    'desc': 'No more steps.',
+                    'data': ''
                 }
             )
     model = None
@@ -34,11 +36,12 @@ class RegularStandardAddition(AnalysisMethod):
         self.model.paraters = data
         yvalues = []
         xvalues = []
+        selRange = data['range1']
         for c in self.model.curveSet.usedCurveData.all():
             #TODO: co na X
-            diffStart = [ abs(x-data[0]) for x in c.potential ]
+            diffStart = [ abs(x-selRange[0]) for x in c.potential ]
             startIndex, startValue = min(enumerate(diffStart), key=lambda p: p[1])
-            diffEnd = [ abs(x-data[1]) for x in c.potential ]
+            diffEnd = [ abs(x-selRange[1]) for x in c.potential ]
             endIndex, endValue = min(enumerate(diffEnd), key=lambda p: p[1])
             if endIndex < startIndex:
                 endIndex,startIndex = startIndex,endIndex
