@@ -147,12 +147,6 @@ class MethodManager:
         return self.methods
 
 
-    def valueToIndex(self, value, vector):
-        diffvec = [ abs(x-value) for x in vector ]
-        index, value = min(enumerate(diffStart), key=lambda p: p[1])
-        return index
-
-
     def drawSelectPoint(self):
         pass
 
