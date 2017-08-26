@@ -93,6 +93,7 @@ class MethodManager:
                     request)
             if self.__current_operation.is_valid():
                 if ( self.__selected_method.processStep(
+                            user,
                             self.__current_step_number,
                             self.__current_operation.process()) ):
                     self.nextStep(user)

@@ -30,7 +30,7 @@ class RegularStandardAddition(AnalysisMethod):
             return None
         return self.steps[stepNum]
 
-    def processStep(self, stepNum, data):
+    def processStep(self, user, stepNum, data):
         print('process step: %i' % stepNum)
         print(data)
         self.model.paraters = data
@@ -38,11 +38,8 @@ class RegularStandardAddition(AnalysisMethod):
         xvalues = []
         selRange = data['range1']
         for c in self.model.curveSet.usedCurveData.all():
-            #TODO: co na X
-            diffStart = [ abs(x-selRange[0]) for x in c.potential ]
-            startIndex, startValue = min(enumerate(diffStart), key=lambda p: p[1])
-            diffEnd = [ abs(x-selRange[1]) for x in c.potential ]
-            endIndex, endValue = min(enumerate(diffEnd), key=lambda p: p[1])
+            startIndex = c.xvalueToIndex(user, selRange[0])
+            endIndex = c.xvalueToIndex(user, selRange[1])
             if endIndex < startIndex:
                 endIndex,startIndex = startIndex,endIndex
             yvalues.append(max(c.current[startIndex:endIndex])-min(c.current[startIndex:endIndex]))

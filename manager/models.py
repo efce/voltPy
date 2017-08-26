@@ -116,6 +116,24 @@ class CurveData(models.Model):
     def canBeReadBy(self, user):
         return self.isOwnedBy(user)
 
+    def xvalueToIndex(self, user, value):
+        onx = OnXAxis.objects.get(user=user).selected
+        if ( onx == 'P' ):
+            diffvec = [ abs(x-value) for x in self.potential ]
+            index, value = min(enumerate(diffvec), key=lambda p: p[1])
+            return index
+        if ( onx == 'T' ):
+            diffvec = [ abs(x-value) for x in self.time ]
+            index, value = min(enumerate(diffvec), key=lambda p: p[1])
+            return index
+        if ( onx == 'S' ):
+            if value < 0:
+                return 0
+            elif value > len(self.probingData):
+                return len(self.probingData)-1
+            else:
+                return int(value)
+
 
 class Analyte(models.Model):
     name=models.CharField(max_length=124, unique=True)
