@@ -102,17 +102,11 @@ class ProcessUpload:
                 for a in range(0,i):
                     index_start += offsets[a]
                 index_end = index_start + offsets[i]
-                if ( __debug__):
-                    print("start %i ; end %i" % (index_start, index_end))
                 c = CurveVol(names[i],params)
                 retIndex = c.unserialize(fileContent[index_start:index_end]) 
                 self._curves.append(c)
                 if ( retIndex < (index_end-index_start) ):
                     print("WARNING!: last index lower than data end cyclic curve not processed ?")
-
-        if ( __debug__ ):
-            for v in self._curves:
-                print("name: %s" % v.name)
 
 
     def _parseVolt(self, isCompressed):
@@ -131,10 +125,6 @@ class ProcessUpload:
             self._curves.append(c)
             index+=curveSize-4 # 4 was added earlier
 
-        if ( __debug__ ):
-            for v in self._curves:
-                print("name: %s" % v.name)
-
 
     def _createModels(self):
         cf = CurveFile(
@@ -144,11 +134,7 @@ class ProcessUpload:
                 filename = self._ufile.name,
                 fileDate=timezone.now(), 
                 uploadDate=timezone.now() )
-        if ( __debug__ ):
-            print("saving CurveFile")
         cf.save()
-        if ( __debug__ ):
-            print("saved")
 
         self._file_id = cf.id;
 
@@ -161,12 +147,7 @@ class ProcessUpload:
                     comment=c.comment, 
                     params=c.vec_param, 
                     date=c.getDate() )
-            if ( __debug__ ):
-                print("saving CurveBasic")
             cb.save()
-            if ( __debug__ ):
-                print("saved")
-                print(c.vec_param)
 
             if ( c.vec_param[Param.nonaveragedsampling] == 0 ):
                 pr = []
@@ -183,11 +164,7 @@ class ProcessUpload:
                     concentration = "",
                     concentrationUnits = "",
                     probingData = pr )
-            if ( __debug__ ):
-                print("saving CurveVectors")
             cv.save()
-            if ( __debug__ ):
-                print("saved")
 
             ci = CurveIndex( 
                     curve = cb, 
@@ -201,11 +178,7 @@ class ProcessUpload:
                     current_max = max(c.vec_current), 
                     current_range = max(c.vec_current) - min(c.vec_current), 
                     probingRate = c.vec_param[Param.nonaveragedsampling] )
-            if ( __debug__ ):
-                print("saving CurveIndexing")
             ci.save()
-            if ( __debug__ ):
-                print("saved")
             order+=1
 
     def _processAnalyte(self):
