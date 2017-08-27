@@ -415,6 +415,14 @@ def analyze(request, user_id, analysis_id):
     return dataop.getContent(user) 
 
 
+def processing(request, user_id, processing_id):
+    try:
+        user = User.objects.get(id=user_id)
+    except:
+        user=None
+    return True
+
+
 @never_cache
 def generatePlot(request, user_id, plot_type, value_id):
     """

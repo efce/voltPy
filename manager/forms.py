@@ -3,7 +3,6 @@ from django.db.models import Q
 from django.utils import timezone
 from .processupload import ProcessUpload
 from .models import *
-from .processing import Processing
 
 class UploadFileForm(forms.Form):
     name = forms.CharField(label="Name", max_length=128)
