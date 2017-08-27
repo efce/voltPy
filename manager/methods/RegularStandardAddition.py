@@ -63,7 +63,7 @@ class RegularStandardAddition(AnalysisMethod):
         p = polyfit(data[0], data[1], 1)
         self.model.fitEquation = '%f*x+%f' % (p[0],p[1])
         self.model.result = p[1]/p[0]
-        self.model.corrCoeff = corrcoef(data[0], data[1])[0,1]
+        self.model.corrCoef = corrcoef(data[0], data[1])[0,1]
         self.model.completed = True
         self.model.step = 0
         self.model.save()

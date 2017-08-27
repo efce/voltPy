@@ -43,7 +43,7 @@ class MethodManager:
         self.loadMethods()
         self.operations = dict([
                     (int(self.Step.selectRange), self.operationSelectRange),
-                    #(int(self.Step.selectPoint), self.operationSelectPoint),
+                    (int(self.Step.selectPoint), self.operationSelectPoint),
                     #(int(self.Step.selectTwoRanges), self.operationSelectTwoRanges),
                     #(int(self.Step.selectAnalytes), self.operationSelectAnalyte),
                 ])
@@ -201,6 +201,39 @@ class MethodManager:
 
         def process(self):
             return { 'range1': self.form.process() }
+
+
+    class operationSelectPoint:
+        def setData(self, data, request):
+            from manager.forms import SelectPoint
+            self.request = request
+            self.data = data
+            print('setting starting: self.starting')
+            if request and request.POST:
+                self.form = SelectPoint(self.data.get('starting',0), request.POST)
+            else:
+                self.form = SelectPoint(self.data.get('starting',0))
+
+
+        def draw(self):
+            from manager.forms import SelectPoint
+            from django.template import loader
+            from django.middleware import csrf
+            template = loader.get_template("manager/analyzeForm.html")
+            context = {
+                    'desc': self.data.get('desc',""),
+                    'form': self.form,
+                    'csrftoken': csrf.get_token(self.request) 
+                    }
+            return template.render(context)
+
+
+        def is_valid(self):
+            return self.form.is_valid()
+
+
+        def process(self):
+            return { 'point': self.form.process() }
 
 
 

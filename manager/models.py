@@ -185,7 +185,7 @@ class Analysis(models.Model):
     curveSet = models.ForeignKey(CurveSet)
     result = models.FloatField(null=True)
     resultStdDev = models.FloatField(null=True)
-    corrCoeff = models.FloatField(null=True)
+    corrCoef = models.FloatField(null=True)
     dataMatrix = CompressedJSONField() 
     fitEquation =CompressedJSONField()
     analyte=models.ManyToManyField(Analyte)
@@ -201,7 +201,7 @@ class Analysis(models.Model):
     completed = models.BooleanField(default=0)
 
     def __str__(self):
-        return "%s: %s" % (self.date, self.name);
+        return "%s %s: %s" % (self.date, self.method, self.name);
 
     class META:
         ordering = ('date')

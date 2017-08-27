@@ -272,50 +272,16 @@ class SelectRange(forms.Form):
         return ( sel_range['start'], sel_range['end'] )
 
 
-#class generateCalibrationForm(forms.Form):
-#    #TODO: rethink / rework / add method selection
-#
-#    def process(self, user, calibration_id):
-#        onx = OnXAxis.objects.get(user=user).selected
-#        cal = Calibration.objects.get(id=calibration_id)
-#        if not cal.canBeUpdatedBy(user):
-#            raise 3
-#
-#        inxstart = 0
-#        diffst = float('Inf')
-#        inxend = 0
-#        diffend = float('Inf')
-#        vec = []
-#        if ( onx == 'P' ):
-#            vec = cal.usedCurveData.all()[0].potential
-#        elif (onx == 'T'):
-#            vec = cal.usedCurveData.all()[0].time
-#        else:
-#            vec=range(1,len(cal.usedCurveData.all()[0].probingData))
-#            
-#        for i,p in enumerate(vec):
-#            if abs(p - cal.selectedRange['start']) < diffst:
-#                inxstart = i
-#                diffst = abs(p-cal.selectedRange['start'])
-#            if (abs(p-cal.selectedRange['end']) < diffend):
-#                inxend = i
-#                diffend = abs(p-cal.selectedRange['end'])
-#
-#        dataMatrix = {}
-#        dataMatrix['x'] = []
-#        dataMatrix['y'] = []
-#        curveConc = []
-#        for cd in cal.usedCurveData.all():
-#            aic = AnalyteInCurve.objects.filter(curve=cd.curve) #TODO: and analyte
-#            curveConc.append(aic[0].concentration)
-#        dataMatrix['x'] = curveConc
-#        if ( onx == 'P' or onx == 'T' ):
-#            for i,cd in enumerate(cal.usedCurveData.all()):
-#                dataMatrix['y'].append(max(cd.current[inxstart:inxend]) - min(cd.current[inxstart:inxend]))
-#        else:
-#            for i,cd in enumerate(cal.usedCurveData.all()):
-#                dataMatrix['y'].append( max(cd.probingData[inxstart:inxend]) - min(cd.probingData[inxstart:inxend]))
-#        cal.dataMatrix = dataMatrix;
-#        cal.save()
-#        p = Processing()
-#        p.standardCalibration(cal)
+class SelectPoint(forms.Form):
+    point = forms.FloatField(label="Value")
+    def __init__(self, defaultRange, *args, **kwargs):
+        super(SelectPoint, self).__init__(*args, **kwargs)
+        try:
+            point = defaultRange
+        except:
+            point = 0
+        self.fields['point'].initial = point
+        
+
+    def process(self):
+        return self.cleaned_data['point']
