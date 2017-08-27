@@ -7,13 +7,14 @@ class RegularStandardAddition(AnalysisMethod):
                 { 
                     'step': MethodManager.Step.selectRange, 
                     'title': 'Select range',
-                    'desc': 'Select range containing peak.',
-                    'data': { 'starting': (0,0) }
+                    'data': { 
+                        'starting': (0,0),
+                        'desc': 'Select range containing peak.',
+                        }
                 },
                 {
                     'step': MethodManager.Step.end,
                     'title': 'End',
-                    'desc': 'No more steps.',
                     'data': ''
                 }
             )

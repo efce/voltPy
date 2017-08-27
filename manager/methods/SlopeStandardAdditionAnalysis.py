@@ -7,8 +7,10 @@ class SlopeStandardAdditionAnalysis(AnalysisMethod):
                 { 
                     'step': MethodManager.Step.selectPoint, 
                     'title': 'Select peak',
-                    'desc': 'Enter X value of peak of interest.',
-                    'data': { 'starting': 0 }
+                    'data': { 
+                        'starting': 0,
+                        'desc': 'Enter X value of peak of interest.',
+                        }
                 },
                 {
                     'step': MethodManager.Step.end,

@@ -212,14 +212,18 @@ def showAnalysis(request, user_id, analysis_id):
         user=None
 
     try:
-        cf = Analysis.objects.get(id=analysis_id, owner=user)
+        an = Analysis.objects.get(id=analysis_id, owner=user)
     except:
-        cf = None
+        an = None
+
+    if an.completed == False:
+        return HttpResponseRedirect(reverse('analyze', args=[user.id, an.id]))
+
 
     template = loader.get_template('manager/showAnalysis.html')
     context = {
             'user' : user,
-            'analysis_id': analysis_id,
+            'analysis_id': an.id,
             'plot_width' : PlotMaker.plot_width,
             'plot_height' : PlotMaker.plot_height,
     }
