@@ -116,6 +116,24 @@ class CurveData(models.Model):
     def canBeReadBy(self, user):
         return self.isOwnedBy(user)
 
+    def xvalueToIndex(self, user, value):
+        onx = OnXAxis.objects.get(user=user).selected
+        if ( onx == 'P' ):
+            diffvec = [ abs(x-value) for x in self.potential ]
+            index, value = min(enumerate(diffvec), key=lambda p: p[1])
+            return index
+        if ( onx == 'T' ):
+            diffvec = [ abs(x-value) for x in self.time ]
+            index, value = min(enumerate(diffvec), key=lambda p: p[1])
+            return index
+        if ( onx == 'S' ):
+            if value < 0:
+                return 0
+            elif value > len(self.probingData):
+                return len(self.probingData)-1
+            else:
+                return int(value)
+
 
 class Analyte(models.Model):
     name=models.CharField(max_length=124, unique=True)
@@ -140,25 +158,79 @@ class AnalyteInCurve(models.Model):
         return self.isOwnedBy(user)
 
 
-class Calibration(models.Model):
+class CurveSet(models.Model):
     id = models.AutoField(primary_key=True)
     owner = models.ForeignKey(User)
+    name = models.CharField(max_length=128)
+    date = models.DateField()
     usedCurveData = models.ManyToManyField(CurveData)
-    selectedRange = CompressedJSONField(default="")
+    locked = models.BooleanField(default=0)
+    deleted = models.BooleanField(default=0)
+
+    def isOwnedBy(self, user):
+        return (self.owner == user)
+
+    def canBeUpdatedBy(self, user):
+        return self.isOwnedBy(user) and not self.locked
+
+    def canBeReadBy(self, user):
+        return self.isOwnedBy(user)
+
+    def __str__(self):
+        return "%s" % self.name
+
+
+
+class Analysis(models.Model):
+    curveSet = models.ForeignKey(CurveSet)
+    result = models.FloatField(null=True)
+    resultStdDev = models.FloatField(null=True)
+    corrCoef = models.FloatField(null=True)
+    dataMatrix = CompressedJSONField() 
+    fitEquation =CompressedJSONField()
+    analyte=models.ManyToManyField(Analyte)
+
+    id = models.AutoField(primary_key=True)
+    owner = models.ForeignKey(User)
+    parameters = CompressedJSONField(default="")
     date = models.DateField()
     name = models.TextField()
     method = models.TextField()
-    result = models.FloatField()
-    resultStdDev = models.FloatField()
-    corrCoeff = models.FloatField()
-    dataMatrix = CompressedJSONField() # JSON List: This can be simple x vs y plot, but also multidimensional
-    fitEquation =CompressedJSONField()
-    analyte=models.ManyToManyField(Analyte)
+    step  = models.IntegerField(default=0)
     deleted = models.BooleanField(default=0)
-    complete = models.BooleanField(default=0)
+    completed = models.BooleanField(default=0)
 
     def __str__(self):
-        return "%s: %s" % (self.date, self.name);
+        return "%s %s: %s" % (self.date, self.method, self.name);
+
+    class META:
+        ordering = ('date')
+
+    def isOwnedBy(self, user):
+        return (self.owner == user)
+
+    def canBeUpdatedBy(self, user):
+        return self.isOwnedBy(user)
+
+    def canBeReadBy(self, user):
+        return self.isOwnedBy(user)
+
+
+class Processing(models.Model):
+    curves = models.ManyToManyField(Curve)
+
+    id = models.AutoField(primary_key=True)
+    owner = models.ForeignKey(User)
+    parameters = CompressedJSONField(default="")
+    date = models.DateField()
+    name = models.TextField()
+    method = models.TextField()
+    step  = models.IntegerField(default=0)
+    deleted = models.BooleanField(default=0)
+    completed = models.BooleanField(default=0)
+
+    def __str__(self):
+        return "%s: %s" % (self.date, self.method);
 
     class META:
         ordering = ('date')

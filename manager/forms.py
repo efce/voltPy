@@ -36,12 +36,12 @@ class AddAnalytesForm(forms.Form):
 
     def __init__(self, user, view_type, object_id, *args, **kwargs):
         super(AddAnalytesForm, self).__init__(*args, **kwargs)
-        if view_type == 'Calibration' :
-            self.isCal = True
-            cal = Calibration.objects.get(id=object_id)
-            if not cal.canBeReadBy(user):
+        if view_type == 'CurveSet' :
+            self.isCal = False
+            cs = CurveSet.objects.get(id=object_id)
+            if not cs.canBeReadBy(user):
                 raise 3
-            cdata = cal.usedCurveData.all()
+            cdata = cs.usedCurveData.all()
             curves_filter_qs = Q()
             for c in cdata:
                 curves_filter_qs = curves_filter_qs | Q(id=c.curve.id)
@@ -70,12 +70,12 @@ class AddAnalytesForm(forms.Form):
             if ac:
                 self.fields["analyte_%d" % ac[0].id] = forms.FloatField(
                         label = c.name + ":\n" + c.comment , 
-                        required = False,
+                        required = True,
                         initial = ac[0].concentration )
             else:
                 self.fields["curve_%d" % c.id] = forms.FloatField(
                         label = c.name + ":\n" + c.comment , 
-                        required = False )
+                        required = True )
 
 
     def process(self, user):
@@ -139,9 +139,9 @@ class SelectXForm(forms.Form):
         return True
 
 
-class SelectCurvesForCalibrationForm(forms.Form):
+class SelectCurvesForCurveSetForm(forms.Form):
     name = forms.CharField(max_length=124, required=True)
-    calid = -1
+    curvesetid = -1
 
     def __init__(self, user,  *args, **kwargs):
         files = CurveFile.objects.filter(owner=user, deleted=False)
@@ -150,7 +150,7 @@ class SelectCurvesForCalibrationForm(forms.Form):
             user_files_filter_qs = user_files_filter_qs | Q(curveFile=f)
         user_curves = Curve.objects.filter(user_files_filter_qs)
 
-        super(SelectCurvesForCalibrationForm, self).__init__(*args, **kwargs)
+        super(SelectCurvesForCurveSetForm, self).__init__(*args, **kwargs)
         for cb in user_curves:
             self.fields["curve_%d" % cb.id] = forms.BooleanField(
                     label = cb.curveFile.name + ": " + cb.name + (" - %i" % cb.id), 
@@ -173,28 +173,21 @@ class SelectCurvesForCalibrationForm(forms.Form):
             else:
                 analyte = analyte[0].analyte.name
 
-            cal = Calibration(
+            cs = CurveSet(
                     owner = user,
-                    date = timezone.now(),
                     name = self.cleaned_data['name'],
-                    method = "",
-                    result = 0,
-                    resultStdDev = 0,
-                    corrCoeff = 0,
-                    dataMatrix = "",
-                    fitEquation = "",
-                    #analyte = analyte,
-                    deleted = False,
-                    complete = False)
-            cal.save()
-            self.calid = cal.id
+                    date = timezone.now(),
+                    locked = False,
+                    deleted = False)
+            cs.save()
+            self.curvesetid = cs.id
             for c in curves:
                 try:
                     cd = CurveData.objects.filter(curve=c)[0]
-                    cal.usedCurveData.add(cd)
+                    cs.usedCurveData.add(cd)
                 except:
                     return False
-            cal.save()
+            cs.save()
             return True
 
 
@@ -252,12 +245,11 @@ class DeleteCurveForm(forms.Form):
 class SelectRange(forms.Form):
     rangeStart = forms.FloatField(label="Select Start")
     rangeEnd = forms.FloatField(label="Select End")
-    def __init__(self, calibration_id, *args, **kwargs):
+    def __init__(self, defaultRange, *args, **kwargs):
         super(SelectRange, self).__init__(*args, **kwargs)
         try:
-            cal = Calibration.objects.get(id=calibration_id)
-            rangest = cal.selectedRange['start']
-            rangend = cal.selectedRange['end']
+            rangest = defaultRange[0]
+            rangend = defaultRange[1]
         except:
             rangest = 0
             rangend = 0
@@ -265,7 +257,7 @@ class SelectRange(forms.Form):
         self.fields['rangeEnd'].initial = rangend
         
 
-    def process(self, user, calibration_id):
+    def process(self):
         if self.cleaned_data['rangeStart'] < self.cleaned_data['rangeEnd']:
             sel_range = { 
                     'start' : self.cleaned_data['rangeStart'], 
@@ -277,59 +269,19 @@ class SelectRange(forms.Form):
                     'start' : self.cleaned_data['rangeEnd']
                     }
 
+        return ( sel_range['start'], sel_range['end'] )
+
+
+class SelectPoint(forms.Form):
+    point = forms.FloatField(label="Value")
+    def __init__(self, defaultRange, *args, **kwargs):
+        super(SelectPoint, self).__init__(*args, **kwargs)
         try:
-            cal = Calibration.objects.get(id=calibration_id)
-            if not cal.canBeUpdatedBy(user):
-                return
-            cal.selectedRange = sel_range
-            cal.save()
+            point = defaultRange
         except:
-            return
+            point = 0
+        self.fields['point'].initial = point
+        
 
-class generateCalibrationForm(forms.Form):
-    #TODO: rethink / rework / add method selection
-
-    def process(self, user, calibration_id):
-        onx = OnXAxis.objects.get(user=user).selected
-        cal = Calibration.objects.get(id=calibration_id)
-        if not cal.canBeUpdatedBy(user):
-            raise 3
-
-        inxstart = 0
-        diffst = float('Inf')
-        inxend = 0
-        diffend = float('Inf')
-        vec = []
-        if ( onx == 'P' ):
-            vec = cal.usedCurveData.all()[0].potential
-        elif (onx == 'T'):
-            vec = cal.usedCurveData.all()[0].time
-        else:
-            vec=range(1,len(cal.usedCurveData.all()[0].probingData))
-            
-        for i,p in enumerate(vec):
-            if abs(p - cal.selectedRange['start']) < diffst:
-                inxstart = i
-                diffst = abs(p-cal.selectedRange['start'])
-            if (abs(p-cal.selectedRange['end']) < diffend):
-                inxend = i
-                diffend = abs(p-cal.selectedRange['end'])
-
-        dataMatrix = {}
-        dataMatrix['x'] = []
-        dataMatrix['y'] = []
-        curveConc = []
-        for cd in cal.usedCurveData.all():
-            aic = AnalyteInCurve.objects.filter(curve=cd.curve) #TODO: and analyte
-            curveConc.append(aic[0].concentration)
-        dataMatrix['x'] = curveConc
-        if ( onx == 'P' or onx == 'T' ):
-            for i,cd in enumerate(cal.usedCurveData.all()):
-                dataMatrix['y'].append(max(cd.current[inxstart:inxend]) - min(cd.current[inxstart:inxend]))
-        else:
-            for i,cd in enumerate(cal.usedCurveData.all()):
-                dataMatrix['y'].append( max(cd.probingData[inxstart:inxend]) - min(cd.probingData[inxstart:inxend]))
-        cal.dataMatrix = dataMatrix;
-        cal.save()
-        p = Processing()
-        p.standardCalibration(cal)
+    def process(self):
+        return self.cleaned_data['point']

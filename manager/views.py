@@ -2,11 +2,12 @@ from django.shortcuts import render
 from django.http import HttpResponse
 from django.http import HttpResponseRedirect
 from django.template import loader
-from django.core.urlresolvers import reverse
 from django.views.decorators.cache import never_cache
+from django.core.urlresolvers import reverse
 from .models import *
 from .forms import *
 from .plotmaker import PlotMaker
+from .data_operation import DataOperation
 
 
 def indexNoUser(request):
@@ -62,29 +63,60 @@ def browseFiles(request, user_id):
     return HttpResponse(template.render(context, request))
 
 
-def browseCalibrations(request, user_id):
+def browseAnalysis(request, user_id):
     try:
         user = User.objects.get(id=user_id)
     except:
         user=None
 
     try:
-        calibs = Calibration.objects.filter(owner=user_id)
+        files = Analysis.objects.filter(owner=user, deleted=False)
     except:
-        calibs = None
+        files = None
 
-    if ( __debug__ ):
-        print(calibs)
     template = loader.get_template('manager/browse.html')
     context = {
-            'browse_by' : 'calibrations',
+            'browse_by' : 'Analysis',
             'user' : user,
-            'disp' : calibs,
-            'action1': 'showCalibration',
-            'action2': 'editCalibration',
+            'disp' : files,
+            'action1': "showAnalysis",
+            'action2': "deleteAnalysis",
+            'action2_text': '(delete)',
+            'whenEmpty' : "Analysis can only be performed on the CurveSet" 
+    }
+    return HttpResponse(template.render(context, request))
+
+def deleteAnalysis(request, user_id, analysis_id):
+    pass
+
+
+def editAnalysis(request, user_id, analysis_id):
+    pass
+
+
+def browseCurveSets(request, user_id):
+    try:
+        user = User.objects.get(id=user_id)
+    except:
+        user=None
+
+    try:
+        csets = CurveSet.objects.filter(owner=user_id)
+    except:
+        csets = None
+
+    if ( __debug__ ):
+        print(csets)
+    template = loader.get_template('manager/browse.html')
+    context = {
+            'browse_by' : 'Curve Set',
+            'user' : user,
+            'disp' : csets,
+            'action1': 'showCurveSet',
+            'action2': 'editCurveSet',
             'action2_text': ' (edit) ',
-            'whenEmpty' : "You have no calibrations. <a href=" +
-                                reverse('selectCurvesForCalibration', args=[user_id]) + ">Prepare one</a>."
+            'whenEmpty' : "You have no curve sets. <a href=" +
+                                reverse('createCurveSet', args=[user_id]) + ">Prepare one</a>."
     }
     return HttpResponse(template.render(context, request))
 
@@ -150,106 +182,139 @@ def deleteCurve(request, user_id, curve_id):
     return render(request, 'manager/deleteCurve.html', context)
 
 
-def selectCurvesForCalibration(request, user_id):
+def createCurveSet(request, user_id):
     try:
         user = User.objects.get(id=user_id)
     except:
         user=None
 
     if request.method == 'POST':
-        form = SelectCurvesForCalibrationForm(user, request.POST)
+        form = SelectCurvesForCurveSetForm(user, request.POST)
         if form.is_valid():
             if ( form.process(user) == True ):
-                calid = form.calid
-                if calid and calid > -1:
-                    return HttpResponseRedirect(reverse('editCalibration', args=[user_id, calid]))
+                cs_id = form.curvesetid
+                if cs_id and cs_id > -1:
+                    return HttpResponseRedirect(reverse('editCurveSet', args=[user_id, cs_id]))
     else:
-        form = SelectCurvesForCalibrationForm(user)
+        form = SelectCurvesForCurveSetForm(user)
 
     context = {
             'form': form, 
             'user': user
             }
-    return render(request, 'manager/selectCurvesForCalibration.html', context)
+    return render(request, 'manager/createCurveSet.html', context)
 
-def showCalibration(request, user_id, calibration_id):
+
+def showAnalysis(request, user_id, analysis_id):
     try:
         user = User.objects.get(id=user_id)
     except:
         user=None
 
     try:
-        cf = Calibration.objects.get(id=calibration_id)
+        cf = Analysis.objects.get(id=analysis_id, owner=user)
     except:
         cf = None
 
-    template = loader.get_template('manager/showCalibration.html')
+    template = loader.get_template('manager/showAnalysis.html')
     context = {
             'user' : user,
-            'calibration_id': calibration_id,
+            'analysis_id': analysis_id,
             'plot_width' : PlotMaker.plot_width,
             'plot_height' : PlotMaker.plot_height,
     }
     return HttpResponse(template.render(context, request))
 
-def editCalibration(request,user_id,calibration_id):
+
+def showProcessed(request, user_id, processing_id):
     try:
         user = User.objects.get(id=user_id)
     except:
         user=None
 
-    if request.method == 'POST':
-        if ( 'submitGenerate' in request.POST ):
-            formGenerate = generateCalibrationForm(request.POST)
-            if ( formGenerate.is_valid() ):
-                formGenerate.process(user, calibration_id)
-                return HttpResponseRedirect(reverse('showCalibration', args=[user_id, calibration_id]))
-        else:
-            formGenerate = generateCalibrationForm()
+    try:
+        cf = Processing.objects.get(id=processing_id, owner=user)
+    except:
+        cf = None
 
-        if ( 'submitFormAnalyte' in request.POST ):
-            formAnalyte = AddAnalytesForm(user, "Calibration", calibration_id, request.POST)
-            if formAnalyte.is_valid():
-                if ( formAnalyte.process(user) == True ):
-                    return HttpResponseRedirect(reverse('showCalibration', args=[user_id, calibration_id]))
-        else:
-            formAnalyte = AddAnalytesForm(user, "Calibration", calibration_id)
+    template = loader.get_template('manager/showAnalysis.html')
+    context = {
+            'user' : user,
+            'processing': processing_id,
+            'plot_width' : PlotMaker.plot_width,
+            'plot_height' : PlotMaker.plot_height,
+    }
+    return HttpResponse(template.render(context, request))
 
-        if ( 'submitFormRange' in request.POST ):
-            formRange = SelectRange(calibration_id, request.POST)
-            if formRange.is_valid():
-                if ( formRange.process(user, calibration_id) == True ):
-                    return HttpResponseRedirect(reverse('showCalibration', args=[user_id, calibration_id]))
-        else:
-            formRange = SelectRange(calibration_id)
 
-    else:
-        formAnalyte = AddAnalytesForm(user, "Calibration", calibration_id)
-        formRange = SelectRange(calibration_id)
-        formGenerate = generateCalibrationForm()
+def showCurveSet(request, user_id, curveset_id):
+    try:
+        user = User.objects.get(id=user_id)
+    except:
+        user=None
 
     try:
-        cal = Calibration.objects.get(id=calibration_id)
-        if not cal.canBeReadBy(user):
+        cf = CurveSet.objects.get(id=curveset_id)
+    except:
+        cf = None
+
+    template = loader.get_template('manager/showCurveSet.html')
+    context = {
+            'user' : user,
+            'curveset_id': curveset_id,
+            'plot_width' : PlotMaker.plot_width,
+            'plot_height' : PlotMaker.plot_height,
+    }
+    return HttpResponse(template.render(context, request))
+
+
+def editCurveSet(request,user_id,curveset_id):
+    try:
+        user = User.objects.get(id=user_id)
+    except:
+        user=None
+
+    dataop = DataOperation(curveset=curveset_id)
+
+    if request.method == 'POST':
+        if ( 'startAnalyze' in request.POST ):
+            formGenerate = dataop.getAnalysisSelectForm(request.POST)
+            if ( formGenerate.is_valid() ):
+                analyzeid = formGenerate.process(user)
+                return HttpResponseRedirect(reverse('analyze', args=[user_id, analyzeid]))
+        else:
+            formGenerate = dataop.getAnalysisSelectForm()
+
+        if ( 'submitFormAnalyte' in request.POST ):
+            formAnalyte = AddAnalytesForm(user, "CurveSet", curveset_id, request.POST)
+            if formAnalyte.is_valid():
+                if ( formAnalyte.process(user) == True ):
+                    return HttpResponseRedirect(reverse('showCurveSet', args=[user_id, curveset_id]))
+        else:
+            formAnalyte = AddAnalytesForm(user, "CurveSet", curveset_id)
+
+    else:
+        formAnalyte = AddAnalytesForm(user, "CurveSet", curveset_id)
+        formGenerate = dataop.getAnalysisSelectForm()
+
+    try:
+        cs = CurveSet.objects.get(id=curveset_id)
+        if not cs.canBeReadBy(user):
             raise 3
     except:
         raise 404
 
     cal_disp = ""
-    for c in cal.usedCurveData.all():
-        cal_disp += ("%i," % c.curve.id)
-    cal_disp = cal_disp[:-1]
     context = { 
             'formAnalyte': formAnalyte, 
-            'formRange': formRange,
-            'formGenerate' : formGenerate,
+            'startAnalyze' : formGenerate,
             'user' : user, 
-            'calibration_id' : calibration_id, 
+            'curveset_id' : curveset_id, 
             'plot_width' : PlotMaker.plot_width,
             'plot_height' : PlotMaker.plot_height,
             'cal_disp': cal_disp
             }
-    return render(request, 'manager/editCalibration.html', context)
+    return render(request, 'manager/editCurveSet.html', context)
 
 
 def upload(request, user_id):
@@ -329,18 +394,37 @@ def showFile(request, user_id, file_id):
     return HttpResponse(template.render(context, request))
 
 
+def processFile(request, user_id, file_id):
+    #create curve set from file and call process curveset#
+    pass
+
+def processCurveSet(request, user_id, file_id):
+    pass
+
+def analyze(request, user_id, analysis_id):
+    try:
+        user = User.objects.get(id=user_id)
+    except:
+        user=None
+    dataop = DataOperation(analysis = analysis_id)
+    dataop.process(user, request)
+    return dataop.getContent(user) 
+
+
 @never_cache
 def generatePlot(request, user_id, plot_type, value_id):
     """
     Allowed types are:
     f - whole file
-    c - calibration
-    s - setup curves
+    a - analysis
+    s - curveset
+    v - selected curves 
     """
     allowedTypes = {
             'f' : 'File',
-            'c' : 'Calibration',
-            's' : 'Curves'
+            'a' : 'Analysis',
+            's' : 'CurveSet',
+            'v' : 'Curves'
             }
     if not ( plot_type in allowedTypes ):
         return
@@ -354,9 +438,11 @@ def generatePlot(request, user_id, plot_type, value_id):
     if (plot_type == 'f' ):
         pm.processFile(user, value_id)
     elif (plot_type == 's'):
-        pm.processCurves(user, value_id)
+        pm.processCurveSet(user, value_id)
+    elif (plot_type == 'a'):
+        pm.processAnalysis(user, value_id)
     elif (plot_type == 'c'):
-        pm.processCalibration(user, value_id)
+        pm.processCurves(user, value_id)
 
     return HttpResponse(
             pm.getPage(), 

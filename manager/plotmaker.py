@@ -50,6 +50,47 @@ class PlotMaker:
         self._processCurveArray(user, cbs)
 
 
+    def processCurveSet(self, user, curveset_id):
+        try:
+            onxs = OnXAxis.objects.get(user=user)
+            onx = onxs.selected
+        except:
+            onxs = OnXAxis(selected='P',user=user)
+            onxs.save()
+            onx = onxs.selected
+
+        self.xlabel = self._generateXLabel(onx)
+        self.ylabel = 'i / µA'
+        cs = CurveSet.objects.get(id=curveset_id)
+
+        if onx == 'S':
+            for cv in cs.usedCurveData.all():
+                self._line.append(
+                        dict(
+                            x=range(1, len(cv.probingData)+1),
+                            y=cv.probingData
+                        )
+                    )
+
+        elif onx == 'T':
+            for cv in cs.usedCurveData.all():
+                self._line.append(
+                        dict(
+                            x=cv.time,
+                            y=cv.current
+                        )
+                    )
+
+        else:
+            for cv in cs.usedCurveData.all():
+                self._line.append(
+                        dict(
+                            x=cv.potential,
+                            y=cv.current
+                        )
+                    )
+
+
     def _processCurveArray(self, user, curves):
         try:
             onxs = OnXAxis.objects.get(user=user)
@@ -105,31 +146,38 @@ class PlotMaker:
             return "E / mV"
 
 
-    def processCalibration(self, user, value_id):
-        cal = Calibration.objects.get(id=value_id)
-        if not cal.canBeReadBy(user):
+    def processAnalysis(self, user, value_id):
+        analysis = Analysis.objects.get(id=value_id)
+        if not analysis.canBeReadBy(user):
             raise 3
-        if not cal.complete:
+        if not analysis.completed:
             return
         self.xlabel = 'concentration'
         self.ylabel = 'i / µA'
         # prepare data points
+        print(analysis.dataMatrix)
+        print(type(analysis.dataMatrix))
+        import json
+        analysis.dataMatrix = json.loads(analysis.dataMatrix) #FIXME: WHY??
+        analysis.fitEquation = json.loads(analysis.fitEquation) #FIXME: WHY??
+
         self._scatter.append(
-                dict( 
-                    x=cal.dataMatrix['x'], 
-                    y=cal.dataMatrix['y'] 
-                )
+                {
+                    'x': analysis.dataMatrix[0], 
+                    'y': analysis.dataMatrix[1] 
+                }
             )
 
         #prepare calibration line
-        xs = list(cal.dataMatrix['x'])
-        xs.append(-cal.result)
+        xs = list(analysis.dataMatrix[0])
+        xs.append(-analysis.result)
+        print(xs)
         x = min(xs) # x variable is used by the fitEquation
-        y1=eval(cal.fitEquation) #should set y if not the equation is wrong
+        y1=eval(analysis.fitEquation) #should set y if not the equation is wrong
         x1=x
 
         x = max(xs)
-        y2=eval(cal.fitEquation) #should set y if not the equation is wrong
+        y2=eval(analysis.fitEquation) #should set y if not the equation is wrong
         x2=x
         if y1:
             vx = []

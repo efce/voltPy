@@ -12,7 +12,7 @@ class CompressedJSONField(JSONField):
     """
     Django model field that stores JSON data compressed with zlib.
     """
-    def from_db_value(self, value, expression, connection, context):#to_python(self, value):
+    def from_db_value(self, value, expression, connection, context):#to_python(self, value):to_python(self, value):
         try:
             value = zlib.decompress(b64decode(value))
         except zlib.error:
