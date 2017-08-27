@@ -82,7 +82,10 @@ class MethodManager:
         self.__selected_method.setModel(model)
         self.__current_step_number = model.step
         self.__current_step = self.__selected_method.getStep(self.__current_step_number)
-        self.__current_operation = self.operations[self.__current_step['step']]()
+        if ( self.__current_step['step'] == self.Step.end ):
+            self.__current_operation = None
+        else:
+            self.__current_operation = self.operations[self.__current_step['step']]()
 
 
     def process(self, user, request):
