@@ -9,7 +9,7 @@ class SlopeStandardAdditionAnalysis(AnalysisMethod):
                     'title': 'Select peak',
                     'data': { 
                         'starting': 0,
-                        'desc': 'Enter X value of peak of interest.',
+                        'desc': 'Enter approx. X value of peak of interest.',
                         }
                 },
                 {
