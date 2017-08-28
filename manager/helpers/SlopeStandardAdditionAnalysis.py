@@ -119,13 +119,14 @@ def SlopeStandardAdditionAnalysis(DATACELL, peakLocation, options):
     #=====================================================================
     sensUnique = set(sensSort)
     sensUniqueLen = len(sensUnique)
-    normalFitL = np.matrix([ [0,0] ] *sensUniqueLen, dtype='float')
-    normalFitR = np.matrix([ [0,0] ] *sensUniqueLen, dtype='float')
-    normalFitAVG = np.matrix([ [0,0] ] *sensUniqueLen, dtype='float')
-    corrAr = {}
-    corrAr['L'] = np.matrix([ 0 ] * sensUniqueLen, dtype='float')
-    corrAr['R'] =np.matrix([ 0 ] * sensUniqueLen, dtype='float')
-    corrAr['AVG'] =np.matrix([ 0 ] * sensUniqueLen, dtype='float')
+    normalFitL = np.array([ [0,0] ] *sensUniqueLen, dtype='float')
+    normalFitR = np.array([ [0,0] ] *sensUniqueLen, dtype='float')
+    normalFitAVG = np.array([ [0,0] ] *sensUniqueLen, dtype='float')
+    corrArr = {
+            'L': np.zeros(shape=(sensUniqueLen)),
+            'R': np.zeros(shape=(sensUniqueLen)),
+            'AVG': np.zeros(shape=(sensUniqueLen))
+        }
     for s in sensUnique:
         list = [ x==s for x in sensSort ]
         msize = np.sum(list)
@@ -136,7 +137,6 @@ def SlopeStandardAdditionAnalysis(DATACELL, peakLocation, options):
         cnt = 0
         for i,istrue in enumerate(list):
             if istrue:
-                print(cnt)
                 conc_sens[cnt]=concSort[i]
                 slopeL_sens[cnt]=slopeL[i]
                 slopeR_sens[cnt]=slopeR[i]
@@ -154,41 +154,39 @@ def SlopeStandardAdditionAnalysis(DATACELL, peakLocation, options):
         normalFitR[s] = np.transpose(normalFitX * slopeR_sens)
         normalFitAVG[s] = np.transpose(normalFitX * slopeAVG_sens)
 
-        v = [ normalFitL.item(s,0)*x[0]+normalFitL.item(s,1) for x in conc_sens.tolist() ]
-        print(v)
-        slopeL_sens = np.ravel(slopeL_sens)
-        print(slopeL_sens);
         tmp = np.corrcoef( 
-            v, 
-            slopeL_sens );
-        print(tmp);
+            [ normalFitL.item(s,0)*x[0]+normalFitL.item(s,1) for x in conc_sens.tolist() ], 
+            slopeL_sens.squeeze() );
+        corrArr['L'][s] = tmp[0,1]
         tmp = np.corrcoef( 
             [ normalFitR.item(s,0)*x[0]+normalFitR.item(s,1) for x in conc_sens.tolist() ], 
             slopeR_sens.squeeze() );
-        corrAr['R'][s] = tmp.item((0,1));
+        corrArr['R'][s] = tmp[0,1];
         tmp = np.corrcoef( 
             [ normalFitAVG.item(s,0)*x[0]+normalFitAVG.item(s,1) for x in conc_sens.tolist() ], 
             slopeAVG_sens.squeeze() );
-        corrAr['AVG'][s] = tmp.item((0,1));
+        corrArr['AVG'][s] = tmp[0,1];
 
-    return
-"""
     
-    calibration.L = slopeL(1,:);
-    calibration.R = slopeR(1,:);
-    calibration.AVG = slopeAVG(1,:);
+    #calibration.L = slopeL(1,:);
+    #calibration.R = slopeR(1,:);
+    #calibration.AVG = slopeAVG(1,:);
     
-    % Generate initial matrix of intercepts
-    %======================================
-    crossL = zeros(size(normalFitL,2),size(normalFitL,2),2);
-    crossR = zeros(size(normalFitR,2),size(normalFitR,2),2);
-    crossAVG = zeros(size(normalFitAVG,2),size(normalFitAVG,2),2);
+    # Generate initial matrix of intercepts
+    #======================================
+    sizeC = normalFitL.shape
+    sizeC = ( sizeC[0], sizeC[1] , 2 )
+    crossL = np.zeros(shape = (sizeC));
+    crossR = np.zeros(shape = (sizeC));
+    crossAVG = np.zeros(shape = (sizeC));
     
     rpos = 1;
     fres = [];
     
-    % We need to verify if slopes for each peak are found
-    %====================================================
+    # We need to verify if slopes for each peak are found
+    #====================================================
+    return
+"""
     avOK = true;
     rOK = true;
     lOK = true;
@@ -590,7 +588,7 @@ end
 
 def getSlopeInInflection(sig, peakLocation, samePoints, firRange):
     import random
-    return random.random(),0,0,[ x for x in range(1,20)]
+    return random.random(),random.random(),random.random(),[ x for x in range(1,20)]
 
 if ( __name__ == '__main__' ):
     import prepareStructForSSAA
