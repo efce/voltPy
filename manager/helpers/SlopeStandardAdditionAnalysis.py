@@ -108,7 +108,6 @@ def SlopeStandardAdditionAnalysis(DATACELL, peakLocation, options):
     last = len(conc) - 1
     peakLocation = None
     i=0
-    print(fitRange)
     slopeL[last], slopeR[last], slopeAVG[last], fitRange[last] = \
             getSlopeInInflection(dataYSort[last], peakLocation, False, 0)
     for i in np.arange(last-1, -1, -1):
@@ -119,7 +118,6 @@ def SlopeStandardAdditionAnalysis(DATACELL, peakLocation, options):
     # It uses Normal Equation to find the optimal fit of calibration plot.
     #=====================================================================
     sensUnique = set(sensSort)
-    print(sensUnique)
     sensUniqueLen = len(sensUnique)
     normalFitL = np.matrix([ [0,0] ] *sensUniqueLen, dtype='float')
     normalFitR = np.matrix([ [0,0] ] *sensUniqueLen, dtype='float')
@@ -131,44 +129,46 @@ def SlopeStandardAdditionAnalysis(DATACELL, peakLocation, options):
     for s in sensUnique:
         list = [ x==s for x in sensSort ]
         msize = np.sum(list)
-        conc_sens = np.matrix([[None]]*msize, dtype='float')
-        slopeL_sens = np.matrix([[None]]*msize, dtype='float')
-        slopeR_sens = np.matrix([[None]]*msize, dtype='float')
-        slopeAVG_sens = np.matrix([[None]]*msize, dtype='float')
+        conc_sens = np.array([[None]]*msize, dtype='float')
+        slopeL_sens = np.array([[None]]*msize, dtype='float')
+        slopeR_sens = np.array([[None]]*msize, dtype='float')
+        slopeAVG_sens = np.array([[None]]*msize, dtype='float')
         cnt = 0
         for i,istrue in enumerate(list):
             if istrue:
-                conc_sens.put((1,cnt),concSort[i])
-                slopeL_sens.put((1,cnt),slopeL[i])
-                slopeR_sens.put((1,cnt),slopeR[i])
-                slopeAVG_sens.put((1,cnt),slopeAVG[i])
+                print(cnt)
+                conc_sens[cnt]=concSort[i]
+                slopeL_sens[cnt]=slopeL[i]
+                slopeR_sens[cnt]=slopeR[i]
+                slopeAVG_sens[cnt]=slopeAVG[i]
                 cnt+=1
-
         unitVec = np.matrix([[1.0]]*len(conc_sens), dtype='float')
 
         # FIT using normal equation:
         X = np.concatenate((unitVec, conc_sens), axis=1)
         XX = X* np.transpose(X)
-        print(XX)
         normalFitX = np.linalg.pinv(XX)
         normalFitX = normalFitX * X;
         normalFitX = np.transpose(normalFitX)
-        print(s)
         normalFitL[s] = np.transpose(normalFitX * slopeL_sens)
         normalFitR[s] = np.transpose(normalFitX * slopeR_sens)
         normalFitAVG[s] = np.transpose(normalFitX * slopeAVG_sens)
 
+        v = [ normalFitL.item(s,0)*x[0]+normalFitL.item(s,1) for x in conc_sens.tolist() ]
+        print(v)
+        slopeL_sens = np.ravel(slopeL_sens)
+        print(slopeL_sens);
         tmp = np.corrcoef( 
-            [ normalFitL.item(s,0)*x[0]+normalFitL.item(s,1) for x in conc_sens.tolist() ], 
-            slopeL_sens.flatten() );
-        corrAr['L'][s] = tmp.item((0,1));
+            v, 
+            slopeL_sens );
+        print(tmp);
         tmp = np.corrcoef( 
             [ normalFitR.item(s,0)*x[0]+normalFitR.item(s,1) for x in conc_sens.tolist() ], 
-            slopeR_sens.flatten() );
+            slopeR_sens.squeeze() );
         corrAr['R'][s] = tmp.item((0,1));
         tmp = np.corrcoef( 
             [ normalFitAVG.item(s,0)*x[0]+normalFitAVG.item(s,1) for x in conc_sens.tolist() ], 
-            slopeAVG_sens.flatten() );
+            slopeAVG_sens.squeeze() );
         corrAr['AVG'][s] = tmp.item((0,1));
 
     return
@@ -589,7 +589,8 @@ end
 """
 
 def getSlopeInInflection(sig, peakLocation, samePoints, firRange):
-    return 0,0,0,[ x for x in range(1,20)]
+    import random
+    return random.random(),0,0,[ x for x in range(1,20)]
 
 if ( __name__ == '__main__' ):
     import prepareStructForSSAA
