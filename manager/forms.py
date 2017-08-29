@@ -11,8 +11,8 @@ class UploadFileForm(forms.Form):
 
     def process(self, user, request):
         p=ProcessUpload(
-                user, 
-                request.FILES['file'], 
+                user,
+                request.FILES['file'],
                 self.cleaned_data.get('name'),
                 self.cleaned_data.get('comment'))
         self.file_id = p.getFileId()
@@ -20,7 +20,7 @@ class UploadFileForm(forms.Form):
 
 
 class AddAnalytesForm(forms.Form):
-    #TODO: draw plot of file, provide fields for settings analytes 
+    #TODO: draw plot of file, provide fields for settings analytes
     isCal = False
     UNITS = (
             ('ng/L','ng/L'),
@@ -68,12 +68,12 @@ class AddAnalytesForm(forms.Form):
             ac = aic.filter(curve=c.id)
             if ac:
                 self.fields["analyte_%d" % ac[0].id] = forms.FloatField(
-                        label = c.name + ":\n" + c.comment , 
+                        label = c.name + ":\n" + c.comment ,
                         required = True,
                         initial = ac[0].concentration )
             else:
                 self.fields["curve_%d" % c.id] = forms.FloatField(
-                        label = c.name + ":\n" + c.comment , 
+                        label = c.name + ":\n" + c.comment ,
                         required = True )
 
 
@@ -152,7 +152,7 @@ class SelectCurvesForCurveSetForm(forms.Form):
         super(SelectCurvesForCurveSetForm, self).__init__(*args, **kwargs)
         for cb in user_curves:
             self.fields["curve_%d" % cb.id] = forms.BooleanField(
-                    label = cb.curveFile.name + ": " + cb.name + (" - %i" % cb.id), 
+                    label = cb.curveFile.name + ": " + cb.name + (" - %i" % cb.id),
                     required = False )
 
     def process(self, user):
@@ -254,17 +254,16 @@ class SelectRange(forms.Form):
             rangend = 0
         self.fields['rangeStart'].initial = rangest
         self.fields['rangeEnd'].initial = rangend
-        
 
     def process(self):
         if self.cleaned_data['rangeStart'] < self.cleaned_data['rangeEnd']:
-            sel_range = { 
-                    'start' : self.cleaned_data['rangeStart'], 
+            sel_range = {
+                    'start' : self.cleaned_data['rangeStart'],
                     'end' : self.cleaned_data['rangeEnd']
                     }
         else:
-            sel_range = { 
-                    'end' : self.cleaned_data['rangeStart'], 
+            sel_range = {
+                    'end' : self.cleaned_data['rangeStart'],
                     'start' : self.cleaned_data['rangeEnd']
                     }
 
@@ -280,7 +279,6 @@ class SelectPoint(forms.Form):
         except:
             point = 0
         self.fields['point'].initial = point
-        
 
     def process(self):
         return self.cleaned_data['point']
