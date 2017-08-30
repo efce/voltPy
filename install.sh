@@ -10,3 +10,4 @@ pip install unipath
 pip install bokeh
 pip install numpy
 pip install scipy
+pip install pandas

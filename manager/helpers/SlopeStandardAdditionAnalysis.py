@@ -1,6 +1,7 @@
 import numpy as np
 from scipy.signal import savgol_filter
 from scipy.stats import t
+from normalEquationFit import normalEquationFit
 
 def SlopeStandardAdditionAnalysis(DATACELL, peakLocation, options):
     """
@@ -119,7 +120,7 @@ def SlopeStandardAdditionAnalysis(DATACELL, peakLocation, options):
         r['R'] = {}
         r['Slopes'] = {}
         r['OK'] = True
-        r['Intersections'] = None
+        r['Intersections'] = []
         r['Results'] = []
         r['Mean'] = None
         r['Median'] = None
@@ -138,7 +139,7 @@ def SlopeStandardAdditionAnalysis(DATACELL, peakLocation, options):
                             yvector, 
                             peakLocation,
                             options['forceSamePoints'], 
-                            fitRanges[s].get(i-1,None)
+                            fitRanges[s].get(i-1,(None, None))
                         )
             result['L']['Slopes'][s].append(slopeL)
             result['R']['Slopes'][s].append(slopeR)
@@ -147,27 +148,6 @@ def SlopeStandardAdditionAnalysis(DATACELL, peakLocation, options):
 
     # It uses Normal Equation to find the optimal fit of calibration plot.
     #=====================================================================
-    def normalEquationFit(x, y):
-        """
-        Computes polynomial 1st degree fit
-        using normal equation.
-        """
-        xlen = len(x)
-        assert(xlen >= 3 and len(y) == xlen)
-        x = np.matrix(x)
-        x = x.transpose()
-        unitVec = np.ones((xlen,1), dtype='float')
-        X = np.concatenate((unitVec, x), axis=1)
-        XX = np.dot(X, np.transpose(X))
-        normalFit = np.linalg.pinv(XX)
-        normalFit = np.dot(normalFit, X);
-        normalFit = np.transpose(normalFit)
-        res = np.dot(normalFit,y)
-        return { 
-                'slope': res[0,1], 
-                'intercept': res[0,0]
-               }
-
     for r_l_avg, r in result.items():
         for s,d in r['Slopes'].items():
             r['Fit'][s] = normalEquationFit(datas[s]['CONC'], r['Slopes'][s])
@@ -251,10 +231,10 @@ def SlopeStandardAdditionAnalysis(DATACELL, peakLocation, options):
     #stdL = std(fresL);
     for r_l_avg, r in result.items():
         s = 0
-        for s,d in r['Interceptions'].items():
-            for v in d:
-                if not d == None:
-                    r['Results'].append(d[0])
+        for s in r['Intersections']:
+            for ss in s:
+                if not ss == None:
+                    r['Results'].append(ss[0])
         r['STD'] = np.std(r['Results'])
         r['Median'] = np.median(r['Results'])
         r['Mean'] = np.average(r['Results'])
@@ -287,149 +267,117 @@ def SlopeStandardAdditionAnalysis(DATACELL, peakLocation, options):
 
 
 # returns: [slopeL, slopeR, slopeAVGfitRange, fitRange] 
-def getSlopeInInflection(signal, peak, forceFitRange, fitRange, lineColor):
+def getSlopeInInflection(signal, peak, forceFitRange, fitRange):
+
 # I find this as one of the most important steps, I has gone trou many
 # iterations, so the code is a bit of mixture of different ideas.
 # Some tweakalbe setting:
 #======================================================================
     fitSize = 5 #How many points should be fitted to get slope%
+    fitX = np.arange(0,fitSize)
     maxHit = 4  #How many times the slope has to change to call it inflection point%
 
     # Prepare data structures:
     #=========================
     hitCnt = 0;
     sigLen = len(signal);
-    prevNormalFit = [ NaN NaN ];
-    finalNormalFit = [ NaN NaN ];
+    prevNormalFit = {'slope': None, 'intercept': None };
+    finalNormalFit = {'slope':  None, 'intercept': None };
     #signal = smooth(signal,13,'sgolay',3);
-    signal = savgol_filter(signal,17,3);
+    #signal = savgol_filter(signal, 17, 3);
 
     if (not None in fitRange) and forceFitRange:
         # If we have already the point range in which the slope has to be
         # found (i.e. this is not the plot with the highest concentration)
         #=================================================================
-        [blackhole,pos] = max(isnan(fitRange));
-        fitrangeL = fitRange(1:pos-1);
-        fitrangeR = fitRange(pos+1:end);
+        fitrangeL = fitRange[0]
+        fitrangeR = fitRange[1]
 
         # Get linear fit on the left side
         #===========================
-        X = [ ones(fitSize,1) (1:1:fitSize)' ];
-        normalFitX = pinv( X' * X );
-        normalFitX = normalFitX * X';
-        yL = signal(fitrangeL,1);
-        normalFitL = normalFitX * yL;
+        fitL=normalEquationFit(fitX, signal[fitrangeL[0]:fitrangeL[1]])
+        # Get linear fit on the rigth side
+        #===========================
+        fitL=normalEquationFit(fitX, signal[fitrangeR[0]:fitrangeR[1]])
 
-        % Get linear fit on the rigth side
-        %===========================
-        yR = signal(fitrangeR,1);
-        normalFitR = normalFitX * yR;
+        # Get slopes:
+        #======================
+        slopeL = fitL['slope'];
+        slopeR = fitR['slope'];
 
-        % Get slopes:
-        %======================
-        slopeL = normalFitL(2);
-        slopeR = normalFitR(2);
+    else:
+        # This is either the plot with the highest concentration or
+        # option.forceSamePoints == false
+        # So first, we need to find the inflection point, and then
+        # compute its slope.
+        #==========================================================
+        for fitPos in np.arange(peak, fitSize, -1):
+            # We start from the left side of the peak:
+            #=========================================
+            if ( peak < fitPos-fitSize ):
+                raise ValueError('Signal too small to fit data');
+            fitrange =  ( fitPos-fitSize, fitPos );
+            y = signal[fitrange[0]:fitrange[1]]
+            nfit = normalEquationFit(fitX, y)
 
-    else
-        % This is either the plot with the highest concentration or
-        % option.forceSamePoints == false
-        % So first, we need to find the inflection point, and then
-        % compute its slope.
-        %==========================================================
-        X = [ ones(fitSize,1) (1:1:fitSize)' ];
-        normalFitX = pinv( X' * X );
-        normalFitX = normalFitX * X';
-        fitrange = [];
-%         if ( verbose )
-%             figure;
-%         end
-        for fitPos = peak:-1:fitSize
-            % We start from the left side of the peak:
-            %=========================================
-            if ( peak < fitPos-fitSize )
-                error('error');
-            end
-            fitrange = [ (fitPos-fitSize+1) :1: fitPos ];
-            y = signal(fitrange,1);
-            normalFit = normalFitX * y;
-
-            if ( isnan(prevNormalFit(1)) )
-                prevNormalFit = normalFit;
-            elseif ( normalFit(2) < prevNormalFit(2) )
-                if ( hitCnt == 0 )
+            if None == prevNormalFit.get('slope', None):
+                prevNormalFit = nfit;
+            elif ( nfit['slope'] < prevNormalFit['slope'] ):
+                if ( hitCnt == 0 ):
                     finalFitrange = fitrange;
-                    finalNormalFit = normalFit;
-                end
-                hitCnt = hitCnt+1;
-                if ( hitCnt == maxHit )
+                    finalNormalFit = nfit;
+                hitCnt += 1;
+                if ( hitCnt == maxHit ):
                     break;
-                end
-            elseif ( normalFit(2) >= prevNormalFit(2) )
-                finalNormalFit = [ NaN NaN ];
+            elif ( nfit['slope'] >= prevNormalFit['slope'] ):
+                finalNormalFit = {'slope': None, 'intercept': None }
                 hitCnt = 0;
-            end
-            prevNormalFit = normalFit;
+            prevNormalFit = nfit
 
-%             if ( verbose )
-%                 plot(X(:,2)+fitPos-5,y,'r*');
-%                 hold on;
-%                 plot(X(:,2)+fitPos-5,normalFit(1)+normalFit(2).*X(:,2));
-%             end
-        end
-        if ( isnan(finalNormalFit(2)) )
-            % fit failed %
-            disp('failed');
-        else
-            slopeL = finalNormalFit(2);
+        if None == finalNormalFit.get('slope', None): 
+            print('Fit failed')
+        else:
+            slopeL = finalNormalFit['slope'];
             fitrangeL = finalFitrange;
-        end
-        fitrange = [];
-%         if ( verbose )
-%             figure;
-%         end
-        for fitPos = peak:1:(sigLen-fitSize)
-            % And now rigth side:
-            %====================
-            fitrange= [ fitPos :1: (fitPos+fitSize-1) ];
-            y = signal(fitrange,1);
-            normalFit = normalFitX * y;
-            if ( isnan(prevNormalFit(2)) )
-                prevNormalFit = normalFit;
-            elseif ( normalFit(2) > prevNormalFit(2) )
-                if ( hitCnt == 0 )
-                    finalFitrange = fitrange;
-                    finalNormalFit = normalFit;
-                end
-                hitCnt = hitCnt+1;
-                if ( hitCnt == maxHit )
+
+        fitrange = (None, None)
+        prevNormalFit = { 'slope': None, 'intercept': None }
+
+        for fitPos in np.arange(peak, (sigLen-fitSize)):
+            # And now rigth side:
+            #====================
+            fitrange= (fitPos, (fitPos+fitSize) )
+            y = signal[fitrange[0]:fitrange[1]]
+            nfit = normalEquationFit(fitX, y)
+
+            if None == prevNormalFit.get('slope', None):
+                prevNormalFit = nfit;
+            elif ( nfit['slope']  > prevNormalFit['slope'] ):
+                if ( hitCnt == 0 ):
+                    finalFitrange = fitrange
+                    finalNormalFit = nfit
+                hitCnt += 1;
+                if ( hitCnt == maxHit ):
                     break;
-                end
-            elseif ( normalFit(2) <= prevNormalFit(2) )
-                finalNormalFit = [ NaN NaN ];
+            elif ( nfit['slope'] <= prevNormalFit['slope'] ):
+                finalNormalFit = {'slope': None, 'intercept': None };
                 hitCnt = 0;
-            end
-            prevNormalFit = normalFit;
+            prevNormalFit = nfit
 
-%             if ( verbose )
-%                 plot(X(:,2)+fitPos-1,y,'r*');
-%                 hold on;
-%                 plot(X(:,2)+fitPos-1,normalFit(1)+normalFit(2).*X(:,2));
-%             end
-        end
-        if ( isnan(finalNormalFit(2)) )
-            % fit failed %
-        else
-            slopeR = finalNormalFit(2);
+        if None == finalNormalFit.get('slope', None):
+            print('Fit failed')
+        else:
+            slopeR = finalNormalFit['slope'];
             fitrangeR = finalFitrange;
-        end
-        fitRange = [ fitrangeL NaN fitrangeR ];
-    end %end catch
 
-    % This part provide alternative method of getting the slope in the
-    % infleciton, as any noise will make it much more difficult, here are
-    % tested approaches. This overrites previous method, as is more
-    % difficult to follow.
-    %=====================================================================
+        fitRange = [ fitrangeL, fitrangeR ]
+
+    # This part provide alternative method of getting the slope in the
+    # infleciton, as any noise will make it much more difficult, here are
+    # tested approaches. This overrites previous method, as is more
+    # difficult to follow.
+    #=====================================================================
+    '''
     experimental = 1;
 
     if ( experimental == 1 )
@@ -477,23 +425,17 @@ def getSlopeInInflection(signal, peak, forceFitRange, fitRange, lineColor):
         end
 
     end
+    '''
 
-    % Get average slope (rigth slope has negative slope (or should have):
-    %==================================================================
+    # Get average slope (rigth slope has negative slope (or should have):
+    #==================================================================
     slopeAVGfitRange = (slopeL - slopeR)/2;
+    return slopeL, slopeR, slopeAVGfitRange, fitRange 
 
-    if ( verbose )
-        plot(signal,'Color', lineColor); hold on;
-        plot(fitrangeL,signal(fitrangeL),'*b', 'MarkerSize', 2);
-        plot(fitrangeR,signal(fitrangeR),'*r', 'MarkerSize', 2);
-    end
-
-end
-'''
-def getSlopeInInflection(sig, peakLocation, samePoints, firRange):
-    import random
-    return random.random(),random.random(),random.random(),[ x for x in range(1,20)]
 if ( __name__ == '__main__' ):
-    import prepareStructForSSAA
-    stru = prepareStructForSSAA.importForSSAA()
-    SlopeStandardAdditionAnalysis(stru, None, {})
+    import prepareStructForSSAA as ps
+    import pandas as pd
+    data = pd.read_csv('Tl_120s_RAW.csv', header=None)
+    datal = [ data[x].tolist() for x in range(0,len(data.columns))]
+    stru = ps.prepareStructForSSAA(datal, [0,1,2,3,4,5,6,7], 40, 4, [5, 10, 15], 'dp')
+    SlopeStandardAdditionAnalysis(stru, 105, {})
