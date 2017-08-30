@@ -4,7 +4,7 @@ import numpy as np
 from scipy.signal import savgol_filter
 from scipy.stats import t
 from scipy.interpolate import UnivariateSpline
-from normalEquationFit import normalEquationFit
+from manager.helpers.normalEquationFit import normalEquationFit
 
 def slopeStandardAdditionAnalysis(DATACELL, peakLocation, options):
     """
@@ -41,8 +41,8 @@ def slopeStandardAdditionAnalysis(DATACELL, peakLocation, options):
 
 # Check input and set some default values (this may be tweaked)
 #==============================================================
-    assert( len(DATACELL.SENS) == len(DATACELL.Y) \
-        and len(DATACELL.CONC) == len(DATACELL.Y) )
+    assert( len(DATACELL['SENS']) == len(DATACELL['Y']) \
+        and len(DATACELL['CONC']) == len(DATACELL['Y']) )
     correlationTreshhold = 0.8
     rowRemoveTresholdPercent = 0.3
     slopeDiffRequired = 0.05
@@ -50,9 +50,9 @@ def slopeStandardAdditionAnalysis(DATACELL, peakLocation, options):
     options['smooth'] = options.get('smooth', False)
     options['forceSamePoints'] = options.get('forceSamePoints', False)
 
-    dataY = DATACELL.Y
-    conc = DATACELL.CONC
-    sens = DATACELL.SENS
+    dataY = DATACELL['Y']
+    conc = DATACELL['CONC']
+    sens = DATACELL['SENS']
 
     if ( options['average'] == True ):
         # try to perform data averaging by sensitivity && concentration

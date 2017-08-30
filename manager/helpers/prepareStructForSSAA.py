@@ -1,4 +1,4 @@
-import setTpTw
+from manager.helpers.setTpTw import *
 
 def prepareStructForSSAA(rawData, concVec, realStepTime, tpValue, twVector, technique):
     """
@@ -14,24 +14,25 @@ def prepareStructForSSAA(rawData, concVec, realStepTime, tpValue, twVector, tech
     %          (eg. [ 5 10 15 20] - provides 4 sets for calibration)
     % technique - voltammetric technique: 'sc' | 'np' | 'dp' | 'sqw'
     """
-    class dataStruct:
-        X = []
-        Y = []
-        CONC = []
-        SENS = []
+    dataStruct=dict(
+            X = [],
+            Y = [],
+            CONC = [],
+            SENS = []
+        )
 
     assert (len(concVec) == len(rawData)), ('len(concVec)=%i and len(rawData)=%i' % (len(concVec), len(rawData)))
     pos=1;
 
-    data = dataStruct()
+    data = dataStruct
     for i,dataColumn in enumerate(rawData):
         for itw,twValue in enumerate(twVector):
-            data.Y.append([])
-            data.CONC.append([])
-            data.SENS.append([])
-            data.Y[-1] , e, ee  = setTpTw.setTpTw(dataColumn, realStepTime, tpValue, twValue, technique)
-            data.CONC[-1] = concVec[i]
-            data.SENS[-1] = itw
+            data['Y'].append([])
+            data['CONC'].append([])
+            data['SENS'].append([])
+            data['Y'][-1] , e, ee = setTpTw(dataColumn, realStepTime, tpValue, twValue, technique)
+            data['CONC'][-1] = concVec[i]
+            data['SENS'][-1] = itw
 
     return data
 

@@ -64,11 +64,10 @@ class CurveVolt(CurveEA):
             self.vec_current[i] =struct.unpack('d', dataUnc[index:index+8])[0]
             index+=8
 
-        return index
-
         # Decode probing data
         if (self.vec_param[60] != 0): ##60 = nonaveraged
             probingNum = struct.unpack('<i', dataUnc[index:index+4])[0]
             index+=4
             self.vec_probing = struct.unpack('f'*probingNum, dataUnc[index:index+probingNum*4])
 
+        return index

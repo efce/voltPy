@@ -161,6 +161,10 @@ class MethodManager:
         pass
 
 
+    def getInfo(self):
+        return self.__selected_method.printInfo()
+
+
     def register(self,m):
         if str(m) == self.methods[m.type()]:
             raise TypeError("Name " + str(m) + " already exists in " +
@@ -273,6 +277,10 @@ class Method(ABC):
         after all steps have been completed
         succssfuly.
         """
+        pass
+
+    @abstractmethod
+    def printInfo(self):
         pass
 
     @abstractmethod

@@ -220,12 +220,14 @@ def showAnalysis(request, user_id, analysis_id):
         return HttpResponseRedirect(reverse('analyze', args=[user.id, an.id]))
 
 
+    dataop = DataOperation(analysis=analysis_id)
     template = loader.get_template('manager/showAnalysis.html')
     context = {
             'user' : user,
             'analysis_id': an.id,
             'plot_width' : PlotMaker.plot_width,
             'plot_height' : PlotMaker.plot_height,
+            'text': dataop.getInfo()
     }
     return HttpResponse(template.render(context, request))
 

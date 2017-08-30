@@ -38,6 +38,9 @@ class DataOperation:
     def process(self, user, request):
         self.methodManager.process(user, request)
 
+    def getInfo(self):
+        return self.methodManager.getInfo()
+
 
     def getContent(self, user):
         if self.methodManager.redirect:

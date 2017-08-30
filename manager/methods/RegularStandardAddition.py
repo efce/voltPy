@@ -69,5 +69,8 @@ class RegularStandardAddition(AnalysisMethod):
         self.model.step = 0
         self.model.save()
 
+    def printInfo(self):
+        pass
+
 def newInstance(*args, **kwargs):
     return RegularStandardAddition(*args, **kwargs)

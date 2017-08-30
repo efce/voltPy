@@ -149,11 +149,12 @@ class ProcessUpload:
                     date=c.getDate() )
             cb.save()
 
-            if ( c.vec_param[Param.nonaveragedsampling] == 0 ):
-                pr = []
-            else:
-                pr = c.vec_probing
-
+#            if ( c.vec_param[Param.nonaveragedsampling] == 0 ):
+#                pr = []
+#            else:
+#                pr = c.vec_probing
+#
+            pr = c.vec_probing
             cv = CurveData(
                     curve = cb, 
                     date = c.getDate(), 

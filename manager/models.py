@@ -192,7 +192,7 @@ class Analysis(models.Model):
 
     id = models.AutoField(primary_key=True)
     owner = models.ForeignKey(User)
-    parameters = CompressedJSONField(default="")
+    params = CompressedJSONField(default="")
     date = models.DateField()
     name = models.TextField()
     method = models.TextField()
@@ -221,7 +221,7 @@ class Processing(models.Model):
 
     id = models.AutoField(primary_key=True)
     owner = models.ForeignKey(User)
-    parameters = CompressedJSONField(default="")
+    params = CompressedJSONField(default="")
     date = models.DateField()
     name = models.TextField()
     method = models.TextField()

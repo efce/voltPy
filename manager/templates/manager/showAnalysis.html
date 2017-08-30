@@ -5,5 +5,6 @@
 {% block real_content %}
 <p>Analysis ID: {{ analysis_id }} </p>
 <iframe width={{ plot_width }} height={{ plot_height }} src="{% url 'generatePlot' user.id 'a' analysis_id %}"></iframe>
+<p>{{ text }}</p>
 
 {% endblock %}
