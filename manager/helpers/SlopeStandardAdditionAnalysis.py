@@ -268,7 +268,7 @@ def SlopeStandardAdditionAnalysis(DATACELL, peakLocation, options):
             r['Median'] = np.median(r['Results'])
             r['Mean'] = np.average(r['Results'])
             r['RSD'] = r['STD']/r['Mean']
-            r['CI'] = t.isf(0.05, len(r['Results'])) * r['STD'] / len(r['Results'])
+            r['CI'] = t.isf(0.05, len(r['Results'])-1) * r['STD'] / len(r['Results'])
 
 
     """
