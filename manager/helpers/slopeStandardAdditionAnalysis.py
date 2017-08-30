@@ -6,7 +6,7 @@ from scipy.stats import t
 from scipy.interpolate import UnivariateSpline
 from normalEquationFit import normalEquationFit
 
-def SlopeStandardAdditionAnalysis(DATACELL, peakLocation, options):
+def slopeStandardAdditionAnalysis(DATACELL, peakLocation, options):
     """
 %
 % SlopeStandardAdditionAnalysis(DATACELL, peakLocation, options) is a function which tries
@@ -469,7 +469,7 @@ if ( __name__ == '__main__' ):
     data = pd.read_csv('Tl_120s_RAW.csv', header=None)
     datal = [ data[x].tolist() for x in range(0,len(data.columns))]
     stru = ps.prepareStructForSSAA(datal, [0,1,2,3,4,5,6,7], 40, 4, [10, 20, 30], 'dp')
-    finalResult = SlopeStandardAdditionAnalysis(stru, 105, {'forceSamePoints':True})
+    finalResult = slopeStandardAdditionAnalysis(stru, 105, {'forceSamePoints':True})
     import pprint
     pprint.pprint(finalResult)
     plt.show()
