@@ -1,6 +1,9 @@
+if ( __debug__):
+    import matplotlib.pyplot as plt
 import numpy as np
 from scipy.signal import savgol_filter
 from scipy.stats import t
+from scipy.interpolate import UnivariateSpline
 from normalEquationFit import normalEquationFit
 
 def SlopeStandardAdditionAnalysis(DATACELL, peakLocation, options):
@@ -101,6 +104,13 @@ def SlopeStandardAdditionAnalysis(DATACELL, peakLocation, options):
             for sig in sData['Y']:
                 sig = savgol_filter(sig, 13, 3)
 
+    """
+    if ( __debug__ ):
+        for key,sData in datas.items():
+            for sig in sData['Y']:
+                plt.plot(range(0,len(sig)), sig)
+    """
+
     # Very important step -- find the slope of each peak in inflection point.
     # By default it reuses the point where the slope was taken from the peak
     # with the highest concentration -- if the location of the peak
@@ -134,6 +144,7 @@ def SlopeStandardAdditionAnalysis(DATACELL, peakLocation, options):
             r['Fit'][s] = []
             r['R'][s] = []
             r['Slopes'][s] = []
+            r['CONC'] = datas[s]['CONC']
         for i,yvector in enumerate(sData['Y']):
             slopeL, slopeR, slopeAVG, fr =  getSlopeInInflection(
                             yvector, 
@@ -150,9 +161,11 @@ def SlopeStandardAdditionAnalysis(DATACELL, peakLocation, options):
     #=====================================================================
     for r_l_avg, r in result.items():
         for s,d in r['Slopes'].items():
-            r['Fit'][s] = normalEquationFit(datas[s]['CONC'], r['Slopes'][s])
+            r['Fit'][s] = normalEquationFit(r['CONC'], r['Slopes'][s])
+            #a = np.polyfit(datas[s]['CONC'], r['Slopes'][s],1)
+            #r['Fit'][s] = { 'slope': a[0], 'intercept': a[1] }
             tmp = np.corrcoef(
-                    [ r['Fit'][s]['slope']*x+r['Fit'][s]['intercept'] for x in datas[s]['CONC'] ],
+                    [ r['Fit'][s]['slope']*x+r['Fit'][s]['intercept'] for x in r['CONC'] ],
                     r['Slopes'][s] 
                 )
             r['R'][s] = tmp[0,1]
@@ -166,8 +179,9 @@ def SlopeStandardAdditionAnalysis(DATACELL, peakLocation, options):
     # We need to verify if slopes for each peak are found
     #====================================================
     for r_l_avg,r in result.items():
-        if None in r['Slopes']:
-            r['OK'] = False
+        for s in r['Slopes'].items():
+            if None in s[1]:
+                r['OK'] = False
 
     for r_l_avg,r in result.items():
         if not r['OK']:
@@ -185,7 +199,7 @@ def SlopeStandardAdditionAnalysis(DATACELL, peakLocation, options):
                 # difference will result in serious problem with precission
                 # (and possible accuracy) of the result
                 #==========================================================
-                if True or ( slopeProportion > (1+slopeDiffRequired) \
+                if ( slopeProportion > (1+slopeDiffRequired) \
                 or slopeProportion < (1-slopeDiffRequired) ):
                     # Matrix solution (not used for performance):
                     #toInv = np.array([ 
@@ -197,13 +211,27 @@ def SlopeStandardAdditionAnalysis(DATACELL, peakLocation, options):
                     #                        [-r['Fit'][s]['intercept']],
                     #                        [-r['Fit'][ss]['intercept']]
                     #                    ])
-                    x = ( (r['Fit'][s]['intercept']-r['Fit'][ss]['intercept'])\
-                          / (r['Fit'][ss]['slope']-r['Fit'][s]['slope']) )
+                    x = ( (r['Fit'][s]['intercept']-r['Fit'][ss]['intercept']) / (r['Fit'][ss]['slope']-r['Fit'][s]['slope']) )
                     y = r['Fit'][s]['slope'] * x + r['Fit'][s]['intercept']
                     r['Intersections'][s,ss] = (x,y)
                 else:
                     r['OK'] = False
                     print('Slopes for two sensitivities are too similar for %s' % r_l_avg )
+
+    if ( __debug__ ):
+        c = { 'L': 'y', 'R': 'r', 'AVG': 'b' }
+        for r_l_avg,r in result.items():
+            if r['OK']:
+                for s,d in r['Slopes'].items():
+                    flat_list = [item[0] for sublist in r['Intersections'] for item in
+                            sublist if not item == None ] 
+                    X = []
+                    X.extend(r['CONC'])
+                    X.extend(flat_list)
+                    plt.plot(r['CONC'], d, c[r_l_avg]+'o')
+                    y=[ r['Fit'][s]['slope']*x+r['Fit'][s]['intercept'] for x in X ]
+                    plt.plot(X,y,'-'+c[r_l_avg])
+                
 
     # Here, is a little trick, to remove the intersection points
     # which are too far from average. It is done by the means of
@@ -230,18 +258,26 @@ def SlopeStandardAdditionAnalysis(DATACELL, peakLocation, options):
     #fresL = -crossL(logical(triu(ones(size(crossL)),1)));
     #stdL = std(fresL);
     for r_l_avg, r in result.items():
-        s = 0
-        for s in r['Intersections']:
-            for ss in s:
-                if not ss == None:
-                    r['Results'].append(ss[0])
-        r['STD'] = np.std(r['Results'])
-        r['Median'] = np.median(r['Results'])
-        r['Mean'] = np.average(r['Results'])
-        r['CI'] = t.isf(0.05, len(r['Results'])) * r['STD'] / len(r['Results'])
+        if r['OK']:
+            s = 0
+            for s in r['Intersections']:
+                for ss in s:
+                    if not ss == None:
+                        r['Results'].append(-ss[0])
+            r['STD'] = np.std(r['Results'])
+            r['Median'] = np.median(r['Results'])
+            r['Mean'] = np.average(r['Results'])
+            r['RSD'] = r['STD']/r['Mean']
+            r['CI'] = t.isf(0.05, len(r['Results'])) * r['STD'] / len(r['Results'])
 
-    print(result)
 
+    """
+    import pprint
+    for r_l_avg, r in result.items():
+        print('==========================')
+        print('======%s========' % r_l_avg)
+        pprint.pprint(r)
+    """
     #TODO:FIXME: Na razie nie robie:
     # Here it selects, if it is possible to offer the final result, for which
     # set of data, the result is the best (left, right or average)
@@ -262,8 +298,27 @@ def SlopeStandardAdditionAnalysis(DATACELL, peakLocation, options):
     #else:
     #    raise ValueError('Could not select slope for calibration, please verify the data');
 
-    ##disp(sprintf('Partial results median: %0.6e ',median(fres)));
-    #print('The final result of standard addition: %d ± %d' % (mean(fres), (std(fres)/sqrt(numel(fres))*tinv(1-(.05/2),length(fres)-1))));
+    order_r=[]
+    for r_l_avg,r in result.items():
+        if r['OK']:
+            minr = 1
+            for rr in r['R'].items():
+                if rr[1] < minr:
+                    minr=rr[1]
+            r['SCORE'] = (1 if (minr>correlationTreshhold) else 0)*(1/r['STD'])
+        else:
+            r['SCORE'] = 0
+
+        order_r.append( (r_l_avg, r['SCORE']) )
+
+    order_r.sort(key=lambda x: x[1], reverse=True)
+    if ( __debug__ ):
+        print(order_r)
+
+    if (order_r[0][1] == 0):
+        raise ValueError('Could not obtain result.')
+    else:
+        return result[order_r[0][0]]
 
 
 # returns: [slopeL, slopeR, slopeAVGfitRange, fitRange] 
@@ -298,7 +353,7 @@ def getSlopeInInflection(signal, peak, forceFitRange, fitRange):
         fitL=normalEquationFit(fitX, signal[fitrangeL[0]:fitrangeL[1]])
         # Get linear fit on the rigth side
         #===========================
-        fitL=normalEquationFit(fitX, signal[fitrangeR[0]:fitrangeR[1]])
+        fitR=normalEquationFit(fitX, signal[fitrangeR[0]:fitrangeR[1]])
 
         # Get slopes:
         #======================
@@ -318,21 +373,21 @@ def getSlopeInInflection(signal, peak, forceFitRange, fitRange):
                 raise ValueError('Signal too small to fit data');
             fitrange =  ( fitPos-fitSize, fitPos );
             y = signal[fitrange[0]:fitrange[1]]
-            nfit = normalEquationFit(fitX, y)
+            fitL = normalEquationFit(fitX, y)
 
             if None == prevNormalFit.get('slope', None):
-                prevNormalFit = nfit;
-            elif ( nfit['slope'] < prevNormalFit['slope'] ):
+                prevNormalFit = fitL;
+            elif ( fitL['slope'] < prevNormalFit['slope'] ):
                 if ( hitCnt == 0 ):
                     finalFitrange = fitrange;
-                    finalNormalFit = nfit;
+                    finalNormalFit = fitL;
                 hitCnt += 1;
                 if ( hitCnt == maxHit ):
                     break;
-            elif ( nfit['slope'] >= prevNormalFit['slope'] ):
+            elif ( fitL['slope'] >= prevNormalFit['slope'] ):
                 finalNormalFit = {'slope': None, 'intercept': None }
                 hitCnt = 0;
-            prevNormalFit = nfit
+            prevNormalFit = fitL
 
         if None == finalNormalFit.get('slope', None): 
             print('Fit failed')
@@ -348,21 +403,21 @@ def getSlopeInInflection(signal, peak, forceFitRange, fitRange):
             #====================
             fitrange= (fitPos, (fitPos+fitSize) )
             y = signal[fitrange[0]:fitrange[1]]
-            nfit = normalEquationFit(fitX, y)
+            fitR = normalEquationFit(fitX, y)
 
             if None == prevNormalFit.get('slope', None):
-                prevNormalFit = nfit;
-            elif ( nfit['slope']  > prevNormalFit['slope'] ):
+                prevNormalFit = fitR;
+            elif ( fitR['slope']  > prevNormalFit['slope'] ):
                 if ( hitCnt == 0 ):
                     finalFitrange = fitrange
-                    finalNormalFit = nfit
+                    finalNormalFit = fitR
                 hitCnt += 1;
                 if ( hitCnt == maxHit ):
                     break;
-            elif ( nfit['slope'] <= prevNormalFit['slope'] ):
+            elif ( fitR['slope'] <= prevNormalFit['slope'] ):
                 finalNormalFit = {'slope': None, 'intercept': None };
                 hitCnt = 0;
-            prevNormalFit = nfit
+            prevNormalFit = fitR
 
         if None == finalNormalFit.get('slope', None):
             print('Fit failed')
@@ -372,60 +427,36 @@ def getSlopeInInflection(signal, peak, forceFitRange, fitRange):
 
         fitRange = [ fitrangeL, fitrangeR ]
 
+    """
+    if ( __debug__ ):
+        plt.plot(fitrangeL,[
+            fitL['slope']*1+fitL['intercept'],fitL['slope']*fitSize+fitL['intercept'] ])
+        plt.plot(fitrangeR,[
+            fitR['slope']*1+fitR['intercept'],fitR['slope']*fitSize+fitR['intercept'] ])
+    """
+
     # This part provide alternative method of getting the slope in the
     # infleciton, as any noise will make it much more difficult, here are
     # tested approaches. This overrites previous method, as is more
     # difficult to follow.
     #=====================================================================
-    '''
-    experimental = 1;
+    experimental = 1
 
-    if ( experimental == 1 )
-        a=( signal(fitrangeR(end))-signal(fitrangeL(1)) )/( fitrangeR(end)-fitrangeL(1));
-        b=signal(fitrangeL(1)) - a*fitrangeL(1);
-        p = [ a b ];
-        %p = polyfit( [ fitrangeL(1) fitrangeR(end) ]', signal([ fitrangeL(1) fitrangeR(end) ]),1), pause
-        levelPeak = signal - polyval(p,[ 1 : numel(signal) ])';
-        range2 = [ floor((fitrangeR(end)+fitrangeL(1))/2)-ceil(1.2*(fitrangeR(end)-fitrangeL(1))) ceil((fitrangeR(end)+fitrangeL(1))/2)+ceil(1.2*(fitrangeR(end)-fitrangeL(1))) ];
-        %levelPeak = levelPeak - min(levelPeak(range2(1):range2(end)));
-        f = fit( [range2(1):range2(end)]', levelPeak([range2(1):range2(end)]), 'smoothingspline' );
-        %figure(99);plot(f,[1:numel(signal)], levelPeak);hold on; pause
-        slopeL = f(fitrangeL(2)) - f(fitrangeL(1));
-        slopeR = f(fitrangeR(end)) - f(fitrangeR(end-1));
-    elseif ( experimental == 2 )
-        d1 = sgsdf(signal,2,1,0,0);
-        d2 = sgsdf(d1,2,1,0,0);
-        plot(signal,'k');hold on;plot(d1,'b'); hold on; plot(d2,'r')
-        vl=abs(d2(1));
-        pl=0;
-        vr=abs(d2(end));
-        pr=0;
-        fr = [ fitrangeL(1)-20 : fitrangeR(end)+20 ];
-        for i= fr;
-            if ( abs(d2(i)) < vl && d2(i)>d2(i-1) ) %signal is increasing
-                vl=abs(d2(i));
-                pl=i;
-            elseif ( abs(d2(i)) < vr && d2(i)<d2(i-1) ) %signal is decreasing
-                vr = abs(d2(i));
-                pr = i;
-            end
-        end
-
-        %Set final values:
-        %=================
-        if ( pl ~= 0 )
-            slopeL = d1(pl);
-        else
-            slopeL = NaN;
-        end
-        if ( pr ~= 0 )
-            slopeR = d1(pr);
-        else
-            slopeR = NaN;
-        end
-
-    end
-    '''
+    if ( experimental == 1 ):
+        a=( signal[fitrangeR[1]]-signal[fitrangeL[0]] )/( fitrangeR[1]-fitrangeL[0]);
+        b=signal[fitrangeL[0]] - a*fitrangeL[0];
+        lsig = [ a*x+b for x in np.arange(0,len(signal)) ]
+        levelPeak = np.subtract(signal, lsig);
+        spl = UnivariateSpline(np.arange(0,len(levelPeak)), levelPeak)
+        spl.set_smoothing_factor(0.1)
+        """
+        if ( __debug__ ):
+            plt.plot(np.arange(0,len(levelPeak)), spl(np.arange(0,len(levelPeak))))
+        """
+        midleft = np.floor((fitrangeL[1]+fitrangeL[0])/2)
+        midright = np.ceil((fitrangeR[1]+fitrangeR[0])/2)
+        slopeL = spl(midleft+1) - spl(midleft)
+        slopeR = spl(midright+1) - spl(midright)
 
     # Get average slope (rigth slope has negative slope (or should have):
     #==================================================================
@@ -437,5 +468,8 @@ if ( __name__ == '__main__' ):
     import pandas as pd
     data = pd.read_csv('Tl_120s_RAW.csv', header=None)
     datal = [ data[x].tolist() for x in range(0,len(data.columns))]
-    stru = ps.prepareStructForSSAA(datal, [0,1,2,3,4,5,6,7], 40, 4, [5, 10, 15], 'dp')
-    SlopeStandardAdditionAnalysis(stru, 105, {})
+    stru = ps.prepareStructForSSAA(datal, [0,1,2,3,4,5,6,7], 40, 4, [10, 20, 30], 'dp')
+    finalResult = SlopeStandardAdditionAnalysis(stru, 105, {'forceSamePoints':True})
+    import pprint
+    pprint.pprint(finalResult)
+    plt.show()
