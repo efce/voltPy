@@ -190,32 +190,6 @@ class SelectCurvesForCurveSetForm(forms.Form):
             return True
 
 
-class DeleteFileForm(forms.Form):
-    areyousure = forms.BooleanField(label = 'Are you sure?', required=False)
-
-    def __init__(self, file_id,  *args, **kwargs):
-        super(DeleteFileForm, self).__init__(*args, **kwargs)
-        self.fields['file_id'] = forms.CharField(widget=forms.HiddenInput(),
-                initial=file_id)
-
-    def process(self, user, file_id):
-        if ( self.cleaned_data['areyousure'] ):
-            if ( self.cleaned_data['areyousure'] == True ):
-                form_file_id = int(self.cleaned_data['file_id'])
-                if ( form_file_id != int(file_id) ):
-                    return False
-                try:
-                    f=CurveFile.objects.get(id=file_id)
-                    if f.canBeUpdatedBy(user):
-                        f.deleted = True
-                        f.save()
-                        return True
-                    else:
-                        return False
-                except:
-                    return False
-
-
 class DeleteForm(forms.Form):
     areyousure = forms.BooleanField(label = 'Are you sure?', required=False)
 
@@ -241,31 +215,6 @@ class DeleteForm(forms.Form):
                 except:
                     return False
 
-
-class DeleteCurveForm(forms.Form):
-    areyousure = forms.BooleanField(label = 'Are you sure?', required=False)
-
-    def __init__(self, curve_id,  *args, **kwargs):
-        super(DeleteCurveForm, self).__init__(*args, **kwargs)
-        self.fields['curve_id'] = forms.CharField(widget=forms.HiddenInput(),
-                initial=file_id)
-
-    def process(self, user, curve_id):
-        if ( self.cleaned_data['areyousure'] ):
-            if ( self.cleaned_data['areyousure'] == True ):
-                try:
-                    form_curve_id = int(self.cleaned_data['file_id'])
-                    if ( form_curve_id != int(curve_id) ):
-                        return False
-                    c=Curve.objects.get(id=curve_id)
-                    if c.canBeUpdatedBy(user):
-                        c.deleted = True
-                        c.save()
-                        return True
-                    else:
-                        return False
-                except:
-                    return False
 
 class SelectRange(forms.Form):
     rangeStart = forms.FloatField(label="Select Start")
