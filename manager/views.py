@@ -346,7 +346,7 @@ def upload(request, user_id):
         if form.is_valid():
             if ( form.process(user, request) == True ):
                 file_id = form.file_id
-                return HttpResponseRedirect(reverse('editFile', args=[user_id, file_id]))
+                return HttpResponseRedirect(reverse('editCurveFile', args=[user_id, file_id]))
     else:
         form = UploadFileForm()
 
@@ -390,7 +390,7 @@ def showCurveFile(request, user_id, file_id):
         form = SelectXForm(user_id, request.POST)
         if form.is_valid():
             if ( form.process(user) == True ):
-                return HttpResponseRedirect(reverse('showFile', args=[user_id, file_id]))
+                return HttpResponseRedirect(reverse('showCurveFile', args=[user_id, file_id]))
     else:
         form = SelectXForm(user_id)
 
