@@ -1,5 +1,6 @@
 from manager.method_manager import *
 from numpy import polyfit, corrcoef
+import numpy as np
 
 class RegularStandardAddition(AnalysisMethod):
     steps = ( 
@@ -60,12 +61,21 @@ class RegularStandardAddition(AnalysisMethod):
         if not data:
             return
         p = polyfit(data[0], data[1], 1)
-        self.model.fitEquation = '%f*x+%f' % (p[0],p[1])
+        self.model.fitEquation = {'slope': p[0], 'intercept': p[1] }
         self.model.result = p[1]/p[0]
+        self.model.resultStdDev = self.__Sx0(p[0],p[1],data[0],data[1])
         self.model.corrCoef = corrcoef(data[0], data[1])[0,1]
         self.model.completed = True
         self.model.step = 0
         self.model.save()
+
+
+    def __Sx0(self, slope, intercept, xvec, yvec):
+        yevec = [ slope*x+intercept for x in xvec ]
+        xmean = np.average(xvec)
+        sr = np.sqrt(1/(len(xvec)-2) * np.sum([ (yi-ye)**2 for yi,ye in zip(yvec, yevec)]))
+        sx0 = (sr/slope) * np.sqrt(1 + 1/len(xvec) + (yvec[0]-np.average(yvec))**2/(slope**2*np.sum([(xi-xmean)**2 for xi in xvec])))
+        return sx0
 
     def printInfo(self):
         import manager.plotmaker as pm
@@ -78,10 +88,11 @@ class RegularStandardAddition(AnalysisMethod):
                 'head': ''.join([p.required_scripts,scr]),
                 'body': ''.join([
                             div,
-                            'Equation: y={2}<br />Result: {0}, STD: {1}'.format(
+                            'Equation: y={2}*x+{3}<br />Result: {0}, STD: {1}'.format(
                                 self.model.result,
                                 self.model.resultStdDev,
-                                self.model.fitEquation)
+                                self.model.fitEquation['slope'],
+                                self.model.fitEquation['intercept'])
                             ])
                 }
 

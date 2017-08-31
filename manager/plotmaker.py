@@ -155,37 +155,18 @@ class PlotMaker:
         self.xlabel = 'concentration'
         self.ylabel = 'i / µA'
         # prepare data points
-        self._scatter.append(
-                {
-                    'x': analysis.dataMatrix[0], 
-                    'y': analysis.dataMatrix[1] 
-                }
-            )
-
+        self.processXY( 
+                    analysis.dataMatrix[0], 
+                    analysis.dataMatrix[1],
+                    False
+                )
         #prepare calibration line
         xs = analysis.dataMatrix[0]
         xs.append(-analysis.result)
-        x = min(xs) # x variable is used by the fitEquation
-        y1=eval(analysis.fitEquation) #should set y if not the equation is wrong
-        x1=x
-
-        x = max(xs)
-        y2=eval(analysis.fitEquation) #should set y if not the equation is wrong
-        x2=x
-        if y1:
-            vx = []
-            vx.append(x1)
-            vx.append(x2)
-            vy = []
-            vy.append(y1)
-            vy.append(y2)
-            self._line.append( 
-                    dict( 
-                        x=vx, 
-                        y=vy 
-                    )
-                )
-
+        vx= [ min(xs), max(xs) ] # x variable is used by the fitEquation
+        FofX = lambda xo: analysis.fitEquation['slope'] * xo + analysis.fitEquation['intercept']
+        vy = [FofX(xi) for xi in vx ]
+        self.processXY(vx,vy,True)
 
 
     def processXY(self, x, y, line=True):
