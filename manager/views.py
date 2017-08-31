@@ -98,7 +98,7 @@ def browseCurveSet(request, user_id):
         user=None
 
     try:
-        csets = CurveSet.objects.filter(owner=user_id)
+        csets = CurveSet.objects.filter(owner=user_id, deleted=False)
     except:
         csets = None
 
@@ -109,9 +109,9 @@ def browseCurveSet(request, user_id):
             'browse_by' : 'Curve Set',
             'user' : user,
             'disp' : csets,
-            'action1': 'showCurveSet',
-            'action2': 'editCurveSet',
-            'action2_text': ' (edit) ',
+            'action1': 'editCurveSet',
+            'action2': 'deleteCurveSet',
+            'action2_text': ' (delete) ',
             'whenEmpty' : "You have no curve sets. <a href=" +
                                 reverse('createCurveSet', args=[user_id]) + ">Prepare one</a>."
     }
@@ -119,6 +119,11 @@ def browseCurveSet(request, user_id):
 
 
 def deleteGeneric(request, user_id, item):
+    if item == None:
+        return HttpResponseRedirect(
+                    reverse('index', args=[user_id])
+                )
+
     try:
         user = User.objects.get(id=user_id)
     except:
@@ -160,21 +165,31 @@ def deleteCurveFile(request, user_id, file_id):
     return deleteGeneric(request, user_id, cfile)
 
 
-
 def deleteCurve(request, user_id, curve_id):
     try:
         c = Curve.objects.get(id=curve_id)
     except:
         c=None
-    return deleteGeneric(user_id, c)
+    return deleteGeneric(request, user_id, c)
 
 
 def deleteAnalysis(request, user_id, analysis_id):
     try:
-        a = Analysis.object.get(id=analysis_id)
+        a = Analysis.objects.get(id=analysis_id)
     except:
         a=None
-    return deleteGeneric(user_id, a)
+    return deleteGeneric(request, user_id, a)
+
+
+def deleteCurveSet(request, user_id, curveset_id):
+    try:
+        a = CurveSet.objects.get(id=curveset_id)
+        if ( a.locked ):
+            pass
+            #TODO: cannot be modified.
+    except:
+        a=None
+    return deleteGeneric(request, user_id, a)
 
 
 def createCurveSet(request, user_id):
