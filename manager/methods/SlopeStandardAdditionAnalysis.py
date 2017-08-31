@@ -1,5 +1,6 @@
 from manager.method_manager import *
 from manager.models import *
+import manager.plotmaker as pm
 from numpy import polyfit, corrcoef
 import json
 
@@ -67,14 +68,38 @@ class SlopeStandardAdditionAnalysis(AnalysisMethod):
             }
         self.model.fitEquation = result['Fit']
         self.model.result = result['Mean']
+        self.model.resultStdDev = result['STD']
         self.model.corrCoeff = result['R']
         self.model.completed = True
         self.model.step = 0
         self.model.save()
 
     def printInfo(self):
-        return 'result: %d' % self.model.result
-        pass
+        p=pm.PlotMaker()
+        p.plot_width = 500
+        p.plot_height = 400
+        self.model.dataMatrix = json.loads(self.model.dataMatrix)
+        xvec = list(self.model.dataMatrix['x'])
+        yvec = [ x[1] for x in self.model.dataMatrix['y'] ]
+        for yrow in yvec:
+            p.processXY(
+                    xvec,
+                    yrow,
+                    False)
+        self.model.fitEquation = json.loads(self.model.fitEquation)
+        print(type(self.model.fitEquation))
+        xvec.append(-self.model.result)
+        for fe in self.model.fitEquation.items():
+            Y = [ float(fe[1]['slope'])*float(x)+float(fe[1]['intercept']) for x in xvec ]
+            p.processXY(xvec,Y,True)
+
+        scripts,div = p.getEmbeded()
+        ret = { 
+            'head': ''.join([p.required_scripts,scripts]),
+            'body': ''.join([div, '<p>Result: {0}<br />STD: {1}</p>'.format(self.model.result, self.model.resultStdDev) ])
+            }
+
+        return ret
 
 def newInstance(*args, **kwargs):
     return SlopeStandardAdditionAnalysis(*args, **kwargs)

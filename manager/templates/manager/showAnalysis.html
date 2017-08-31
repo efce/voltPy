@@ -2,9 +2,15 @@
 
 {% block title %} Show {% endblock %}
 
+{% block scripts %} {{ head | safe }} {% endblock %}
+
 {% block real_content %}
-<p>Analysis ID: {{ analysis_id }} </p>
-<iframe width={{ plot_width }} height={{ plot_height }} src="{% url 'generatePlot' user.id 'a' analysis_id %}"></iframe>
-<p>{{ text }}</p>
+<p>Analysis ID: {{ analysis.id }} </p>
+<div style="float:left">
+<iframe width={{ plot_width }} height={{ plot_height }} src="{% url 'generatePlot' user.id 's' analysis.curveSet.id %}"></iframe>
+</div>
+<div style="float:left">
+<p>{{ text | safe }}</p>
+</div>
 
 {% endblock %}

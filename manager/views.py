@@ -38,7 +38,7 @@ def logout(request):
     return HttpResponseRedirect(reverse('indexNoUser'))
 
 
-def browseFiles(request, user_id):
+def browseCurveFile(request, user_id):
     try:
         user = User.objects.get(id=user_id)
     except:
@@ -54,8 +54,8 @@ def browseFiles(request, user_id):
             'browse_by' : 'files',
             'user' : user,
             'disp' : files,
-            'action1': "editFile",
-            'action2': "deleteFile",
+            'action1': "editCurveFile",
+            'action2': "deleteCurveFile",
             'action2_text': '(delete)',
             'whenEmpty' : "You have no files uploaded. <a href=" + 
                                 reverse('upload', args=[user_id]) + ">Upload one</a>."
@@ -86,15 +86,12 @@ def browseAnalysis(request, user_id):
     }
     return HttpResponse(template.render(context, request))
 
-def deleteAnalysis(request, user_id, analysis_id):
-    pass
-
 
 def editAnalysis(request, user_id, analysis_id):
     pass
 
 
-def browseCurveSets(request, user_id):
+def browseCurveSet(request, user_id):
     try:
         user = User.objects.get(id=user_id)
     except:
@@ -120,66 +117,64 @@ def browseCurveSets(request, user_id):
     }
     return HttpResponse(template.render(context, request))
 
-def deleteFile(request, user_id, file_id):
+
+def deleteGeneric(request, user_id, item):
     try:
         user = User.objects.get(id=user_id)
     except:
         user=None
-
+    itemclass = str(item.__class__.__name__)
     try:
-        file = CurveFile.objects.get(id=file_id)
+        if not item.canBeUpdatedBy(user):
+            raise PermissionError("Not allowed")
     except:
         if ( __debug__ ):
-            print("File not found with id: %s" % file_id)
-        return HttpResponseRedirect(reverse('browseFiles',
-            args=[user_id]))
-
+            print("Not allowed to edit %s by %s" % (item,user))
+        return HttpResponseRedirect(
+                    reverse('browse'+itemclass, args=[user_id])
+                )
     if request.method == 'POST':
-        form = DeleteFileForm(file_id, request.POST)
+        form = DeleteForm(item, request.POST)
         if form.is_valid():
-            if ( form.process(user, file_id) == True ):
-                return HttpResponseRedirect(reverse('browseFiles',
-                    args=[user_id]))
+            a = form.process(user, item)
+            if a:
+                return HttpResponseRedirect(
+                        reverse('browse'+itemclass, args=[user_id])
+                    )
     else:
-        form = DeleteFileForm(file_id)
+        form = DeleteForm(item)
 
     context = { 
             'form': form,
-            'file': file,
+            'item': item,
             'user': user
             }
-    return render(request, 'manager/deleteFile.html', context)
+    return render(request, 'manager/deleteGeneric.html', context)
+
+
+def deleteCurveFile(request, user_id, file_id):
+    try:
+        cfile = CurveFile.objects.get(id=file_id)
+    except:
+        cfile = None
+    return deleteGeneric(request, user_id, cfile)
+
 
 
 def deleteCurve(request, user_id, curve_id):
     try:
-        user = User.objects.get(id=user_id)
+        c = Curve.objects.get(id=curve_id)
     except:
-        user=None
+        c=None
+    return deleteGeneric(user_id, c)
 
+
+def deleteAnalysis(request, user_id, analysis_id):
     try:
-        file = Curve.objects.get(id=curve_id)
+        a = Analysis.object.get(id=analysis_id)
     except:
-        if ( __debug__ ):
-            print("Curve not found with id: %s" % file_id)
-        return HttpResponseRedirect(reverse('browseFiles',
-            args=[user_id]))
-
-    if request.method == 'POST':
-        form = DeleteCurveForm(curve_id, request.POST)
-        if form.is_valid():
-            if ( form.process(user, curve_id) == True ):
-                return HttpResponseRedirect(reverse('browseFiles',
-                    args=[user_id]))
-    else:
-        form = DeleteFileForm(curve_id)
-
-    context = { 
-            'form': form,
-            'curve': curve,
-            'user': user
-            }
-    return render(request, 'manager/deleteCurve.html', context)
+        a=None
+    return deleteGeneric(user_id, a)
 
 
 def createCurveSet(request, user_id):
@@ -222,12 +217,14 @@ def showAnalysis(request, user_id, analysis_id):
 
     dataop = DataOperation(analysis=analysis_id)
     template = loader.get_template('manager/showAnalysis.html')
+    info = dataop.getInfo()
     context = {
+            'head': info.get('head',''),
             'user' : user,
-            'analysis_id': an.id,
+            'analysis': an,
             'plot_width' : PlotMaker.plot_width,
             'plot_height' : PlotMaker.plot_height,
-            'text': dataop.getInfo()
+            'text': info.get('body','')
     }
     return HttpResponse(template.render(context, request))
 
@@ -345,7 +342,7 @@ def upload(request, user_id):
     return render(request, 'manager/uploadFile.html', context)
 
 
-def editFile(request, user_id, file_id,):
+def editCurveFile(request, user_id, file_id,):
     try:
         user = User.objects.get(id=user_id)
     except:
@@ -355,7 +352,7 @@ def editFile(request, user_id, file_id,):
         form = AddAnalytesForm(user, "File", file_id, request.POST)
         if form.is_valid():
             if ( form.process(user) == True ):
-                return HttpResponseRedirect(reverse('browseFiles', args=[user_id]))
+                return HttpResponseRedirect(reverse('browseCurveFile', args=[user_id]))
     else:
         form = AddAnalytesForm(user, "File", file_id)
     context = {
@@ -368,7 +365,7 @@ def editFile(request, user_id, file_id,):
     return render(request, 'manager/editFile.html', context)
 
 
-def showFile(request, user_id, file_id):
+def showCurveFile(request, user_id, file_id):
     try:
         user = User.objects.get(id=user_id)
     except:
@@ -400,7 +397,7 @@ def showFile(request, user_id, file_id):
     return HttpResponse(template.render(context, request))
 
 
-def processFile(request, user_id, file_id):
+def processCurveFile(request, user_id, file_id):
     #create curve set from file and call process curveset#
     pass
 

@@ -216,6 +216,32 @@ class DeleteFileForm(forms.Form):
                     return False
 
 
+class DeleteForm(forms.Form):
+    areyousure = forms.BooleanField(label = 'Are you sure?', required=False)
+
+    def __init__(self, item,  *args, **kwargs):
+        super(DeleteForm, self).__init__(*args, **kwargs)
+        self.fields['item_id'] = forms.CharField(
+                widget=forms.HiddenInput(),
+                initial=item.id)
+
+    def process(self, user, item):
+        if ( self.cleaned_data['areyousure'] ):
+            if ( self.cleaned_data['areyousure'] == True ):
+                form_item_id = int(self.cleaned_data['item_id'])
+                if ( form_item_id != int(item.id) ):
+                    return False
+                try:
+                    if item.canBeUpdatedBy(user):
+                        item.deleted = True
+                        item.save()
+                        return True
+                    else:
+                        return False
+                except:
+                    return False
+
+
 class DeleteCurveForm(forms.Form):
     areyousure = forms.BooleanField(label = 'Are you sure?', required=False)
 

@@ -70,7 +70,22 @@ class RegularStandardAddition(AnalysisMethod):
         self.model.save()
 
     def printInfo(self):
-        pass
+        import manager.plotmaker as pm
+        p = pm.PlotMaker()
+        p.processAnalysis(self.model.owner, self.model.id)
+        p.plot_width = 500
+        p.plot_height = 500
+        scr,div = p.getEmbeded()
+        return {
+                'head': ''.join([p.required_scripts,scr]),
+                'body': ''.join([
+                            div,
+                            'Equation: y={2}<br />Result: {0}, STD: {1}'.format(
+                                self.model.result,
+                                self.model.resultStdDev,
+                                self.model.fitEquation.replace('"',""))
+                            ])
+                }
 
 def newInstance(*args, **kwargs):
     return RegularStandardAddition(*args, **kwargs)
