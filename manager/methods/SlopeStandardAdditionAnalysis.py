@@ -2,7 +2,6 @@ from manager.method_manager import *
 from manager.models import *
 import manager.plotmaker as pm
 from numpy import polyfit, corrcoef
-import json
 
 class SlopeStandardAdditionAnalysis(AnalysisMethod):
     steps = ( 
@@ -47,8 +46,6 @@ class SlopeStandardAdditionAnalysis(AnalysisMethod):
         from manager.helpers.slopeStandardAdditionAnalysis import slopeStandardAdditionAnalysis
         from manager.helpers.prepareStructForSSAA import prepareStructForSSAA
         from manager.curveea import Param
-        print('----')
-        print(self.model.params)
         peak = self.model.params.get('selectedIndex', 0)
         X = []
         Conc = []
@@ -62,10 +59,10 @@ class SlopeStandardAdditionAnalysis(AnalysisMethod):
         #TODO: proper selection of values
         prepare = prepareStructForSSAA(X,Conc, tptw, 3,[3,7,13],'dp') 
         result = slopeStandardAdditionAnalysis(prepare, peak, {'forceSamePoints': True})
-        self.model.dataMatrix = { 
-                'x': result['CONC'], 
-                'y': [ x for x in result['Slopes'].items() ]
-            }
+        self.model.dataMatrix = [ 
+                result['CONC'], 
+                [ x for x in result['Slopes'].items() ]
+            ]
         self.model.fitEquation = result['Fit']
         self.model.result = result['Mean']
         self.model.resultStdDev = result['STD']
@@ -78,20 +75,18 @@ class SlopeStandardAdditionAnalysis(AnalysisMethod):
         p=pm.PlotMaker()
         p.plot_width = 500
         p.plot_height = 400
-        self.model.dataMatrix = json.loads(self.model.dataMatrix)
-        xvec = list(self.model.dataMatrix['x'])
-        yvec = [ x[1] for x in self.model.dataMatrix['y'] ]
-        for yrow in yvec:
+        xvec = self.model.dataMatrix[0]
+        yvec = self.model.dataMatrix[1]
+        for sens,yrow in yvec:
             p.processXY(
                     xvec,
                     yrow,
                     False)
-        self.model.fitEquation = json.loads(self.model.fitEquation)
-        print(type(self.model.fitEquation))
-        xvec.append(-self.model.result)
-        for fe in self.model.fitEquation.items():
-            Y = [ float(fe[1]['slope'])*float(x)+float(fe[1]['intercept']) for x in xvec ]
-            p.processXY(xvec,Y,True)
+        xvec2 = list(xvec)
+        xvec2.append(-self.model.result)
+        for k,fe in self.model.fitEquation.items():
+            Y = [ fe['slope']*x+fe['intercept'] for x in xvec2 ]
+            p.processXY(xvec2,Y,True)
 
         scripts,div = p.getEmbeded()
         ret = { 

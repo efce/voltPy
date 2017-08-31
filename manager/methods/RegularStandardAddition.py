@@ -1,6 +1,5 @@
 from manager.method_manager import *
 from numpy import polyfit, corrcoef
-import json
 
 class RegularStandardAddition(AnalysisMethod):
     steps = ( 
@@ -33,7 +32,6 @@ class RegularStandardAddition(AnalysisMethod):
 
     def processStep(self, user, stepNum, data):
         print('process step: %i' % stepNum)
-        print(data)
         self.model.paraters = data
         yvalues = []
         xvalues = []
@@ -83,7 +81,7 @@ class RegularStandardAddition(AnalysisMethod):
                             'Equation: y={2}<br />Result: {0}, STD: {1}'.format(
                                 self.model.result,
                                 self.model.resultStdDev,
-                                self.model.fitEquation.replace('"',""))
+                                self.model.fitEquation)
                             ])
                 }
 

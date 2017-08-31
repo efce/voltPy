@@ -1,5 +1,5 @@
 from django.db import models
-from .compressedjsonfield import CompressedJSONField
+from picklefield.fields import PickledObjectField
 
 
 class Group(models.Model):
@@ -50,7 +50,7 @@ class Curve(models.Model):
     orderInFile = models.IntegerField()
     name    = models.TextField()
     comment = models.TextField()
-    params  = CompressedJSONField()# JSON List 
+    params  = PickledObjectField()# JSON List 
     date = models.DateField()
     deleted = models.BooleanField(default=0)
 
@@ -100,12 +100,12 @@ class CurveData(models.Model):
     date = models.DateField()
     name      = models.TextField()# Name of transformation (empty for unaltered)
     method    = models.TextField()# Field empty when data unaltered
-    time = CompressedJSONField()
-    potential = CompressedJSONField()# JSON List 
-    current   = CompressedJSONField()# JSON List 
-    concentration = CompressedJSONField()# JSON List
-    concentrationUnits = CompressedJSONField()#JSON List
-    probingData = CompressedJSONField()# JSON List 
+    time = PickledObjectField()
+    potential = PickledObjectField()# JSON List 
+    current   = PickledObjectField()# JSON List 
+    concentration = PickledObjectField()# JSON List
+    concentrationUnits = PickledObjectField()#JSON List
+    probingData = PickledObjectField()# JSON List 
 
     def isOwnedBy(self, user):
         return (self.curve.curveFile.owner == user)
@@ -186,13 +186,13 @@ class Analysis(models.Model):
     result = models.FloatField(null=True)
     resultStdDev = models.FloatField(null=True)
     corrCoef = models.FloatField(null=True)
-    dataMatrix = CompressedJSONField() 
-    fitEquation =CompressedJSONField()
+    dataMatrix = PickledObjectField() 
+    fitEquation =PickledObjectField()
     analyte=models.ManyToManyField(Analyte)
 
     id = models.AutoField(primary_key=True)
     owner = models.ForeignKey(User)
-    params = CompressedJSONField(default="")
+    params = PickledObjectField(default="")
     date = models.DateField()
     name = models.TextField()
     method = models.TextField()
@@ -221,7 +221,7 @@ class Processing(models.Model):
 
     id = models.AutoField(primary_key=True)
     owner = models.ForeignKey(User)
-    params = CompressedJSONField(default="")
+    params = PickledObjectField(default="")
     date = models.DateField()
     name = models.TextField()
     method = models.TextField()

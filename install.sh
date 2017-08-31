@@ -4,10 +4,10 @@ if [ $(id -u) -ne 0 ]; then
 	exit 1
 fi
 pip install django
-pip install jsonfield
 pip install matplotlib
 pip install unipath
 pip install bokeh
 pip install numpy
 pip install scipy
 pip install pandas
+pip install django-picklefield
