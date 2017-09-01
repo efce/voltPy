@@ -4,7 +4,7 @@ import numpy as np
 from scipy.signal import savgol_filter
 from scipy.stats import t
 from scipy.interpolate import UnivariateSpline
-from manager.helpers.normalEquationFit import normalEquationFit
+from manager.helpers.fithelpers import calc_calc_normal_equation_fit
 
 def slopeStandardAdditionAnalysis(DATACELL, peakLocation, options):
     """
@@ -161,7 +161,7 @@ def slopeStandardAdditionAnalysis(DATACELL, peakLocation, options):
     #=====================================================================
     for r_l_avg, r in result.items():
         for s,d in r['Slopes'].items():
-            r['Fit'][s] = normalEquationFit(r['CONC'], r['Slopes'][s])
+            r['Fit'][s] = calc_normal_equation_fit(r['CONC'], r['Slopes'][s])
             #a = np.polyfit(datas[s]['CONC'], r['Slopes'][s],1)
             #r['Fit'][s] = { 'slope': a[0], 'intercept': a[1] }
             tmp = np.corrcoef(
@@ -349,10 +349,10 @@ def getSlopeInInflection(signal, peak, forceFitRange, fitRange):
 
         # Get linear fit on the left side
         #===========================
-        fitL=normalEquationFit(fitX, signal[fitrangeL[0]:fitrangeL[1]])
+        fitL=calc_normal_equation_fit(fitX, signal[fitrangeL[0]:fitrangeL[1]])
         # Get linear fit on the rigth side
         #===========================
-        fitR=normalEquationFit(fitX, signal[fitrangeR[0]:fitrangeR[1]])
+        fitR=calc_normal_equation_fit(fitX, signal[fitrangeR[0]:fitrangeR[1]])
 
         # Get slopes:
         #======================
@@ -372,7 +372,7 @@ def getSlopeInInflection(signal, peak, forceFitRange, fitRange):
                 raise ValueError('Signal too small to fit data');
             fitrange =  ( fitPos-fitSize, fitPos );
             y = signal[fitrange[0]:fitrange[1]]
-            fitL = normalEquationFit(fitX, y)
+            fitL = calc_normal_equation_fit(fitX, y)
 
             if None == prevNormalFit.get('slope', None):
                 prevNormalFit = fitL;
@@ -402,7 +402,7 @@ def getSlopeInInflection(signal, peak, forceFitRange, fitRange):
             #====================
             fitrange= (fitPos, (fitPos+fitSize) )
             y = signal[fitrange[0]:fitrange[1]]
-            fitR = normalEquationFit(fitX, y)
+            fitR = calc_normal_equation_fit(fitX, y)
 
             if None == prevNormalFit.get('slope', None):
                 prevNormalFit = fitR;

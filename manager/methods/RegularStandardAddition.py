@@ -1,5 +1,6 @@
 from manager.method_manager import *
-from numpy import polyfit, corrcoef
+from numpy import corrcoef
+from manager.helpers.fithelpers import calc_normal_equation_fit, calc_sx0
 import numpy as np
 
 class RegularStandardAddition(AnalysisMethod):
@@ -60,10 +61,10 @@ class RegularStandardAddition(AnalysisMethod):
         data = self.model.dataMatrix
         if not data:
             return
-        p = polyfit(data[0], data[1], 1)
-        self.model.fitEquation = {'slope': p[0], 'intercept': p[1] }
-        self.model.result = p[1]/p[0]
-        self.model.resultStdDev = self.__Sx0(p[0],p[1],data[0],data[1])
+        p = calc_normal_equation_fit(data[0], data[1])
+        self.model.fitEquation = p
+        self.model.result = p['intercept']/p['slope']
+        self.model.resultStdDev = calc_sx0(p['slope'],p['intercept'],data[0],data[1])
         self.model.corrCoef = corrcoef(data[0], data[1])[0,1]
         self.model.completed = True
         self.model.step = 0
