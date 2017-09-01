@@ -108,6 +108,8 @@ class DataOperation:
                     deleted = False
                 )
             a.save()
+            cs.locked=True #CurveSet cannot be changed when used by Analysis method.
+            cs.save()
             return a.id
 
     class ProcessingSelectForm(forms.Form):
@@ -133,7 +135,7 @@ class DataOperation:
 
         def process(self, user):
             try:
-                cs = CurveSet.objects.get(id=self.parent.curveset_id, owner=user)
+                cs = CurveSet.objects.get(id=self.parent.curveset_id, owner=user, locked=False)
             except:
                 raise 404
             a = Processing(

@@ -292,6 +292,18 @@ def editCurveSet(request,user_id,curveset_id):
     except:
         user=None
 
+    try:
+        cs=CurveSet.objects.get(id=curveset_id)
+    except:
+        raise 404
+
+    if not cs.canBeReadBy(user):
+        raise 3
+
+    if ( cs.locked ):
+        #show that is is locked
+        pass
+
     dataop = DataOperation(curveset=curveset_id)
 
     if request.method == 'POST':
@@ -303,7 +315,8 @@ def editCurveSet(request,user_id,curveset_id):
         else:
             formGenerate = dataop.getAnalysisSelectForm()
 
-        if ( 'startProcessing' in request.POST ):
+        if ( not cs.locked
+        and 'startProcessing' in request.POST ):
             formProc = dataop.getProcessingSelectForm(request.POST)
             if ( formProc.is_valid() ):
                 procid = formProc.process(user)

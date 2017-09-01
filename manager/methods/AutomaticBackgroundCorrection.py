@@ -34,6 +34,8 @@ class AutomaticBackgroundCorrection(ProcessingMethod):
 
     def finalize(self, *args, **kwargs):
         import numpy as np
+        if self.model.curveSet.locked:
+            raise ValueError("CurveSet used by Analysis method cannot be changed.")
         for cd in self.model.curveSet.usedCurveData.all():
             newcd = deepcopy(cd)
             newcd.id = None
