@@ -91,7 +91,9 @@ class DataOperation:
             self.fields['method'] = forms.ChoiceField(
                     choices=choices,
                     required=True, 
-                    label='Analysis method')
+                    label='Analysis method'
+                    )
+            
 
         def process(self, user):
             try:
@@ -119,6 +121,10 @@ class DataOperation:
         """
         def __init__(self, parent, *args, **kwargs):
             self.parent = parent
+            try:
+                cs = CurveSet.objects.get(id=self.parent.curveset_id)
+            except:
+                raise 404
             super(DataOperation.ProcessingSelectForm, self).__init__(*args, **kwargs)
             choices = list(
                             zip(
@@ -131,7 +137,8 @@ class DataOperation:
             self.fields['method'] = forms.ChoiceField(
                     choices=choices,
                     required=True, 
-                    label='Processing method')
+                    label='Processing method',
+                    disabled=cs.locked)
 
         def process(self, user):
             try:
