@@ -98,7 +98,7 @@ class CurveData(models.Model):
     id = models.AutoField(primary_key=True)
     curve = models.ForeignKey(Curve, on_delete=models.CASCADE)
     date = models.DateField()
-    method    = models.TextField()# Field empty when data unaltered
+    processing = models.ForeignKey('Processing', null=True, default=None) #What it was processed with
     time = PickledObjectField()
     potential = PickledObjectField()# JSON List 
     current   = PickledObjectField()# JSON List 

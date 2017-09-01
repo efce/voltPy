@@ -158,7 +158,7 @@ class ProcessUpload:
             cv = CurveData(
                     curve = cb, 
                     date = c.getDate(), 
-                    method = c.getMethod(),
+                    processing = None,
                     time = c.vec_time, 
                     potential = c.vec_potential,
                     current = c.vec_current, 
