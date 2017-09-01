@@ -73,8 +73,8 @@ class RegularStandardAddition(AnalysisMethod):
     def __Sx0(self, slope, intercept, xvec, yvec):
         yevec = [ slope*x+intercept for x in xvec ]
         xmean = np.average(xvec)
-        sr = np.sqrt(1/(len(xvec)-2) * np.sum([ (yi-ye)**2 for yi,ye in zip(yvec, yevec)]))
-        sx0 = (sr/slope) * np.sqrt(1 + 1/len(xvec) + (yvec[0]-np.average(yvec))**2/(slope**2*np.sum([(xi-xmean)**2 for xi in xvec])))
+        sr = np.sqrt(1/(len(xvec)-2) * np.sum((yi-ye)**2 for yi,ye in zip(yvec, yevec)))
+        sx0 = (sr/slope) * np.sqrt(1 + 1/len(xvec) + (yvec[0]-np.average(yvec))**2/(slope**2*np.sum((xi-xmean)**2 for xi in xvec)))
         return sx0
 
     def printInfo(self):
