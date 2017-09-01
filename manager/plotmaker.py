@@ -105,7 +105,7 @@ class PlotMaker:
 
         if onx == 'S':
             for cb in curves:
-                cvs = CurveData.objects.filter(curve=cb)
+                cvs = CurveData.objects.filter(curve=cb, method="")
                 for cv in cvs:
                     self._line.append(
                             dict(
@@ -116,7 +116,7 @@ class PlotMaker:
 
         elif onx == 'T':
             for cb in curves:
-                cvs = CurveData.objects.filter(curve=cb)
+                cvs = CurveData.objects.filter(curve=cb, method="")
                 for cv in cvs:
                     self._line.append(
                             dict(
@@ -127,7 +127,7 @@ class PlotMaker:
 
         else:
             for cb in curves:
-                cvs = CurveData.objects.filter(curve=cb)
+                cvs = CurveData.objects.filter(curve=cb, method="")
                 for cv in cvs:
                     self._line.append(
                             dict(

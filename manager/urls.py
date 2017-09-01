@@ -37,6 +37,8 @@ urlpatterns = [
         views.deleteCurveSet, name='deleteCurveSet'),
     url(r'^(?P<user_id>[0-9]+)/analyze/(?P<analysis_id>[0-9]+)/$', 
         views.analyze, name='analyze'),
+    url(r'^(?P<user_id>[0-9]+)/process/(?P<processing_id>[0-9]+)/$', 
+        views.process, name='process'),
     url(r'^(?P<user_id>[0-9]+)/show-analysis/(?P<analysis_id>[0-9]+)/$', 
         views.showAnalysis, name='showAnalysis'),
     url(r'^(?P<user_id>[0-9]+)/browse-analysis/$', 

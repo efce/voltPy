@@ -98,13 +98,10 @@ class CurveData(models.Model):
     id = models.AutoField(primary_key=True)
     curve = models.ForeignKey(Curve, on_delete=models.CASCADE)
     date = models.DateField()
-    name      = models.TextField()# Name of transformation (empty for unaltered)
     method    = models.TextField()# Field empty when data unaltered
     time = PickledObjectField()
     potential = PickledObjectField()# JSON List 
     current   = PickledObjectField()# JSON List 
-    concentration = PickledObjectField()# JSON List
-    concentrationUnits = PickledObjectField()#JSON List
     probingData = PickledObjectField()# JSON List 
 
     def isOwnedBy(self, user):
@@ -217,8 +214,7 @@ class Analysis(models.Model):
 
 
 class Processing(models.Model):
-    curves = models.ManyToManyField(Curve)
-
+    curveSet = models.ForeignKey(CurveSet)
     id = models.AutoField(primary_key=True)
     owner = models.ForeignKey(User)
     params = PickledObjectField(default="")

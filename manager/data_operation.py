@@ -13,13 +13,17 @@ class DataOperation:
     This class is used to streamline the usage of MethodManager.
     """
     def __init__(self, **kwargs):
-        if ( 'curves' in kwargs ):
-            self.operation = 'processing'
-            self.curves_ids = kwargs.get('curves').split(",")
-            self.curves_ids = [ int(x) for x in self.curves_ids ]
-        elif ( 'curveset' in kwargs ):
-            self.operation = 'processing'
+        if ( 'curveset' in kwargs ):
+            self.operation = 'other'
             self.curveset_id = int(kwargs.get('curveset'))
+        elif ( 'processing' in kwargs ):
+            self.operation = 'processing'
+            self.processing_id = int(kwargs.get('processing'))
+            try:
+                self.processing = Processing.objects.get(id=self.processing_id)
+                self.curveset_id = self.processing.curveSet.id
+            except:
+                raise 404
         elif ( 'analysis' in kwargs ):
             self.operation = 'analysis'
             self.analysis_id = int(kwargs.get('analysis'))
@@ -33,6 +37,8 @@ class DataOperation:
         self.methodManager.loadMethods()
         if ( self.operation == 'analysis' ):
             self.methodManager.setAnalysis(self.analysis)
+        elif ( self.operation == 'processing' ):
+            self.methodManager.setProcessing(self.processing)
 
 
     def process(self, user, request):
@@ -62,6 +68,10 @@ class DataOperation:
         return DataOperation.AnalysisSelectForm(self, *args, **kwargs)
 
 
+    def getProcessingSelectForm(self, *args, **kwargs):
+        return DataOperation.ProcessingSelectForm(self, *args, **kwargs)
+
+
     class AnalysisSelectForm(forms.Form):
         """
         Should not be obtained directly, only by:
@@ -78,7 +88,10 @@ class DataOperation:
                             )
                         )
 
-            self.fields['method'] = forms.ChoiceField(choices=choices, required=True)
+            self.fields['method'] = forms.ChoiceField(
+                    choices=choices,
+                    required=True, 
+                    label='Analysis method')
 
         def process(self, user):
             try:
@@ -93,6 +106,45 @@ class DataOperation:
                     name = "",
                     step = 0,
                     deleted = False
+                )
+            a.save()
+            return a.id
+
+    class ProcessingSelectForm(forms.Form):
+        """
+        Should not be obtained directly, only by:
+        DataOperation.getProcessingSelectForm
+        """
+        def __init__(self, parent, *args, **kwargs):
+            self.parent = parent
+            super(DataOperation.ProcessingSelectForm, self).__init__(*args, **kwargs)
+            choices = list(
+                            zip(
+                                [ str(x) for x in
+                                    parent.methodManager.getProcessingMethods() ],
+                                parent.methodManager.getProcessingMethods()
+                            )
+                        )
+
+            self.fields['method'] = forms.ChoiceField(
+                    choices=choices,
+                    required=True, 
+                    label='Processing method')
+
+        def process(self, user):
+            try:
+                cs = CurveSet.objects.get(id=self.parent.curveset_id, owner=user)
+            except:
+                raise 404
+            a = Processing(
+                    owner = user,
+                    curveSet = cs,
+                    date = timezone.now(),
+                    method = self.cleaned_data.get('method'),
+                    name = "",
+                    step = 0,
+                    deleted = False,
+                    completed = False
                 )
             a.save()
             return a.id

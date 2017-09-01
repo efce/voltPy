@@ -35,5 +35,13 @@
 	<tr><td><input type="submit" name="startAnalyze" value="Start Analysis" /></td></tr>
 	</table>
 </form>
+<hr />
+<form method="post" action="" enctype="multipart/form-data" id="concform">
+	<table>
+	{% csrf_token %}
+	{{ startProcessing.as_table }}
+	<tr><td><input type="submit" name="startProcessing" value="Start Processing" /></td></tr>
+	</table>
+</form>
 </div>
 {% endblock %}

@@ -303,6 +303,14 @@ def editCurveSet(request,user_id,curveset_id):
         else:
             formGenerate = dataop.getAnalysisSelectForm()
 
+        if ( 'startProcessing' in request.POST ):
+            formProc = dataop.getProcessingSelectForm(request.POST)
+            if ( formProc.is_valid() ):
+                procid = formProc.process(user)
+                return HttpResponseRedirect(reverse('process', args=[user_id, procid]))
+        else:
+            formProc = dataop.getProcessingSelectForm()
+
         if ( 'submitFormAnalyte' in request.POST ):
             formAnalyte = AddAnalytesForm(user, "CurveSet", curveset_id, request.POST)
             if formAnalyte.is_valid():
@@ -314,6 +322,7 @@ def editCurveSet(request,user_id,curveset_id):
     else:
         formAnalyte = AddAnalytesForm(user, "CurveSet", curveset_id)
         formGenerate = dataop.getAnalysisSelectForm()
+        formProc = dataop.getProcessingSelectForm()
 
     try:
         cs = CurveSet.objects.get(id=curveset_id)
@@ -326,6 +335,7 @@ def editCurveSet(request,user_id,curveset_id):
     context = { 
             'formAnalyte': formAnalyte, 
             'startAnalyze' : formGenerate,
+            'startProcessing' : formProc,
             'user' : user, 
             'curveset_id' : curveset_id, 
             'plot_width' : PlotMaker.plot_width,
@@ -429,12 +439,14 @@ def analyze(request, user_id, analysis_id):
     return dataop.getContent(user) 
 
 
-def processing(request, user_id, processing_id):
+def process(request, user_id, processing_id):
     try:
         user = User.objects.get(id=user_id)
     except:
         user=None
-    return True
+    dataop = DataOperation(processing = processing_id)
+    dataop.process(user, request)
+    return dataop.getContent(user) 
 
 
 @never_cache

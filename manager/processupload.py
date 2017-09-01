@@ -162,8 +162,6 @@ class ProcessUpload:
                     time = c.vec_time, 
                     potential = c.vec_potential,
                     current = c.vec_current, 
-                    concentration = "",
-                    concentrationUnits = "",
                     probingData = pr )
             cv.save()
 
