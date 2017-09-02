@@ -10,6 +10,9 @@ $(function() {
     $(e.target).closest('ul').children(".childClass").toggleClass("visible invisible");
     $(e.target).toggleClass("upsidedown upsideup")
   });
+  $('.parent').change(function() {
+    $(this).closest('.parentUL').find('.child').prop('checked', this.checked);
+  });
 });
 </script>
 {% endblock %}
@@ -42,6 +45,7 @@ li {
 }
 .invisible {
 height: 0px;
+overflow: hidden;
 }
 .visible {
 height: 30px;
