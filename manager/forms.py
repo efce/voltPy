@@ -150,6 +150,7 @@ class SelectCurvesForCurveSetForm(forms.Form):
 
         self.fields['FILES'] = forms.CharField(
                 label='',
+                required=False,
                 initial='Files:')
         self.fields['FILES'].widget.attrs['readonly'] = True
         order.append('FILES')
@@ -166,7 +167,10 @@ class SelectCurvesForCurveSetForm(forms.Form):
                         forms.BooleanField(label = c, required = False )
                 self.fields[cname].widget.attrs['class'] = 'child'
                 order.append(cname)
-            self.fields['end_'+fname] = forms.CharField( label='', initial='')
+            self.fields['end_'+fname] = forms.CharField( 
+                    label='', 
+                    required=False,
+                    initial='')
             self.fields['end_'+fname].widget.attrs['readonly'] = True
             self.fields['end_'+fname].widget.attrs['class'] = 'invisible'
             order.append('end_'+fname)
@@ -174,6 +178,7 @@ class SelectCurvesForCurveSetForm(forms.Form):
         css = CurveSet.objects.filter(owner=user, deleted=False)
         self.fields['CURVESETS'] = forms.CharField(
                 label='',
+                required=False,
                 initial='Curve Sets:')
         self.fields['CURVESETS'].widget.attrs['readonly'] = True
         order.append('CURVESETS')
@@ -193,46 +198,83 @@ class SelectCurvesForCurveSetForm(forms.Form):
                         forms.BooleanField(label = c.curve, required = False )
                 self.fields[cname].widget.attrs['class'] = 'child'
                 order.append(cname)
-            self.fields['end_'+csname] = forms.CharField( label='', initial='')
+            self.fields['end_'+csname] = forms.CharField( 
+                    label='', 
+                    required=False,
+                    initial='')
             self.fields['end_'+csname].widget.attrs['readonly'] = True
             self.fields['end_'+csname].widget.attrs['class'] = 'invisible'
             order.append('end_'+csname)
-        self.order_fields(order)
+        self.keyOrder=order
 
 
     def process(self, user):
-        curves = []
+        files = []
+        curvesets = []
+        final_curvedatas = []
         for name,val in self.cleaned_data.items():
-            if "curve_" in name:
-                if ( val == True ) :
-                    curve_id = int(name[6:])
-                    c = Curve.objects.get(id=curve_id)
-                    if not c.canBeUpdatedBy(user):
-                        return False
-                    curves.append(c)
-        if curves:
-            analyte = AnalyteInCurve.objects.filter(curve=curves[0].id)
-            if not analyte:
-                analyte = None
-            else:
-                analyte = analyte[0].analyte.name
+            if ( '_' in name ):
+                nameSplit = name.split('_')
+                if "end_" in nameSplit[0]:
+                    continue
+                if "curve" in nameSplit[0]:
+                    if ( val == True ) :
+                        if ( name[3] in files ):
+                            continue
+                        vid = int(nameSplit[1])
+                        c = Curve.objects.get(id=vid)
+                        if not c.canBeReadBy(user):
+                            raise 3
+                        cd = CurveData.objects.get(curve=c, processing=None)
+                        final_curvedatas.append(cd)
+                        
+                elif "curveData" in nameSplit[0]:
+                    if ( val == True ) :
+                        if ( name[3] in curvesets ):
+                            continue
+                        vid = int(nameSplit[1])
+                        cd = CurveData.objects.get(id=vid)
+                        if not cd.canBeReadBy(user):
+                            raise 3
+                        final_curvedatas.append(cd)
 
-            cs = CurveSet(
-                    owner = user,
-                    name = self.cleaned_data['name'],
-                    date = timezone.now(),
-                    locked = False,
-                    deleted = False)
-            cs.save()
-            self.curvesetid = cs.id
-            for c in curves:
-                try:
-                    cd = CurveData.objects.filter(curve=c)[0]
-                    cs.usedCurveData.add(cd)
-                except:
-                    return False
-            cs.save()
-            return True
+                elif "curveFile" in nameSplit[0]:
+                    if ( val == True ) :
+                        vid = int(nameSplit[1])
+                        cf = CurveFile.objects.get(id=vid)
+                        if not cf.canBeReadBy(user):
+                            raise 3
+                        files.append(cf.id)
+                        cc = Curve.objects.filter(curveFile=cf, deleted=False)
+                        for c in cc.all():
+                            cd = CurveData.objects.get(curve=c, processing=None)
+                            final_curvedatas.append(cd)
+
+                elif "curveSet" in nameSplit[0]:
+                    if ( val == True ) :
+                        vid = int(nameSplit[1])
+                        cs = CurveSet.objects.get(id=vid)
+                        if not cs.canBeReadBy(user):
+                            raise 3
+                        curvesets.append(cs.id)
+                        for cd in cs.usedCurveData.all():
+                            final_curvedatas.append(cs)
+
+        if len(final_curvedatas) == 0:
+            return False
+
+        cs = CurveSet(
+                owner = user,
+                name = self.cleaned_data['name'],
+                date = timezone.now(),
+                locked = False,
+                deleted = False)
+        cs.save()
+        self.curvesetid = cs.id
+        for cd in final_curvedatas:
+            cs.usedCurveData.add(cd)
+        cs.save()
+        return True
 
 
 class DeleteForm(forms.Form):

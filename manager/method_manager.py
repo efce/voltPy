@@ -82,7 +82,8 @@ class MethodManager:
         self.__selected_method.setModel(model)
         self.__current_step_number = model.step
         self.__current_step = self.__selected_method.getStep(self.__current_step_number)
-        print(self.__current_step)
+        if ( __debug__ ):
+            print(self.__current_step)
         if ( self.__current_step['step'] == self.Step.end ):
             self.__current_operation = None
         else:
@@ -173,8 +174,6 @@ class MethodManager:
             raise TypeError("Name " + str(m) + " already exists in " +
                     m.type())
         self.methods[m.type()][str(m)] = m
-        print(self.methods)
-
 
     def isMethodSelected(self):
         return (self.__selected_method != None)
@@ -185,7 +184,6 @@ class MethodManager:
             from manager.forms import SelectRange
             self.request = request
             self.data = data
-            print('setting starting: self.starting')
             if request and request.POST:
                 self.form = SelectRange(self.data.get('starting',(0,0)), request.POST)
             else:
@@ -218,7 +216,6 @@ class MethodManager:
             from manager.forms import SelectPoint
             self.request = request
             self.data = data
-            print('setting starting: self.starting')
             if request and request.POST:
                 self.form = SelectPoint(self.data.get('starting',0), request.POST)
             else:
