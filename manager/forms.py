@@ -144,50 +144,130 @@ class SelectCurvesForCurveSetForm(forms.Form):
 
     def __init__(self, user,  *args, **kwargs):
         files = CurveFile.objects.filter(owner=user, deleted=False)
-        user_files_filter_qs = Q()
-        for f in files:
-            user_files_filter_qs = user_files_filter_qs | Q(curveFile=f)
-        user_curves = Curve.objects.filter(user_files_filter_qs)
 
         super(SelectCurvesForCurveSetForm, self).__init__(*args, **kwargs)
-        for cb in user_curves:
-            self.fields["curve_%d" % cb.id] = forms.BooleanField(
-                    label = cb.curveFile.name + ": " + cb.name + (" - %i" % cb.id),
-                    required = False )
+        order = ['name']
+
+        self.fields['FILES'] = forms.CharField(
+                label='',
+                required=False,
+                initial='Files:')
+        self.fields['FILES'].widget.attrs['readonly'] = True
+        order.append('FILES')
+        for f in files:
+            fname = 'curveFile_{0}'.format(f.id)
+            self.fields[fname] = \
+                    forms.BooleanField(label=f,required=False)
+            self.fields[fname].widget.attrs['class'] = 'parent'
+            order.append(fname)
+            cf = Curve.objects.filter(curveFile=f)
+            for c in cf:
+                cname = "curve_{0}_curveFile_{1}".format(c.id,f.id)
+                self.fields[cname] = \
+                        forms.BooleanField(label = c, required = False )
+                self.fields[cname].widget.attrs['class'] = 'child'
+                order.append(cname)
+            self.fields['end_'+fname] = forms.CharField( 
+                    label='', 
+                    required=False,
+                    initial='')
+            self.fields['end_'+fname].widget.attrs['readonly'] = True
+            self.fields['end_'+fname].widget.attrs['class'] = 'invisible'
+            order.append('end_'+fname)
+
+        css = CurveSet.objects.filter(owner=user, deleted=False)
+        self.fields['CURVESETS'] = forms.CharField(
+                label='',
+                required=False,
+                initial='Curve Sets:')
+        self.fields['CURVESETS'].widget.attrs['readonly'] = True
+        order.append('CURVESETS')
+        for cs in css:
+            csname = 'curveSet_{0}'.format(cs.id)
+            self.fields[csname] = \
+                    forms.BooleanField(
+                            label=cs,
+                            help_text='asdasdasd',
+                            required=False)
+            self.fields[csname].widget.attrs['class'] = 'parent'
+
+            order.append(csname)
+            for c in cs.usedCurveData.all():
+                cname = "curveData_{0}_curveSet_{1}".format(c.id,cs.id)
+                self.fields[cname] = \
+                        forms.BooleanField(label = c.curve, required = False )
+                self.fields[cname].widget.attrs['class'] = 'child'
+                order.append(cname)
+            self.fields['end_'+csname] = forms.CharField( 
+                    label='', 
+                    required=False,
+                    initial='')
+            self.fields['end_'+csname].widget.attrs['readonly'] = True
+            self.fields['end_'+csname].widget.attrs['class'] = 'invisible'
+            order.append('end_'+csname)
+        self.keyOrder=order
+
 
     def process(self, user):
-        curves = []
+        final_curvedatas = []
         for name,val in self.cleaned_data.items():
-            if "curve_" in name:
-                if ( val == True ) :
-                    curve_id = int(name[6:])
-                    c = Curve.objects.get(id=curve_id)
-                    if not c.canBeUpdatedBy(user):
-                        return False
-                    curves.append(c)
-        if curves:
-            analyte = AnalyteInCurve.objects.filter(curve=curves[0].id)
-            if not analyte:
-                analyte = None
-            else:
-                analyte = analyte[0].analyte.name
+            if ( '_' in name ):
+                nameSplit = name.split('_')
+                if "end" == nameSplit[0]:
+                    continue
+                if "curve" == nameSplit[0]:
+                    if ( val == True ) :
+                        vid = int(nameSplit[1])
+                        c = Curve.objects.get(id=vid)
+                        if not c.canBeReadBy(user):
+                            raise 3
+                        cd = CurveData.objects.get(curve=c, processing=None)
+                        final_curvedatas.append(cd)
+                        
+                elif "curveData" == nameSplit[0]:
+                    if ( val == True ) :
+                        vid = int(nameSplit[1])
+                        cd = CurveData.objects.get(id=vid)
+                        if not cd.canBeReadBy(user):
+                            raise 3
+                        final_curvedatas.append(cd)
 
-            cs = CurveSet(
-                    owner = user,
-                    name = self.cleaned_data['name'],
-                    date = timezone.now(),
-                    locked = False,
-                    deleted = False)
-            cs.save()
-            self.curvesetid = cs.id
-            for c in curves:
-                try:
-                    cd = CurveData.objects.filter(curve=c)[0]
-                    cs.usedCurveData.add(cd)
-                except:
-                    return False
-            cs.save()
-            return True
+                elif "curveFile" == nameSplit[0]:
+                    if ( val == True ) :
+                        vid = int(nameSplit[1])
+                        cf = CurveFile.objects.get(id=vid)
+                        if not cf.canBeReadBy(user):
+                            raise 3
+                        cc = Curve.objects.filter(curveFile=cf, deleted=False)
+                        for c in cc.all():
+                            cd = CurveData.objects.get(curve=c, processing=None)
+                            final_curvedatas.append(cd)
+
+                elif "curveSet" == nameSplit[0]:
+                    if ( val == True ) :
+                        vid = int(nameSplit[1])
+                        cs = CurveSet.objects.get(id=vid)
+                        if not cs.canBeReadBy(user):
+                            raise 3
+                        for cd in cs.usedCurveData.all():
+                            final_curvedatas.append(cd)
+
+        if len(final_curvedatas) == 0:
+            return False
+        final_curvedatas = list(set(final_curvedatas)) #only unique
+
+        cs = CurveSet(
+                owner = user,
+                name = self.cleaned_data['name'],
+                date = timezone.now(),
+                locked = False,
+                deleted = False)
+        cs.save()
+        self.curvesetid = cs.id
+        for cd in final_curvedatas:
+            cs.usedCurveData.add(cd)
+        cs.save()
+        return True
 
 
 class DeleteForm(forms.Form):
