@@ -14,6 +14,7 @@
 #notification { background: #229; color: white; }
 {% block style %} {% endblock %}
 </style>
+{{ scripts | safe }}
 {% block scripts %} {% endblock %}
 </head>
 
@@ -45,7 +46,14 @@
 <p id="notification">{{ notification }}</p>
 {% endif %}
 
+{% if mainPlot %}
+<div style="float:left">
+{{ mainPlot | safe }}
+</div>
+{% endif %}
+<div style="float:left">
 {% block real_content %} {% endblock %}
+</div>
 
 </div> <!-- end content -->
 {% endblock %} 

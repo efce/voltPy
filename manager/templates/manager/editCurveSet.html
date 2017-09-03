@@ -15,10 +15,6 @@
 {% endblock %}
 
 {% block real_content %}
-<div style="float:left">
-	<iframe width={{ plot_width }} height={{ plot_height}} src="{% url 'generatePlot' user.id 's' curveset_id %}"></iframe>
-</div>
-<div style="float: left">
 <hr />
 <form method="post" action="" enctype="multipart/form-data" id="concform">
 	<table>
@@ -43,5 +39,4 @@
 	<tr><td><input type="submit" name="startProcessing" value="Start Processing" /></td></tr>
 	</table>
 </form>
-</div>
 {% endblock %}

@@ -4,7 +4,6 @@
 
 {% block real_content %}
 <p>File ID: {{ curvefile_id }} </p>
-<iframe width={{ plot_width }} height={{plot_height }} src="{% url 'generatePlot' user_id 'f' curvefile_id %}"></iframe>
 
 <form method="post" action="{{ url }}" enctype="multipart/form-data">
 	<table>

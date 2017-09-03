@@ -4,11 +4,6 @@
 
 {% block real_content %}
 <p>Analysis ID: {{ analysis_id }} </p>
-<div style="float: left">
-<iframe width={{ plot_width }} height={{ plot_height }} src="{% url 'generatePlot' user.id 's' curveset_id %}"></iframe>
-</div>
-<div style="float: left">
 {{ analyze_content }}
-</div>
 
 {% endblock %}

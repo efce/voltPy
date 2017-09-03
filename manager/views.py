@@ -51,6 +51,7 @@ def browseCurveFile(request, user_id):
 
     template = loader.get_template('manager/browse.html')
     context = {
+            'scripts': PlotMaker.required_scripts,
             'browse_by' : 'files',
             'user' : user,
             'disp' : files,
@@ -76,6 +77,7 @@ def browseAnalysis(request, user_id):
 
     template = loader.get_template('manager/browse.html')
     context = {
+            'scripts': PlotMaker.required_scripts,
             'browse_by' : 'Analysis',
             'user' : user,
             'disp' : files,
@@ -106,6 +108,7 @@ def browseCurveSet(request, user_id):
         print(csets)
     template = loader.get_template('manager/browse.html')
     context = {
+            'scripts': PlotMaker.required_scripts,
             'browse_by' : 'Curve Set',
             'user' : user,
             'disp' : csets,
@@ -150,6 +153,7 @@ def deleteGeneric(request, user_id, item):
         form = DeleteForm(item)
 
     context = { 
+            'scripts': PlotMaker.required_scripts,
             'form': form,
             'item': item,
             'user': user
@@ -209,6 +213,7 @@ def createCurveSet(request, user_id):
         form = SelectCurvesForCurveSetForm(user)
 
     context = {
+            'scripts': PlotMaker.required_scripts,
             'form': form, 
             'user': user
             }
@@ -233,7 +238,10 @@ def showAnalysis(request, user_id, analysis_id):
     dataop = DataOperation(analysis=analysis_id)
     template = loader.get_template('manager/showAnalysis.html')
     info = dataop.getInfo()
+    plotScr, plotDiv = generatePlot('', user, 's' ,an.curveSet.id)
     context = {
+            'scripts': PlotMaker.required_scripts + plotScr,
+            'mainPlot': plotDiv,
             'head': info.get('head',''),
             'user' : user,
             'analysis': an,
@@ -257,6 +265,7 @@ def showProcessed(request, user_id, processing_id):
 
     template = loader.get_template('manager/showAnalysis.html')
     context = {
+            'scripts': PlotMaker.required_scripts,
             'user' : user,
             'processing': processing_id,
             'plot_width' : PlotMaker.plot_width,
@@ -272,12 +281,15 @@ def showCurveSet(request, user_id, curveset_id):
         user=None
 
     try:
-        cf = CurveSet.objects.get(id=curveset_id)
+        cs = CurveSet.objects.get(id=curveset_id)
     except:
-        cf = None
+        cs = None
 
     template = loader.get_template('manager/showCurveSet.html')
+    plotScr, plotDiv = generatePlot('', user, 's' ,cs.id)
     context = {
+            'scripts': PlotMaker.required_scripts + plotScr,
+            'mainPlot' : plotDiv,
             'user' : user,
             'curveset_id': curveset_id,
             'plot_width' : PlotMaker.plot_width,
@@ -345,7 +357,10 @@ def editCurveSet(request,user_id,curveset_id):
         raise 404
 
     cal_disp = ""
+    plotScr, plotDiv = generatePlot('', user, 's' ,cs.id)
     context = { 
+            'scripts': PlotMaker.required_scripts + plotScr,
+            'mainPlot' : plotDiv,
             'formAnalyte': formAnalyte, 
             'startAnalyze' : formGenerate,
             'startProcessing' : formProc,
@@ -374,6 +389,7 @@ def upload(request, user_id):
         form = UploadFileForm()
 
     context = {
+            'scripts': PlotMaker.required_scripts,
             'form': form, 
             'user': user
             }
@@ -393,7 +409,10 @@ def editCurveFile(request, user_id, file_id,):
                 return HttpResponseRedirect(reverse('browseCurveFile', args=[user_id]))
     else:
         form = AddAnalytesForm(user, "File", file_id)
-    context = {
+    plotScr, plotDiv = generatePlot('', user, 'f' ,file_id)
+    context = { 
+            'scripts': PlotMaker.required_scripts + plotScr,
+            'mainPlot' : plotDiv,
             'user' : user, 
             'file_id' : file_id,
             'form': form,
@@ -425,7 +444,10 @@ def showCurveFile(request, user_id, file_id):
     if ( __debug__): 
         print(cf)
     template = loader.get_template('manager/showFile.html')
-    context = {
+    plotScr, plotDiv = generatePlot('', user, 'f' ,cf.id)
+    context = { 
+            'scripts': PlotMaker.required_scripts + plotScr,
+            'mainPlot' : plotDiv,
             'user' : user,
             'curvefile_id': curvefile_id,
             'plot_width' : PlotMaker.plot_width,
@@ -462,8 +484,8 @@ def process(request, user_id, processing_id):
     return dataop.getContent(user) 
 
 
-@never_cache
-def generatePlot(request, user_id, plot_type, value_id):
+#@never_cache
+def generatePlot(request, user, plot_type, value_id):
     """
     Allowed types are:
     f - whole file
@@ -480,11 +502,6 @@ def generatePlot(request, user_id, plot_type, value_id):
     if not ( plot_type in allowedTypes ):
         return
 
-    try:
-        user = User.objects.get(id=user_id)
-    except:
-        user=None
-
     pm = PlotMaker()
     if (plot_type == 'f' ):
         pm.processFile(user, value_id)
@@ -495,7 +512,4 @@ def generatePlot(request, user_id, plot_type, value_id):
     elif (plot_type == 'c'):
         pm.processCurves(user, value_id)
 
-    return HttpResponse(
-            pm.getPage(), 
-            content_type="text/html" 
-        )
+    return pm.getEmbeded() 

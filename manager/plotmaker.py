@@ -2,8 +2,9 @@ from django.db.models import Q
 from .models import *
 import io
 import numpy as np
-from bokeh.plotting import figure
+from bokeh.plotting import figure, ColumnDataSource
 from bokeh.embed import components
+from bokeh.models.callbacks import CustomJS
 
 class PlotMaker:
     _scatter = [] # list to be plotted of dictionaries containing 'x' and 'y' vectors
@@ -18,6 +19,7 @@ class PlotMaker:
     <link href="http://cdn.pydata.org/bokeh/release/bokeh-widgets-0.12.6.min.css" rel="stylesheet" type="text/css"> 
     <script src="http://cdn.pydata.org/bokeh/release/bokeh-0.12.6.min.js"></script> 
     <script src="http://cdn.pydata.org/bokeh/release/bokeh-widgets-0.12.6.min.js"></script>
+    <script type="text/javascript">window.voltPyPointNum = 0;</script>
     """
     def __init__(self):
         self._line = []
@@ -206,11 +208,29 @@ class PlotMaker:
         for s in self._scatter:
             p.scatter(s['x'], s['y'], color="red", size=8)
 
+        srcEmpty = ColumnDataSource(data = dict( x=[], y=[]))
+
+        callback = CustomJS(args=dict(s=srcEmpty), code="""
+        window.voltPyPointNum = window.voltPyPointNum +1;
+        //var event = cb_obj.value;
+        var x_data = cb_obj.x; // current mouse x position in plot coordinates
+        var y_data = cb_obj.y; // current mouse y position in plot coordinates
+        console.log("(x,y)=" + x_data+","+y_data); //monitors values in Javascript console
+        var x = s.get('data')['x'];
+        var y = s.get('data')['y'];
+        x[window.voltPyPointNum] = x_data;
+        y[window.voltPyPointNum] = y_data;
+        s.trigger('change');
+        """)
+
+        p.line(x='x',y='y',source=srcEmpty)
+        p.js_on_event('tap', callback)
+
         return components(p) 
 
 
     def getPage(self):
         scr,div = self.getEmbeded()
-        strr = "<html><head>" + self.required_scripts + scr + "</head><body>" + div + "</body></html>"        
+        strr = "<html><head>" + self.required_scripts+ "</head><body>"  + scr + div + "</body></html>"        
         return strr
 
