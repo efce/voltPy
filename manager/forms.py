@@ -209,18 +209,14 @@ class SelectCurvesForCurveSetForm(forms.Form):
 
 
     def process(self, user):
-        files = []
-        curvesets = []
         final_curvedatas = []
         for name,val in self.cleaned_data.items():
             if ( '_' in name ):
                 nameSplit = name.split('_')
-                if "end_" in nameSplit[0]:
+                if "end" == nameSplit[0]:
                     continue
-                if "curve" in nameSplit[0]:
+                if "curve" == nameSplit[0]:
                     if ( val == True ) :
-                        if ( name[3] in files ):
-                            continue
                         vid = int(nameSplit[1])
                         c = Curve.objects.get(id=vid)
                         if not c.canBeReadBy(user):
@@ -228,40 +224,37 @@ class SelectCurvesForCurveSetForm(forms.Form):
                         cd = CurveData.objects.get(curve=c, processing=None)
                         final_curvedatas.append(cd)
                         
-                elif "curveData" in nameSplit[0]:
+                elif "curveData" == nameSplit[0]:
                     if ( val == True ) :
-                        if ( name[3] in curvesets ):
-                            continue
                         vid = int(nameSplit[1])
                         cd = CurveData.objects.get(id=vid)
                         if not cd.canBeReadBy(user):
                             raise 3
                         final_curvedatas.append(cd)
 
-                elif "curveFile" in nameSplit[0]:
+                elif "curveFile" == nameSplit[0]:
                     if ( val == True ) :
                         vid = int(nameSplit[1])
                         cf = CurveFile.objects.get(id=vid)
                         if not cf.canBeReadBy(user):
                             raise 3
-                        files.append(cf.id)
                         cc = Curve.objects.filter(curveFile=cf, deleted=False)
                         for c in cc.all():
                             cd = CurveData.objects.get(curve=c, processing=None)
                             final_curvedatas.append(cd)
 
-                elif "curveSet" in nameSplit[0]:
+                elif "curveSet" == nameSplit[0]:
                     if ( val == True ) :
                         vid = int(nameSplit[1])
                         cs = CurveSet.objects.get(id=vid)
                         if not cs.canBeReadBy(user):
                             raise 3
-                        curvesets.append(cs.id)
                         for cd in cs.usedCurveData.all():
-                            final_curvedatas.append(cs)
+                            final_curvedatas.append(cd)
 
         if len(final_curvedatas) == 0:
             return False
+        final_curvedatas = list(set(final_curvedatas)) #only unique
 
         cs = CurveSet(
                 owner = user,
