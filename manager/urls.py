@@ -23,8 +23,6 @@ urlpatterns = [
         views.showCurveFile, name='showCurveFile'),
     url(r'^(?P<user_id>[0-9]+)/delete-curve/(?P<curve_id>[0-9]+)/$', 
         views.deleteCurve, name='deleteCurve'),
-    url(r'^(?P<user_id>[0-9]+)/interact-plot/(?P<plot_type>[a-z]+)/(?P<value_id>[0-9,]+)/$',
-        views.interactPlot, name='interactPlot'),
     url(r'^(?P<user_id>[0-9]+)/generate-plot/(?P<plot_type>[a-z]+)/(?P<value_id>[0-9,]+)/$',
         views.generatePlot, name='generatePlot'),
     url(r'^(?P<user_id>[0-9]+)/browse-curvesets/$', 
@@ -55,6 +53,6 @@ urlpatterns = [
         views.processCurveFile, name='processCurveFile'),
     url(r'^(?P<user_id>[0-9]+)/show-processed/(?P<processing_id>[0-9]+)/$', 
         views.showProcessed, name='showProcessed'),
-    url(r'^(?P<user_id>[0-9]+)/methods/(?P<method_type>[ap]+)/(?P<methodName>[a-zA-Z]+)/(?P<stepNum>[0-9]+)/$', 
-        views.showProcessed, name='showProcessed'),
+    url(r'^(?P<user_id>[0-9]+)/method-interaction/(?P<method_type>[ap]+)/(?P<method_id>[0-9]+)/$',
+        views.methodInteraction, name='methodInteraction'),
 ]

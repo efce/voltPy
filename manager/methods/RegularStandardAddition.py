@@ -1,4 +1,5 @@
 from manager.methodmanager import *
+import manager.plotmanager as pm
 from numpy import corrcoef
 from manager.helpers.fithelpers import calc_normal_equation_fit, calc_sx0
 import numpy as np
@@ -79,7 +80,6 @@ class RegularStandardAddition(AnalysisMethod):
         return sx0
 
     def printInfo(self):
-        import manager.plotmaker as pm
         p = pm.PlotMaker()
         p.processAnalysis(self.model.owner, self.model.id)
         p.plot_width = 500

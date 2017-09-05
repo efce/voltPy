@@ -9,6 +9,7 @@ from django.http import HttpResponse
 from django.template import loader
 from django.core.urlresolvers import reverse
 from .models import *
+import json
 #from .plotmaker import PlotManager
 
 class MethodManager:
@@ -21,7 +22,8 @@ class MethodManager:
     If procedure meets the requirements it should be immedietly
     avaiable for usage.
     """
-    redirect = '' # reverse() 
+    redirect = None # reverse() 
+    json_reply = None #
 
     class Step(IntEnum):
         """ 
@@ -111,6 +113,11 @@ class MethodManager:
         self.__current_operation = None
         self.__current_step = None
         self.__current_step_number = 0
+        self.analysis = None
+
+        self.loadMethods()
+
+        user = kwargs.pop('user', None)
         if ( 'curveset' in kwargs ):
             self.__selected_type = 'other'
             self.curveset_id = int(kwargs.get('curveset', None))
@@ -129,6 +136,16 @@ class MethodManager:
                 self.analysis = Analysis.objects.get(id=self.analysis_id)
             except:
                 raise 404
+        elif ( 'method_id' in kwargs and 'method_type' in kwargs ):
+            self.__selected_type = kwargs.get('method_type')
+            if ( self.__selected_type == 'analysis' ):
+                model = Analysis.objects.get(id=int(kwargs['method_id']))
+            if ( self.__selected_type == 'processing' ):
+                model = Processing.objects.get(id=int(kwargs['method_id']))
+            if not self.analysis.canBeUpdatedBy(user):
+                raise 3
+            self.__setModel(model)
+            
         else:
             raise NameError('Uknown type')
         if ( self.__selected_type == 'analysis' ):
@@ -141,7 +158,6 @@ class MethodManager:
                     #(int(self.Step.selectTwoRanges), self.operationSelectTwoRanges),
                     #(int(self.Step.selectAnalytes), self.operationSelectAnalyte),
                 ])
-        self.loadMethods()
 
 
     def loadMethods(self):
@@ -174,19 +190,21 @@ class MethodManager:
 
 
     def process(self, user, request):
-        self.request = request
         if self.__current_operation:
-            self.__current_operation.setData(
-                    self.__current_step['data'],
-                    request)
-            if self.__current_operation.is_valid():
-                if ( self.__selected_method.processStep(
-                            user,
-                            self.__current_step_number,
-                            self.__current_operation.process()) ):
-                    self.nextStep(user)
-        else:
-            self.nextStep(user)
+            self.request = request
+            try:
+                if ( request.POST['query'] == 'json' ):
+                    x = request.POST['x']
+                    y = request.POST['y']
+                    result = self.__current_operation.process({'x': x, 'y': y})
+                    if result:
+                        if ( self.__selected_method.processStep(
+                                                user,
+                                                result)):
+                            self.nextStep(user)
+            except AttributeError:
+                raise 5
+                self.nextStep(user)
 
 
     def nextStep(self, user):
@@ -218,9 +236,11 @@ class MethodManager:
             self.__current_operation = self.opetations[self.__current_step['step']]()
 
 
-    def getContent(self):
+    def getContent(self, user):
         if self.redirect:
             return HttpResponseRedirect( self.redirect )
+        elif self.json_reply:
+            return HttpResponse(json.dumps(self.json_reply))
         elif not self.isMethodSelected():
             return HttpResponseRedirect( reverse("browseCurveSet") )
 
@@ -229,16 +249,19 @@ class MethodManager:
             text = self.__current_operation.draw(), 
         else:
             text = "No operation"
-        template = loader.get_template('manager/analyze.html')
-        context = {
-                'analyze_content': text,
-                'user': user,
-                'analysis_id': self.analysis_id,
-                'curveset_id': Analysis.objects.get(id=self.analysis_id).curveSet.id,
-                'plot_width' : PlotManager.plot_width,
-                'plot_height' : PlotManager.plot_height
-        }
-        return HttpResponse(template.render(context))
+        if self.__selected_type == 'analysis':
+            template = loader.get_template('manager/analyze.html')
+            context = {
+                    'analyze_content': text,
+                    'user': user,
+                    'analysis_id': self.analysis.id,
+                    'curveset_id': self.analysis.curveSet.id,
+                    'plot_width' : PlotManager.plot_width,
+                    'plot_height' : PlotManager.plot_height
+            }
+            return HttpResponse(template.render(context))
+        else:
+            return ''
 
     def getAnalysisSelectionForm(self, *args, **kwargs):
         return MethodManager.SelectionForm(self, 
@@ -278,63 +301,60 @@ class MethodManager:
 
     class operationSelectRange:
         def setData(self, data, request):
-            self.request = request
-            self.data = data
-            if request and request.GET:
-                pass
-
+            pass
 
         def draw(self):
-            from manager.forms import SelectRange
-            from django.template import loader
-            from django.middleware import csrf
-            template = loader.get_template("manager/analyzeForm.html")
-            context = {
-                    'desc': self.data.get('desc',""),
-                    'form': self.form,
-                    'csrftoken': csrf.get_token(self.request) 
-                    }
-            return template.render(context)
+            pass
 
-
-        def is_valid(self):
-            return self.form.is_valid()
-
-
-        def process(self):
-            return { 'range1': self.form.process() }
-
+        def process(self, data):
+            x = data.get('x', None)
+            if x:
+                try:
+                    x=float(x)
+                except:
+                    raise 5
+                    return False
+                rg = self.model.customData.get('range1')
+                try:
+                    if len(rg) == 3:
+                        rg.append(x)
+                        return True
+                    if len(rg) < 3:
+                        rg.append(rg)
+                        self.json_reply = { 'command': 'addCursor', 'x': x, 'number': len(rg) }
+                        self.model.save()
+                        return False
+                except:
+                    raise 5
+                    self.model.customData['range1'][0] = x
+                    self.json_reply = { 'command': 'addCursor', 'x': x, 'number': 0 }
+                    self.model.save()
+                    return False
+            else:
+                return False
 
     class operationSelectPoint:
         def setData(self, data, request):
-            from manager.forms import SelectPoint
-            self.request = request
-            self.data = data
-            if request and request.POST:
-                self.form = SelectPoint(self.data.get('starting',0), request.POST)
-            else:
-                self.form = SelectPoint(self.data.get('starting',0))
-
+            pass
 
         def draw(self):
-            from manager.forms import SelectPoint
-            from django.template import loader
-            from django.middleware import csrf
-            template = loader.get_template("manager/analyzeForm.html")
-            context = {
-                    'desc': self.data.get('desc',""),
-                    'form': self.form,
-                    'csrftoken': csrf.get_token(self.request) 
-                    }
-            return template.render(context)
+            pass
 
-
-        def is_valid(self):
-            return self.form.is_valid()
-
-
-        def process(self):
-            return { 'point': self.form.process() }
+        def process(self,data):
+            x = data.get('x', None)
+            y = data.get('y', None)
+            if x and y:
+                try:
+                    x=float(x)
+                    y=float(y)
+                except:
+                    raise 5
+                    return False
+                self.model.customData['point'] = (x,y)
+                self.model.save()
+                return True
+            else:
+                return False
 
 
 

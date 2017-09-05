@@ -335,7 +335,7 @@ def editCurveSet(request,user_id,curveset_id):
         if ( 'startAnalyze' in request.POST ):
             formGenerate = dataop.getAnalysisSelectionForm(request.POST)
             if ( formGenerate.is_valid() ):
-                analyzeid = formGenerate.process(user)
+                analyzeid = formGenerate.process(user,cs)
                 return HttpResponseRedirect(reverse('analyze', args=[user_id, analyzeid]))
         else:
             formGenerate = dataop.getAnalysisSelectionForm()
@@ -344,7 +344,7 @@ def editCurveSet(request,user_id,curveset_id):
         and 'startProcessing' in request.POST ):
             formProc = dataop.getProcessingSelectionForm(request.POST)
             if ( formProc.is_valid() ):
-                procid = formProc.process(user)
+                procid = formProc.process(user,cs)
                 return HttpResponseRedirect(reverse('process', args=[user_id, procid]))
         else:
             formProc = dataop.getProcessingSelectionForm()
@@ -487,20 +487,22 @@ def process(request, user_id, processing_id):
         user = User.objects.get(id=user_id)
     except:
         user=None
-    dataop = DataOperation(processing = processing_id)
+    dataop = MethodManager(processing = processing_id)
     dataop.process(user, request)
     return dataop.getContent(user) 
 
-def interactPlot(request, user_id, plot_type, value_id):
-    """
-    if ( request.GET ):
-        varx = request.GET.get('x', None)
-        vary = request.GET.get('y', None)
-    """
-    varx = [ 1, 2, 3, 4, 5, 6 ];
-    vary = [ -1, -2, -5, -7, -10, -12 ];
-
-    return HttpResponse(json.dumps(dict(command="setLineData",number=0,x=varx, y=vary)))
+def methodInteraction(request, user_id, method_type, method_id):
+    try:
+        user = User.objects.get(id=user_id)
+    except:
+        user=None
+    if ( method_type == 'a' ):
+        m = MethodManager(user=user,method_type='analysis',method_id=method_id)
+    elif ( method_type == 'p' ):
+        m = MethodManager(user=user,method_type='processing',method_id=method_id)
+    else:
+        raise NameError('Unknown method type')
+        
 
 #@never_cache
 def generatePlot(request, user, plot_type, value_id):
