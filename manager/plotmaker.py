@@ -2,9 +2,13 @@ from django.db.models import Q
 from .models import *
 import io
 import numpy as np
+import json 
 from bokeh.plotting import figure, ColumnDataSource
 from bokeh.embed import components
 from bokeh.models.callbacks import CustomJS
+from bokeh.models import Span
+from bokeh.layouts import widgetbox, column
+from bokeh.models.widgets import RadioButtonGroup
 
 class PlotMaker:
     _scatter = [] # list to be plotted of dictionaries containing 'x' and 'y' vectors
@@ -19,7 +23,45 @@ class PlotMaker:
     <link href="http://cdn.pydata.org/bokeh/release/bokeh-widgets-0.12.6.min.css" rel="stylesheet" type="text/css"> 
     <script src="http://cdn.pydata.org/bokeh/release/bokeh-0.12.6.min.js"></script> 
     <script src="http://cdn.pydata.org/bokeh/release/bokeh-widgets-0.12.6.min.js"></script>
-    <script type="text/javascript">window.voltPyPointNum = 0;</script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    <script type="text/javascript">
+    function processData (plot,lineData,cursors,jdata) {
+        var data = JSON.parse(jdata);
+        switch (data.command) {
+        case 'reload':
+            location.reload();
+            break;
+        case 'setCursor':
+            cursors[data.number].location = parseFloat(data.x);
+            cursors[data.number].line_alpha = 1;
+            show(cursors[data.number]);
+            break;
+        case 'setLineData':
+            var xv = lineData.data['x'];
+            var yv = lineData.data['y'];
+            for (i = 0; i < data.x.length; i++) {
+                xv[i] = data.x[i];
+                yv[i] = data.y[i];
+            }
+            xv.length = data.x.length;
+            yv.length = data.x.length;
+            lineData.trigger('change');
+            break;
+        case 'removeLine':
+            lineData.x = [];
+            lineData.y = [];
+            lineData.trigger('change');
+            break;
+        case 'removeCursor':
+            cursors[data.number].line_alpha = 0;
+            show(cursors[data.number]);
+            break;
+        case 'changeColor':
+        default:
+            alert('Not implemented...');
+        }
+    }
+    </script>
     """
     def __init__(self):
         self._line = []
@@ -188,7 +230,7 @@ class PlotMaker:
                 )
 
 
-    def _prepareFigure(self):
+    def _prepareFigure(self, user):
         p = figure(
                 title=self.title, 
                 x_axis_label=self.xlabel,
@@ -196,11 +238,46 @@ class PlotMaker:
                 height=self.plot_height-10,
                 width=self.plot_width-20
             )
-        return p
+        labels = []
+        onx = OnXAxis.objects.get(user=user).selected
+        for k,l in dict(OnXAxis.AVAILABLE).items():
+            labels.append(l)
+        active = -1
+        for i,k in enumerate(dict(OnXAxis.AVAILABLE).keys()):
+            if k==onx:
+                active = i
+
+        radio_button_group = RadioButtonGroup(
+                labels=labels, 
+                active=active,
+                callback=CustomJS(args={}, code=
+                    """
+                    var act = cb_obj.active;
+                    alert('not implemented: '+ act);
+                    """)
+                )
+        w=widgetbox(radio_button_group)
+        layout = column([ p, w ])
+        return layout, p
+
+    def plotInteract(self, intercation, data):
+        if ( interaction == 'add' ):
+            pass
+        elif ( interaction == 'remove' ):
+            pass
+        elif ( interaction == 'change' ):
+            pass
+        elif ( interaction == 'reloadPage' ):
+            pass
 
 
-    def getEmbeded(self):
-        p = self._prepareFigure()
+
+    def getEmbeded(self, user_id, plot_type, vid):
+        try:
+            user=User.objects.get(id=user_id)
+        except:
+            user=None
+        layout, p = self._prepareFigure(user)
 
         for l in self._line:
             p.line(l['x'], l['y'], color="blue", line_width=2)
@@ -209,24 +286,45 @@ class PlotMaker:
             p.scatter(s['x'], s['y'], color="red", size=8)
 
         srcEmpty = ColumnDataSource(data = dict( x=[], y=[]))
+        p.line(x='x',y='y',source=srcEmpty, color='red', line_dash='dashed')
 
-        callback = CustomJS(args=dict(s=srcEmpty), code="""
-        window.voltPyPointNum = window.voltPyPointNum +1;
-        //var event = cb_obj.value;
+        cursors = []
+        for i in range(4):
+            C= Span(location=0,
+                        dimension='height', 
+                        line_color='green',
+                        line_dash='dashed', 
+                        line_width=2,
+                        line_alpha=0
+                       )
+            p.add_layout(C)
+            cursors.append(C)
+
+        args = dict(
+                lineSrc=srcEmpty,
+                plot=p,
+                cursor1=cursors[0],
+                cursor2=cursors[1],
+                cursor3=cursors[2],
+                cursor4=cursors[3]
+                )
+        callback = CustomJS(args=args, code=
+        "var type = '" + plot_type + "'; var vid = '" + vid + "'; var uid = '" +
+        str(user_id) + "';" + """
+        var cursors = [cursor1, cursor2, cursor3, cursor4];
         var x_data = cb_obj.x; // current mouse x position in plot coordinates
         var y_data = cb_obj.y; // current mouse y position in plot coordinates
         console.log("(x,y)=" + x_data+","+y_data); //monitors values in Javascript console
-        var x = s.get('data')['x'];
-        var y = s.get('data')['y'];
-        x[window.voltPyPointNum] = x_data;
-        y[window.voltPyPointNum] = y_data;
-        s.trigger('change');
+        var geturl = window.location.href + "?query=json&plot_type=" + type +"&vid=" + vid + "&x=" + x_data +"&y=" + y_data;
+        $.get( geturl, function(data, status){
+                alert("Data: " + data);
+                if (status == 'success')
+                    processData(plot,lineSrc,cursors,data);
+            });
         """)
 
-        p.line(x='x',y='y',source=srcEmpty)
         p.js_on_event('tap', callback)
-
-        return components(p) 
+        return components(layout) 
 
 
     def getPage(self):

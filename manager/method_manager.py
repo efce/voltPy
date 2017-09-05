@@ -181,13 +181,10 @@ class MethodManager:
 
     class operationSelectRange:
         def setData(self, data, request):
-            from manager.forms import SelectRange
             self.request = request
             self.data = data
-            if request and request.POST:
-                self.form = SelectRange(self.data.get('starting',(0,0)), request.POST)
-            else:
-                self.form = SelectRange(self.data.get('starting',(0,0)))
+            if request and request.GET:
+                pass
 
 
         def draw(self):

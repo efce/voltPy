@@ -4,6 +4,7 @@ from django.http import HttpResponseRedirect
 from django.template import loader
 from django.views.decorators.cache import never_cache
 from django.core.urlresolvers import reverse
+import json
 from .models import *
 from .forms import *
 from .plotmaker import PlotMaker
@@ -87,10 +88,6 @@ def browseAnalysis(request, user_id):
             'whenEmpty' : "Analysis can only be performed on the CurveSet" 
     }
     return HttpResponse(template.render(context, request))
-
-
-def editAnalysis(request, user_id, analysis_id):
-    pass
 
 
 def browseCurveSet(request, user_id):
@@ -227,18 +224,25 @@ def showAnalysis(request, user_id, analysis_id):
         user=None
 
     try:
-        an = Analysis.objects.get(id=analysis_id, owner=user)
+        an = Analysis.objects.get(id=analysis_id)
     except:
         an = None
+
+    if not an.canBeReadBy(user):
+        raise 3
 
     if an.completed == False:
         return HttpResponseRedirect(reverse('analyze', args=[user.id, an.id]))
 
-
     dataop = DataOperation(analysis=analysis_id)
     template = loader.get_template('manager/showAnalysis.html')
     info = dataop.getInfo()
-    plotScr, plotDiv = generatePlot('', user, 's' ,an.curveSet.id)
+    plotScr, plotDiv = generatePlot(
+            request='', 
+            user=user, 
+            plot_type='s',
+            value_id=an.curveSet.id
+            )
     context = {
             'scripts': PlotMaker.required_scripts + plotScr,
             'mainPlot': plotDiv,
@@ -285,6 +289,9 @@ def showCurveSet(request, user_id, curveset_id):
     except:
         cs = None
 
+    if not cs.canBeReadBy(user):
+        raise 3
+
     template = loader.get_template('manager/showCurveSet.html')
     plotScr, plotDiv = generatePlot('', user, 's' ,cs.id)
     context = {
@@ -298,6 +305,12 @@ def showCurveSet(request, user_id, curveset_id):
     return HttpResponse(template.render(context, request))
 
 
+
+def editAnalysis(request, user_id, analysis_id):
+    pass
+
+
+
 def editCurveSet(request,user_id,curveset_id):
     try:
         user = User.objects.get(id=user_id)
@@ -309,7 +322,7 @@ def editCurveSet(request,user_id,curveset_id):
     except:
         raise 404
 
-    if not cs.canBeReadBy(user):
+    if not cs.canBeUpdatedBy(user):
         raise 3
 
     if ( cs.locked ):
@@ -428,18 +441,13 @@ def showCurveFile(request, user_id, file_id):
     except:
         user=None
 
-    if request.method == 'POST':
-        form = SelectXForm(user_id, request.POST)
-        if form.is_valid():
-            if ( form.process(user) == True ):
-                return HttpResponseRedirect(reverse('showCurveFile', args=[user_id, file_id]))
-    else:
-        form = SelectXForm(user_id)
-
     try:
         cf = CurveFile.objects.get(id=file_id, deleted=False)
     except:
         cf = None
+
+    if not cf.canBeReadBy(user):
+        raise 3
 
     if ( __debug__): 
         print(cf)
@@ -483,6 +491,16 @@ def process(request, user_id, processing_id):
     dataop.process(user, request)
     return dataop.getContent(user) 
 
+def interactPlot(request, user_id, plot_type, value_id):
+    """
+    if ( request.GET ):
+        varx = request.GET.get('x', None)
+        vary = request.GET.get('y', None)
+    """
+    varx = [ 1, 2, 3, 4, 5, 6 ];
+    vary = [ -1, -2, -5, -7, -10, -12 ];
+
+    return HttpResponse(json.dumps(dict(command="setLineData",number=0,x=varx, y=vary)))
 
 #@never_cache
 def generatePlot(request, user, plot_type, value_id):
@@ -512,4 +530,4 @@ def generatePlot(request, user, plot_type, value_id):
     elif (plot_type == 'c'):
         pm.processCurves(user, value_id)
 
-    return pm.getEmbeded() 
+    return pm.getEmbeded(user.id, plot_type, value_id) 
