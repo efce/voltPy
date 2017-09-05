@@ -10,7 +10,7 @@ from bokeh.models import Span
 from bokeh.layouts import widgetbox, column
 from bokeh.models.widgets import RadioButtonGroup
 
-class PlotMaker:
+class PlotManager:
     _scatter = [] # list to be plotted of dictionaries containing 'x' and 'y' vectors
     _line = []    # list to be plotted of dictionaries containing 'x' and 'y' vectors
     title = None

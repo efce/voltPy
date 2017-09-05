@@ -1,4 +1,4 @@
-from manager.method_manager import *
+from manager.methodmanager import *
 from numpy import corrcoef
 from manager.helpers.fithelpers import calc_normal_equation_fit, calc_sx0
 import numpy as np

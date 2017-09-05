@@ -1,7 +1,7 @@
-from manager.method_manager import *
+from numpy import polyfit, corrcoef
+from manager.methodmanager import *
 from manager.models import *
 import manager.plotmaker as pm
-from numpy import polyfit, corrcoef
 
 class SlopeStandardAdditionAnalysis(AnalysisMethod):
     steps = ( 

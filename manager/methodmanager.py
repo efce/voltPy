@@ -9,7 +9,7 @@ from django.http import HttpResponse
 from django.template import loader
 from django.core.urlresolvers import reverse
 from .models import *
-#from .plotmaker import PlotMaker
+#from .plotmaker import PlotManager
 
 class MethodManager:
     """
@@ -235,8 +235,8 @@ class MethodManager:
                 'user': user,
                 'analysis_id': self.analysis_id,
                 'curveset_id': Analysis.objects.get(id=self.analysis_id).curveSet.id,
-                'plot_width' : PlotMaker.plot_width,
-                'plot_height' : PlotMaker.plot_height
+                'plot_width' : PlotManager.plot_width,
+                'plot_height' : PlotManager.plot_height
         }
         return HttpResponse(template.render(context))
 

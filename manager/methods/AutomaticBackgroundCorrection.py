@@ -1,7 +1,7 @@
-from manager.method_manager import *
-from manager.helpers.bkghelpers import calc_abc
 from copy import deepcopy
 from django.utils import timezone
+from manager.methodmanager import *
+from manager.helpers.bkghelpers import calc_abc
 
 class AutomaticBackgroundCorrection(ProcessingMethod):
     steps = [ 
