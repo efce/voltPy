@@ -308,22 +308,22 @@ class PlotMaker:
                 cursor3=cursors[2],
                 cursor4=cursors[3]
                 )
-        callback = CustomJS(args=args, code=
-        "var type = '" + plot_type + "'; var vid = '" + vid + "'; var uid = '" +
-        str(user_id) + "';" + """
-        var cursors = [cursor1, cursor2, cursor3, cursor4];
-        var x_data = cb_obj.x; // current mouse x position in plot coordinates
-        var y_data = cb_obj.y; // current mouse y position in plot coordinates
-        console.log("(x,y)=" + x_data+","+y_data); //monitors values in Javascript console
-        var geturl = window.location.href + "?query=json&plot_type=" + type +"&vid=" + vid + "&x=" + x_data +"&y=" + y_data;
-        $.get( geturl, function(data, status){
-                alert("Data: " + data);
-                if (status == 'success')
-                    processData(plot,lineSrc,cursors,data);
-            });
-        """)
-
-        p.js_on_event('tap', callback)
+        #        callback = CustomJS(args=args, code=
+        #        "var type = '" + plot_type + "'; var vid = '" + vid + "'; var uid = '" +
+        #        str(user_id) + "';" + """
+        #        var cursors = [cursor1, cursor2, cursor3, cursor4];
+        #        var x_data = cb_obj.x; // current mouse x position in plot coordinates
+        #        var y_data = cb_obj.y; // current mouse y position in plot coordinates
+        #        console.log("(x,y)=" + x_data+","+y_data); //monitors values in Javascript console
+        #        var geturl = window.location.href + "?query=json&plot_type=" + type +"&vid=" + vid + "&x=" + x_data +"&y=" + y_data;
+        #        $.get( geturl, function(data, status){
+        #                alert("Data: " + data);
+        #                if (status == 'success')
+        #                    processData(plot,lineSrc,cursors,data);
+        #            });
+        #        """)
+        #
+        #        p.js_on_event('tap', callback)
         return components(layout) 
 
 

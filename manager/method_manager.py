@@ -2,6 +2,14 @@ import sys
 from abc import ABC, abstractmethod
 from enum import IntEnum
 from django.core.urlresolvers import reverse
+from django import forms
+from django.utils import timezone
+from django.http import HttpResponseRedirect
+from django.http import HttpResponse
+from django.template import loader
+from django.core.urlresolvers import reverse
+from .models import *
+#from .plotmaker import PlotMaker
 
 class MethodManager:
     """
@@ -14,7 +22,6 @@ class MethodManager:
     avaiable for usage.
     """
     redirect = '' # reverse() 
-
 
     class Step(IntEnum):
         """ 
@@ -30,24 +37,111 @@ class MethodManager:
         setConcentrations = 5
         end = 99
 
+    class SelectionForm(forms.Form):
+        """
+        Should not be obtained directly, only by:
+        MethoManager.getSelectionForm('processing'/'analysis')
+        """
+        def __init__(self,  parent, methods, *args, **kwargs):
+            self.type = kwargs.pop('type', 'processing')
+            if ( self.type == 'processing' ):
+                label = "Processing method"
+            elif (self.type == 'analysis' ):
+                label = 'Analysis method'
+            disabled = kwargs.pop('disabled', False)
+            super(MethodManager.SelectionForm, self).__init__(*args, **kwargs)
+            self.methods = methods
+            self.parent = parent
+            choices = list(
+                            zip(
+                                [ str(x) for x in methods ],
+                                methods
+                            )
+                        )
 
-    def __init__(self):
-        self.__current_step = None
-        self.__current_step_number = 0
-        self.__selected_method = None
-        self.__selected_type = None
+            self.fields['method'] = forms.ChoiceField(
+                    choices=choices,
+                    required=True, 
+                    label=label,
+                    disabled=disabled)
+
+        def process(self, user, curveset):
+            if self.type == 'processing':
+                if self.cleaned_data.get('method') in self.methods:
+                    a = Processing(
+                            owner = user,
+                            curveSet = curveset,
+                            date = timezone.now(),
+                            method =self.cleaned_data.get('method'), 
+                            name = "",
+                            step = 0,
+                            deleted = False,
+                            completed = False
+                        )
+                    a.save()
+                    return a.id
+                else:
+                    return None
+            elif self.type == 'analysis':
+                if self.cleaned_data.get('method') in self.methods:
+                    a = Analysis(
+                            owner = user,
+                            curveSet = cs,
+                            date = timezone.now(),
+                            method = self.cleaned_data.get('method'),
+                            name = "",
+                            step = 0,
+                            deleted = False
+                        )
+                    a.save()
+                    cs.locked=True #CurveSet cannot be changed when used by Analysis method.
+                    cs.save()
+                    return a.id
+                else:
+                    return None
+
+
+    def __init__(self, **kwargs):
         self.methods = {
                     'processing': dict(), 
                     'analysis': dict() 
                 }
-        self.loadMethods()
+        self.__selected_type = None
+        self.__selected_method = None
+        self.__current_operation = None
+        self.__current_step = None
+        self.__current_step_number = 0
+        if ( 'curveset' in kwargs ):
+            self.__selected_type = 'other'
+            self.curveset_id = int(kwargs.get('curveset', None))
+        elif ( 'processing' in kwargs ):
+            self.__selected_type = 'processing'
+            self.processing_id = int(kwargs.get('processing', None))
+            try:
+                self.processing = Processing.objects.get(id=self.processing_id)
+                self.curveset_id = self.processing.curveSet.id
+            except:
+                raise 404
+        elif ( 'analysis' in kwargs ):
+            self.__selected_type = 'analysis'
+            self.analysis_id = int(kwargs.get('analysis', None))
+            try:
+                self.analysis = Analysis.objects.get(id=self.analysis_id)
+            except:
+                raise 404
+        else:
+            raise NameError('Uknown type')
+        if ( self.__selected_type == 'analysis' ):
+            self.__setModel(self.analysis)
+        elif ( self.__selected_type == 'processing' ):
+            self.__setModel(self.processing)
         self.operations = dict([
                     (int(self.Step.selectRange), self.operationSelectRange),
                     (int(self.Step.selectPoint), self.operationSelectPoint),
                     #(int(self.Step.selectTwoRanges), self.operationSelectTwoRanges),
                     #(int(self.Step.selectAnalytes), self.operationSelectAnalyte),
                 ])
-        self.__current_operation = None
+        self.loadMethods()
 
 
     def loadMethods(self):
@@ -65,17 +159,6 @@ class MethodManager:
                 fimp = __import__(fname)
                 methodInstance = fimp.newInstance()
                 self.register(methodInstance)
-
-
-    def setAnalysis(self, model):
-        self.__selected_type = 'analysis'
-        self.__setModel(model)
-
-
-    def setProcessing(self, model):
-        self.__selected_type = 'processing'
-        self.__setModel(model)
-
 
     def __setModel(self, model):
         self.__selected_method = self.methods[self.__selected_type].get(model.method, None)
@@ -136,23 +219,36 @@ class MethodManager:
 
 
     def getContent(self):
+        if self.redirect:
+            return HttpResponseRedirect( self.redirect )
+        elif not self.isMethodSelected():
+            return HttpResponseRedirect( reverse("browseCurveSet") )
+
+        text = ''
         if self.__current_operation:
-            return self.__current_operation.draw()
+            text = self.__current_operation.draw(), 
         else:
-            return "No operation"
+            text = "No operation"
+        template = loader.get_template('manager/analyze.html')
+        context = {
+                'analyze_content': text,
+                'user': user,
+                'analysis_id': self.analysis_id,
+                'curveset_id': Analysis.objects.get(id=self.analysis_id).curveSet.id,
+                'plot_width' : PlotMaker.plot_width,
+                'plot_height' : PlotMaker.plot_height
+        }
+        return HttpResponse(template.render(context))
 
+    def getAnalysisSelectionForm(self, *args, **kwargs):
+        return MethodManager.SelectionForm(self, 
+                self.methods['analysis'],
+                type='analysis', *args, **kwargs)
 
-    def getProcessingMethods(self):
-        return self.methods['processing']
-
-
-    def getAnalysisMethods(self):
-        return self.methods['analysis']
-
-
-    def getMethods(self):
-        return self.methods
-
+    def getProcessingSelectionForm(self, *args, **kwargs):
+        return MethodManager.SelectionForm(self, 
+                self.methods['processing'],
+                type='processing', *args, **kwargs)
 
     def drawSelectPoint(self):
         pass
@@ -171,9 +267,10 @@ class MethodManager:
 
     def register(self,m):
         if str(m) == self.methods[m.type()]:
-            raise TypeError("Name " + str(m) + " already exists in " +
+            raise NameError("Name " + str(m) + " already exists in " +
                     m.type())
         self.methods[m.type()][str(m)] = m
+
 
     def isMethodSelected(self):
         return (self.__selected_method != None)

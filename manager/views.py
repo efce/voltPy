@@ -8,7 +8,7 @@ import json
 from .models import *
 from .forms import *
 from .plotmaker import PlotMaker
-from .data_operation import DataOperation
+from .method_manager import *
 
 
 def indexNoUser(request):
@@ -234,7 +234,7 @@ def showAnalysis(request, user_id, analysis_id):
     if an.completed == False:
         return HttpResponseRedirect(reverse('analyze', args=[user.id, an.id]))
 
-    dataop = DataOperation(analysis=analysis_id)
+    dataop = MethodManager(analysis=analysis_id)
     template = loader.get_template('manager/showAnalysis.html')
     info = dataop.getInfo()
     plotScr, plotDiv = generatePlot(
@@ -329,25 +329,25 @@ def editCurveSet(request,user_id,curveset_id):
         #show that is is locked
         pass
 
-    dataop = DataOperation(curveset=curveset_id)
+    dataop = MethodManager(curveset=curveset_id)
 
     if request.method == 'POST':
         if ( 'startAnalyze' in request.POST ):
-            formGenerate = dataop.getAnalysisSelectForm(request.POST)
+            formGenerate = dataop.getAnalysisSelectionForm(request.POST)
             if ( formGenerate.is_valid() ):
                 analyzeid = formGenerate.process(user)
                 return HttpResponseRedirect(reverse('analyze', args=[user_id, analyzeid]))
         else:
-            formGenerate = dataop.getAnalysisSelectForm()
+            formGenerate = dataop.getAnalysisSelectionForm()
 
         if ( not cs.locked
         and 'startProcessing' in request.POST ):
-            formProc = dataop.getProcessingSelectForm(request.POST)
+            formProc = dataop.getProcessingSelectionForm(request.POST)
             if ( formProc.is_valid() ):
                 procid = formProc.process(user)
                 return HttpResponseRedirect(reverse('process', args=[user_id, procid]))
         else:
-            formProc = dataop.getProcessingSelectForm()
+            formProc = dataop.getProcessingSelectionForm()
 
         if ( 'submitFormAnalyte' in request.POST ):
             formAnalyte = AddAnalytesForm(user, "CurveSet", curveset_id, request.POST)
@@ -359,8 +359,8 @@ def editCurveSet(request,user_id,curveset_id):
 
     else:
         formAnalyte = AddAnalytesForm(user, "CurveSet", curveset_id)
-        formGenerate = dataop.getAnalysisSelectForm()
-        formProc = dataop.getProcessingSelectForm()
+        formGenerate = dataop.getAnalysisSelectionForm()
+        formProc = dataop.getProcessingSelectionForm()
 
     try:
         cs = CurveSet.objects.get(id=curveset_id)
