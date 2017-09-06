@@ -256,22 +256,24 @@ class PlotManager:
             if k==onx:
                 active = i
 
+        if ( getattr(self, 'request',False) and self._include_x_switch ):
+            jsfun= """
+                function sleep (time) {
+                  return new Promise((resolve) => setTimeout(resolve, time));
+                }
+                var act = cb_obj.active;
+                var geturl = window.location.href;
+                $.post( geturl, {'query': 'plotmanager', 'onx': act,
+                'csrfmiddlewaretoken': '""" +\
+                django.middleware.csrf.get_token(getattr(self,'request',''))\
+                + """' }).done(sleep(500).then(()=>{location=window.location.href}));
+                """
+        else:
+            jsfun = ''
         radio_button_group = RadioButtonGroup(
                 labels=labels, 
                 active=active,
-                callback=CustomJS(args={}, code=\
-                    """
-                    function sleep (time) {
-                      return new Promise((resolve) => setTimeout(resolve, time));
-                    }
-                    var act = cb_obj.active;
-                    var geturl = window.location.href;
-                    $.post( geturl, {'query': 'plotmanager', 'onx': act,
-                    'csrfmiddlewaretoken': '""" +
-                    django.middleware.csrf.get_token(getattr(self,'request',''))
-                    + """' }).done(sleep(500).then(()=>{location=window.location.href}));
-                    """)
-                )
+                callback=CustomJS(args={}, code=jsfun))
         w=widgetbox(radio_button_group)
         if self._include_x_switch:
             layout = column([ p, w ])
