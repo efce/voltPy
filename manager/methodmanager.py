@@ -193,7 +193,7 @@ class MethodManager:
         if self.__current_operation:
             self.request = request
             try:
-                if ( request.POST['query'] == 'json' ):
+                if ( request.POST.get('query', None) == 'json' ):
                     x = request.POST['x']
                     y = request.POST['y']
                     result = self.__current_operation.process({'x': x, 'y': y})
@@ -204,13 +204,13 @@ class MethodManager:
                             self.nextStep(user)
             except AttributeError:
                 raise 5
-                self.nextStep(user)
+        else:
+            self.nextStep(user)
 
 
     def nextStep(self, user):
         self.__current_step_number += 1
         self.__current_step  = self.__selected_method.getStep(self.__current_step_number)
-
         if not self.__current_step \
         or ( self.__current_step['step'] == self.Step.end ):
             self.__selected_method.finalize()
@@ -221,6 +221,7 @@ class MethodManager:
                                          self.__selected_method.model.id ]
                                     )
             elif self.__selected_method.type() == 'processing':
+                print( 'redirecting' )
                 self.redirect = reverse( 
                                     'showCurveSet',
                                      args=[ 

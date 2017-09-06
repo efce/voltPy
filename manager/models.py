@@ -168,7 +168,7 @@ class CurveSet(models.Model):
         return (self.owner == user)
 
     def canBeUpdatedBy(self, user):
-        return self.isOwnedBy(user) and not self.locked
+        return self.isOwnedBy(user) #and not self.locked
 
     def canBeReadBy(self, user):
         return self.isOwnedBy(user)

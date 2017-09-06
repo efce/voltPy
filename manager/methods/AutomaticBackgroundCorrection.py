@@ -29,7 +29,8 @@ class AutomaticBackgroundCorrection(ProcessingMethod):
 
 
     def processStep(self, user, stepNum, data):
-        pass
+        return True
+        
 
 
     def finalize(self, *args, **kwargs):
