@@ -1,4 +1,5 @@
-from manager.method_manager import *
+from manager.methodmanager import *
+import manager.plotmanager as pm
 from numpy import corrcoef
 from manager.helpers.fithelpers import calc_normal_equation_fit, calc_sx0
 import numpy as np
@@ -32,12 +33,10 @@ class RegularStandardAddition(AnalysisMethod):
             return None
         return self.steps[stepNum]
 
-    def processStep(self, user, stepNum, data):
-        print('process step: %i' % stepNum)
-        self.model.paraters = data
+    def processStep(self, user, stepNum):
         yvalues = []
         xvalues = []
-        selRange = data['range1']
+        selRange = self.model.customData['range1']
         for c in self.model.curveSet.usedCurveData.all():
             startIndex = c.xvalueToIndex(user, selRange[0])
             endIndex = c.xvalueToIndex(user, selRange[1])
@@ -52,48 +51,39 @@ class RegularStandardAddition(AnalysisMethod):
                 [ int(b) for b in xvalues ],
                 [ int(b) for b in yvalues ]
             ]
-        self.model.dataMatrix = dm
+        self.model.customData['matrix'] = dm
         self.model.step += 1
         self.model.save()
         return True
 
     def finalize(self, *args, **kwargs):
-        data = self.model.dataMatrix
+        data = self.model.customData['matrix']
         if not data:
             return
         p = calc_normal_equation_fit(data[0], data[1])
-        self.model.fitEquation = p
-        self.model.result = p['intercept']/p['slope']
-        self.model.resultStdDev = calc_sx0(p['slope'],p['intercept'],data[0],data[1])
-        self.model.corrCoef = corrcoef(data[0], data[1])[0,1]
+        self.model.customData['fitEquation'] = p
+        self.model.customData['result'] = p['intercept']/p['slope']
+        self.model.customData['resultStdDev'] = calc_sx0(p['slope'],p['intercept'],data[0],data[1])
+        self.model.customData['corrCoef'] = corrcoef(data[0], data[1])[0,1]
         self.model.completed = True
         self.model.step = 0
         self.model.save()
 
-
-    def __Sx0(self, slope, intercept, xvec, yvec):
-        yevec = [ slope*x+intercept for x in xvec ]
-        xmean = np.average(xvec)
-        sr = np.sqrt(1/(len(xvec)-2) * np.sum((yi-ye)**2 for yi,ye in zip(yvec, yevec)))
-        sx0 = (sr/slope) * np.sqrt(1 + 1/len(xvec) + (yvec[0]-np.average(yvec))**2/(slope**2*np.sum((xi-xmean)**2 for xi in xvec)))
-        return sx0
-
-    def printInfo(self):
-        import manager.plotmaker as pm
-        p = pm.PlotMaker()
+    def printInfo(self, user):
+        p = pm.PlotManager()
         p.processAnalysis(self.model.owner, self.model.id)
         p.plot_width = 500
         p.plot_height = 500
-        scr,div = p.getEmbeded()
+        scr,div = p.getEmbeded(user, 'analysis', self.model.id)
         return {
                 'head': ''.join([p.required_scripts,scr]),
                 'body': ''.join([
                             div,
                             'Equation: y={2}*x+{3}<br />Result: {0}, STD: {1}'.format(
-                                self.model.result,
-                                self.model.resultStdDev,
-                                self.model.fitEquation['slope'],
-                                self.model.fitEquation['intercept'])
+                                self.model.customData['result'],
+                                self.model.customData['resultStdDev'],
+                                self.model.customData['fitEquation']['slope'],
+                                self.model.customData['fitEquation']['intercept'])
                             ])
                 }
 

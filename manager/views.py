@@ -4,10 +4,11 @@ from django.http import HttpResponseRedirect
 from django.template import loader
 from django.views.decorators.cache import never_cache
 from django.core.urlresolvers import reverse
+import json
 from .models import *
 from .forms import *
-from .plotmaker import PlotMaker
-from .data_operation import DataOperation
+from .plotmanager import *
+from .methodmanager import *
 
 
 def indexNoUser(request):
@@ -51,7 +52,7 @@ def browseCurveFile(request, user_id):
 
     template = loader.get_template('manager/browse.html')
     context = {
-            'scripts': PlotMaker.required_scripts,
+            'scripts': PlotManager.required_scripts,
             'browse_by' : 'files',
             'user' : user,
             'disp' : files,
@@ -77,7 +78,7 @@ def browseAnalysis(request, user_id):
 
     template = loader.get_template('manager/browse.html')
     context = {
-            'scripts': PlotMaker.required_scripts,
+            'scripts': PlotManager.required_scripts,
             'browse_by' : 'Analysis',
             'user' : user,
             'disp' : files,
@@ -87,10 +88,6 @@ def browseAnalysis(request, user_id):
             'whenEmpty' : "Analysis can only be performed on the CurveSet" 
     }
     return HttpResponse(template.render(context, request))
-
-
-def editAnalysis(request, user_id, analysis_id):
-    pass
 
 
 def browseCurveSet(request, user_id):
@@ -108,7 +105,7 @@ def browseCurveSet(request, user_id):
         print(csets)
     template = loader.get_template('manager/browse.html')
     context = {
-            'scripts': PlotMaker.required_scripts,
+            'scripts': PlotManager.required_scripts,
             'browse_by' : 'Curve Set',
             'user' : user,
             'disp' : csets,
@@ -153,7 +150,7 @@ def deleteGeneric(request, user_id, item):
         form = DeleteForm(item)
 
     context = { 
-            'scripts': PlotMaker.required_scripts,
+            'scripts': PlotManager.required_scripts,
             'form': form,
             'item': item,
             'user': user
@@ -213,7 +210,7 @@ def createCurveSet(request, user_id):
         form = SelectCurvesForCurveSetForm(user)
 
     context = {
-            'scripts': PlotMaker.required_scripts,
+            'scripts': PlotManager.required_scripts,
             'form': form, 
             'user': user
             }
@@ -227,26 +224,33 @@ def showAnalysis(request, user_id, analysis_id):
         user=None
 
     try:
-        an = Analysis.objects.get(id=analysis_id, owner=user)
+        an = Analysis.objects.get(id=analysis_id)
     except:
         an = None
+
+    if not an.canBeReadBy(user):
+        raise 3
 
     if an.completed == False:
         return HttpResponseRedirect(reverse('analyze', args=[user.id, an.id]))
 
-
-    dataop = DataOperation(analysis=analysis_id)
+    dataop = MethodManager(analysis=analysis_id)
     template = loader.get_template('manager/showAnalysis.html')
-    info = dataop.getInfo()
-    plotScr, plotDiv = generatePlot('', user, 's' ,an.curveSet.id)
+    info = dataop.getInfo(user)
+    plotScr, plotDiv = generatePlot(
+            request=request, 
+            user=user, 
+            plot_type='s',
+            value_id=an.curveSet.id
+            )
     context = {
-            'scripts': PlotMaker.required_scripts + plotScr,
+            'scripts': PlotManager.required_scripts + plotScr,
             'mainPlot': plotDiv,
             'head': info.get('head',''),
             'user' : user,
             'analysis': an,
-            'plot_width' : PlotMaker.plot_width,
-            'plot_height' : PlotMaker.plot_height,
+            'plot_width' : PlotManager.plot_width,
+            'plot_height' : PlotManager.plot_height,
             'text': info.get('body','')
     }
     return HttpResponse(template.render(context, request))
@@ -265,11 +269,11 @@ def showProcessed(request, user_id, processing_id):
 
     template = loader.get_template('manager/showAnalysis.html')
     context = {
-            'scripts': PlotMaker.required_scripts,
+            'scripts': PlotManager.required_scripts,
             'user' : user,
             'processing': processing_id,
-            'plot_width' : PlotMaker.plot_width,
-            'plot_height' : PlotMaker.plot_height,
+            'plot_width' : PlotManager.plot_width,
+            'plot_height' : PlotManager.plot_height,
     }
     return HttpResponse(template.render(context, request))
 
@@ -285,17 +289,26 @@ def showCurveSet(request, user_id, curveset_id):
     except:
         cs = None
 
+    if not cs.canBeReadBy(user):
+        raise 3
+
     template = loader.get_template('manager/showCurveSet.html')
-    plotScr, plotDiv = generatePlot('', user, 's' ,cs.id)
+    plotScr, plotDiv = generatePlot(request, user, 's' ,cs.id)
     context = {
-            'scripts': PlotMaker.required_scripts + plotScr,
+            'scripts': PlotManager.required_scripts + plotScr,
             'mainPlot' : plotDiv,
             'user' : user,
             'curveset_id': curveset_id,
-            'plot_width' : PlotMaker.plot_width,
-            'plot_height' : PlotMaker.plot_height,
+            'plot_width' : PlotManager.plot_width,
+            'plot_height' : PlotManager.plot_height,
     }
     return HttpResponse(template.render(context, request))
+
+
+
+def editAnalysis(request, user_id, analysis_id):
+    pass
+
 
 
 def editCurveSet(request,user_id,curveset_id):
@@ -309,32 +322,32 @@ def editCurveSet(request,user_id,curveset_id):
     except:
         raise 404
 
-    if not cs.canBeReadBy(user):
+    if not cs.canBeUpdatedBy(user):
         raise 3
 
     if ( cs.locked ):
         #show that is is locked
         pass
 
-    dataop = DataOperation(curveset=curveset_id)
+    dataop = MethodManager(curveset=curveset_id)
 
     if request.method == 'POST':
         if ( 'startAnalyze' in request.POST ):
-            formGenerate = dataop.getAnalysisSelectForm(request.POST)
+            formGenerate = dataop.getAnalysisSelectionForm(request.POST)
             if ( formGenerate.is_valid() ):
-                analyzeid = formGenerate.process(user)
+                analyzeid = formGenerate.process(user,cs)
                 return HttpResponseRedirect(reverse('analyze', args=[user_id, analyzeid]))
         else:
-            formGenerate = dataop.getAnalysisSelectForm()
+            formGenerate = dataop.getAnalysisSelectionForm()
 
         if ( not cs.locked
         and 'startProcessing' in request.POST ):
-            formProc = dataop.getProcessingSelectForm(request.POST)
+            formProc = dataop.getProcessingSelectionForm(request.POST)
             if ( formProc.is_valid() ):
-                procid = formProc.process(user)
+                procid = formProc.process(user,cs)
                 return HttpResponseRedirect(reverse('process', args=[user_id, procid]))
         else:
-            formProc = dataop.getProcessingSelectForm()
+            formProc = dataop.getProcessingSelectionForm()
 
         if ( 'submitFormAnalyte' in request.POST ):
             formAnalyte = AddAnalytesForm(user, "CurveSet", curveset_id, request.POST)
@@ -346,8 +359,8 @@ def editCurveSet(request,user_id,curveset_id):
 
     else:
         formAnalyte = AddAnalytesForm(user, "CurveSet", curveset_id)
-        formGenerate = dataop.getAnalysisSelectForm()
-        formProc = dataop.getProcessingSelectForm()
+        formGenerate = dataop.getAnalysisSelectionForm()
+        formProc = dataop.getProcessingSelectionForm()
 
     try:
         cs = CurveSet.objects.get(id=curveset_id)
@@ -357,17 +370,17 @@ def editCurveSet(request,user_id,curveset_id):
         raise 404
 
     cal_disp = ""
-    plotScr, plotDiv = generatePlot('', user, 's' ,cs.id)
+    plotScr, plotDiv = generatePlot(request, user, 's' ,cs.id)
     context = { 
-            'scripts': PlotMaker.required_scripts + plotScr,
+            'scripts': PlotManager.required_scripts + plotScr,
             'mainPlot' : plotDiv,
             'formAnalyte': formAnalyte, 
             'startAnalyze' : formGenerate,
             'startProcessing' : formProc,
             'user' : user, 
             'curveset_id' : curveset_id, 
-            'plot_width' : PlotMaker.plot_width,
-            'plot_height' : PlotMaker.plot_height,
+            'plot_width' : PlotManager.plot_width,
+            'plot_height' : PlotManager.plot_height,
             'cal_disp': cal_disp
             }
     return render(request, 'manager/editCurveSet.html', context)
@@ -389,7 +402,7 @@ def upload(request, user_id):
         form = UploadFileForm()
 
     context = {
-            'scripts': PlotMaker.required_scripts,
+            'scripts': PlotManager.required_scripts,
             'form': form, 
             'user': user
             }
@@ -409,15 +422,15 @@ def editCurveFile(request, user_id, file_id,):
                 return HttpResponseRedirect(reverse('browseCurveFile', args=[user_id]))
     else:
         form = AddAnalytesForm(user, "File", file_id)
-    plotScr, plotDiv = generatePlot('', user, 'f' ,file_id)
+    plotScr, plotDiv = generatePlot(request, user, 'f' ,file_id)
     context = { 
-            'scripts': PlotMaker.required_scripts + plotScr,
+            'scripts': PlotManager.required_scripts + plotScr,
             'mainPlot' : plotDiv,
             'user' : user, 
             'file_id' : file_id,
             'form': form,
-            'plot_width' : PlotMaker.plot_width,
-            'plot_height' : PlotMaker.plot_height
+            'plot_width' : PlotManager.plot_width,
+            'plot_height' : PlotManager.plot_height
             }
     return render(request, 'manager/editFile.html', context)
 
@@ -428,30 +441,25 @@ def showCurveFile(request, user_id, file_id):
     except:
         user=None
 
-    if request.method == 'POST':
-        form = SelectXForm(user_id, request.POST)
-        if form.is_valid():
-            if ( form.process(user) == True ):
-                return HttpResponseRedirect(reverse('showCurveFile', args=[user_id, file_id]))
-    else:
-        form = SelectXForm(user_id)
-
     try:
         cf = CurveFile.objects.get(id=file_id, deleted=False)
     except:
         cf = None
 
+    if not cf.canBeReadBy(user):
+        raise 3
+
     if ( __debug__): 
         print(cf)
     template = loader.get_template('manager/showFile.html')
-    plotScr, plotDiv = generatePlot('', user, 'f' ,cf.id)
+    plotScr, plotDiv = generatePlot(request, user, 'f' ,cf.id)
     context = { 
-            'scripts': PlotMaker.required_scripts + plotScr,
+            'scripts': PlotManager.required_scripts + plotScr,
             'mainPlot' : plotDiv,
             'user' : user,
             'curvefile_id': curvefile_id,
-            'plot_width' : PlotMaker.plot_width,
-            'plot_height' : PlotMaker.plot_height,
+            'plot_width' : PlotManager.plot_width,
+            'plot_height' : PlotManager.plot_height,
             'form' : form
         }
     return HttpResponse(template.render(context, request))
@@ -469,7 +477,7 @@ def analyze(request, user_id, analysis_id):
         user = User.objects.get(id=user_id)
     except:
         user=None
-    dataop = DataOperation(analysis = analysis_id)
+    dataop = MethodManager(analysis = analysis_id)
     dataop.process(user, request)
     return dataop.getContent(user) 
 
@@ -479,10 +487,22 @@ def process(request, user_id, processing_id):
         user = User.objects.get(id=user_id)
     except:
         user=None
-    dataop = DataOperation(processing = processing_id)
+    dataop = MethodManager(processing = processing_id)
     dataop.process(user, request)
     return dataop.getContent(user) 
 
+def methodInteraction(request, user_id, method_type, method_id):
+    try:
+        user = User.objects.get(id=user_id)
+    except:
+        user=None
+    if ( method_type == 'a' ):
+        m = MethodManager(user=user,method_type='analysis',method_id=method_id)
+    elif ( method_type == 'p' ):
+        m = MethodManager(user=user,method_type='processing',method_id=method_id)
+    else:
+        raise NameError('Unknown method type')
+        
 
 #@never_cache
 def generatePlot(request, user, plot_type, value_id):
@@ -502,7 +522,8 @@ def generatePlot(request, user, plot_type, value_id):
     if not ( plot_type in allowedTypes ):
         return
 
-    pm = PlotMaker()
+    pm = PlotManager()
+    pm.process(request, user)
     if (plot_type == 'f' ):
         pm.processFile(user, value_id)
     elif (plot_type == 's'):
@@ -512,4 +533,4 @@ def generatePlot(request, user, plot_type, value_id):
     elif (plot_type == 'c'):
         pm.processCurves(user, value_id)
 
-    return pm.getEmbeded() 
+    return pm.getEmbeded(user, plot_type, value_id) 

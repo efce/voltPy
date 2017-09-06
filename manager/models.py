@@ -168,7 +168,7 @@ class CurveSet(models.Model):
         return (self.owner == user)
 
     def canBeUpdatedBy(self, user):
-        return self.isOwnedBy(user) and not self.locked
+        return self.isOwnedBy(user) #and not self.locked
 
     def canBeReadBy(self, user):
         return self.isOwnedBy(user)
@@ -179,18 +179,12 @@ class CurveSet(models.Model):
 
 
 class Analysis(models.Model):
-    curveSet = models.ForeignKey(CurveSet)
-    result = models.FloatField(null=True)
-    resultStdDev = models.FloatField(null=True)
-    corrCoef = models.FloatField(null=True)
-    dataMatrix = PickledObjectField() 
-    fitEquation =PickledObjectField()
-    analyte=models.ManyToManyField(Analyte)
-
     id = models.AutoField(primary_key=True)
     owner = models.ForeignKey(User)
-    params = PickledObjectField(default="")
+    curveSet = models.ForeignKey(CurveSet)
     date = models.DateField()
+    customData=PickledObjectField(default={})
+    analytes=models.ManyToManyField(Analyte)
     name = models.TextField()
     method = models.TextField()
     step  = models.IntegerField(default=0)
@@ -214,11 +208,11 @@ class Analysis(models.Model):
 
 
 class Processing(models.Model):
-    curveSet = models.ForeignKey(CurveSet)
     id = models.AutoField(primary_key=True)
     owner = models.ForeignKey(User)
-    params = PickledObjectField(default="")
+    curveSet = models.ForeignKey(CurveSet)
     date = models.DateField()
+    customData = PickledObjectField(default={})
     name = models.TextField()
     method = models.TextField()
     step  = models.IntegerField(default=0)

@@ -1,7 +1,7 @@
-from manager.method_manager import *
-from manager.models import *
-import manager.plotmaker as pm
 from numpy import polyfit, corrcoef
+from manager.methodmanager import *
+from manager.models import *
+import manager.plotmanager as pm
 
 class SlopeStandardAdditionAnalysis(AnalysisMethod):
     steps = ( 
@@ -33,11 +33,8 @@ class SlopeStandardAdditionAnalysis(AnalysisMethod):
             return None
         return self.steps[stepNum]
 
-    def processStep(self, user, stepNum, data):
-        data['selectedIndex'] = self.model.curveSet.usedCurveData.all()[0].xvalueToIndex(user, data['point'])
-        print('process step: %i' % stepNum)
-        print(data)
-        self.model.params = data
+    def processStep(self, user, stepNum):
+        self.model.customData['selectedIndex'] = self.model.curveSet.usedCurveData.all()[0].xvalueToIndex(user, self.model.customData['point'][0])
         self.model.step += 1
         self.model.save
         return True
@@ -46,7 +43,7 @@ class SlopeStandardAdditionAnalysis(AnalysisMethod):
         from manager.helpers.slopeStandardAdditionAnalysis import slopeStandardAdditionAnalysis
         from manager.helpers.prepareStructForSSAA import prepareStructForSSAA
         from manager.curveea import Param
-        peak = self.model.params.get('selectedIndex', 0)
+        peak = self.model.customData.get('selectedIndex', 0)
         X = []
         Conc = []
         tptw = 0
@@ -59,41 +56,43 @@ class SlopeStandardAdditionAnalysis(AnalysisMethod):
         #TODO: proper selection of values
         prepare = prepareStructForSSAA(X,Conc, tptw, 3,[3,7,13],'dp') 
         result = slopeStandardAdditionAnalysis(prepare, peak, {'forceSamePoints': True})
-        self.model.dataMatrix = [ 
+        self.model.customData['matrix'] = [ 
                 result['CONC'], 
                 [ x for x in result['Slopes'].items() ]
             ]
-        self.model.fitEquation = result['Fit']
-        self.model.result = result['Mean']
-        self.model.resultStdDev = result['STD']
-        self.model.corrCoeff = result['R']
+        self.model.customData['fitEquation'] = result['Fit']
+        self.model.customData['result'] = result['Mean']
+        self.model.customData['resultStdDev'] = result['STD']
+        self.model.customData['corrCoeff'] = result['R']
         self.model.completed = True
         self.model.step = 0
         self.model.save()
 
-    def printInfo(self):
-        p=pm.PlotMaker()
+    def printInfo(self, user):
+        p=pm.PlotManager()
         p.plot_width = 500
         p.plot_height = 400
-        xvec = self.model.dataMatrix[0]
-        yvec = self.model.dataMatrix[1]
+        xvec = self.model.customData['matrix'][0]
+        yvec = self.model.customData['matrix'][1]
         for sens,yrow in yvec:
             p.processXY(
                     xvec,
                     yrow,
                     False)
         xvec2 = list(xvec)
-        xvec2.append(-self.model.result)
-        for k,fe in self.model.fitEquation.items():
+        xvec2.append(-self.model.customData['result'])
+        for k,fe in self.model.customData['fitEquation'].items():
             Y = [ fe['slope']*x+fe['intercept'] for x in xvec2 ]
             p.processXY(xvec2,Y,True)
 
-        scripts,div = p.getEmbeded()
+        scripts,div = p.getEmbeded(user, 'analysis', self.model.id)
         ret = { 
             'head': ''.join([p.required_scripts,scripts]),
-            'body': ''.join([div, '<p>Result: {0}<br />STD: {1}</p>'.format(self.model.result, self.model.resultStdDev) ])
+            'body': ''.join([div, '<p>Result: {0}<br />STD: {1}</p>'.format(
+                                            self.model.customData['result'],
+                                            self.model.customData['resultStdDev']) 
+                            ])
             }
-
         return ret
 
 def newInstance(*args, **kwargs):
