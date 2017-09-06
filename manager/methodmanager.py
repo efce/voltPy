@@ -221,7 +221,6 @@ class MethodManager:
                                          self.__selected_method.model.id ]
                                     )
             elif self.__selected_method.type() == 'processing':
-                print( 'redirecting' )
                 self.redirect = reverse( 
                                     'showCurveSet',
                                      args=[ 
