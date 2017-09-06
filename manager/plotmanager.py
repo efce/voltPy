@@ -31,6 +31,9 @@ class PlotManager:
         case 'reload':
             location.reload();
             break;
+        case 'redirect':
+            location = data.location;
+            break;
         case 'setCursor':
             cursors[data.number].location = parseFloat(data.x);
             cursors[data.number].line_alpha = 1;
@@ -200,15 +203,15 @@ class PlotManager:
         self.ylabel = 'i / µA'
         # prepare data points
         self.processXY( 
-                    analysis.dataMatrix[0], 
-                    analysis.dataMatrix[1],
+                    analysis.customData['matrix'][0], 
+                    analysis.customData['matrix'][1],
                     False
                 )
         #prepare calibration line
-        xs = analysis.dataMatrix[0]
-        xs.append(-analysis.result)
+        xs = analysis.customData['matrix'][0]
+        xs.append(-analysis.customData['result'])
         vx= [ min(xs), max(xs) ] # x variable is used by the fitEquation
-        FofX = lambda xo: analysis.fitEquation['slope'] * xo + analysis.fitEquation['intercept']
+        FofX = lambda xo: analysis.customData['fitEquation']['slope'] * xo + analysis.customData['fitEquation']['intercept']
         vy = [FofX(xi) for xi in vx ]
         self.processXY(vx,vy,True)
 
@@ -239,7 +242,8 @@ class PlotManager:
                 width=self.plot_width-20
             )
         labels = []
-        onx = OnXAxis.objects.get(user=user).selected
+        onx = OnXAxis.objects.get(user=user)
+        onx = onx.selected
         for k,l in dict(OnXAxis.AVAILABLE).items():
             labels.append(l)
         active = -1
@@ -272,11 +276,8 @@ class PlotManager:
 
 
 
-    def getEmbeded(self, user_id, plot_type, vid):
-        try:
-            user=User.objects.get(id=user_id)
-        except:
-            user=None
+    def getEmbeded(self, user, plot_type, vid):
+
         layout, p = self._prepareFigure(user)
 
         for l in self._line:
@@ -301,34 +302,27 @@ class PlotManager:
             cursors.append(C)
 
         args = dict(
-                lineSrc=srcEmpty,
-                plot=p,
-                cursor1=cursors[0],
-                cursor2=cursors[1],
-                cursor3=cursors[2],
-                cursor4=cursors[3]
+                    lineSrc=srcEmpty,
+                    plot=p,
+                    cursor1=cursors[0],
+                    cursor2=cursors[1],
+                    cursor3=cursors[2],
+                    cursor4=cursors[3]
                 )
-        #        callback = CustomJS(args=args, code=
-        #        "var type = '" + plot_type + "'; var vid = '" + vid + "'; var uid = '" +
-        #        str(user_id) + "';" + """
-        #        var cursors = [cursor1, cursor2, cursor3, cursor4];
-        #        var x_data = cb_obj.x; // current mouse x position in plot coordinates
-        #        var y_data = cb_obj.y; // current mouse y position in plot coordinates
-        #        console.log("(x,y)=" + x_data+","+y_data); //monitors values in Javascript console
-        #        var geturl = window.location.href + "?query=json&plot_type=" + type +"&vid=" + vid + "&x=" + x_data +"&y=" + y_data;
-        #        $.get( geturl, function(data, status){
-        #                alert("Data: " + data);
-        #                if (status == 'success')
-        #                    processData(plot,lineSrc,cursors,data);
-        #            });
-        #        """)
-        #
-        #        p.js_on_event('tap', callback)
+
+        jsfun = "var type = '" + plot_type + "'; var vid = '" + str(vid) + "'; var uid = '" + str(user.id) + "';" +\
+        """
+                var cursors = [cursor1, cursor2, cursor3, cursor4];
+                var x_data = cb_obj.x; // current mouse x position in plot coordinates
+                var y_data = cb_obj.y; // current mouse y position in plot coordinates
+                console.log("(x,y)=" + x_data+","+y_data); //monitors values in Javascript console
+                var geturl = window.location.href + "?query=json&plot_type=" + type +"&vid=" + vid + "&x=" + x_data +"&y=" + y_data;
+                $.get( geturl, function(data, status){
+                        alert("Data: " + data);
+                        if (status == 'success')
+                            processData(plot,lineSrc,cursors,data);
+                    });
+        """
+        callback = CustomJS(args=args, code=jsfun)
+        p.js_on_event('tap', callback)
         return components(layout) 
-
-
-    def getPage(self):
-        scr,div = self.getEmbeded()
-        strr = "<html><head>" + self.required_scripts+ "</head><body>"  + scr + div + "</body></html>"        
-        return strr
-

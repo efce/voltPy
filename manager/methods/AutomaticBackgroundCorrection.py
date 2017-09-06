@@ -43,6 +43,8 @@ class AutomaticBackgroundCorrection(ProcessingMethod):
             newcd.pk = None
             xvec = range(len(cd.current))
             yvec = cd.current
+            self.model.customData['iter'] = 20
+            self.model.customData['degree'] = 5
             yvec = calc_abc(xvec, yvec, 5, 20)['yvec']
             newcd.current = yvec
             newcd.method=self.__repr__()
@@ -56,7 +58,7 @@ class AutomaticBackgroundCorrection(ProcessingMethod):
         return True
 
 
-    def printInfo(self):
+    def printInfo(self, user):
         return {
                 'head': '',
                 'body': ''

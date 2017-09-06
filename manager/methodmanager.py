@@ -9,8 +9,9 @@ from django.http import HttpResponse
 from django.template import loader
 from django.core.urlresolvers import reverse
 from .models import *
+import manager.plotmanager as pm
 import json
-#from .plotmaker import PlotManager
+import manager.views
 
 class MethodManager:
     """
@@ -88,7 +89,7 @@ class MethodManager:
                 if self.cleaned_data.get('method') in self.methods:
                     a = Analysis(
                             owner = user,
-                            curveSet = cs,
+                            curveSet = curveset,
                             date = timezone.now(),
                             method = self.cleaned_data.get('method'),
                             name = "",
@@ -96,14 +97,20 @@ class MethodManager:
                             deleted = False
                         )
                     a.save()
-                    cs.locked=True #CurveSet cannot be changed when used by Analysis method.
-                    cs.save()
+                    curveset.locked=True #CurveSet cannot be changed when used by Analysis method.
+                    curveset.save()
                     return a.id
                 else:
                     return None
 
 
     def __init__(self, **kwargs):
+        self.operations = dict([
+                    (int(self.Step.selectRange), self.operationSelectRange),
+                    (int(self.Step.selectPoint), self.operationSelectPoint),
+                    #(int(self.Step.selectTwoRanges), self.operationSelectTwoRanges),
+                    #(int(self.Step.selectAnalytes), self.operationSelectAnalyte),
+                ])
         self.methods = {
                     'processing': dict(), 
                     'analysis': dict() 
@@ -152,12 +159,6 @@ class MethodManager:
             self.__setModel(self.analysis)
         elif ( self.__selected_type == 'processing' ):
             self.__setModel(self.processing)
-        self.operations = dict([
-                    (int(self.Step.selectRange), self.operationSelectRange),
-                    (int(self.Step.selectPoint), self.operationSelectPoint),
-                    #(int(self.Step.selectTwoRanges), self.operationSelectTwoRanges),
-                    #(int(self.Step.selectAnalytes), self.operationSelectAnalyte),
-                ])
 
 
     def loadMethods(self):
@@ -190,20 +191,20 @@ class MethodManager:
 
 
     def process(self, user, request):
-        if self.__current_operation:
+        if self.__selected_method and self.__current_operation:
             self.request = request
-            try:
-                if ( request.POST.get('query', None) == 'json' ):
-                    x = request.POST['x']
-                    y = request.POST['y']
-                    result = self.__current_operation.process({'x': x, 'y': y})
-                    if result:
-                        if ( self.__selected_method.processStep(
-                                                user,
-                                                result)):
-                            self.nextStep(user)
-            except AttributeError:
-                raise 5
+            #try:
+            if ( request.GET.get('query', None) == 'json' ):
+                x = request.GET['x']
+                y = request.GET['y']
+                result,self.json_reply = self.__current_operation.process(self.__selected_method.model, {'x': x, 'y': y})
+                if result:
+                    if ( self.__selected_method.processStep(
+                        user,
+                        self.__current_step_number) ):
+                        self.nextStep(user)
+            #except AttributeError:
+            #    raise 5
         else:
             self.nextStep(user)
 
@@ -235,29 +236,47 @@ class MethodManager:
         else:
             self.__current_operation = self.opetations[self.__current_step['step']]()
 
-
     def getContent(self, user):
         if self.redirect:
+            try:
+                if self.request.GET.get('query') == 'json':
+                    ret = dict( command='redirect', location=self.redirect )
+                    return HttpResponse(json.dumps(ret))
+            except:
+                pass
             return HttpResponseRedirect( self.redirect )
         elif self.json_reply:
             return HttpResponse(json.dumps(self.json_reply))
         elif not self.isMethodSelected():
             return HttpResponseRedirect( reverse("browseCurveSet") )
 
-        text = ''
+        operationText = dict( 
+                    head= '', 
+                    body= "No operation"
+            )
         if self.__current_operation:
-            text = self.__current_operation.draw(), 
-        else:
-            text = "No operation"
+            operationText = self.__current_operation.draw(self.__current_step)
         if self.__selected_type == 'analysis':
+            plotScr, plotDiv = manager.views.generatePlot(
+                    request='', 
+                    user=user, 
+                    plot_type='s',
+                    value_id=self.analysis.curveSet.id
+                )
             template = loader.get_template('manager/analyze.html')
             context = {
-                    'analyze_content': text,
+                    'scripts': '\n'.join(
+                                    [   plotScr, 
+                                        pm.PlotManager.required_scripts, 
+                                        operationText.get('head','')
+                                    ]),
+                    'mainPlot': plotDiv,
+                    'analyze_content': operationText.get("body",''),
                     'user': user,
                     'analysis_id': self.analysis.id,
                     'curveset_id': self.analysis.curveSet.id,
-                    'plot_width' : PlotManager.plot_width,
-                    'plot_height' : PlotManager.plot_height
+                    'plot_width' : pm.PlotManager.plot_width,
+                    'plot_height' : pm.PlotManager.plot_height
             }
             return HttpResponse(template.render(context))
         else:
@@ -284,8 +303,8 @@ class MethodManager:
         pass
 
 
-    def getInfo(self):
-        return self.__selected_method.printInfo()
+    def getInfo(self, user):
+        return self.__selected_method.printInfo(user)
 
 
     def register(self,m):
@@ -303,44 +322,44 @@ class MethodManager:
         def setData(self, data, request):
             pass
 
-        def draw(self):
-            pass
+        def draw(self, step):
+            return dict( 
+                        head = '', 
+                        body = step.get('data').get('desc','')
+                    )
+            
 
-        def process(self, data):
+        def process(self, model, data):
             x = data.get('x', None)
             if x:
                 try:
                     x=float(x)
                 except:
-                    raise 5
-                    return False
-                rg = self.model.customData.get('range1')
+                    return False,None
+                rg = model.customData.get('range1')
                 try:
-                    if len(rg) == 3:
+                    if len(rg) == 1:
                         rg.append(x)
-                        return True
-                    if len(rg) < 3:
-                        rg.append(rg)
-                        self.json_reply = { 'command': 'addCursor', 'x': x, 'number': len(rg) }
-                        self.model.save()
-                        return False
+                        return True,{}
                 except:
-                    raise 5
-                    self.model.customData['range1'][0] = x
-                    self.json_reply = { 'command': 'addCursor', 'x': x, 'number': 0 }
-                    self.model.save()
-                    return False
+                    model.customData['range1'] = []
+                    model.customData['range1'].append(x)
+                    model.save()
+                    return False,{'command': 'setCursor', 'x': x, 'number': 0}
             else:
-                return False
+                return False,None
 
     class operationSelectPoint:
         def setData(self, data, request):
             pass
 
-        def draw(self):
-            pass
+        def draw(self, step):
+            return dict( 
+                        head = '', 
+                        body = step.get('data').get('desc','')
+                    )
 
-        def process(self,data):
+        def process(self, model, data):
             x = data.get('x', None)
             y = data.get('y', None)
             if x and y:
@@ -350,12 +369,11 @@ class MethodManager:
                 except:
                     raise 5
                     return False
-                self.model.customData['point'] = (x,y)
-                self.model.save()
-                return True
+                model.customData['point'] = (x,y)
+                model.save()
+                return True,None
             else:
-                return False
-
+                return False,None
 
 
 class Method(ABC):
@@ -378,7 +396,7 @@ class Method(ABC):
         pass
 
     @abstractmethod
-    def processStep(self, stepNum, data):
+    def processStep(self, stepNum):
         """
         This processes current step.
         """
@@ -394,7 +412,7 @@ class Method(ABC):
         pass
 
     @abstractmethod
-    def printInfo(self):
+    def printInfo(self, user):
         pass
 
     @abstractmethod

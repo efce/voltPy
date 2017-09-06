@@ -4,7 +4,7 @@ import numpy as np
 from scipy.signal import savgol_filter
 from scipy.stats import t
 from scipy.interpolate import UnivariateSpline
-from manager.helpers.fithelpers import calc_calc_normal_equation_fit
+from manager.helpers.fithelpers import calc_normal_equation_fit
 
 def slopeStandardAdditionAnalysis(DATACELL, peakLocation, options):
     """

@@ -236,7 +236,7 @@ def showAnalysis(request, user_id, analysis_id):
 
     dataop = MethodManager(analysis=analysis_id)
     template = loader.get_template('manager/showAnalysis.html')
-    info = dataop.getInfo()
+    info = dataop.getInfo(user)
     plotScr, plotDiv = generatePlot(
             request='', 
             user=user, 
@@ -477,7 +477,7 @@ def analyze(request, user_id, analysis_id):
         user = User.objects.get(id=user_id)
     except:
         user=None
-    dataop = DataOperation(analysis = analysis_id)
+    dataop = MethodManager(analysis = analysis_id)
     dataop.process(user, request)
     return dataop.getContent(user) 
 
@@ -532,4 +532,4 @@ def generatePlot(request, user, plot_type, value_id):
     elif (plot_type == 'c'):
         pm.processCurves(user, value_id)
 
-    return pm.getEmbeded(user.id, plot_type, value_id) 
+    return pm.getEmbeded(user, plot_type, value_id) 
