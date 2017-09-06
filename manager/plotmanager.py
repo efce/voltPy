@@ -3,6 +3,7 @@ from .models import *
 import io
 import numpy as np
 import json 
+import django
 from bokeh.plotting import figure, ColumnDataSource
 from bokeh.embed import components
 from bokeh.models.callbacks import CustomJS
@@ -13,6 +14,7 @@ from bokeh.models.widgets import RadioButtonGroup
 class PlotManager:
     _scatter = [] # list to be plotted of dictionaries containing 'x' and 'y' vectors
     _line = []    # list to be plotted of dictionaries containing 'x' and 'y' vectors
+    _include_x_switch = False
     title = None
     xlabel = "x"
     ylabel = "y"
@@ -76,6 +78,7 @@ class PlotManager:
     
 
     def processFile(self, user, value_id):
+        self._include_x_switch = True
         curvefile_id = value_id
         cf = CurveFile.objects.get(id=curvefile_id)
         if not cf.canBeReadBy(user):
@@ -85,6 +88,7 @@ class PlotManager:
     
 
     def processCurves(self, user, curve_ids_comma_separated):
+        self._include_x_switch = True
         cids = curve_ids_comma_separated.split(",")
         curves_filter_qs = Q()
         for i in cids:
@@ -98,6 +102,7 @@ class PlotManager:
 
 
     def processCurveSet(self, user, curveset_id):
+        self._include_x_switch = True
         try:
             onxs = OnXAxis.objects.get(user=user)
             onx = onxs.selected
@@ -254,26 +259,46 @@ class PlotManager:
         radio_button_group = RadioButtonGroup(
                 labels=labels, 
                 active=active,
-                callback=CustomJS(args={}, code=
+                callback=CustomJS(args={}, code=\
                     """
                     var act = cb_obj.active;
-                    alert('not implemented: '+ act);
+                    var geturl = window.location.href;
+                    $.post( geturl, {'query': 'plotmanager', 'onx': act,
+                    'csrfmiddlewaretoken': '""" +
+                    django.middleware.csrf.get_token(getattr(self,'request','')) + """' });
+                    location=window.location.href;
                     """)
                 )
         w=widgetbox(radio_button_group)
-        layout = column([ p, w ])
+        if self._include_x_switch:
+            layout = column([ p, w ])
+        else:
+            layout = column([ p ])
         return layout, p
 
-    def plotInteract(self, intercation, data):
-        if ( interaction == 'add' ):
-            pass
-        elif ( interaction == 'remove' ):
-            pass
-        elif ( interaction == 'change' ):
-            pass
-        elif ( interaction == 'reloadPage' ):
-            pass
-
+    def process(self, request, user):
+        self.request = request
+        data = getattr(request, 'POST', None)
+        if ( data ):
+            if ( data.get('query', '') == 'plotmanager' ):
+                onx =  data.get('onx', None)
+                if ( onx ):
+                    try:
+                        onx=int(onx)
+                    except:
+                        return
+                    ONX = OnXAxis.objects.get(user=user)
+                    i=0
+                    for k,v in OnXAxis.AVAILABLE:
+                        if onx == i:
+                            newkey=k
+                            break
+                        else:
+                            i+=1
+                    else:
+                        return
+                    ONX.selected = newkey
+                    ONX.save()
 
 
     def getEmbeded(self, user, plot_type, vid):

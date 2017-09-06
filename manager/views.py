@@ -238,7 +238,7 @@ def showAnalysis(request, user_id, analysis_id):
     template = loader.get_template('manager/showAnalysis.html')
     info = dataop.getInfo(user)
     plotScr, plotDiv = generatePlot(
-            request='', 
+            request=request, 
             user=user, 
             plot_type='s',
             value_id=an.curveSet.id
@@ -293,7 +293,7 @@ def showCurveSet(request, user_id, curveset_id):
         raise 3
 
     template = loader.get_template('manager/showCurveSet.html')
-    plotScr, plotDiv = generatePlot('', user, 's' ,cs.id)
+    plotScr, plotDiv = generatePlot(request, user, 's' ,cs.id)
     context = {
             'scripts': PlotManager.required_scripts + plotScr,
             'mainPlot' : plotDiv,
@@ -370,7 +370,7 @@ def editCurveSet(request,user_id,curveset_id):
         raise 404
 
     cal_disp = ""
-    plotScr, plotDiv = generatePlot('', user, 's' ,cs.id)
+    plotScr, plotDiv = generatePlot(request, user, 's' ,cs.id)
     context = { 
             'scripts': PlotManager.required_scripts + plotScr,
             'mainPlot' : plotDiv,
@@ -422,7 +422,7 @@ def editCurveFile(request, user_id, file_id,):
                 return HttpResponseRedirect(reverse('browseCurveFile', args=[user_id]))
     else:
         form = AddAnalytesForm(user, "File", file_id)
-    plotScr, plotDiv = generatePlot('', user, 'f' ,file_id)
+    plotScr, plotDiv = generatePlot(request, user, 'f' ,file_id)
     context = { 
             'scripts': PlotManager.required_scripts + plotScr,
             'mainPlot' : plotDiv,
@@ -452,7 +452,7 @@ def showCurveFile(request, user_id, file_id):
     if ( __debug__): 
         print(cf)
     template = loader.get_template('manager/showFile.html')
-    plotScr, plotDiv = generatePlot('', user, 'f' ,cf.id)
+    plotScr, plotDiv = generatePlot(request, user, 'f' ,cf.id)
     context = { 
             'scripts': PlotManager.required_scripts + plotScr,
             'mainPlot' : plotDiv,
@@ -523,6 +523,7 @@ def generatePlot(request, user, plot_type, value_id):
         return
 
     pm = PlotManager()
+    pm.process(request, user)
     if (plot_type == 'f' ):
         pm.processFile(user, value_id)
     elif (plot_type == 's'):
