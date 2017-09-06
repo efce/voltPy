@@ -261,12 +261,15 @@ class PlotManager:
                 active=active,
                 callback=CustomJS(args={}, code=\
                     """
+                    function sleep (time) {
+                      return new Promise((resolve) => setTimeout(resolve, time));
+                    }
                     var act = cb_obj.active;
                     var geturl = window.location.href;
                     $.post( geturl, {'query': 'plotmanager', 'onx': act,
                     'csrfmiddlewaretoken': '""" +
-                    django.middleware.csrf.get_token(getattr(self,'request','')) + """' });
-                    location=window.location.href;
+                    django.middleware.csrf.get_token(getattr(self,'request',''))
+                    + """' }).done(sleep(500).then(()=>{location=window.location.href}));
                     """)
                 )
         w=widgetbox(radio_button_group)
