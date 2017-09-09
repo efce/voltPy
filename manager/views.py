@@ -514,23 +514,43 @@ def generatePlot(request, user, plot_type, value_id):
     v - selected curves 
     """
     allowedTypes = {
-            'f' : 'File',
-            'a' : 'Analysis',
-            's' : 'CurveSet',
-            'v' : 'Curves'
-            }
+        'f' : 'File',
+        'a' : 'Analysis',
+        's' : 'CurveSet',
+        'v' : 'Curves'
+    }
     if not ( plot_type in allowedTypes ):
         return
 
     pm = PlotManager()
     pm.process(request, user)
+    data=[]
     if (plot_type == 'f' ):
-        pm.processFile(user, value_id)
+        data=pm.fileHelper(user, value_id)
+        pm.xlabel = pm.xLabelHelper(user)
+        pm.include_x_switch = True
     elif (plot_type == 's'):
-        pm.processCurveSet(user, value_id)
+        data=pm.curveSetHelper(user, value_id)
+        pm.xlabel = pm.xLabelHelper(user)
+        pm.include_x_switch = True
     elif (plot_type == 'a'):
-        pm.processAnalysis(user, value_id)
+        data=pm.analysisHelper(user, value_id)
+        xlabel = pm.xLabelHelper(user)
+        pm.include_x_switch = False
     elif (plot_type == 'c'):
-        pm.processCurves(user, value_id)
+        data=pm.curvesHelper(user, value_id)
+        pm.xlabel = pm.xLabelHelper(user)
+        pm.include_x_switch = True
+
+    pm.ylabel = 'i / µA'
+
+    for d in data:
+        pm.add(
+            x=d.get('x',[]), 
+            y=d.get('y', []),
+            name=d.get('name',''),
+            color=d.get('color','blue'),
+            isLine=d.get('isLine', True)
+        )
 
     return pm.getEmbeded(user, plot_type, value_id) 

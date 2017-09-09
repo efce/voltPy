@@ -12,10 +12,8 @@ from bokeh.layouts import widgetbox, column
 from bokeh.models.widgets import RadioButtonGroup
 
 class PlotManager:
-    _scatter = [] # list to be plotted of dictionaries containing 'x' and 'y' vectors
-    _line = []    # list to be plotted of dictionaries containing 'x' and 'y' vectors
-    _include_x_switch = False
-    title = None
+    include_x_switch = False
+    title = ''
     xlabel = "x"
     ylabel = "y"
     plot_width = 850
@@ -69,26 +67,31 @@ class PlotManager:
     </script>
     """
     def __init__(self):
-        self._line = []
-        self._scatter = []
+        self.__line = []
+        self.__scatter = []
         self.xlabel = "x"
         self.ylabel = "y"
         self.plot_width = 850
         self.plot_height = 700
+        self.p = figure(
+            title=self.title, 
+            x_axis_label=self.xlabel,
+            y_axis_label=self.ylabel,
+            height=self.plot_height-10,
+            width=self.plot_width-20
+        )
     
 
-    def processFile(self, user, value_id):
-        self._include_x_switch = True
+    def fileHelper(self, user, value_id):
         curvefile_id = value_id
         cf = CurveFile.objects.get(id=curvefile_id)
         if not cf.canBeReadBy(user):
             raise 3
         cbs = Curve.objects.filter(curveFile=cf, deleted=False)
-        self._processCurveArray(user, cbs)
+        return self._processCurveArray(user, cbs)
     
 
-    def processCurves(self, user, curve_ids_comma_separated):
-        self._include_x_switch = True
+    def curvesHelper(self, user, curve_ids_comma_separated):
         cids = curve_ids_comma_separated.split(",")
         curves_filter_qs = Q()
         for i in cids:
@@ -98,11 +101,10 @@ class PlotManager:
         for c in cbs:
             if not c.canBeReadBy(user):
                 raise 3
-        self._processCurveArray(user, cbs)
+        return self._processCurveArray(user, cbs)
 
 
-    def processCurveSet(self, user, curveset_id):
-        self._include_x_switch = True
+    def curveSetHelper(self, user, curveset_id):
         try:
             onxs = OnXAxis.objects.get(user=user)
             onx = onxs.selected
@@ -110,37 +112,46 @@ class PlotManager:
             onxs = OnXAxis(selected='P',user=user)
             onxs.save()
             onx = onxs.selected
-
-        self.xlabel = self._generateXLabel(onx)
-        self.ylabel = 'i / µA'
         cs = CurveSet.objects.get(id=curveset_id)
+        ret = []
 
         if onx == 'S':
             for cv in cs.usedCurveData.all():
-                self._line.append(
+                ret.append(
                         dict(
                             x=range(1, len(cv.probingData)+1),
-                            y=cv.probingData
+                            y=cv.probingData,
+                            isLine=True,
+                            name = '',
+                            color='blue',
                         )
                     )
 
         elif onx == 'T':
             for cv in cs.usedCurveData.all():
-                self._line.append(
+                ret.append(
                         dict(
                             x=cv.time,
-                            y=cv.current
+                            y=cv.current,
+                            isLine=True,
+                            name = '',
+                            color='blue',
                         )
                     )
 
         else:
             for cv in cs.usedCurveData.all():
-                self._line.append(
+                ret.append(
                         dict(
                             x=cv.potential,
-                            y=cv.current
+                            y=cv.current,
+                            isLine=True,
+                            name = '',
+                            color='blue',
                         )
                     )
+
+        return ret
 
 
     def _processCurveArray(self, user, curves):
@@ -152,17 +163,19 @@ class PlotManager:
             onxs.save()
             onx = onxs.selected
 
-        self.xlabel = self._generateXLabel(onx)
-        self.ylabel = 'i / µA'
+        ret = []
 
         if onx == 'S':
             for cb in curves:
                 cvs = CurveData.objects.filter(curve=cb, processing=None)
                 for cv in cvs:
-                    self._line.append(
+                    ret.append(
                             dict(
                                 x=range(1, len(cv.probingData)+1),
-                                y=cv.probingData
+                                y=cv.probingData,
+                                isLine=True,
+                                name = '',
+                                color='blue',
                             )
                         )
 
@@ -170,10 +183,13 @@ class PlotManager:
             for cb in curves:
                 cvs = CurveData.objects.filter(curve=cb, processing=None)
                 for cv in cvs:
-                    self._line.append(
+                    ret.append(
                             dict(
                                 x=cv.time,
-                                y=cv.current
+                                y=cv.current,
+                                isLine=True,
+                                name = '',
+                                color='blue',
                             )
                         )
 
@@ -184,12 +200,24 @@ class PlotManager:
                     self._line.append(
                             dict(
                                 x=cv.potential,
-                                y=cv.current
+                                y=cv.current,
+                                isLine=True,
+                                name = '',
+                                color='blue',
                             )
                         )
 
+        return ret
 
-    def _generateXLabel(self, onx):
+
+    def xLabelHelper(self, user):
+        try:
+            onxs = OnXAxis.objects.get(user=user)
+            onx = onxs.selected
+        except:
+            onxs = OnXAxis(selected='P',user=user)
+            onxs.save()
+            onx = onxs.selected
         if ( onx == 'S' ):
             return "Sample no."
         elif ( onx == 'T' ):
@@ -198,7 +226,8 @@ class PlotManager:
             return "E / mV"
 
 
-    def processAnalysis(self, user, value_id):
+    def analysisHelper(self, user, value_id):
+        # TODO: makeover :)
         analysis = Analysis.objects.get(id=value_id)
         if not analysis.canBeReadBy(user):
             raise 3
@@ -221,34 +250,31 @@ class PlotManager:
         self.processXY(vx,vy,True)
 
 
-    def processXY(self, x, y, line=True):
-        if line:
-            self._line.append(
-                    dict(
-                        x=x,
-                        y=y
-                    )
-                )
+    def add(self, x=[], y=[], name='', isLine=True, color="blue", **kwargs):
+        if isLine:
+            self.p.line(
+                x=x,
+                y=y,
+                name=name,
+                color=color,
+                line_width=kwargs.get('line_width',2),
+            )
         else:
-            self._scatter.append(
-                    dict(
-                        x=x,
-                        y=y
-                    )
-                )
+            self.p.scatter(
+                x=x,
+                y=y,
+                name=name,
+                color=color,
+                size=kwargs.get('size',8)
+            )
 
 
     def _prepareFigure(self, user):
-        p = figure(
-                title=self.title, 
-                x_axis_label=self.xlabel,
-                y_axis_label=self.ylabel,
-                height=self.plot_height-10,
-                width=self.plot_width-20
-            )
         labels = []
         onx = OnXAxis.objects.get(user=user)
         onx = onx.selected
+        self.p.xaxis.axis_label = self.xlabel
+        self.p.yaxis.axis_label = self.ylabel
         for k,l in dict(OnXAxis.AVAILABLE).items():
             labels.append(l)
         active = -1
@@ -275,11 +301,11 @@ class PlotManager:
                 active=active,
                 callback=CustomJS(args={}, code=jsfun))
         w=widgetbox(radio_button_group)
-        if self._include_x_switch:
-            layout = column([ p, w ])
+        if self.include_x_switch:
+            layout = column([ self.p, w ])
         else:
-            layout = column([ p ])
-        return layout, p
+            layout = column([ self.p ])
+        return layout, self.p
 
     def process(self, request, user):
         self.request = request
@@ -306,18 +332,49 @@ class PlotManager:
                     ONX.save()
 
 
+    def __operation(self, data):
+        switch = {
+            'addLine': self.__addLine,
+            'addCursor': self.__addCursor,
+            'addPoint': self.__addPoint,
+            'removeLine': self.__removeLine,
+            'removeCursor': self.__removeCursor,
+            'removePoint': self.__removePoint
+        }
+        operation = switch.get(data['operation'], 'None')
+        if not operation:
+            return
+        else:
+            return operation(data)
+
+    def __addLine(self):
+        if not data['operation'] == 'addLine':
+            return
+        if ( self.isJson ):
+            ret = {
+                    'command': 'addLine',
+                    'yvec': data['yvec'],
+                    'xvec': data['xvec']
+            }
+            return ret
+        else:
+            srcEmpty = ColumnDataSource(data = dict( x=[], y=[]))
+            self.p.line(x='xvec',y='yvec',source=data, color='red', line_dash='dashed')
+            return
+
+
     def getEmbeded(self, user, plot_type, vid):
 
-        layout, p = self._prepareFigure(user)
+        layout, self.p = self._prepareFigure(user)
 
-        for l in self._line:
-            p.line(l['x'], l['y'], color="blue", line_width=2)
+        for l in self.__line:
+            self.p.line(l['x'], l['y'], color="blue", line_width=2)
 
-        for s in self._scatter:
-            p.scatter(s['x'], s['y'], color="red", size=8)
+        for s in self.__scatter:
+            self.p.scatter(s['x'], s['y'], color="red", size=8)
 
         srcEmpty = ColumnDataSource(data = dict( x=[], y=[]))
-        p.line(x='x',y='y',source=srcEmpty, color='red', line_dash='dashed')
+        self.p.line(x='x',y='y',source=srcEmpty, color='red', line_dash='dashed')
 
         cursors = []
         for i in range(4):
@@ -328,12 +385,12 @@ class PlotManager:
                         line_width=2,
                         line_alpha=0
                        )
-            p.add_layout(C)
+            self.p.add_layout(C)
             cursors.append(C)
 
         args = dict(
                     lineSrc=srcEmpty,
-                    plot=p,
+                    plot=self.p,
                     cursor1=cursors[0],
                     cursor2=cursors[1],
                     cursor3=cursors[2],
@@ -354,5 +411,5 @@ class PlotManager:
                     });
         """
         callback = CustomJS(args=args, code=jsfun)
-        p.js_on_event('tap', callback)
+        self.p.js_on_event('tap', callback)
         return components(layout) 
