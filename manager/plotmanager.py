@@ -282,7 +282,7 @@ class PlotManager:
             if k==onx:
                 active = i
 
-        if ( getattr(self, 'request',False) and self._include_x_switch ):
+        if ( getattr(self, 'request',False) and self.include_x_switch ):
             jsfun= """
                 function sleep (time) {
                   return new Promise((resolve) => setTimeout(resolve, time));
