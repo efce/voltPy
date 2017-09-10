@@ -69,12 +69,14 @@ class RegularStandardAddition(AnalysisMethod):
         self.model.step = 0
         self.model.save()
 
-    def printInfo(self, user):
+    def printInfo(self, request, user):
         p = pm.PlotManager()
-        p.processAnalysis(self.model.owner, self.model.id)
+        data = p.analysisHelper(self.model.owner, self.model.id)
+        for d in data:
+            p.add(**d)
         p.plot_width = 500
         p.plot_height = 500
-        scr,div = p.getEmbeded(user, 'analysis', self.model.id)
+        scr,div = p.getEmbeded(request, user, 'analysis', self.model.id)
         return {
                 'head': ''.join([p.required_scripts,scr]),
                 'body': ''.join([

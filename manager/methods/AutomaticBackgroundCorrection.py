@@ -58,7 +58,7 @@ class AutomaticBackgroundCorrection(ProcessingMethod):
         return True
 
 
-    def printInfo(self, user):
+    def printInfo(self, request, user):
         return {
                 'head': '',
                 'body': ''

@@ -105,16 +105,17 @@ class MethodManager:
 
 
     def __init__(self, **kwargs):
+        print(kwargs)
         self.operations = dict([
-                    (int(self.Step.selectRange), self.operationSelectRange),
-                    (int(self.Step.selectPoint), self.operationSelectPoint),
-                    #(int(self.Step.selectTwoRanges), self.operationSelectTwoRanges),
-                    #(int(self.Step.selectAnalytes), self.operationSelectAnalyte),
-                ])
+            (int(self.Step.selectRange), self.operationSelectRange),
+            (int(self.Step.selectPoint), self.operationSelectPoint),
+            #(int(self.Step.selectTwoRanges), self.operationSelectTwoRanges),
+            #(int(self.Step.selectAnalytes), self.operationSelectAnalyte),
+        ])
         self.methods = {
-                    'processing': dict(), 
-                    'analysis': dict() 
-                }
+            'processing': dict(), 
+            'analysis': dict() 
+        }
         self.__selected_type = None
         self.__selected_method = None
         self.__current_operation = None
@@ -134,6 +135,7 @@ class MethodManager:
             try:
                 self.processing = Processing.objects.get(id=self.processing_id)
                 self.curveset_id = self.processing.curveSet.id
+                self.__setModel(self.processing)
             except:
                 raise 404
         elif ( 'analysis' in kwargs ):
@@ -141,6 +143,7 @@ class MethodManager:
             self.analysis_id = int(kwargs.get('analysis', None))
             try:
                 self.analysis = Analysis.objects.get(id=self.analysis_id)
+                self.__setModel(self.analysis)
             except:
                 raise 404
         elif ( 'method_id' in kwargs and 'method_type' in kwargs ):
@@ -152,13 +155,8 @@ class MethodManager:
             if not self.analysis.canBeUpdatedBy(user):
                 raise 3
             self.__setModel(model)
-            
         else:
             raise NameError('Uknown type')
-        if ( self.__selected_type == 'analysis' ):
-            self.__setModel(self.analysis)
-        elif ( self.__selected_type == 'processing' ):
-            self.__setModel(self.processing)
 
 
     def loadMethods(self):
@@ -178,6 +176,7 @@ class MethodManager:
                 self.register(methodInstance)
 
     def __setModel(self, model):
+        print('mm setting model')
         self.__selected_method = self.methods[self.__selected_type].get(model.method, None)
         self.__selected_method.setModel(model)
         self.__current_step_number = model.step
@@ -190,13 +189,16 @@ class MethodManager:
             self.__current_operation = self.operations[self.__current_step['step']]()
 
 
-    def process(self, user, request):
+    def process(self, request, user):
+        print(request)
+        print('mm process')
         if self.__selected_method and self.__current_operation:
-            self.request = request
+            print('mm after if 1')
             #try:
-            if ( request.GET.get('query', None) == 'json' ):
-                x = request.GET['x']
-                y = request.GET['y']
+            if ( request.POST.get('query', None) == 'methodmanager' ):
+                print('mm after if 2')
+                x = request.POST['x']
+                y = request.POST['y']
                 result,self.json_reply = self.__current_operation.process(self.__selected_method.model, {'x': x, 'y': y})
                 if result:
                     if ( self.__selected_method.processStep(
@@ -210,59 +212,61 @@ class MethodManager:
 
 
     def nextStep(self, user):
-        self.__current_step_number += 1
-        self.__current_step  = self.__selected_method.getStep(self.__current_step_number)
-        if not self.__current_step \
-        or ( self.__current_step['step'] == self.Step.end ):
-            self.__selected_method.finalize()
-            if self.__selected_method.type() == 'analysis':
-                self.redirect = reverse( 
-                                    'showAnalysis',
-                                     args=[ user.id,
-                                         self.__selected_method.model.id ]
-                                    )
-            elif self.__selected_method.type() == 'processing':
-                self.redirect = reverse( 
-                                    'showCurveSet',
-                                     args=[ 
-                                         user.id,
-                                         self.__selected_method.model.curveSet.id 
-                                        ]
-                                    )
-            self.__current_step = None
-            self.__current_step_number = 0
-            self.__selected_method = None
-            self.__current_operation = None
-        else:
-            self.__current_operation = self.opetations[self.__current_step['step']]()
+        if self.__selected_method:
+            self.__current_step_number += 1
+            self.__current_step  = self.__selected_method.getStep(self.__current_step_number)
+            if not self.__current_step \
+            or ( self.__current_step['step'] == self.Step.end ):
+                self.__selected_method.finalize()
+                if self.__selected_method.type() == 'analysis':
+                    self.redirect = reverse( 
+                        'showAnalysis',
+                         args=[ user.id, self.__selected_method.model.id ]
+                    )
+                elif self.__selected_method.type() == 'processing':
+                    self.redirect = reverse( 
+                            'showCurveSet',
+                             args=[ user.id, self.__selected_method.model.curveSet.id ]
+                        )
+                self.__current_step = None
+                self.__current_step_number = 0
+                self.__selected_method = None
+                self.__current_operation = None
+            else:
+                self.__current_operation = self.opetations[self.__current_step['step']]()
 
-    def getContent(self, user):
+
+    def getJSON(self):
         if self.redirect:
-            try:
-                if self.request.GET.get('query') == 'json':
-                    ret = dict( command='redirect', location=self.redirect )
-                    return HttpResponse(json.dumps(ret))
-            except:
-                pass
-            return HttpResponseRedirect( self.redirect )
+            return { 'command': 'redirect', 'location': self.redirect }
         elif self.json_reply:
-            return HttpResponse(json.dumps(self.json_reply))
+            return self.json_reply
+        else:
+            return { 'command': 'none' }
+
+
+    def getContent(self, request, user):
+        if self.redirect:
+            return HttpResponseRedirect( self.redirect )
         elif not self.isMethodSelected():
             return HttpResponseRedirect( reverse("browseCurveSet") )
 
         operationText = dict( 
-                    head= '', 
-                    body= "No operation"
-            )
+                head= '', 
+                body= "No operation"
+        )
         if self.__current_operation:
             operationText = self.__current_operation.draw(self.__current_step)
         if self.__selected_type == 'analysis':
             plotScr, plotDiv = manager.views.generatePlot(
-                    request='', 
+                    request=request, 
                     user=user, 
-                    plot_type='s',
-                    value_id=self.analysis.curveSet.id
-                )
+                    plot_type='curveset',
+                    value_id=self.analysis.curveSet.id,
+                    vtype='analysis',
+                    vid=self.analysis.id,
+
+            )
             template = loader.get_template('manager/analyze.html')
             context = {
                     'scripts': '\n'.join(
@@ -303,8 +307,8 @@ class MethodManager:
         pass
 
 
-    def getInfo(self, user):
-        return self.__selected_method.printInfo(user)
+    def getInfo(self, request, user):
+        return self.__selected_method.printInfo(request=request, user=user)
 
 
     def register(self,m):

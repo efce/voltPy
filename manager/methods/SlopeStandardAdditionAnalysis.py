@@ -5,21 +5,21 @@ import manager.plotmanager as pm
 
 class SlopeStandardAdditionAnalysis(AnalysisMethod):
     steps = ( 
-                { 
-                    'step': MethodManager.Step.selectPoint, 
-                    'title': 'Select peak',
-                    'data': { 
-                        'starting': 0,
-                        'desc': 'Enter approx. X value of peak of interest.',
-                        }
-                },
-                {
-                    'step': MethodManager.Step.end,
-                    'title': 'End',
-                    'desc': 'No more steps.',
-                    'data': ''
-                }
-            )
+        { 
+            'step': MethodManager.Step.selectPoint, 
+            'title': 'Select peak',
+            'data': { 
+                'starting': 0,
+                'desc': 'Enter approx. X value of peak of interest.',
+            }
+        },
+        {
+            'step': MethodManager.Step.end,
+            'title': 'End',
+            'desc': 'No more steps.',
+            'data': None
+        }
+    )
     model = None
 
     def __init__(self):
@@ -57,9 +57,9 @@ class SlopeStandardAdditionAnalysis(AnalysisMethod):
         prepare = prepareStructForSSAA(X,Conc, tptw, 3,[3,7,13],'dp') 
         result = slopeStandardAdditionAnalysis(prepare, peak, {'forceSamePoints': True})
         self.model.customData['matrix'] = [ 
-                result['CONC'], 
-                [ x for x in result['Slopes'].items() ]
-            ]
+            result['CONC'], 
+            [ x for x in result['Slopes'].items() ]
+        ]
         self.model.customData['fitEquation'] = result['Fit']
         self.model.customData['result'] = result['Mean']
         self.model.customData['resultStdDev'] = result['STD']
@@ -68,29 +68,38 @@ class SlopeStandardAdditionAnalysis(AnalysisMethod):
         self.model.step = 0
         self.model.save()
 
-    def printInfo(self, user):
+    def printInfo(self, request, user):
         p=pm.PlotManager()
         p.plot_width = 500
         p.plot_height = 400
         xvec = self.model.customData['matrix'][0]
         yvec = self.model.customData['matrix'][1]
         for sens,yrow in yvec:
-            p.processXY(
-                    xvec,
-                    yrow,
-                    False)
+            p.add(
+                x=xvec,
+                y=yrow,
+                isLine=False,
+                color='red',
+                size=7
+            )
         xvec2 = list(xvec)
         xvec2.append(-self.model.customData['result'])
         for k,fe in self.model.customData['fitEquation'].items():
             Y = [ fe['slope']*x+fe['intercept'] for x in xvec2 ]
-            p.processXY(xvec2,Y,True)
+            p.add(
+                x=xvec2,
+                y=Y,
+                isLine=True,
+                color='blue',
+                line_width=2
+            )
 
-        scripts,div = p.getEmbeded(user, 'analysis', self.model.id)
+        scripts,div = p.getEmbeded(request, user, 'analysis', self.model.id)
         ret = { 
             'head': ''.join([p.required_scripts,scripts]),
             'body': ''.join([div, '<p>Result: {0}<br />STD: {1}</p>'.format(
-                                            self.model.customData['result'],
-                                            self.model.customData['resultStdDev']) 
+                                self.model.customData['result'],
+                                self.model.customData['resultStdDev']) 
                             ])
             }
         return ret

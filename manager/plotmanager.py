@@ -13,7 +13,7 @@ from bokeh.layouts import widgetbox, column
 from bokeh.models.widgets import RadioButtonGroup
 
 class PlotManager:
-    active_class = None
+    methodmanager = None
     include_x_switch = False
     title = ''
     xlabel = "x"
@@ -32,6 +32,8 @@ class PlotManager:
     }
     function processData (data,plot='',lineData='',cursors='') {
         switch (data.command) {
+        case 'none':
+            return;
         case 'reload':
             sleep(500).then(()=>{location.reload();});
             break;
@@ -41,7 +43,6 @@ class PlotManager:
         case 'setCursor':
             cursors[data.number].location = parseFloat(data.x);
             cursors[data.number].line_alpha = 1;
-            show(cursors[data.number]);
             break;
         case 'setLineData':
             var xv = lineData.data['x'];
@@ -61,7 +62,6 @@ class PlotManager:
             break;
         case 'removeCursor':
             cursors[data.number].line_alpha = 0;
-            show(cursors[data.number]);
             break;
         case 'changeColor':
         default:
@@ -237,21 +237,29 @@ class PlotManager:
             raise 3
         if not analysis.completed:
             return
-        self.xlabel = 'concentration'
-        self.ylabel = 'i / µA'
         # prepare data points
-        self.processXY( 
-                    analysis.customData['matrix'][0], 
-                    analysis.customData['matrix'][1],
-                    False
-                )
+        ret = []
+        ret.append( {
+            'x': analysis.customData['matrix'][0], 
+            'y': analysis.customData['matrix'][1],
+            'isLine': False,
+            'color': 'red',
+            'size': 8
+        })
         #prepare calibration line
         xs = analysis.customData['matrix'][0]
         xs.append(-analysis.customData['result'])
         vx= [ min(xs), max(xs) ] # x variable is used by the fitEquation
         FofX = lambda xo: analysis.customData['fitEquation']['slope'] * xo + analysis.customData['fitEquation']['intercept']
         vy = [FofX(xi) for xi in vx ]
-        self.processXY(vx,vy,True)
+        ret.append({
+            'x': vx,
+            'y': vy,
+            'isLine': True,
+            'color': 'blue',
+            'line_width': 2
+        })
+        return ret
 
 
     def add(self, x=[], y=[], name='', isLine=True, color="blue", **kwargs):
@@ -293,11 +301,11 @@ class PlotManager:
             "var vid = '" + str(vid) + "';",
             "var uid = '" + str(user.id) + "';",
             "var token = '" + django.middleware.csrf.get_token(request) + "';",
-            "var object = $.extend({{}},{PYTHON},{{'csrfmiddlewaretoken': token}});",
+            "var object = $.extend({{}},{PYTHON},{{'csrfmiddlewaretoken': token, 'vtype': vtype, 'vid': vid}});",
             "var cursors = [cursor1, cursor2, cursor3, cursor4];",
             "$.post(jsonurl, object).done( function(data) {{ processData(data, plot, lineSrc, cursors); }});"
         ])
-        jsfun_plot = jsfun.format(PYTHON="{'query': 'interaction', 'x': cb_obj.x, 'y': cb_obj.y}")
+        jsfun_plot = jsfun.format(PYTHON="{'query': 'methodmanager', 'x': cb_obj.x, 'y': cb_obj.y}")
         srcEmpty = ColumnDataSource(data = dict( x=[], y=[]))
         self.p.line(x='x',y='y',source=srcEmpty, color='red', line_dash='dashed')
         cursors = []
@@ -363,9 +371,11 @@ class PlotManager:
                     ONX.selected = newkey
                     ONX.save()
                     return { 'command': 'reload' }
-            elif ( query == 'interaction' ):
-                if not self.active_class:
+            elif ( query == 'methodmanager' ):
+                if not self.methodmanager:
                     return None
+                self.methodmanager.process(request=request, user=user)
+                return self.methodmanager.getJSON()
 
 
     def __operation(self, data):
