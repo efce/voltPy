@@ -545,12 +545,14 @@ def generatePlot(request, user, plot_type, value_id):
     pm.ylabel = 'i / µA'
 
     for d in data:
-        pm.add(
+        pm.add(**d)
+        """
             x=d.get('x',[]), 
             y=d.get('y', []),
             name=d.get('name',''),
             color=d.get('color','blue'),
             isLine=d.get('isLine', True)
         )
+        """
 
     return pm.getEmbeded(user, plot_type, value_id) 

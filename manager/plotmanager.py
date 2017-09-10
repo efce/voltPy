@@ -197,7 +197,7 @@ class PlotManager:
             for cb in curves:
                 cvs = CurveData.objects.filter(curve=cb, processing=None)
                 for cv in cvs:
-                    self._line.append(
+                    ret.append(
                             dict(
                                 x=cv.potential,
                                 y=cv.current,
