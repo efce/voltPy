@@ -43,9 +43,11 @@ class AutomaticBackgroundCorrection(ProcessingMethod):
             newcd.pk = None
             xvec = range(len(cd.current))
             yvec = cd.current
-            self.model.customData['iter'] = 20
-            self.model.customData['degree'] = 5
-            yvec = calc_abc(xvec, yvec, 5, 20)['yvec']
+            degree = 4
+            iterations = 40
+            self.model.customData['itererations'] = iterations
+            self.model.customData['degree'] = degree
+            yvec = calc_abc(xvec, yvec, degree, iterations)['yvec']
             newcd.current = yvec
             newcd.method=self.__repr__()
             newcd.date=timezone.now()
