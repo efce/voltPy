@@ -4,6 +4,7 @@ import io
 import numpy as np
 import json 
 import django
+from django.core.urlresolvers import reverse
 from bokeh.plotting import figure, ColumnDataSource
 from bokeh.embed import components
 from bokeh.models.callbacks import CustomJS
@@ -12,6 +13,7 @@ from bokeh.layouts import widgetbox, column
 from bokeh.models.widgets import RadioButtonGroup
 
 class PlotManager:
+    active_class = None
     include_x_switch = False
     title = ''
     xlabel = "x"
@@ -25,11 +27,13 @@ class PlotManager:
     <script src="http://cdn.pydata.org/bokeh/release/bokeh-widgets-0.12.6.min.js"></script>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
     <script type="text/javascript">
-    function processData (plot,lineData,cursors,jdata) {
-        var data = JSON.parse(jdata);
+    function sleep (time) {
+        return new Promise((resolve) => setTimeout(resolve, time));
+    }
+    function processData (data,plot='',lineData='',cursors='') {
         switch (data.command) {
         case 'reload':
-            location.reload();
+            sleep(500).then(()=>{location.reload();});
             break;
         case 'redirect':
             location = data.location;
@@ -269,7 +273,7 @@ class PlotManager:
             )
 
 
-    def _prepareFigure(self, user):
+    def _prepareFigure(self, request, user, vtype, vid):
         labels = []
         onx = OnXAxis.objects.get(user=user)
         onx = onx.selected
@@ -282,37 +286,65 @@ class PlotManager:
             if k==onx:
                 active = i
 
-        if ( getattr(self, 'request',False) and self.include_x_switch ):
-            jsfun= """
-                function sleep (time) {
-                  return new Promise((resolve) => setTimeout(resolve, time));
-                }
-                var act = cb_obj.active;
-                var geturl = window.location.href;
-                $.post( geturl, {'query': 'plotmanager', 'onx': act,
-                'csrfmiddlewaretoken': '""" +\
-                django.middleware.csrf.get_token(getattr(self,'request',''))\
-                + """' }).done(sleep(500).then(()=>{location=window.location.href}));
-                """
-        else:
-            jsfun = ''
+        jsonurl = reverse('plotInteraction', args=[ user.id ])
+        jsfun = '\n'.join([
+            "var jsonurl = '" + jsonurl + "';",
+            "var vtype = '" + vtype + "';",
+            "var vid = '" + str(vid) + "';",
+            "var uid = '" + str(user.id) + "';",
+            "var token = '" + django.middleware.csrf.get_token(request) + "';",
+            "var object = $.extend({{}},{PYTHON},{{'csrfmiddlewaretoken': token}});",
+            "var cursors = [cursor1, cursor2, cursor3, cursor4];",
+            "$.post(jsonurl, object).done( function(data) {{ processData(data, plot, lineSrc, cursors); }});"
+        ])
+        jsfun_plot = jsfun.format(PYTHON="{'query': 'interaction', 'x': cb_obj.x, 'y': cb_obj.y}")
+        srcEmpty = ColumnDataSource(data = dict( x=[], y=[]))
+        self.p.line(x='x',y='y',source=srcEmpty, color='red', line_dash='dashed')
+        cursors = []
+        for i in range(4):
+            C= Span(
+                location=0,
+                dimension='height', 
+                line_color='green',
+                line_dash='dashed', 
+                line_width=2,
+                line_alpha=0
+            )
+            self.p.add_layout(C)
+            cursors.append(C)
+
+        args = dict(
+            lineSrc=srcEmpty,
+            plot=self.p,
+            cursor1=cursors[0],
+            cursor2=cursors[1],
+            cursor3=cursors[2],
+            cursor4=cursors[3]
+        )
+        callback = CustomJS(args=args, code=jsfun_plot)
+        self.p.js_on_event('tap', callback)
+        jsfun_buttons = jsfun.format(PYTHON="{'query': 'plotmanager', 'onx': cb_obj.active}")
+
         radio_button_group = RadioButtonGroup(
-                labels=labels, 
-                active=active,
-                callback=CustomJS(args={}, code=jsfun))
+            labels=labels, 
+            active=active,
+            callback=CustomJS(args=args, code=jsfun_buttons)
+        )
         w=widgetbox(radio_button_group)
         if self.include_x_switch:
             layout = column([ self.p, w ])
         else:
             layout = column([ self.p ])
-        return layout, self.p
+        return layout
 
-    def process(self, request, user):
+
+    def plotInteraction(self, request, user):
         self.request = request
         data = getattr(request, 'POST', None)
         if ( data ):
-            if ( data.get('query', '') == 'plotmanager' ):
-                onx =  data.get('onx', None)
+            query = data.get('query', '')  
+            if ( query == 'plotmanager' ):
+                onx = data.get('onx', None)
                 if ( onx ):
                     try:
                         onx=int(onx)
@@ -330,6 +362,10 @@ class PlotManager:
                         return
                     ONX.selected = newkey
                     ONX.save()
+                    return { 'command': 'reload' }
+            elif ( query == 'interaction' ):
+                if not self.active_class:
+                    return None
 
 
     def __operation(self, data):
@@ -363,53 +399,6 @@ class PlotManager:
             return
 
 
-    def getEmbeded(self, user, plot_type, vid):
-
-        layout, self.p = self._prepareFigure(user)
-
-        for l in self.__line:
-            self.p.line(l['x'], l['y'], color="blue", line_width=2)
-
-        for s in self.__scatter:
-            self.p.scatter(s['x'], s['y'], color="red", size=8)
-
-        srcEmpty = ColumnDataSource(data = dict( x=[], y=[]))
-        self.p.line(x='x',y='y',source=srcEmpty, color='red', line_dash='dashed')
-
-        cursors = []
-        for i in range(4):
-            C= Span(location=0,
-                        dimension='height', 
-                        line_color='green',
-                        line_dash='dashed', 
-                        line_width=2,
-                        line_alpha=0
-                       )
-            self.p.add_layout(C)
-            cursors.append(C)
-
-        args = dict(
-                    lineSrc=srcEmpty,
-                    plot=self.p,
-                    cursor1=cursors[0],
-                    cursor2=cursors[1],
-                    cursor3=cursors[2],
-                    cursor4=cursors[3]
-                )
-
-        jsfun = "var type = '" + plot_type + "'; var vid = '" + str(vid) + "'; var uid = '" + str(user.id) + "';" +\
-        """
-                var cursors = [cursor1, cursor2, cursor3, cursor4];
-                var x_data = cb_obj.x; // current mouse x position in plot coordinates
-                var y_data = cb_obj.y; // current mouse y position in plot coordinates
-                console.log("(x,y)=" + x_data+","+y_data); //monitors values in Javascript console
-                var geturl = window.location.href + "?query=json&plot_type=" + type +"&vid=" + vid + "&x=" + x_data +"&y=" + y_data;
-                $.get( geturl, function(data, status){
-                        alert("Data: " + data);
-                        if (status == 'success')
-                            processData(plot,lineSrc,cursors,data);
-                    });
-        """
-        callback = CustomJS(args=args, code=jsfun)
-        self.p.js_on_event('tap', callback)
+    def getEmbeded(self, request, user, vtype, vid):
+        layout = self._prepareFigure(request, user, vtype, vid)
         return components(layout) 

@@ -240,9 +240,9 @@ def showAnalysis(request, user_id, analysis_id):
     plotScr, plotDiv = generatePlot(
             request=request, 
             user=user, 
-            plot_type='s',
+            plot_type='curveset',
             value_id=an.curveSet.id
-            )
+        )
     context = {
             'scripts': PlotManager.required_scripts + plotScr,
             'mainPlot': plotDiv,
@@ -293,7 +293,11 @@ def showCurveSet(request, user_id, curveset_id):
         raise 3
 
     template = loader.get_template('manager/showCurveSet.html')
-    plotScr, plotDiv = generatePlot(request, user, 's' ,cs.id)
+    plotScr, plotDiv = generatePlot(
+            request=request, 
+            user=user, 
+            plot_type ='curveset',
+            value_id = cs.id)
     context = {
             'scripts': PlotManager.required_scripts + plotScr,
             'mainPlot' : plotDiv,
@@ -370,7 +374,11 @@ def editCurveSet(request,user_id,curveset_id):
         raise 404
 
     cal_disp = ""
-    plotScr, plotDiv = generatePlot(request, user, 's' ,cs.id)
+    plotScr, plotDiv = generatePlot(
+            request=request, 
+            user=user, 
+            plot_type='curveset',
+            value_id=cs.id)
     context = { 
             'scripts': PlotManager.required_scripts + plotScr,
             'mainPlot' : plotDiv,
@@ -422,7 +430,11 @@ def editCurveFile(request, user_id, file_id,):
                 return HttpResponseRedirect(reverse('browseCurveFile', args=[user_id]))
     else:
         form = AddAnalytesForm(user, "File", file_id)
-    plotScr, plotDiv = generatePlot(request, user, 'f' ,file_id)
+    plotScr, plotDiv = generatePlot(
+            request=request, 
+            user=user, 
+            plot_type='file',
+            value_id=file_id)
     context = { 
             'scripts': PlotManager.required_scripts + plotScr,
             'mainPlot' : plotDiv,
@@ -452,7 +464,11 @@ def showCurveFile(request, user_id, file_id):
     if ( __debug__): 
         print(cf)
     template = loader.get_template('manager/showFile.html')
-    plotScr, plotDiv = generatePlot(request, user, 'f' ,cf.id)
+    plotScr, plotDiv = generatePlot(
+            request=request, 
+            user=user, 
+            plot_type='file',
+            value_id=cf.id)
     context = { 
             'scripts': PlotManager.required_scripts + plotScr,
             'mainPlot' : plotDiv,
@@ -491,53 +507,60 @@ def process(request, user_id, processing_id):
     dataop.process(user, request)
     return dataop.getContent(user) 
 
-def methodInteraction(request, user_id, method_type, method_id):
+
+def plotInteraction(request, user_id):
     try:
         user = User.objects.get(id=user_id)
     except:
         user=None
-    if ( method_type == 'a' ):
-        m = MethodManager(user=user,method_type='analysis',method_id=method_id)
-    elif ( method_type == 'p' ):
-        m = MethodManager(user=user,method_type='processing',method_id=method_id)
-    else:
-        raise NameError('Unknown method type')
+
+    if request.method != 'POST' or not request.POST.get('query', None):
+        return HttpResponse('Error')
+    
+    vtype =  request.POST.get('vtype', '')
+    vid = int(request.POST.get('vid', -1))
+    kwrg = {
+            vtype: vid
+    }
+    try:
+        mm = MethodManager(**kwrg)
+    except:
+        mm = None
+    pm = PlotManager()
+    pm.active_class = mm
+    return HttpResponse(
+            json.dumps(pm.plotInteraction(request=request, user=user)),
+            'type=application/json'
+    )
         
 
 #@never_cache
 def generatePlot(request, user, plot_type, value_id):
-    """
-    Allowed types are:
-    f - whole file
-    a - analysis
-    s - curveset
-    v - selected curves 
-    """
-    allowedTypes = {
-        'f' : 'File',
-        'a' : 'Analysis',
-        's' : 'CurveSet',
-        'v' : 'Curves'
-    }
+    allowedTypes = [
+        'file',
+        'analysis',
+        'curveset',
+        'curves'
+    ]
     if not ( plot_type in allowedTypes ):
         return
 
     pm = PlotManager()
-    pm.process(request, user)
+    #pm.processJSON(request, user)
     data=[]
-    if (plot_type == 'f' ):
+    if (plot_type == 'file' ):
         data=pm.fileHelper(user, value_id)
         pm.xlabel = pm.xLabelHelper(user)
         pm.include_x_switch = True
-    elif (plot_type == 's'):
+    elif (plot_type == 'curveset'):
         data=pm.curveSetHelper(user, value_id)
         pm.xlabel = pm.xLabelHelper(user)
         pm.include_x_switch = True
-    elif (plot_type == 'a'):
+    elif (plot_type == 'analysis'):
         data=pm.analysisHelper(user, value_id)
         xlabel = pm.xLabelHelper(user)
         pm.include_x_switch = False
-    elif (plot_type == 'c'):
+    elif (plot_type == 'curves'):
         data=pm.curvesHelper(user, value_id)
         pm.xlabel = pm.xLabelHelper(user)
         pm.include_x_switch = True
@@ -555,4 +578,4 @@ def generatePlot(request, user, plot_type, value_id):
         )
         """
 
-    return pm.getEmbeded(user, plot_type, value_id) 
+    return pm.getEmbeded(request, user, plot_type, value_id) 

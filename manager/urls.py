@@ -53,6 +53,6 @@ urlpatterns = [
         views.processCurveFile, name='processCurveFile'),
     url(r'^(?P<user_id>[0-9]+)/show-processed/(?P<processing_id>[0-9]+)/$', 
         views.showProcessed, name='showProcessed'),
-    url(r'^(?P<user_id>[0-9]+)/method-interaction/(?P<method_type>[ap]+)/(?P<method_id>[0-9]+)/$',
-        views.methodInteraction, name='methodInteraction'),
+    url(r'^(?P<user_id>[0-9]+)/plot-interaction/$',
+        views.plotInteraction, name='plotInteraction'),
 ]
