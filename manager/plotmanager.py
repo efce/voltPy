@@ -9,8 +9,8 @@ from bokeh.plotting import figure, ColumnDataSource
 from bokeh.embed import components
 from bokeh.models.callbacks import CustomJS
 from bokeh.models import Span
-from bokeh.layouts import widgetbox, column
-from bokeh.models.widgets import RadioButtonGroup
+from bokeh.layouts import widgetbox, column, row
+from bokeh.models.widgets import RadioButtonGroup, Button, Paragraph
 
 class PlotManager:
     methodmanager = None
@@ -338,9 +338,14 @@ class PlotManager:
             active=active,
             callback=CustomJS(args=args, code=jsfun_buttons)
         )
+        #TODO: button scripts ... ;)
+        bforward = Button(label="Forward", width=250)
+        bback = Button(label="Back", width=250)
+        p = Paragraph(text="""X axis:""", width=50)
         w=widgetbox(radio_button_group)
+        xaxis = row([p,w,bback, bforward], width=self.plot_width)
         if self.include_x_switch:
-            layout = column([ self.p, w ])
+            layout = column([ self.p, xaxis ])
         else:
             layout = column([ self.p ])
         return layout
