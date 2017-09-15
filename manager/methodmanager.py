@@ -38,6 +38,7 @@ class MethodManager:
         selectTwoRanges = 3
         additionalData = 4 
         setConcentrations = 5
+        confirmation = 98
         end = 99
 
     class SelectionForm(forms.Form):
@@ -109,6 +110,7 @@ class MethodManager:
         self.operations = dict([
             (int(self.Step.selectRange), self.operationSelectRange),
             (int(self.Step.selectPoint), self.operationSelectPoint),
+            (int(self.Step.confirmation), self.operationConfirmation),
             #(int(self.Step.selectTwoRanges), self.operationSelectTwoRanges),
             #(int(self.Step.selectAnalytes), self.operationSelectAnalyte),
         ])
@@ -190,25 +192,49 @@ class MethodManager:
 
 
     def process(self, request, user):
-        print(request)
-        print('mm process')
         if self.__selected_method and self.__current_operation:
-            print('mm after if 1')
-            #try:
-            if ( request.POST.get('query', None) == 'methodmanager' ):
-                print('mm after if 2')
-                x = request.POST['x']
-                y = request.POST['y']
-                result,self.json_reply = self.__current_operation.process(self.__selected_method.model, {'x': x, 'y': y})
-                if result:
-                    if ( self.__selected_method.processStep(
-                        user,
-                        self.__current_step_number) ):
-                        self.nextStep(user)
-            #except AttributeError:
-            #    raise 5
+            command = request.POST.get('command', None)
+            val = None
+            if ( command == 'set1cursor' ):
+                crs = request.POST.get('cursors',[])
+                if ( len(crs)<1 ):
+                    raise ValueError('Wrong number of cursors')
+                val = float(crs[0])
+            elif ( command == 'set2cursors' ):
+                crs = request.POST.get('cursors',[])
+                if ( len(crs)<2 ):
+                    raise ValueError('Wrong number of cursors')
+                val = [ min(crs), max(crs) ]
+                val = [ float(v) for v in val ]
+            elif ( command == 'set4cursors' ):
+                crs = request.POST.get('cursors',[])
+                if ( len(crs)<4 ):
+                    raise ValueError('Wrong number of cursors')
+                crs.sort()
+                val = crs
+                val = [ float(v) for v in val ]
+            elif ( command == 'cancel' ):
+                val = False
+            elif ( command == 'confirm' ):
+                val = True
+            else:
+                ValueError('Unknown command')
+
+            result,self.json_reply = self.__current_operation.process(
+                model = self.__selected_method.model,
+                data = val
+            )
+            if result:
+                stepCompleted = self.__selected_method.processStep(
+                    user,
+                    self.__current_step_number
+                ) 
+                if ( stepCompleted ):
+                    self.nextStep(user)
+            else:
+                self.nextStep(user)
         else:
-            self.nextStep(user)
+            print('not selected method or no current operation')
 
 
     def nextStep(self, user):
@@ -225,15 +251,15 @@ class MethodManager:
                     )
                 elif self.__selected_method.type() == 'processing':
                     self.redirect = reverse( 
-                            'showCurveSet',
-                             args=[ user.id, self.__selected_method.model.curveSet.id ]
-                        )
+                        'showCurveSet',
+                         args=[ user.id, self.__selected_method.model.curveSet.id ]
+                    )
                 self.__current_step = None
                 self.__current_step_number = 0
                 self.__selected_method = None
                 self.__current_operation = None
             else:
-                self.__current_operation = self.opetations[self.__current_step['step']]()
+                self.__current_operation = self.operations[self.__current_step['step']]()
 
 
     def getJSON(self):
@@ -252,49 +278,57 @@ class MethodManager:
             return HttpResponseRedirect( reverse("browseCurveSet") )
 
         operationText = dict( 
-                head= '', 
-                body= "No operation"
+            head= '', 
+            body= "No operation"
         )
         if self.__current_operation:
             operationText = self.__current_operation.draw(self.__current_step)
         if self.__selected_type == 'analysis':
             plotScr, plotDiv = manager.views.generatePlot(
-                    request=request, 
-                    user=user, 
-                    plot_type='curveset',
-                    value_id=self.analysis.curveSet.id,
-                    vtype='analysis',
-                    vid=self.analysis.id,
-
+                request=request, 
+                user=user, 
+                plot_type='curveset',
+                value_id=self.analysis.curveSet.id,
+                vtype='analysis',
+                vid=self.analysis.id,
+                interactionName = self.__current_operation.interactionName,
             )
             template = loader.get_template('manager/analyze.html')
             context = {
-                    'scripts': '\n'.join(
-                                    [   plotScr, 
-                                        pm.PlotManager.required_scripts, 
-                                        operationText.get('head','')
-                                    ]),
-                    'mainPlot': plotDiv,
-                    'analyze_content': operationText.get("body",''),
-                    'user': user,
-                    'analysis_id': self.analysis.id,
-                    'curveset_id': self.analysis.curveSet.id,
-                    'plot_width' : pm.PlotManager.plot_width,
-                    'plot_height' : pm.PlotManager.plot_height
+                'scripts': '\n'.join( [   
+                                    plotScr, 
+                                    pm.PlotManager.required_scripts, 
+                                    operationText.get('head','')
+                                ]),
+                'mainPlot': plotDiv,
+                'analyze_content': operationText.get("body",''),
+                'user': user,
+                'analysis_id': self.analysis.id,
+                'curveset_id': self.analysis.curveSet.id,
+                'plot_width' : pm.PlotManager.plot_width,
+                'plot_height' : pm.PlotManager.plot_height
             }
             return HttpResponse(template.render(context))
         else:
             return ''
 
     def getAnalysisSelectionForm(self, *args, **kwargs):
-        return MethodManager.SelectionForm(self, 
-                self.methods['analysis'],
-                type='analysis', *args, **kwargs)
+        return MethodManager.SelectionForm(
+            self, 
+            self.methods['analysis'],
+            type='analysis', 
+            *args, 
+            **kwargs
+        )
 
     def getProcessingSelectionForm(self, *args, **kwargs):
-        return MethodManager.SelectionForm(self, 
-                self.methods['processing'],
-                type='processing', *args, **kwargs)
+        return MethodManager.SelectionForm(
+            self, 
+            self.methods['processing'],
+            type='processing', 
+            *args, 
+            **kwargs
+        )
 
     def drawSelectPoint(self):
         pass
@@ -313,8 +347,7 @@ class MethodManager:
 
     def register(self,m):
         if str(m) == self.methods[m.type()]:
-            raise NameError("Name " + str(m) + " already exists in " +
-                    m.type())
+            raise NameError("Name " + str(m) + " already exists in " + m.type())
         self.methods[m.type()][str(m)] = m
 
 
@@ -323,61 +356,64 @@ class MethodManager:
 
 
     class operationSelectRange:
+        interactionName = 'set2cursors'
         def setData(self, data, request):
             pass
 
         def draw(self, step):
             return dict( 
-                        head = '', 
-                        body = step.get('data').get('desc','')
-                    )
+                head = '', 
+                body = step.get('data').get('desc','')
+            )
             
 
         def process(self, model, data):
-            x = data.get('x', None)
-            if x:
-                try:
-                    x=float(x)
-                except:
-                    return False,None
-                rg = model.customData.get('range1')
-                try:
-                    if len(rg) == 1:
-                        rg.append(x)
-                        return True,{}
-                except:
-                    model.customData['range1'] = []
-                    model.customData['range1'].append(x)
-                    model.save()
-                    return False,{'command': 'setCursor', 'x': x, 'number': 0}
+            if (len(data) == 2):
+                model.customData['range1'] = data
+                model.save()
+                return True,{'command', 'reload'}
             else:
                 return False,None
 
     class operationSelectPoint:
+        interactionName = 'set1cursor'
         def setData(self, data, request):
             pass
 
         def draw(self, step):
             return dict( 
-                        head = '', 
-                        body = step.get('data').get('desc','')
-                    )
+                head = '', 
+                body = step.get('data').get('desc','')
+            )
 
         def process(self, model, data):
-            x = data.get('x', None)
-            y = data.get('y', None)
-            if x and y:
-                try:
-                    x=float(x)
-                    y=float(y)
-                except:
-                    raise 5
-                    return False
-                model.customData['point'] = (x,y)
+            if isinstance(data, float):
+                model.customData['pointX'] = data
                 model.save()
                 return True,None
             else:
                 return False,None
+
+
+    class operationConfirmation:
+        interactionName = 'confirm'
+
+        def setData(self, data, request):
+            pass
+
+        def draw(self, step):
+            return dict( 
+                head = '', 
+                body = step.get('data').get('desc','')
+            )
+
+        def process(self, model, data):
+            if data:
+                return True,{'command': 'reload'}
+            else:
+                model.step = model.step-1
+                model.save()
+                return False,{'command', 'reload'}
 
 
 class Method(ABC):

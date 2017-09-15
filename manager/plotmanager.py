@@ -15,6 +15,7 @@ from bokeh.models.widgets import RadioButtonGroup, Button, Paragraph
 
 class PlotManager:
     methodmanager = None
+    interaction = 'none'
     include_x_switch = False
     title = ''
     xlabel = "x"
@@ -28,11 +29,10 @@ class PlotManager:
     <script src="http://cdn.pydata.org/bokeh/release/bokeh-widgets-0.12.6.min.js"></script>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
     <script type="text/javascript">
-    window.voltPy1 = {'command': 'set4cursors'};
     function sleep (time) {
         return new Promise((resolve) => setTimeout(resolve, time));
     }
-    function processData (data,plot='',lineData='',cursors='') {
+    function processJSONReply (data,plot='',lineData='',cursors='') {
         switch (data.command) {
         case 'none':
             return;
@@ -340,13 +340,13 @@ class PlotManager:
             }
             break;
         default:
-            reutrn;
+            return;
         }
         """
         js_globalBase = "var cursors = [cursor1, cursor2, cursor3, cursor4];"
         jsonurl = reverse('plotInteraction', args=[ user.id ])
 
-        js_buttonBase = '\n'.join([
+        js_postRequired = '\n'.join([
             js_globalBase,
             "var jsonurl = '" + jsonurl + "';",
             "var vtype = '" + vtype + "';",
@@ -387,25 +387,52 @@ class PlotManager:
         ])
         callback = CustomJS(args=args, code=js_plot)
         self.p.js_on_event('tap', callback)
-        jsfun_xaxis = ''#jsfun.format(PYTHON="{'query': 'plotmanager', 'onx': cb_obj.active}")
+        js_axisSub = """
+        var object = { 
+            'query': 'plotmanager', 
+            'onx': cb_obj.active,
+            'csrfmiddlewaretoken': token, 
+        };
+        $.post(jsonurl, object).done(function(data){processJSONReply(data);});
+        """
+
+        js_xaxis = '\n'.join([
+            js_postRequired,
+            js_axisSub
+        ])
 
         radio_button_group = RadioButtonGroup(
             labels=labels, 
             active=active,
-            callback=CustomJS(args=args, code=jsfun_xaxis)
+            callback=CustomJS(args=args, code=js_xaxis)
         )
 
         js_backSub = """
-        for (i=cursors.length-1; i>=0; i--) {
-            if ( cursors[i].location != null ) {
-                cursors[i].location = null;
-                cursors[i].line_alpha = 0;
-                break;
+        var coma=window.voltPy1.command;
+        if ( coma == 'set1cursor'
+        || coma == 'set2cursors'
+        || coma == 'set4cursors' ) {
+            for (i=cursors.length-1; i>=0; i--) {
+                if ( cursors[i].location != null ) {
+                    cursors[i].location = null;
+                    cursors[i].line_alpha = 0;
+                    break;
+                }
             }
+        } else if ( coma == 'confirm' ) {
+            var object = { 
+                'query': 'methodmanager',
+                'command': 'cancel',
+                'csrfmiddlewaretoken': token, 
+                'vtype': vtype, 
+                'vid': vid
+            }
+            $.post(jsonurl, object).done(function(data) {processJSONReply(data, plot, lineSrc, cursors);});
         }
+
         """
         js_back = '\n'.join([
-            js_buttonBase,
+            js_postRequired,
             js_backSub
         ])
 
@@ -433,6 +460,8 @@ class PlotManager:
                 return;
             }
             break;
+        case 'confirm':
+            break;
         default:
             return;
         }
@@ -449,10 +478,10 @@ class PlotManager:
             'vtype': vtype, 
             'vid': vid
         }
-        $.post(jsonurl, object).done( function(data) { processData(data, plot, lineSrc, cursors); });
+        $.post(jsonurl, object).done(function(data) {processJSONReply(data, plot, lineSrc, cursors);});
         """
         js_forward = '\n'.join([
-            js_buttonBase,
+            js_postRequired,
             js_forwardSub
         ])
 
@@ -502,11 +531,6 @@ class PlotManager:
                     ONX.selected = newkey
                     ONX.save()
                     return { 'command': 'reload' }
-            elif ( query == 'methodmanager' ):
-                if not self.methodmanager:
-                    return None
-                self.methodmanager.process(request=request, user=user)
-                return self.methodmanager.getJSON()
 
 
     def __operation(self, data):
@@ -539,7 +563,15 @@ class PlotManager:
             self.p.line(x='xvec',y='yvec',source=data, color='red', line_dash='dashed')
             return
 
+    def setInteraction(self, name):
+        self.interaction = name
 
     def getEmbeded(self, request, user, vtype, vid):
         layout = self._prepareFigure(request, user, vtype, vid)
-        return components(layout) 
+        src,div = components(layout) 
+        src = '\n'.join([
+            src,
+            "<script type='text/javascript'>(function(){window.voltPy1 = { 'command': '" + \
+                    self.interaction + "' };})();</script>"
+        ])
+        return src,div

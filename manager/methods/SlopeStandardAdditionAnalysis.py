@@ -34,7 +34,8 @@ class SlopeStandardAdditionAnalysis(AnalysisMethod):
         return self.steps[stepNum]
 
     def processStep(self, user, stepNum):
-        self.model.customData['selectedIndex'] = self.model.curveSet.usedCurveData.all()[0].xvalueToIndex(user, self.model.customData['point'][0])
+        self.model.customData['selectedIndex'] = \
+            self.model.curveSet.usedCurveData.all()[0].xvalueToIndex(user, self.model.customData['pointX'])
         self.model.step += 1
         self.model.save
         return True
@@ -53,7 +54,6 @@ class SlopeStandardAdditionAnalysis(AnalysisMethod):
             Conc.append(a.concentration)
             tptw = cd.curve.params[Param.tp] + cd.curve.params[Param.tw]
 
-        #TODO: proper selection of values
         tp = 3
         twvec = self.__chooseTw(tptw)
         if not twvec:

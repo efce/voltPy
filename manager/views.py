@@ -523,18 +523,24 @@ def plotInteraction(request, user_id):
     if request.method != 'POST' or not request.POST.get('query', None):
         return HttpResponse('Error')
    
-    pm = PlotManager()
-
-    if ( request.POST['query'] == 'methodmanager' ):
+    ret = ''
+    if ( request.POST.get('query') == 'methodmanager' ):
         vtype =  request.POST.get('vtype', '')
         vid = int(request.POST.get('vid', -1))
         kwrg = {
             vtype: vid
         }
-        pm.methodmanager = MethodManager(**kwrg)
+        mm = MethodManager(**kwrg)
+        mm.process(request=request, user=user)
+        ret = mm.getJSON()
+    elif (request.POST.get('query') == 'plotmanager' ): 
+        pm = PlotManager()
+        ret = pm.plotInteraction(request=request, user=user)
+    else:
+        raise NameError('Unknown query type')
 
     return HttpResponse(
-        json.dumps(pm.plotInteraction(request=request, user=user)),
+        json.dumps(ret),
         'type=application/json'
     )
         
@@ -573,6 +579,7 @@ def generatePlot(request, user, plot_type, value_id, **kwargs):
         pm.include_x_switch = True
 
     pm.ylabel = 'i / µA'
+    pm.setInteraction(kwargs.get('interactionName', 'none'))
 
     for d in data:
         pm.add(**d)
