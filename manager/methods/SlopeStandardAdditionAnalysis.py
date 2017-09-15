@@ -54,7 +54,25 @@ class SlopeStandardAdditionAnalysis(AnalysisMethod):
             tptw = cd.curve.params[Param.tp] + cd.curve.params[Param.tw]
 
         #TODO: proper selection of values
-        prepare = prepareStructForSSAA(X,Conc, tptw, 3,[3,7,13],'dp') 
+        tp = 3
+        twvec = self.__chooseTw(tptw)
+        if not twvec:
+            raise 3
+        numM = self.model.curveSet.usedCurveData.all()[0].curve.params[Param.method]
+        ctype = 'dp'
+        if numM == Param.method_dpv:
+            ctype='dp'
+        elif numM == Param.method_npv:
+            ctype='np'
+        elif numM == Param.method_sqw:
+            ctype = 'sqw'
+        elif numM == Param.method_scv:
+            ctype = 'sc'
+        else:
+            raise TypeError('Method numer %i not supported' % numM)
+
+        prepare = prepareStructForSSAA(X,Conc, tptw, 3,twvec,ctype)
+                
         result = slopeStandardAdditionAnalysis(prepare, peak, {'forceSamePoints': True})
         self.model.customData['matrix'] = [ 
             result['CONC'], 
@@ -103,6 +121,18 @@ class SlopeStandardAdditionAnalysis(AnalysisMethod):
                             ])
             }
         return ret
+
+    def __chooseTw(self, tptw):
+        if ( tptw < 9 ):
+            return None
+        elif ( tptw < 20 ):
+            return [ tptw-3, tptw-6, tptw-9 ]
+        if ( tptw < 40 ):
+            return [ tptw-3, tptw-7, tptw-11 ]
+        else:
+            n = floor(n/12)
+            d = floor(sqrt(n))
+            return [ tptw-((x*d)-3) for x in range(n) ]
 
 def newInstance(*args, **kwargs):
     return SlopeStandardAdditionAnalysis(*args, **kwargs)
