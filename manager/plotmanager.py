@@ -4,6 +4,7 @@ import io
 import numpy as np
 import json 
 import django
+import random
 from django.core.urlresolvers import reverse
 from bokeh.plotting import figure, ColumnDataSource
 from bokeh.embed import components
@@ -27,6 +28,7 @@ class PlotManager:
     <script src="http://cdn.pydata.org/bokeh/release/bokeh-widgets-0.12.6.min.js"></script>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
     <script type="text/javascript">
+    window.voltPy1 = {'command': 'set4cursors'};
     function sleep (time) {
         return new Promise((resolve) => setTimeout(resolve, time));
     }
@@ -71,6 +73,7 @@ class PlotManager:
     </script>
     """
     def __init__(self):
+        self.__random = str(random.random()).replace(".","")
         self.__line = []
         self.__scatter = []
         self.xlabel = "x"
@@ -84,6 +87,7 @@ class PlotManager:
             height=self.plot_height-10,
             width=self.plot_width-20
         )
+        self.required_scripts = self.required_scripts
     
 
     def fileHelper(self, user, value_id):
@@ -294,24 +298,72 @@ class PlotManager:
             if k==onx:
                 active = i
 
+        funmaster = """
+        switch (window.voltPy1.command) {
+        case 'set1cursor':
+            if (cursors[0].location == null) {
+                cursors[0].location = cb_obj.x;
+                cursors[0].line_alpha = 1;
+            } else {
+                //cursor is set, do nothing.
+                return;
+            }
+            break;
+        case 'set2cursors':
+            if (cursors[0].location == null) {
+                cursors[0].location = cb_obj.x;
+                cursors[0].line_alpha = 1;
+            } else if (cursors[1].location == null) {
+                cursors[1].location = cb_obj.x;
+                cursors[1].line_alpha = 1;
+            } else {
+                //cursors are set, do nothing.
+                return;
+            }
+            break;
+        case 'set4cursors':
+            if (cursors[0].location == null) {
+                cursors[0].location = cb_obj.x;
+                cursors[0].line_alpha = 1;
+            } else if (cursors[1].location == null) {
+                cursors[1].location = cb_obj.x;
+                cursors[1].line_alpha = 1;
+            } else if (cursors[2].location == null) {
+                cursors[2].location = cb_obj.x;
+                cursors[2].line_alpha = 1;
+            } else if (cursors[3].location == null) {
+                cursors[3].location = cb_obj.x;
+                cursors[3].line_alpha = 1;
+            } else {
+                //cursors are set, do nothing.
+                return;
+            }
+            break;
+        default:
+            reutrn;
+        }
+        """
+        js_globalBase = "var cursors = [cursor1, cursor2, cursor3, cursor4];"
         jsonurl = reverse('plotInteraction', args=[ user.id ])
-        jsfun = '\n'.join([
+
+        js_buttonBase = '\n'.join([
+            js_globalBase,
             "var jsonurl = '" + jsonurl + "';",
             "var vtype = '" + vtype + "';",
             "var vid = '" + str(vid) + "';",
             "var uid = '" + str(user.id) + "';",
             "var token = '" + django.middleware.csrf.get_token(request) + "';",
-            "var object = $.extend({{}},{PYTHON},{{'csrfmiddlewaretoken': token, 'vtype': vtype, 'vid': vid}});",
-            "var cursors = [cursor1, cursor2, cursor3, cursor4];",
-            "$.post(jsonurl, object).done( function(data) {{ processData(data, plot, lineSrc, cursors); }});"
         ])
-        jsfun_plot = jsfun.format(PYTHON="{'query': 'methodmanager', 'x': cb_obj.x, 'y': cb_obj.y}")
+        js_plot = '\n'.join([
+            js_globalBase,
+            funmaster
+        ])
         srcEmpty = ColumnDataSource(data = dict( x=[], y=[]))
         self.p.line(x='x',y='y',source=srcEmpty, color='red', line_dash='dashed')
         cursors = []
         for i in range(4):
             C= Span(
-                location=0,
+                location=None,
                 dimension='height', 
                 line_color='green',
                 line_dash='dashed', 
@@ -329,18 +381,92 @@ class PlotManager:
             cursor3=cursors[2],
             cursor4=cursors[3]
         )
-        callback = CustomJS(args=args, code=jsfun_plot)
+        js_plot = '\n'.join([
+            js_globalBase,
+            funmaster
+        ])
+        callback = CustomJS(args=args, code=js_plot)
         self.p.js_on_event('tap', callback)
-        jsfun_buttons = jsfun.format(PYTHON="{'query': 'plotmanager', 'onx': cb_obj.active}")
+        jsfun_xaxis = ''#jsfun.format(PYTHON="{'query': 'plotmanager', 'onx': cb_obj.active}")
 
         radio_button_group = RadioButtonGroup(
             labels=labels, 
             active=active,
-            callback=CustomJS(args=args, code=jsfun_buttons)
+            callback=CustomJS(args=args, code=jsfun_xaxis)
         )
-        #TODO: button scripts ... ;)
-        bforward = Button(label="Forward", width=250)
-        bback = Button(label="Back", width=250)
+
+        js_backSub = """
+        for (i=cursors.length-1; i>=0; i--) {
+            if ( cursors[i].location != null ) {
+                cursors[i].location = null;
+                cursors[i].line_alpha = 0;
+                break;
+            }
+        }
+        """
+        js_back = '\n'.join([
+            js_buttonBase,
+            js_backSub
+        ])
+
+        js_forwardSub = """
+        switch ( window.voltPy1.command ) {
+        case 'set1cursor':
+            if ( cusors[0].location == null ) {
+                alert('Please set one curosor on the plot');
+                return;
+            } 
+            break;
+        case 'set2cursors':
+            if ( ( cursors[0].location == null )
+            || ( cursors[1].location == null ) ) {
+                alert('Please set two cursors on the plot');
+                return;
+            }
+            break;
+        case 'set4cursors':
+            if ( ( cursors[0].location == null )
+            || ( cursors[1].location == null )
+            || ( cursors[2].location == null )
+            || ( cursors[3].location == null ) ) {
+                alert('Please set four cursors on the plot');
+                return;
+            }
+            break;
+        default:
+            return;
+        }
+        var object = { 
+            'query': 'methodmanager',
+            'command': window.voltPy1.command,
+            'cursors': [ 
+                cursors[0].location, 
+                cursors[1].location, 
+                cursors[2].location, 
+                cursors[3].location 
+            ], 
+            'csrfmiddlewaretoken': token, 
+            'vtype': vtype, 
+            'vid': vid
+        }
+        $.post(jsonurl, object).done( function(data) { processData(data, plot, lineSrc, cursors); });
+        """
+        js_forward = '\n'.join([
+            js_buttonBase,
+            js_forwardSub
+        ])
+
+
+        bforward = Button(
+            label="Forward", 
+            width=250,
+            callback=CustomJS(args=args, code=js_forward)
+        )
+        bback = Button(
+            label="Back", 
+            width=250, 
+            callback=CustomJS(args=args, code=js_back)
+        )
         p = Paragraph(text="""X axis:""", width=50)
         w=widgetbox(radio_button_group)
         xaxis = row([p,w,bback, bforward], width=self.plot_width)
