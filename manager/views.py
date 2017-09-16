@@ -578,6 +578,6 @@ def generatePlot(request, user, plot_type, value_id, **kwargs):
 
     if addTo:
         for a in addTo:
-            pm.add(a)
+            pm.add(**a)
 
     return pm.getEmbeded(request, user, vtype, vid) 

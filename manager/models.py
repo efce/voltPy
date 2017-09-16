@@ -133,6 +133,7 @@ class CurveData(models.Model):
 
     @property
     def xVector(self):
+        user = User.objects.get(id=1) #TODO FIXME do zmiany !!
         onx = OnXAxis.objects.get(user=user).selected
         if ( onx == 'P' ):
             return self.potential
@@ -143,10 +144,19 @@ class CurveData(models.Model):
 
     @xVector.setter
     def xVector(self, val):
-        ValueError('This value cannot be set')
+        user = User.objects.get(id=1) #TODO FIXME do zmiany !!
+        onx = OnXAxis.objects.get(user=user).selected
+        if ( onx == 'P' ):
+            self.potential = val
+        if ( onx == 'T' ):
+            self.time = val
+        if ( onx == 'S' ):
+            pass
 
     @property
     def yVector(self):
+        user = User.objects.get(id=1) #TODO FIXME do zmiany !!
+        onx = OnXAxis.objects.get(user=user).selected
         if ( onx == 'P' ) or ( onx == 'T' ):
             return self.current
         if ( onx == 'S' ):
@@ -154,7 +164,13 @@ class CurveData(models.Model):
 
     @yVector.setter
     def yVector(self, val):
-        ValueError('This value cannot be set')
+        user = User.objects.get(id=1) #TODO FIXME do zmiany !!
+        onx = OnXAxis.objects.get(user=user).selected
+        if ( onx == 'P'
+        or onx == 'T' ):
+            self.current = val
+        if ( onx == 'S' ):
+            self.probingData = val
 
 class Analyte(models.Model):
     name=models.CharField(max_length=124, unique=True)

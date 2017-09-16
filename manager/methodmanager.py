@@ -234,11 +234,13 @@ class MethodManager:
                 model = self.__selected_method.model,
                 data = val
             )
+            print('operation processing result: {0}'.format(result))
             if result:
                 stepCompleted = self.__selected_method.processStep(
                     user,
                     self.__current_step_number
                 ) 
+                print('step processing result: {0}'.format(stepCompleted))
                 if ( stepCompleted ):
                     self.nextStep(user)
             else:
@@ -249,7 +251,7 @@ class MethodManager:
 
     def nextStep(self, user):
         if self.__selected_method:
-            self.__current_step_number += 1
+            self.__current_step_number = self.__selected_method.model.step
             self.__current_step  = self.__selected_method.getStep(self.__current_step_number)
             if not self.__current_step \
             or ( self.__current_step['step'] == self.Step.end ):
@@ -319,8 +321,35 @@ class MethodManager:
                 'plot_height' : pm.PlotManager.plot_height
             }
             return HttpResponse(template.render(context))
-        else:
-            return ''
+        elif self.__selected_type == 'processing':
+            if ( self.__current_operation == None
+            or self.__current_step == self.Step.end ):
+                return ' '
+            plotScr, plotDiv = manager.views.generatePlot(
+                request=request, 
+                user=user, 
+                plot_type='curveset',
+                value_id=self.processing.curveSet.id,
+                vtype='processing',
+                vid=self.processing.id,
+                interactionName = self.__current_operation.interactionName,
+                add = self.__selected_method.getAddToPlot(self.__current_step_number)
+            )
+
+            template = loader.get_template('manager/analyze.html')
+            context = {
+                'scripts': '\n'.join([ plotScr, 
+                                       pm.PlotManager.required_scripts, 
+                                       operationText.get('head','') ]),
+                'mainPlot': plotDiv,
+                'analyze_content': operationText.get("body",''),
+                'user': user,
+                'analysis_id': self.processing.id,
+                'curveset_id': self.processing.curveSet.id,
+                'plot_width' : pm.PlotManager.plot_width,
+                'plot_height' : pm.PlotManager.plot_height
+            }
+            return HttpResponse(template.render(context))
 
     def getAnalysisSelectionForm(self, *args, **kwargs):
         return MethodManager.SelectionForm(
@@ -367,7 +396,7 @@ class MethodManager:
                 model.customData['range1'] = [data[0], data[1]]
                 model.customData['range2'] = [data[2], data[3]]
                 model.save()
-                return True,{'command', 'reload'}
+                return True,{'command': 'reload'}
             else:
                 return False,None
 
@@ -386,7 +415,7 @@ class MethodManager:
             if (len(data) == 2):
                 model.customData['range1'] = data
                 model.save()
-                return True,{'command', 'reload'}
+                return True,{'command': 'reload'}
             else:
                 return False,None
 
@@ -428,7 +457,7 @@ class MethodManager:
             else:
                 model.step = model.step-1
                 model.save()
-                return False,{'command', 'reload'}
+                return False,{'command': 'reload'}
 
 
 class Method(ABC):
