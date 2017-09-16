@@ -73,15 +73,15 @@ class MethodManager:
             if self.type == 'processing':
                 if self.cleaned_data.get('method') in self.methods:
                     a = Processing(
-                            owner = user,
-                            curveSet = curveset,
-                            date = timezone.now(),
-                            method =self.cleaned_data.get('method'), 
-                            name = "",
-                            step = 0,
-                            deleted = False,
-                            completed = False
-                        )
+                        owner = user,
+                        curveSet = curveset,
+                        date = timezone.now(),
+                        method =self.cleaned_data.get('method'), 
+                        name = "",
+                        step = 0,
+                        deleted = False,
+                        completed = False
+                    )
                     a.save()
                     return a.id
                 else:
@@ -89,14 +89,14 @@ class MethodManager:
             elif self.type == 'analysis':
                 if self.cleaned_data.get('method') in self.methods:
                     a = Analysis(
-                            owner = user,
-                            curveSet = curveset,
-                            date = timezone.now(),
-                            method = self.cleaned_data.get('method'),
-                            name = "",
-                            step = 0,
-                            deleted = False
-                        )
+                        owner = user,
+                        curveSet = curveset,
+                        date = timezone.now(),
+                        method = self.cleaned_data.get('method'),
+                        name = "",
+                        step = 0,
+                        deleted = False
+                    )
                     a.save()
                     curveset.locked=True #CurveSet cannot be changed when used by Analysis method.
                     curveset.save()
@@ -111,7 +111,7 @@ class MethodManager:
             (int(self.Step.selectRange), self.operationSelectRange),
             (int(self.Step.selectPoint), self.operationSelectPoint),
             (int(self.Step.confirmation), self.operationConfirmation),
-            #(int(self.Step.selectTwoRanges), self.operationSelectTwoRanges),
+            (int(self.Step.selectTwoRanges), self.operationSelectTwoRanges),
             #(int(self.Step.selectAnalytes), self.operationSelectAnalyte),
         ])
         self.methods = {
@@ -125,7 +125,7 @@ class MethodManager:
         self.__current_step_number = 0
         self.analysis = None
 
-        self.loadMethods()
+        self.__loadMethods()
 
         user = kwargs.pop('user', None)
         if ( 'curveset' in kwargs ):
@@ -138,7 +138,7 @@ class MethodManager:
                 self.processing = Processing.objects.get(id=self.processing_id)
                 self.curveset_id = self.processing.curveSet.id
                 self.__setModel(self.processing)
-            except:
+            except Processing.DoesNotExists:
                 raise 404
         elif ( 'analysis' in kwargs ):
             self.__selected_type = 'analysis'
@@ -146,7 +146,7 @@ class MethodManager:
             try:
                 self.analysis = Analysis.objects.get(id=self.analysis_id)
                 self.__setModel(self.analysis)
-            except:
+            except Analysis.DoesNotExists:
                 raise 404
         elif ( 'method_id' in kwargs and 'method_type' in kwargs ):
             self.__selected_type = kwargs.get('method_type')
@@ -161,7 +161,7 @@ class MethodManager:
             raise NameError('Uknown type')
 
 
-    def loadMethods(self):
+    def __loadMethods(self):
         import os
         dir_path = os.path.dirname(os.path.realpath(__file__))
         from os import listdir
@@ -189,7 +189,6 @@ class MethodManager:
             self.__current_operation = None
         else:
             self.__current_operation = self.operations[self.__current_step['step']]()
-
 
     def process(self, request, user):
         if ( request.method != 'POST' ):
@@ -303,14 +302,14 @@ class MethodManager:
                 vtype='analysis',
                 vid=self.analysis.id,
                 interactionName = self.__current_operation.interactionName,
+                add = self.__selected_method.getAddToPlot(self.__current_step_number)
             )
+
             template = loader.get_template('manager/analyze.html')
             context = {
-                'scripts': '\n'.join( [   
-                                    plotScr, 
-                                    pm.PlotManager.required_scripts, 
-                                    operationText.get('head','')
-                                ]),
+                'scripts': '\n'.join([ plotScr, 
+                                       pm.PlotManager.required_scripts, 
+                                       operationText.get('head','') ]),
                 'mainPlot': plotDiv,
                 'analyze_content': operationText.get("body",''),
                 'user': user,
@@ -344,7 +343,6 @@ class MethodManager:
     def getInfo(self, request, user):
         return self.__selected_method.printInfo(request=request, user=user)
 
-
     def register(self,m):
         if str(m) == self.methods[m.type()]:
             raise NameError("Name " + str(m) + " already exists in " + m.type())
@@ -353,6 +351,25 @@ class MethodManager:
     def isMethodSelected(self):
         return (self.__selected_method != None)
 
+    class operationSelectTwoRanges:
+        interactionName = 'set4cursors'
+        def setData(self, data, request):
+            pass
+
+        def draw(self, step):
+            return dict( 
+                head = '', 
+                body = step.get('data').get('desc','')
+            )
+
+        def process(self, model, data):
+            if (len(data) == 4):
+                model.customData['range1'] = [data[0], data[1]]
+                model.customData['range2'] = [data[2], data[3]]
+                model.save()
+                return True,{'command', 'reload'}
+            else:
+                return False,None
 
     class operationSelectRange:
         interactionName = 'set2cursors'
@@ -423,6 +440,9 @@ class Method(ABC):
 
     def setModel(self, model):
         self.model = model
+
+    def getAddToPlot(self, currentStepNumber):
+        return None
 
     @abstractmethod
     def getStep(self, stepNum):

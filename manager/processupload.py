@@ -39,6 +39,7 @@ class ProcessUpload:
             try:
                 self._createModels()
             except Exception as e:
+                # doesnt matter what error it was, we need to rollback
                 if ( __debug__ ):
                     print("Query failed, rolling back transaction. Exception:" + "%s" % e)
                 transaction.savepoint_rollback(sid)
@@ -54,7 +55,8 @@ class ProcessUpload:
             sid=transaction.savepoint()
             try:
                 self._createModels()
-            except:
+            except Exception as e:
+                # doesnt matter what error it was, we need to rollback
                 if ( __debug__ ):
                     print("Query failed, rolling back transaction. Exception:" + "%s" % e)
                 transaction.savepoint_rollback(sid)

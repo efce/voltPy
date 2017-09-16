@@ -96,7 +96,7 @@ class SlopeStandardAdditionAnalysis(AnalysisMethod):
             p.add(
                 x=xvec,
                 y=yrow,
-                isLine=False,
+                plottype='scatter',
                 color='red',
                 size=7
             )
@@ -107,7 +107,7 @@ class SlopeStandardAdditionAnalysis(AnalysisMethod):
             p.add(
                 x=xvec2,
                 y=Y,
-                isLine=True,
+                plottype='line',
                 color='blue',
                 line_width=2
             )

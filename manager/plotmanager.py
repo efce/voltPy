@@ -116,7 +116,7 @@ class PlotManager:
         try:
             onxs = OnXAxis.objects.get(user=user)
             onx = onxs.selected
-        except:
+        except OnXAxis.DoesNotExists:
             onxs = OnXAxis(selected='P',user=user)
             onxs.save()
             onx = onxs.selected
@@ -126,38 +126,37 @@ class PlotManager:
         if onx == 'S':
             for cv in cs.usedCurveData.all():
                 ret.append(
-                        dict(
-                            x=range(1, len(cv.probingData)+1),
-                            y=cv.probingData,
-                            isLine=True,
-                            name = '',
-                            color='blue',
-                        )
+                    dict(
+                        x=range(1, len(cv.probingData)+1),
+                        y=cv.probingData,
+                        plottype='line',
+                        name = '',
+                        color='blue',
                     )
+                )
 
         elif onx == 'T':
             for cv in cs.usedCurveData.all():
                 ret.append(
-                        dict(
-                            x=cv.time,
-                            y=cv.current,
-                            isLine=True,
-                            name = '',
-                            color='blue',
-                        )
+                    dict(
+                        x=cv.time,
+                        y=cv.current,
+                        plottype='line',
+                        name = '',
+                        color='blue',
                     )
-
+                )
         else:
             for cv in cs.usedCurveData.all():
                 ret.append(
-                        dict(
-                            x=cv.potential,
-                            y=cv.current,
-                            isLine=True,
-                            name = '',
-                            color='blue',
-                        )
+                    dict(
+                        x=cv.potential,
+                        y=cv.current,
+                        plottype='line',
+                        name = '',
+                        color='blue',
                     )
+                )
 
         return ret
 
@@ -166,7 +165,7 @@ class PlotManager:
         try:
             onxs = OnXAxis.objects.get(user=user)
             onx = onxs.selected
-        except:
+        except OnXAxis.DoesNotExists:
             onxs = OnXAxis(selected='P',user=user)
             onxs.save()
             onx = onxs.selected
@@ -181,7 +180,7 @@ class PlotManager:
                         dict(
                             x=range(1, len(cv.probingData)+1),
                             y=cv.probingData,
-                            isLine=True,
+                            plottype='line',
                             name = '',
                             color='blue',
                         )
@@ -194,7 +193,7 @@ class PlotManager:
                         dict(
                             x=cv.time,
                             y=cv.current,
-                            isLine=True,
+                            plottype='line',
                             name = '',
                             color='blue',
                         )
@@ -207,7 +206,7 @@ class PlotManager:
                         dict(
                             x=cv.potential,
                             y=cv.current,
-                            isLine=True,
+                            plottype='line',
                             name = '',
                             color='blue',
                         )
@@ -220,7 +219,7 @@ class PlotManager:
         try:
             onxs = OnXAxis.objects.get(user=user)
             onx = onxs.selected
-        except:
+        except OnXAxis.DoesNotExists:
             onxs = OnXAxis(selected='P',user=user)
             onxs.save()
             onx = onxs.selected
@@ -244,7 +243,7 @@ class PlotManager:
         ret.append( {
             'x': analysis.customData['matrix'][0], 
             'y': analysis.customData['matrix'][1],
-            'isLine': False,
+            'plottype':'scatter',
             'color': 'red',
             'size': 8
         })
@@ -257,15 +256,15 @@ class PlotManager:
         ret.append({
             'x': vx,
             'y': vy,
-            'isLine': True,
+            'plottype':'line',
             'color': 'blue',
             'line_width': 2
         })
         return ret
 
-
-    def add(self, x=[], y=[], name='', isLine=True, color="blue", **kwargs):
-        if isLine:
+    def add(self, x=[], y=[], name='', plottype='line', color="blue", **kwargs):
+        allowedtyped = [ 'line', 'scatter', 'cursor' ];
+        if plottype == 'line':
             self.p.line(
                 x=x,
                 y=y,
@@ -273,7 +272,7 @@ class PlotManager:
                 color=color,
                 line_width=kwargs.get('line_width',2),
             )
-        else:
+        elif plottype == 'scatter':
             self.p.scatter(
                 x=x,
                 y=y,
@@ -281,7 +280,18 @@ class PlotManager:
                 color=color,
                 size=kwargs.get('size',8)
             )
-
+        elif plottype == 'cursor':
+            if ( len(x) > 1 ):
+                ValueError('When adding cursor only one x value is allowed')
+            C= Span(
+                location=x[0],
+                dimension='height', 
+                line_color=color,
+                line_dash='dashed', 
+                line_width=2,
+                line_alpha=1
+            )
+            self.p.add_layout(C)
 
     def _prepareFigure(self, request, user, vtype, vid):
         labels = []
@@ -512,7 +522,7 @@ class PlotManager:
                 if ( onx ):
                     try:
                         onx=int(onx)
-                    except:
+                    except ValueError:
                         return
                     ONX = OnXAxis.objects.get(user=user)
                     i=0

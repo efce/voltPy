@@ -81,7 +81,7 @@ class AddAnalytesForm(forms.Form):
 
         try:
             a = Analyte.objects.get(name=self.cleaned_data.get('analyte'))
-        except:
+        except Analyte.DoesNotExist:
             a = Analyte(name=self.cleaned_data['analyte'])
             a.save()
 
@@ -93,7 +93,7 @@ class AddAnalytesForm(forms.Form):
                 try:
                     c = Curve.objects.get(id=curve_id)
                     f = CurveFile.objects.get(id=c.curveFile.id)
-                except:
+                except (Curve.DoesNotExist, CurveFile.DoesNotExist):
                     continue
 
                 if not f.canBeUpdatedBy(user):
@@ -107,7 +107,7 @@ class AddAnalytesForm(forms.Form):
                     print("Updateing analyte nr: %i, concentration: %s" % (analyte_in_id, val))
                 try:
                     aic = AnalyteInCurve.objects.get(id=analyte_in_id)
-                except:
+                except AnalyteInCurve.DoesNotExist:
                     continue
 
                 if not aic.canBeUpdatedBy(user):
@@ -125,7 +125,7 @@ class SelectXForm(forms.Form):
         self.user = user
         try:
             self.onx = OnXAxis.objects.get(user=self.user)
-        except:
+        except OnXAxis.DoesNotExist:
             self.onx = OnXAxis(user=user)
             self.onx.save()
 
@@ -285,55 +285,9 @@ class DeleteForm(forms.Form):
                 form_item_id = int(self.cleaned_data['item_id'])
                 if ( form_item_id != int(item.id) ):
                     return False
-                try:
-                    if item.canBeUpdatedBy(user):
-                        item.deleted = True
-                        item.save()
-                        return True
-                    else:
-                        return False
-                except:
+                if item.canBeUpdatedBy(user):
+                    item.deleted = True
+                    item.save()
+                    return True
+                else:
                     return False
-
-
-class SelectRange(forms.Form):
-    rangeStart = forms.FloatField(label="Select Start")
-    rangeEnd = forms.FloatField(label="Select End")
-    def __init__(self, defaultRange, *args, **kwargs):
-        super(SelectRange, self).__init__(*args, **kwargs)
-        try:
-            rangest = defaultRange[0]
-            rangend = defaultRange[1]
-        except:
-            rangest = 0
-            rangend = 0
-        self.fields['rangeStart'].initial = rangest
-        self.fields['rangeEnd'].initial = rangend
-
-    def process(self):
-        if self.cleaned_data['rangeStart'] < self.cleaned_data['rangeEnd']:
-            sel_range = {
-                    'start' : self.cleaned_data['rangeStart'],
-                    'end' : self.cleaned_data['rangeEnd']
-                    }
-        else:
-            sel_range = {
-                    'end' : self.cleaned_data['rangeStart'],
-                    'start' : self.cleaned_data['rangeEnd']
-                    }
-
-        return ( sel_range['start'], sel_range['end'] )
-
-
-class SelectPoint(forms.Form):
-    point = forms.FloatField(label="Value")
-    def __init__(self, defaultRange, *args, **kwargs):
-        super(SelectPoint, self).__init__(*args, **kwargs)
-        try:
-            point = defaultRange
-        except:
-            point = 0
-        self.fields['point'].initial = point
-
-    def process(self):
-        return self.cleaned_data['point']

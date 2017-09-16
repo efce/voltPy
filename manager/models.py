@@ -131,6 +131,30 @@ class CurveData(models.Model):
             else:
                 return int(value)
 
+    @property
+    def xVector(self):
+        onx = OnXAxis.objects.get(user=user).selected
+        if ( onx == 'P' ):
+            return self.potential
+        if ( onx == 'T' ):
+            return self.time
+        if ( onx == 'S' ):
+            return range(len(self.probingData))
+
+    @xVector.setter
+    def xVector(self, val):
+        ValueError('This value cannot be set')
+
+    @property
+    def yVector(self):
+        if ( onx == 'P' ) or ( onx == 'T' ):
+            return self.current
+        if ( onx == 'S' ):
+            return self.probingData
+
+    @yVector.setter
+    def yVector(self, val):
+        ValueError('This value cannot be set')
 
 class Analyte(models.Model):
     name=models.CharField(max_length=124, unique=True)

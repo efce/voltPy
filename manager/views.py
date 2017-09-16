@@ -20,7 +20,7 @@ def index(request, user_id):
     template = loader.get_template('manager/index.html')
     try:
         user = User.objects.get(id=user_id)
-    except:
+    except User.DoesNotExists:
         user=None
     return HttpResponse(template.render({ 'user': user }, request))
 
@@ -29,7 +29,7 @@ def login(request):
     user_id = 1
     try:
         user = User.objects.get(id=user_id)
-    except:
+    except User.DoesNotExists:
         user = User(name="Użytkownik numer %i" % user_id)
         user.save()
     return HttpResponseRedirect(reverse('index', args=[ user.id ]))
@@ -42,13 +42,10 @@ def logout(request):
 def browseCurveFile(request, user_id):
     try:
         user = User.objects.get(id=user_id)
-    except:
+    except User.DoesNotExists:
         user=None
 
-    try:
-        files = CurveFile.objects.filter(owner=user, deleted=False)
-    except:
-        files = None
+    files = CurveFile.objects.filter(owner=user, deleted=False)
 
     template = loader.get_template('manager/browse.html')
     context = {
@@ -68,20 +65,17 @@ def browseCurveFile(request, user_id):
 def browseAnalysis(request, user_id):
     try:
         user = User.objects.get(id=user_id)
-    except:
+    except User.DoesNotExists:
         user=None
 
-    try:
-        files = Analysis.objects.filter(owner=user, deleted=False)
-    except:
-        files = None
+    anals = Analysis.objects.filter(owner=user, deleted=False)
 
     template = loader.get_template('manager/browse.html')
     context = {
         'scripts': PlotManager.required_scripts,
         'browse_by' : 'Analysis',
         'user' : user,
-        'disp' : files,
+        'disp' : anals,
         'action1': "showAnalysis",
         'action2': "deleteAnalysis",
         'action2_text': '(delete)',
@@ -93,13 +87,10 @@ def browseAnalysis(request, user_id):
 def browseCurveSet(request, user_id):
     try:
         user = User.objects.get(id=user_id)
-    except:
+    except User.DoesNotExists:
         user=None
 
-    try:
-        csets = CurveSet.objects.filter(owner=user_id, deleted=False)
-    except:
-        csets = None
+    csets = CurveSet.objects.filter(owner=user_id, deleted=False)
 
     if ( __debug__ ):
         print(csets)
@@ -121,18 +112,18 @@ def browseCurveSet(request, user_id):
 def deleteGeneric(request, user_id, item):
     if item == None:
         return HttpResponseRedirect(
-                    reverse('index', args=[user_id])
-                )
+            reverse('index', args=[user_id])
+        )
 
     try:
         user = User.objects.get(id=user_id)
-    except:
+    except User.DoesNotExists:
         user=None
     itemclass = str(item.__class__.__name__)
     try:
         if not item.canBeUpdatedBy(user):
             raise PermissionError("Not allowed")
-    except:
+    except PermissionError: #TODO: let it go
         if ( __debug__ ):
             print("Not allowed to edit %s by %s" % (item,user))
         return HttpResponseRedirect(
@@ -161,7 +152,7 @@ def deleteGeneric(request, user_id, item):
 def deleteCurveFile(request, user_id, file_id):
     try:
         cfile = CurveFile.objects.get(id=file_id)
-    except:
+    except CurveFile.DoesNotExists:
         cfile = None
     return deleteGeneric(request, user_id, cfile)
 
@@ -169,7 +160,7 @@ def deleteCurveFile(request, user_id, file_id):
 def deleteCurve(request, user_id, curve_id):
     try:
         c = Curve.objects.get(id=curve_id)
-    except:
+    except Curve.DoesNotExists:
         c=None
     return deleteGeneric(request, user_id, c)
 
@@ -177,7 +168,7 @@ def deleteCurve(request, user_id, curve_id):
 def deleteAnalysis(request, user_id, analysis_id):
     try:
         a = Analysis.objects.get(id=analysis_id)
-    except:
+    except Analysis.DoesNotExists:
         a=None
     return deleteGeneric(request, user_id, a)
 
@@ -188,7 +179,7 @@ def deleteCurveSet(request, user_id, curveset_id):
         if ( a.locked ):
             pass
             #TODO: cannot be modified.
-    except:
+    except CurveSet.DoesNotExists:
         a=None
     return deleteGeneric(request, user_id, a)
 
@@ -196,7 +187,7 @@ def deleteCurveSet(request, user_id, curveset_id):
 def createCurveSet(request, user_id):
     try:
         user = User.objects.get(id=user_id)
-    except:
+    except User.DoesNotExists:
         user=None
 
     if request.method == 'POST':
@@ -220,12 +211,12 @@ def createCurveSet(request, user_id):
 def showAnalysis(request, user_id, analysis_id):
     try:
         user = User.objects.get(id=user_id)
-    except:
+    except User.DoesNotExists:
         user=None
 
     try:
         an = Analysis.objects.get(id=analysis_id)
-    except:
+    except Analysis.DoesNotExists:
         an = None
 
     if not an.canBeReadBy(user):
@@ -259,12 +250,12 @@ def showAnalysis(request, user_id, analysis_id):
 def showProcessed(request, user_id, processing_id):
     try:
         user = User.objects.get(id=user_id)
-    except:
+    except User.DoesNotExists:
         user=None
 
     try:
         cf = Processing.objects.get(id=processing_id, owner=user)
-    except:
+    except Processing.DoesNotExists:
         cf = None
 
     template = loader.get_template('manager/showAnalysis.html')
@@ -281,12 +272,12 @@ def showProcessed(request, user_id, processing_id):
 def showCurveSet(request, user_id, curveset_id):
     try:
         user = User.objects.get(id=user_id)
-    except:
+    except User.DoesNotExists:
         user=None
 
     try:
         cs = CurveSet.objects.get(id=curveset_id)
-    except:
+    except CurveSet.DoesNotExists:
         cs = None
 
     if not cs.canBeReadBy(user):
@@ -319,12 +310,12 @@ def editAnalysis(request, user_id, analysis_id):
 def editCurveSet(request,user_id,curveset_id):
     try:
         user = User.objects.get(id=user_id)
-    except:
+    except User.DoesNotExists:
         user=None
 
     try:
         cs=CurveSet.objects.get(id=curveset_id)
-    except:
+    except CurveSet.DoesNotExists:
         raise 404
 
     if not cs.canBeUpdatedBy(user):
@@ -370,8 +361,8 @@ def editCurveSet(request,user_id,curveset_id):
     try:
         cs = CurveSet.objects.get(id=curveset_id)
         if not cs.canBeReadBy(user):
-            raise 3
-    except:
+            raise PermissionError('Not allowed')
+    except PermissionError:
         raise 404
 
     cal_disp = ""
@@ -399,7 +390,7 @@ def editCurveSet(request,user_id,curveset_id):
 def upload(request, user_id):
     try:
         user = User.objects.get(id=user_id)
-    except:
+    except User.DoesNotExists:
         user=None
 
     if request.method == 'POST':
@@ -422,7 +413,7 @@ def upload(request, user_id):
 def editCurveFile(request, user_id, file_id,):
     try:
         user = User.objects.get(id=user_id)
-    except:
+    except User.DoesNotExists:
         user=None
 
     if request.method == 'POST':
@@ -453,12 +444,12 @@ def editCurveFile(request, user_id, file_id,):
 def showCurveFile(request, user_id, file_id):
     try:
         user = User.objects.get(id=user_id)
-    except:
+    except User.DoesNotExists:
         user=None
 
     try:
         cf = CurveFile.objects.get(id=file_id, deleted=False)
-    except:
+    except CurveFile.DoesNotExists:
         cf = None
 
     if not cf.canBeReadBy(user):
@@ -497,7 +488,7 @@ def processCurveSet(request, user_id, file_id):
 def analyze(request, user_id, analysis_id):
     try:
         user = User.objects.get(id=user_id)
-    except:
+    except User.DoesNotExists:
         user=None
     mm = MethodManager(analysis = analysis_id)
     mm.process(request=request, user=user)
@@ -507,7 +498,7 @@ def analyze(request, user_id, analysis_id):
 def process(request, user_id, processing_id):
     try:
         user = User.objects.get(id=user_id)
-    except:
+    except User.DoesNotExists:
         user=None
     mm = MethodManager(processing = processing_id)
     mm.process(request=request, user=user)
@@ -517,7 +508,7 @@ def process(request, user_id, processing_id):
 def plotInteraction(request, user_id):
     try:
         user = User.objects.get(id=user_id)
-    except:
+    except User.DoesNotExists:
         user=None
 
     if request.method != 'POST' or not request.POST.get('query', None):
@@ -557,9 +548,9 @@ def generatePlot(request, user, plot_type, value_id, **kwargs):
         return
     vtype = kwargs.get('vtype', plot_type)
     vid = kwargs.get('vid', value_id)
+    addTo = kwargs.get('add', None)
 
     pm = PlotManager()
-    #pm.processJSON(request, user)
     data=[]
     if (plot_type == 'file' ):
         data=pm.fileHelper(user, value_id)
@@ -578,18 +569,15 @@ def generatePlot(request, user, plot_type, value_id, **kwargs):
         pm.xlabel = pm.xLabelHelper(user)
         pm.include_x_switch = True
 
+
     pm.ylabel = 'i / µA'
     pm.setInteraction(kwargs.get('interactionName', 'none'))
 
     for d in data:
         pm.add(**d)
-        """
-            x=d.get('x',[]), 
-            y=d.get('y', []),
-            name=d.get('name',''),
-            color=d.get('color','blue'),
-            isLine=d.get('isLine', True)
-        )
-        """
+
+    if addTo:
+        for a in addTo:
+            pm.add(a)
 
     return pm.getEmbeded(request, user, vtype, vid) 
