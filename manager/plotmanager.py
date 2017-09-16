@@ -178,42 +178,40 @@ class PlotManager:
                 cvs = CurveData.objects.filter(curve=cb, processing=None)
                 for cv in cvs:
                     ret.append(
-                            dict(
-                                x=range(1, len(cv.probingData)+1),
-                                y=cv.probingData,
-                                isLine=True,
-                                name = '',
-                                color='blue',
-                            )
+                        dict(
+                            x=range(1, len(cv.probingData)+1),
+                            y=cv.probingData,
+                            isLine=True,
+                            name = '',
+                            color='blue',
                         )
-
+                    )
         elif onx == 'T':
             for cb in curves:
                 cvs = CurveData.objects.filter(curve=cb, processing=None)
                 for cv in cvs:
                     ret.append(
-                            dict(
-                                x=cv.time,
-                                y=cv.current,
-                                isLine=True,
-                                name = '',
-                                color='blue',
-                            )
+                        dict(
+                            x=cv.time,
+                            y=cv.current,
+                            isLine=True,
+                            name = '',
+                            color='blue',
                         )
-
+                    )
         else:
             for cb in curves:
                 cvs = CurveData.objects.filter(curve=cb, processing=None)
                 for cv in cvs:
                     ret.append(
-                            dict(
-                                x=cv.potential,
-                                y=cv.current,
-                                isLine=True,
-                                name = '',
-                                color='blue',
-                            )
+                        dict(
+                            x=cv.potential,
+                            y=cv.current,
+                            isLine=True,
+                            name = '',
+                            color='blue',
                         )
+                    )
 
         return ret
 
@@ -408,7 +406,7 @@ class PlotManager:
         )
 
         js_backSub = """
-        var coma=window.voltPy1.command;
+        var coma = window.voltPy1.command;
         if ( coma == 'set1cursor'
         || coma == 'set2cursors'
         || coma == 'set4cursors' ) {
@@ -439,7 +437,7 @@ class PlotManager:
         js_forwardSub = """
         switch ( window.voltPy1.command ) {
         case 'set1cursor':
-            if ( cusors[0].location == null ) {
+            if ( cursors[0].location == null ) {
                 alert('Please set one curosor on the plot');
                 return;
             } 
@@ -468,12 +466,10 @@ class PlotManager:
         var object = { 
             'query': 'methodmanager',
             'command': window.voltPy1.command,
-            'cursors': [ 
-                cursors[0].location, 
-                cursors[1].location, 
-                cursors[2].location, 
-                cursors[3].location 
-            ], 
+            'cursor1': cursors[0].location, 
+            'cursor2': cursors[1].location, 
+            'cursor3': cursors[2].location, 
+            'cursor4': cursors[3].location, 
             'csrfmiddlewaretoken': token, 
             'vtype': vtype, 
             'vid': vid

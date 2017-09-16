@@ -192,27 +192,38 @@ class MethodManager:
 
 
     def process(self, request, user):
+        if ( request.method != 'POST' ):
+            return
         if self.__selected_method and self.__current_operation:
             command = request.POST.get('command', None)
             val = None
+            cursor_names = [ 'cursor1', 'cursor2', 'cursor3', 'cursor4' ]
+            non_null_cursors = []
+            for cn in cursor_names:
+                wrk = request.POST.get(cn, None)
+                if not wrk:
+                    continue
+                try:
+                    wrk = float(wrk)
+                except ValueError:
+                    continue
+                non_null_cursors.append(wrk)
+
+            print(non_null_cursors)
+
             if ( command == 'set1cursor' ):
-                crs = request.POST.get('cursors',[])
-                if ( len(crs)<1 ):
+                if ( len(non_null_cursors)<0 ):
                     raise ValueError('Wrong number of cursors')
-                val = float(crs[0])
+                val = non_null_cursors[0]
             elif ( command == 'set2cursors' ):
-                crs = request.POST.get('cursors',[])
-                if ( len(crs)<2 ):
+                if ( len(non_null_cursors)<2 ):
                     raise ValueError('Wrong number of cursors')
-                val = [ min(crs), max(crs) ]
-                val = [ float(v) for v in val ]
+                val = [ min(non_null_cursors), max(non_null_cursors) ]
             elif ( command == 'set4cursors' ):
-                crs = request.POST.get('cursors',[])
-                if ( len(crs)<4 ):
+                if ( len(non_null_cursors)<4 ):
                     raise ValueError('Wrong number of cursors')
-                crs.sort()
-                val = crs
-                val = [ float(v) for v in val ]
+                non_null_cursors.sort()
+                val = non_null_cursors
             elif ( command == 'cancel' ):
                 val = False
             elif ( command == 'confirm' ):
@@ -330,17 +341,6 @@ class MethodManager:
             **kwargs
         )
 
-    def drawSelectPoint(self):
-        pass
-
-    def drawSelectAnalyte(self):
-        pass
-
-
-    def drawEnd(self):
-        pass
-
-
     def getInfo(self, request, user):
         return self.__selected_method.printInfo(request=request, user=user)
 
@@ -349,7 +349,6 @@ class MethodManager:
         if str(m) == self.methods[m.type()]:
             raise NameError("Name " + str(m) + " already exists in " + m.type())
         self.methods[m.type()][str(m)] = m
-
 
     def isMethodSelected(self):
         return (self.__selected_method != None)
@@ -365,7 +364,6 @@ class MethodManager:
                 head = '', 
                 body = step.get('data').get('desc','')
             )
-            
 
         def process(self, model, data):
             if (len(data) == 2):
@@ -425,7 +423,6 @@ class Method(ABC):
 
     def setModel(self, model):
         self.model = model
-
 
     @abstractmethod
     def getStep(self, stepNum):

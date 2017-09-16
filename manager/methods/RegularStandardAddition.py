@@ -6,20 +6,20 @@ import numpy as np
 
 class RegularStandardAddition(AnalysisMethod):
     steps = ( 
-                { 
-                    'step': MethodManager.Step.selectRange, 
-                    'title': 'Select range',
-                    'data': { 
-                        'starting': (0,0),
-                        'desc': 'Select range containing peak.',
-                        }
-                },
-                {
-                    'step': MethodManager.Step.end,
-                    'title': 'End',
-                    'data': ''
-                }
-            )
+        { 
+            'step': MethodManager.Step.selectRange, 
+            'title': 'Select range',
+            'data': { 
+                'starting': (0,0),
+                'desc': 'Select range containing peak.',
+            }
+        },
+        {
+            'step': MethodManager.Step.end,
+            'title': 'End',
+            'data': ''
+        }
+    )
     model = None
 
     def __init__(self):
@@ -37,6 +37,8 @@ class RegularStandardAddition(AnalysisMethod):
         yvalues = []
         xvalues = []
         selRange = self.model.customData['range1']
+        print(selRange)
+        print(type(selRange[0]))
         for c in self.model.curveSet.usedCurveData.all():
             startIndex = c.xvalueToIndex(user, selRange[0])
             endIndex = c.xvalueToIndex(user, selRange[1])
