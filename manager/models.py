@@ -1,5 +1,6 @@
 from django.db import models
 from picklefield.fields import PickledObjectField
+from django.core.urlresolvers import reverse
 
 
 class Group(models.Model):
@@ -227,7 +228,7 @@ class Analysis(models.Model):
     analytes=models.ManyToManyField(Analyte)
     name = models.TextField()
     method = models.TextField()
-    step  = models.IntegerField(default=0)
+    step  = models.IntegerField(default=0, null=True)
     deleted = models.BooleanField(default=0)
     completed = models.BooleanField(default=0)
 
@@ -246,6 +247,8 @@ class Analysis(models.Model):
     def canBeReadBy(self, user):
         return self.isOwnedBy(user)
 
+    def getRedirectURL(self, user):
+        return reverse('showAnalysis', args=[ user.id, self.id ])
 
 class Processing(models.Model):
     id = models.AutoField(primary_key=True)
@@ -255,7 +258,7 @@ class Processing(models.Model):
     customData = PickledObjectField(default={})
     name = models.TextField()
     method = models.TextField()
-    step  = models.IntegerField(default=0)
+    step  = models.IntegerField(default=0, null=True)
     deleted = models.BooleanField(default=0)
     completed = models.BooleanField(default=0)
 
@@ -273,6 +276,9 @@ class Processing(models.Model):
 
     def canBeReadBy(self, user):
         return self.isOwnedBy(user)
+
+    def getRedirectURL(self, user):
+        return reverse('editCurveSet', args=[ user.id, self.curveSet.id ])
 
 
 class OnXAxis(models.Model):

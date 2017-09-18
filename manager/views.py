@@ -5,10 +5,10 @@ from django.template import loader
 from django.views.decorators.cache import never_cache
 from django.core.urlresolvers import reverse
 import json
-from .models import *
-from .forms import *
-from .plotmanager import *
-from .methodmanager import *
+from manager.models import *
+from manager.forms import * 
+from manager.plotmanager import *
+from manager.methodmanager import *
 
 
 def indexNoUser(request):
@@ -225,7 +225,7 @@ def showAnalysis(request, user_id, analysis_id):
     if an.completed == False:
         return HttpResponseRedirect(reverse('analyze', args=[user.id, an.id]))
 
-    mm = MethodManager(analysis=analysis_id)
+    mm = MethodManager(analysis_id=analysis_id)
     template = loader.get_template('manager/showAnalysis.html')
     info = mm.getInfo(request=request, user=user)
     plotScr, plotDiv = generatePlot(
@@ -325,7 +325,7 @@ def editCurveSet(request,user_id,curveset_id):
         #show that is is locked
         pass
 
-    mm = MethodManager(curveset=curveset_id)
+    mm = MethodManager(user=user,curveset_id=curveset_id)
 
     if request.method == 'POST':
         if ( 'startAnalyze' in request.POST ):
@@ -490,7 +490,7 @@ def analyze(request, user_id, analysis_id):
         user = User.objects.get(id=user_id)
     except User.DoesNotExists:
         user=None
-    mm = MethodManager(analysis = analysis_id)
+    mm = MethodManager(user=user,analysis_id=analysis_id)
     mm.process(request=request, user=user)
     return mm.getContent(request=request, user=user) 
 
@@ -500,7 +500,7 @@ def process(request, user_id, processing_id):
         user = User.objects.get(id=user_id)
     except User.DoesNotExists:
         user=None
-    mm = MethodManager(processing = processing_id)
+    mm = MethodManager(user=user, processing_id=processing_id)
     mm.process(request=request, user=user)
     return mm.getContent(request=request, user=user) 
 

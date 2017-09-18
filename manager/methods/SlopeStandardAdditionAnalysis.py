@@ -1,49 +1,31 @@
 from numpy import polyfit, corrcoef
-from manager.methodmanager import *
-from manager.models import *
+import manager.methodmanager as mm
+import manager.models as models
 import manager.plotmanager as pm
 
-class SlopeStandardAdditionAnalysis(AnalysisMethod):
-    steps = ( 
+class SlopeStandardAdditionAnalysis(mm.AnalysisMethod):
+    _operations = ( 
         { 
-            'step': MethodManager.Step.selectPoint, 
+            'class': mm.OperationSelectPoint,
             'title': 'Select peak',
-            'data': { 
-                'starting': 0,
-                'desc': 'Enter approx. X value of peak of interest.',
-            }
+            'desc': 'Enter approx. X value of peak of interest.',
         },
         {
-            'step': MethodManager.Step.end,
+            'class': None,
             'title': 'End',
             'desc': 'No more steps.',
-            'data': None
         }
     )
-    model = None
-
-    def __init__(self):
-        pass
 
     def __str__(self):
         return "Slope Standard Addition Analysis"
 
-    def getStep(self, stepNum):
-        if ( stepNum >= len(self.steps) ):
-            return None
-        return self.steps[stepNum]
-
-    def processStep(self, user, stepNum):
-        self.model.customData['selectedIndex'] = \
-            self.model.curveSet.usedCurveData.all()[0].xvalueToIndex(user, self.model.customData['pointX'])
-        self.model.step += 1
-        self.model.save
-        return True
-
-    def finalize(self, *args, **kwargs):
+    def finalize(self):
         from manager.helpers.slopeStandardAdditionAnalysis import slopeStandardAdditionAnalysis
         from manager.helpers.prepareStructForSSAA import prepareStructForSSAA
         from manager.curveea import Param
+        self.model.customData['selectedIndex'] = \
+            self.model.curveSet.usedCurveData.all()[0].xvalueToIndex(user, self.model.customData['pointX'])
         peak = self.model.customData.get('selectedIndex', 0)
         X = []
         Conc = []
@@ -86,7 +68,7 @@ class SlopeStandardAdditionAnalysis(AnalysisMethod):
         self.model.step = 0
         self.model.save()
 
-    def printInfo(self, request, user):
+    def getInfo(self, request, user):
         p=pm.PlotManager()
         p.plot_width = 500
         p.plot_height = 400
@@ -134,5 +116,4 @@ class SlopeStandardAdditionAnalysis(AnalysisMethod):
             d = floor(sqrt(n))
             return [ tptw-((x*d)-3) for x in range(n) ]
 
-def newInstance(*args, **kwargs):
-    return SlopeStandardAdditionAnalysis(*args, **kwargs)
+main_class = SlopeStandardAdditionAnalysis

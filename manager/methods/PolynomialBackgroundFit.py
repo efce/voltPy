@@ -1,51 +1,34 @@
 from copy import deepcopy
 from django.utils import timezone
-from manager.methodmanager import *
+import manager.methodmanager as mm
 import numpy as np
 
-class PolynomialBackgroundFit(ProcessingMethod):
-    steps = [ 
-                {
-                    'step': MethodManager.Step.selectTwoRanges,
-                    'title': 'Choose two fit intervals.',
-                    'data': { 
-                        'starting': ((0,0),(0,0)),
-                        'desc': 'Select two fit intervals.',
-                    }
-                },
-                {
-                    'step': MethodManager.Step.confirmation,
-                    'title': 'Choose two fit intervals.',
-                    'data': { 
-                        'starting': '',
-                        'desc': 'Confirm background shape.',
-                    }
-                },
-                {
-                    'step': MethodManager.Step.end,
-                    'title': 'End',
-                    'data': ''
-                }
-            ]
-    model = None
+class PolynomialBackgroundFit(mm.ProcessingMethod):
+    _operations = [ 
+        {
+            'class': mm.OperationSelectTwoRanges,
+            'title': 'Choose two fit intervals.',
+            'desc': 'Select two fit intervals.',
+        },
+        {
+            'class': mm.OperationConfirmation,
+            'title': 'Choose two fit intervals.',
+            'desc': 'Confirm background shape.',
+        },
+        {
+            'class': None,
+            'title': 'End',
+            'data': ''
+        }
+    ]
     degree = 3
-
-
-    def __init__(self):
-        pass
-
 
     def __str__(self):
         return "3rd deg Polynomial Background Fit"
 
-
-    def getStep(self, stepNum):
-        if ( stepNum >= len(self.steps) ):
-            return None
-        return self.steps[stepNum]
-
-    def processStep(self, user, stepNum):
-        if ( stepNum == 0 ):
+    def process(self, user, request):
+        super(ProcessingMethod, self).process(user, request)
+        if ( self.model.step == 1 ):
             print( 'processing step for num: %i' %stepNum)
             self.model.customData['fitCoeff'] = []
             for cd in self.model.curveSet.usedCurveData.all():
@@ -61,12 +44,9 @@ class PolynomialBackgroundFit(ProcessingMethod):
                 self.model.customData['fitCoeff'].append({'x3': p[0], 'x2': p[1], 'x1': p[2], 'x0': p[3]})
             self.model.step = self.model.step+1
             self.model.save()
-        elif ( stepNum == 1 ):
-            self.model.step = self.model.step+1
-            self.model.save()
-        return True
 
-    def getAddToPlot(self, currentStepNumber):
+    def getAddToPlot(self):
+        currentStepNumber = self.model.step
         print( 'addtoplot for num: %i' %currentStepNumber)
         if ( currentStepNumber == 1 ):
             fitlines = []
@@ -119,11 +99,10 @@ class PolynomialBackgroundFit(ProcessingMethod):
         return True
 
 
-    def printInfo(self, request, user):
+    def getInfo(self, request, user):
         return {
-                'head': '',
-                'body': ''
-            }
+            'head': '',
+            'body': ''
+        }
 
-def newInstance(*args, **kwargs):
-    return PolynomialBackgroundFit(*args, **kwargs)
+main_class = PolynomialBackgroundFit

@@ -1,32 +1,24 @@
 from copy import deepcopy
 from django.utils import timezone
-from manager.methodmanager import *
-from manager.helpers.bkghelpers import calc_abc
 import numpy as np
+import manager.methodmanager as mm
+from manager.helpers.bkghelpers import calc_abc
 
-class AutomaticBackgroundCorrection(ProcessingMethod):
-    steps = [ 
-                {
-                    'step': MethodManager.Step.end,
-                    'title': 'End',
-                    'data': ''
-                }
-            ]
+class AutomaticBackgroundCorrection(mm.ProcessingMethod):
+    _operations = [ 
+        {
+            'class': None,
+            'title': 'End',
+            'desc': ''
+        }
+    ]
     model = None
 
-    def __init__(self):
-        pass
+    def __init__(self, model):
+        self.model = model
 
     def __str__(self):
         return "Automatic Background Correction"
-
-    def getStep(self, stepNum):
-        if ( stepNum >= len(self.steps) ):
-            return None
-        return self.steps[stepNum]
-
-    def processStep(self, user, stepNum):
-        return True
 
     def finalize(self, *args, **kwargs):
         if self.model.curveSet.locked:
@@ -50,15 +42,14 @@ class AutomaticBackgroundCorrection(ProcessingMethod):
             self.model.curveSet.usedCurveData.remove(cd)
             self.model.curveSet.usedCurveData.add(newcd)
             self.model.curveSet.save()
+            self.model.step = None
+            self.model.completed = True
             self.model.save()
-        return True
 
-
-    def printInfo(self, request, user):
+    def getInfo(self, request, user):
         return {
             'head': '',
             'body': ''
         }
 
-def newInstance(*args, **kwargs):
-    return AutomaticBackgroundCorrection(*args, **kwargs)
+main_class = AutomaticBackgroundCorrection
