@@ -15,11 +15,6 @@ class PolynomialBackgroundFit(mm.ProcessingMethod):
             'title': 'Choose two fit intervals.',
             'desc': 'Confirm background shape.',
         },
-        {
-            'class': None,
-            'title': 'End',
-            'data': ''
-        }
     ]
     degree = 3
 
@@ -27,9 +22,11 @@ class PolynomialBackgroundFit(mm.ProcessingMethod):
         return "3rd deg Polynomial Background Fit"
 
     def process(self, user, request):
-        super(ProcessingMethod, self).process(user, request)
+        print('step before %i', self.model.step)
+        ret = super(mm.ProcessingMethod, self).process(user, request)
+        print('step after %i', self.model.step)
         if ( self.model.step == 1 ):
-            print( 'processing step for num: %i' %stepNum)
+            print( 'processing step for num: %i' % self.model.step)
             self.model.customData['fitCoeff'] = []
             for cd in self.model.curveSet.usedCurveData.all():
                 st1 = cd.xvalueToIndex(user, self.model.customData['range1'][0])
@@ -42,8 +39,8 @@ class PolynomialBackgroundFit(mm.ProcessingMethod):
                 yvec.extend(cd.yVector[st2:en2])
                 p = np.polyfit(xvec, yvec, self.degree)
                 self.model.customData['fitCoeff'].append({'x3': p[0], 'x2': p[1], 'x1': p[2], 'x0': p[3]})
-            self.model.step = self.model.step+1
-            self.model.save()
+                self.model.save()
+        return ret
 
     def getAddToPlot(self):
         currentStepNumber = self.model.step
@@ -67,7 +64,7 @@ class PolynomialBackgroundFit(mm.ProcessingMethod):
         else:
             return None
 
-    def finalize(self, *args, **kwargs):
+    def finalize(self, user):
         print('finalizing')
         import numpy as np
         if self.model.curveSet.locked:
@@ -93,8 +90,6 @@ class PolynomialBackgroundFit(mm.ProcessingMethod):
             self.model.curveSet.usedCurveData.remove(cd)
             self.model.curveSet.usedCurveData.add(newcd)
             self.model.curveSet.save()
-            self.model.step = self.model.step+1
-            self.model.completed = True
             self.model.save()
         return True
 

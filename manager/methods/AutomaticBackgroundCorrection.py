@@ -7,20 +7,17 @@ from manager.helpers.bkghelpers import calc_abc
 class AutomaticBackgroundCorrection(mm.ProcessingMethod):
     _operations = [ 
         {
-            'class': None,
-            'title': 'End',
-            'desc': ''
-        }
+            'class': mm.OperationConfirmation,
+            'title': 'Config before proceding.',
+            'desc': 'Confirm before proceding.',
+        },
     ]
     model = None
-
-    def __init__(self, model):
-        self.model = model
 
     def __str__(self):
         return "Automatic Background Correction"
 
-    def finalize(self, *args, **kwargs):
+    def finalize(self, user):
         if self.model.curveSet.locked:
             raise ValueError("CurveSet used by Analysis method cannot be changed.")
         for cd in self.model.curveSet.usedCurveData.all():

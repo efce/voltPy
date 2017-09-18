@@ -4,6 +4,7 @@ from django.http import HttpResponseRedirect
 from django.template import loader
 from django.views.decorators.cache import never_cache
 from django.core.urlresolvers import reverse
+from django.core.exceptions import ObjectDoesNotExist
 import json
 from manager.models import *
 from manager.forms import * 
@@ -20,7 +21,7 @@ def index(request, user_id):
     template = loader.get_template('manager/index.html')
     try:
         user = User.objects.get(id=user_id)
-    except User.DoesNotExists:
+    except ObjectDoesNotExist:
         user=None
     return HttpResponse(template.render({ 'user': user }, request))
 
@@ -29,7 +30,7 @@ def login(request):
     user_id = 1
     try:
         user = User.objects.get(id=user_id)
-    except User.DoesNotExists:
+    except ObjectDoesNotExist:
         user = User(name="Użytkownik numer %i" % user_id)
         user.save()
     return HttpResponseRedirect(reverse('index', args=[ user.id ]))
@@ -42,7 +43,7 @@ def logout(request):
 def browseCurveFile(request, user_id):
     try:
         user = User.objects.get(id=user_id)
-    except User.DoesNotExists:
+    except ObjectDoesNotExist:
         user=None
 
     files = CurveFile.objects.filter(owner=user, deleted=False)
@@ -65,7 +66,7 @@ def browseCurveFile(request, user_id):
 def browseAnalysis(request, user_id):
     try:
         user = User.objects.get(id=user_id)
-    except User.DoesNotExists:
+    except ObjectDoesNotExist:
         user=None
 
     anals = Analysis.objects.filter(owner=user, deleted=False)
@@ -87,7 +88,7 @@ def browseAnalysis(request, user_id):
 def browseCurveSet(request, user_id):
     try:
         user = User.objects.get(id=user_id)
-    except User.DoesNotExists:
+    except ObjectDoesNotExist:
         user=None
 
     csets = CurveSet.objects.filter(owner=user_id, deleted=False)
@@ -117,7 +118,7 @@ def deleteGeneric(request, user_id, item):
 
     try:
         user = User.objects.get(id=user_id)
-    except User.DoesNotExists:
+    except ObjectDoesNotExist:
         user=None
     itemclass = str(item.__class__.__name__)
     try:
@@ -152,7 +153,7 @@ def deleteGeneric(request, user_id, item):
 def deleteCurveFile(request, user_id, file_id):
     try:
         cfile = CurveFile.objects.get(id=file_id)
-    except CurveFile.DoesNotExists:
+    except ObjectDoesNotExist:
         cfile = None
     return deleteGeneric(request, user_id, cfile)
 
@@ -160,7 +161,7 @@ def deleteCurveFile(request, user_id, file_id):
 def deleteCurve(request, user_id, curve_id):
     try:
         c = Curve.objects.get(id=curve_id)
-    except Curve.DoesNotExists:
+    except ObjectDoesNotExist:
         c=None
     return deleteGeneric(request, user_id, c)
 
@@ -168,7 +169,7 @@ def deleteCurve(request, user_id, curve_id):
 def deleteAnalysis(request, user_id, analysis_id):
     try:
         a = Analysis.objects.get(id=analysis_id)
-    except Analysis.DoesNotExists:
+    except ObjectDoesNotExist:
         a=None
     return deleteGeneric(request, user_id, a)
 
@@ -179,7 +180,7 @@ def deleteCurveSet(request, user_id, curveset_id):
         if ( a.locked ):
             pass
             #TODO: cannot be modified.
-    except CurveSet.DoesNotExists:
+    except ObjectDoesNotExist:
         a=None
     return deleteGeneric(request, user_id, a)
 
@@ -187,7 +188,7 @@ def deleteCurveSet(request, user_id, curveset_id):
 def createCurveSet(request, user_id):
     try:
         user = User.objects.get(id=user_id)
-    except User.DoesNotExists:
+    except ObjectDoesNotExist:
         user=None
 
     if request.method == 'POST':
@@ -211,12 +212,12 @@ def createCurveSet(request, user_id):
 def showAnalysis(request, user_id, analysis_id):
     try:
         user = User.objects.get(id=user_id)
-    except User.DoesNotExists:
+    except ObjectDoesNotExist:
         user=None
 
     try:
         an = Analysis.objects.get(id=analysis_id)
-    except Analysis.DoesNotExists:
+    except ObjectDoesNotExist:
         an = None
 
     if not an.canBeReadBy(user):
@@ -225,7 +226,7 @@ def showAnalysis(request, user_id, analysis_id):
     if an.completed == False:
         return HttpResponseRedirect(reverse('analyze', args=[user.id, an.id]))
 
-    mm = MethodManager(analysis_id=analysis_id)
+    mm = MethodManager(user=user, analysis_id=analysis_id)
     template = loader.get_template('manager/showAnalysis.html')
     info = mm.getInfo(request=request, user=user)
     plotScr, plotDiv = generatePlot(
@@ -250,12 +251,12 @@ def showAnalysis(request, user_id, analysis_id):
 def showProcessed(request, user_id, processing_id):
     try:
         user = User.objects.get(id=user_id)
-    except User.DoesNotExists:
+    except ObjectDoesNotExist:
         user=None
 
     try:
         cf = Processing.objects.get(id=processing_id, owner=user)
-    except Processing.DoesNotExists:
+    except ObjectDoesNotExist:
         cf = None
 
     template = loader.get_template('manager/showAnalysis.html')
@@ -272,12 +273,12 @@ def showProcessed(request, user_id, processing_id):
 def showCurveSet(request, user_id, curveset_id):
     try:
         user = User.objects.get(id=user_id)
-    except User.DoesNotExists:
+    except ObjectDoesNotExist:
         user=None
 
     try:
         cs = CurveSet.objects.get(id=curveset_id)
-    except CurveSet.DoesNotExists:
+    except ObjectDoesNotExist:
         cs = None
 
     if not cs.canBeReadBy(user):
@@ -310,12 +311,12 @@ def editAnalysis(request, user_id, analysis_id):
 def editCurveSet(request,user_id,curveset_id):
     try:
         user = User.objects.get(id=user_id)
-    except User.DoesNotExists:
+    except ObjectDoesNotExist:
         user=None
 
     try:
         cs=CurveSet.objects.get(id=curveset_id)
-    except CurveSet.DoesNotExists:
+    except ObjectDoesNotExist:
         raise 404
 
     if not cs.canBeUpdatedBy(user):
@@ -325,7 +326,7 @@ def editCurveSet(request,user_id,curveset_id):
         #show that is is locked
         pass
 
-    mm = MethodManager(user=user,curveset_id=curveset_id)
+    mm = MethodManager(user=user, curveset_id=curveset_id)
 
     if request.method == 'POST':
         if ( 'startAnalyze' in request.POST ):
@@ -390,7 +391,7 @@ def editCurveSet(request,user_id,curveset_id):
 def upload(request, user_id):
     try:
         user = User.objects.get(id=user_id)
-    except User.DoesNotExists:
+    except ObjectDoesNotExist:
         user=None
 
     if request.method == 'POST':
@@ -413,7 +414,7 @@ def upload(request, user_id):
 def editCurveFile(request, user_id, file_id,):
     try:
         user = User.objects.get(id=user_id)
-    except User.DoesNotExists:
+    except ObjectDoesNotExist:
         user=None
 
     if request.method == 'POST':
@@ -444,12 +445,12 @@ def editCurveFile(request, user_id, file_id,):
 def showCurveFile(request, user_id, file_id):
     try:
         user = User.objects.get(id=user_id)
-    except User.DoesNotExists:
+    except ObjectDoesNotExist:
         user=None
 
     try:
         cf = CurveFile.objects.get(id=file_id, deleted=False)
-    except CurveFile.DoesNotExists:
+    except ObjectDoesNotExist:
         cf = None
 
     if not cf.canBeReadBy(user):
@@ -476,21 +477,12 @@ def showCurveFile(request, user_id, file_id):
     return HttpResponse(template.render(context, request))
 
 
-def processCurveFile(request, user_id, file_id):
-    #create curve set from file and call process curveset#
-    pass
-
-
-def processCurveSet(request, user_id, file_id):
-    pass
-
-
 def analyze(request, user_id, analysis_id):
     try:
         user = User.objects.get(id=user_id)
-    except User.DoesNotExists:
+    except ObjectDoesNotExist:
         user=None
-    mm = MethodManager(user=user,analysis_id=analysis_id)
+    mm = MethodManager(user=user, analysis_id=analysis_id)
     mm.process(request=request, user=user)
     return mm.getContent(request=request, user=user) 
 
@@ -498,7 +490,7 @@ def analyze(request, user_id, analysis_id):
 def process(request, user_id, processing_id):
     try:
         user = User.objects.get(id=user_id)
-    except User.DoesNotExists:
+    except ObjectDoesNotExist:
         user=None
     mm = MethodManager(user=user, processing_id=processing_id)
     mm.process(request=request, user=user)
@@ -508,7 +500,7 @@ def process(request, user_id, processing_id):
 def plotInteraction(request, user_id):
     try:
         user = User.objects.get(id=user_id)
-    except User.DoesNotExists:
+    except ObjectDoesNotExist:
         user=None
 
     if request.method != 'POST' or not request.POST.get('query', None):
@@ -521,9 +513,9 @@ def plotInteraction(request, user_id):
         kwrg = {
             vtype: vid
         }
-        mm = MethodManager(**kwrg)
+        mm = MethodManager(user=user, **kwrg)
         mm.process(request=request, user=user)
-        ret = mm.getJSON()
+        ret = mm.getJSON(user=user)
     elif (request.POST.get('query') == 'plotmanager' ): 
         pm = PlotManager()
         ret = pm.plotInteraction(request=request, user=user)

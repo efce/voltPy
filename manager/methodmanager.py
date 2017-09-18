@@ -8,6 +8,7 @@ from django.http import HttpResponseRedirect
 from django.http import HttpResponse
 from django.template import loader
 from django.core.urlresolvers import reverse
+from django.core.exceptions import ObjectDoesNotExist
 from .models import *
 import manager.plotmanager as pm
 import json
@@ -40,23 +41,23 @@ class MethodManager:
             self.__type = 'other'
             self.__curveset_id = int(kwargs.get('curveset_id', None))
             return
-        elif ( 'processing_id' in kwargs ):
+        elif ( 'processing_id' in kwargs  or 'processing' in kwargs ):
             self.__type = 'processing'
-            _id = int(kwargs.get('processing_id', None))
+            _id = int(kwargs.get('processing_id', kwargs.get('processing')))
             try:
-                self.__model = Processing.objects.get(id=self._id)
-                self.__curveset_id = self.processing.curveSet.id
-            except Processing.DoesNotExists:
+                self.__model = Processing.objects.get(id=_id)
+                self.__curveset_id = self.__model.curveSet.id
+            except ObjectDoesNotExist:
                 raise 404
-        elif ( 'analysis_id' in kwargs ):
+        elif ( 'analysis_id' in kwargs or 'analysis' in kwargs ):
             self.__type = 'analysis'
-            _id = int(kwargs.get('analysis_id', None))
+            _id = int(kwargs.get('analysis_id', kwargs.get('analysis')))
             try:
                 self.__model = Analysis.objects.get(id=_id)
-            except Analysis.DoesNotExists:
+            except ObjectDoesNotExist:
                 raise 404
         else:
-            raise NameError('Uknown type')
+            raise NameError('Unknown type')
         self.__activateMethod()
 
     def __loadMethods(self):
@@ -90,8 +91,8 @@ class MethodManager:
         if ( request.method != 'POST' 
         or request.POST.get('query') != 'methodmanager' ):
             return
-        if self.__method and self.__method.has_next:
-            self.__method.process(request, user)
+        if self.__method:
+            self.__method.process(user=user,request=request)
 
     def getJSON(self, user):
         if not self.__method.has_next:
@@ -100,7 +101,7 @@ class MethodManager:
             return { 'command': 'reload' }
 
     def getContent(self, request, user):
-        if not self.__method.has_next:
+        if self.__method.has_next == False or self.__method.operation is None:
             return HttpResponseRedirect(self.__model.getRedirectURL(user))
         elif not self.isMethodSelected():
             return HttpResponseRedirect( reverse("browseCurveSet") )
@@ -221,7 +222,8 @@ class MethodManager:
                         method = self.cleaned_data.get('method'),
                         name = "",
                         step = 0,
-                        deleted = False
+                        deleted = False,
+                        completed = False
                     )
                     a.save()
                     curveset.locked=True #CurveSet cannot be changed when used by Analysis method.
@@ -246,7 +248,6 @@ class Method(ABC):
         if model.step is not None:
             if ( model.step < len(self._operations) ):
                 self.operation = self._operations[model.step]
-                import pdb; pdb.set_trace()
                 if self.operation['class'] is not None:
                     self.operation['object'] = self.operation['class']()
                 else:
@@ -259,26 +260,32 @@ class Method(ABC):
     def __nextOperation(self):
         if (self.model.step+1) < len(self._operations):
             self.model.step = self.model.step + 1
+            self.model.save()
             self.operation = self._operations[self.model.step]
             return True
         else:
-            self.finalize()
-            self.model.step = None
-            self.model.save()
-            self.operation = None
             return False
 
     def process(self, user, request):
         """
         This processes current step.
         """
-        if not self.operation or not self.operation['object']:
+        if self.operation is None or self.operation['object'] is None:
             self.has_next = False
-        if self.operation['object'].process(user=user, request=request, model=self.model):
+        elif self.operation['object'].process(user=user, request=request, model=self.model):
             self.has_next = self.__nextOperation()
+        if not self.has_next:
+            self.finalize(user)
+            self.model.step = None
+            self.model.completed = True
+            self.model.save()
+            self.operation = None
 
     def getOperationText(self):
-        return { 'head': self.operation.get('head',''), 'body': self.operation['desc'] }
+        if self.operation and self.operation.get('object', None):
+            return { 'head': self.operation.get('head',''), 'body': self.operation['desc'] }
+        else:
+            return { 'head': '', 'body': '' }
 
     def getAddToPlot(self):
         return None
@@ -295,12 +302,7 @@ class Method(ABC):
         """
         This should not be reimplemented.
         """
-        return ''.join([
-            self.__class__.__name__,
-            '(',
-            self.model.__repr__,
-            ')'
-        ])
+        return self.__class__.__name__
 
 
 class AnalysisMethod(Method):
@@ -327,7 +329,7 @@ class OperationSelectTwoRanges:
     def process(self, user, request, model):
         data = []
         for cnum in range(1,5):
-            name = 'cursor' + cnum
+            name = 'cursor' + str(cnum)
             if request.POST.get(name,''):
                 try:
                     data.append(float(request.POST.get(name)))
@@ -346,7 +348,7 @@ class OperationSelectRange:
     def process(self, user, request, model):
         data = []
         for cnum in range(1,5):
-            name = 'cursor' + cnum
+            name = 'cursor' + str(cnum)
             if request.POST.get(name,''):
                 try:
                     data.append(float(request.POST.get(name)))
@@ -364,14 +366,14 @@ class OperationSelectPoint:
     def process(self, user, request, model):
         data = []
         for cnum in range(1,5):
-            name = 'cursor' + cnum
+            name = 'cursor' + str(cnum)
             if request.POST.get(name,''):
                 try:
                     data.append(float(request.POST.get(name)))
                 except ValueError:
                     continue
         if ( len(data) > 0 ):
-            model.customData['pointX'] = data
+            model.customData['pointX'] = data[0]
             model.save()
             return True
         return False
@@ -380,7 +382,7 @@ class OperationConfirmation:
     plot_interaction = 'confirm'
 
     def process(self, user, request, model):
-        if request.POST.get('confirm', False):
+        if request.POST.get('command', False) == 'confirm':
             return True
         else:
             model.step = model.step-1

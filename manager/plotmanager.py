@@ -6,6 +6,7 @@ import json
 import django
 import random
 from django.core.urlresolvers import reverse
+from django.core.exceptions import ObjectDoesNotExist
 from bokeh.plotting import figure, ColumnDataSource
 from bokeh.embed import components
 from bokeh.models.callbacks import CustomJS
@@ -116,7 +117,7 @@ class PlotManager:
         try:
             onxs = OnXAxis.objects.get(user=user)
             onx = onxs.selected
-        except OnXAxis.DoesNotExists:
+        except ObjectDoesNotExist:
             onxs = OnXAxis(selected='P',user=user)
             onxs.save()
             onx = onxs.selected
@@ -165,7 +166,7 @@ class PlotManager:
         try:
             onxs = OnXAxis.objects.get(user=user)
             onx = onxs.selected
-        except OnXAxis.DoesNotExists:
+        except ObjectDoesNotExist:
             onxs = OnXAxis(selected='P',user=user)
             onxs.save()
             onx = onxs.selected
@@ -219,7 +220,7 @@ class PlotManager:
         try:
             onxs = OnXAxis.objects.get(user=user)
             onx = onxs.selected
-        except OnXAxis.DoesNotExists:
+        except ObjectDoesNotExist:
             onxs = OnXAxis(selected='P',user=user)
             onxs.save()
             onx = onxs.selected

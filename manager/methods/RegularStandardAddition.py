@@ -11,17 +11,14 @@ class RegularStandardAddition(mm.AnalysisMethod):
             'title': 'Select range',
             'desc': 'Select range containing peak.',
         },
-        {
-            'class': None,
-            'title': 'End',
-            'data': ''
-        }
     ]
 
     def __str__(self):
         return "Regular Standard Addition"
 
-    def finalize(self, *args, **kwargs):
+    def finalize(self, user):
+        xvalues = []
+        yvalues = []
         selRange = self.model.customData['range1']
         for c in self.model.curveSet.usedCurveData.all():
             startIndex = c.xvalueToIndex(user, selRange[0])

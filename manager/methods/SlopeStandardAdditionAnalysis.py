@@ -10,17 +10,12 @@ class SlopeStandardAdditionAnalysis(mm.AnalysisMethod):
             'title': 'Select peak',
             'desc': 'Enter approx. X value of peak of interest.',
         },
-        {
-            'class': None,
-            'title': 'End',
-            'desc': 'No more steps.',
-        }
     )
 
     def __str__(self):
         return "Slope Standard Addition Analysis"
 
-    def finalize(self):
+    def finalize(self, user):
         from manager.helpers.slopeStandardAdditionAnalysis import slopeStandardAdditionAnalysis
         from manager.helpers.prepareStructForSSAA import prepareStructForSSAA
         from manager.curveea import Param
