@@ -4,7 +4,9 @@ import io
 import numpy as np
 import json 
 import django
+import random
 from django.core.urlresolvers import reverse
+from django.core.exceptions import ObjectDoesNotExist
 from bokeh.plotting import figure, ColumnDataSource
 from bokeh.embed import components
 from bokeh.models.callbacks import CustomJS
@@ -14,6 +16,7 @@ from bokeh.models.widgets import RadioButtonGroup, Button, Paragraph
 
 class PlotManager:
     methodmanager = None
+    interaction = 'none'
     include_x_switch = False
     title = ''
     xlabel = "x"
@@ -30,7 +33,7 @@ class PlotManager:
     function sleep (time) {
         return new Promise((resolve) => setTimeout(resolve, time));
     }
-    function processData (data,plot='',lineData='',cursors='') {
+    function processJSONReply (data,plot='',lineData='',cursors='') {
         switch (data.command) {
         case 'none':
             return;
@@ -71,6 +74,7 @@ class PlotManager:
     </script>
     """
     def __init__(self):
+        self.__random = str(random.random()).replace(".","")
         self.__line = []
         self.__scatter = []
         self.xlabel = "x"
@@ -84,6 +88,7 @@ class PlotManager:
             height=self.plot_height-10,
             width=self.plot_width-20
         )
+        self.required_scripts = self.required_scripts
     
 
     def fileHelper(self, user, value_id):
@@ -112,7 +117,7 @@ class PlotManager:
         try:
             onxs = OnXAxis.objects.get(user=user)
             onx = onxs.selected
-        except:
+        except ObjectDoesNotExist:
             onxs = OnXAxis(selected='P',user=user)
             onxs.save()
             onx = onxs.selected
@@ -122,38 +127,37 @@ class PlotManager:
         if onx == 'S':
             for cv in cs.usedCurveData.all():
                 ret.append(
-                        dict(
-                            x=range(1, len(cv.probingData)+1),
-                            y=cv.probingData,
-                            isLine=True,
-                            name = '',
-                            color='blue',
-                        )
+                    dict(
+                        x=range(1, len(cv.probingData)+1),
+                        y=cv.probingData,
+                        plottype='line',
+                        name = '',
+                        color='blue',
                     )
+                )
 
         elif onx == 'T':
             for cv in cs.usedCurveData.all():
                 ret.append(
-                        dict(
-                            x=cv.time,
-                            y=cv.current,
-                            isLine=True,
-                            name = '',
-                            color='blue',
-                        )
+                    dict(
+                        x=cv.time,
+                        y=cv.current,
+                        plottype='line',
+                        name = '',
+                        color='blue',
                     )
-
+                )
         else:
             for cv in cs.usedCurveData.all():
                 ret.append(
-                        dict(
-                            x=cv.potential,
-                            y=cv.current,
-                            isLine=True,
-                            name = '',
-                            color='blue',
-                        )
+                    dict(
+                        x=cv.potential,
+                        y=cv.current,
+                        plottype='line',
+                        name = '',
+                        color='blue',
                     )
+                )
 
         return ret
 
@@ -162,7 +166,7 @@ class PlotManager:
         try:
             onxs = OnXAxis.objects.get(user=user)
             onx = onxs.selected
-        except:
+        except ObjectDoesNotExist:
             onxs = OnXAxis(selected='P',user=user)
             onxs.save()
             onx = onxs.selected
@@ -174,42 +178,40 @@ class PlotManager:
                 cvs = CurveData.objects.filter(curve=cb, processing=None)
                 for cv in cvs:
                     ret.append(
-                            dict(
-                                x=range(1, len(cv.probingData)+1),
-                                y=cv.probingData,
-                                isLine=True,
-                                name = '',
-                                color='blue',
-                            )
+                        dict(
+                            x=range(1, len(cv.probingData)+1),
+                            y=cv.probingData,
+                            plottype='line',
+                            name = '',
+                            color='blue',
                         )
-
+                    )
         elif onx == 'T':
             for cb in curves:
                 cvs = CurveData.objects.filter(curve=cb, processing=None)
                 for cv in cvs:
                     ret.append(
-                            dict(
-                                x=cv.time,
-                                y=cv.current,
-                                isLine=True,
-                                name = '',
-                                color='blue',
-                            )
+                        dict(
+                            x=cv.time,
+                            y=cv.current,
+                            plottype='line',
+                            name = '',
+                            color='blue',
                         )
-
+                    )
         else:
             for cb in curves:
                 cvs = CurveData.objects.filter(curve=cb, processing=None)
                 for cv in cvs:
                     ret.append(
-                            dict(
-                                x=cv.potential,
-                                y=cv.current,
-                                isLine=True,
-                                name = '',
-                                color='blue',
-                            )
+                        dict(
+                            x=cv.potential,
+                            y=cv.current,
+                            plottype='line',
+                            name = '',
+                            color='blue',
                         )
+                    )
 
         return ret
 
@@ -218,7 +220,7 @@ class PlotManager:
         try:
             onxs = OnXAxis.objects.get(user=user)
             onx = onxs.selected
-        except:
+        except ObjectDoesNotExist:
             onxs = OnXAxis(selected='P',user=user)
             onxs.save()
             onx = onxs.selected
@@ -242,7 +244,7 @@ class PlotManager:
         ret.append( {
             'x': analysis.customData['matrix'][0], 
             'y': analysis.customData['matrix'][1],
-            'isLine': False,
+            'plottype':'scatter',
             'color': 'red',
             'size': 8
         })
@@ -255,15 +257,15 @@ class PlotManager:
         ret.append({
             'x': vx,
             'y': vy,
-            'isLine': True,
+            'plottype':'line',
             'color': 'blue',
             'line_width': 2
         })
         return ret
 
-
-    def add(self, x=[], y=[], name='', isLine=True, color="blue", **kwargs):
-        if isLine:
+    def add(self, x=[], y=[], name='', plottype='line', color="blue", **kwargs):
+        allowedtyped = [ 'line', 'scatter', 'cursor' ];
+        if plottype == 'line':
             self.p.line(
                 x=x,
                 y=y,
@@ -271,7 +273,7 @@ class PlotManager:
                 color=color,
                 line_width=kwargs.get('line_width',2),
             )
-        else:
+        elif plottype == 'scatter':
             self.p.scatter(
                 x=x,
                 y=y,
@@ -279,7 +281,18 @@ class PlotManager:
                 color=color,
                 size=kwargs.get('size',8)
             )
-
+        elif plottype == 'cursor':
+            if ( len(x) > 1 ):
+                ValueError('When adding cursor only one x value is allowed')
+            C= Span(
+                location=x[0],
+                dimension='height', 
+                line_color=color,
+                line_dash='dashed', 
+                line_width=2,
+                line_alpha=1
+            )
+            self.p.add_layout(C)
 
     def _prepareFigure(self, request, user, vtype, vid):
         labels = []
@@ -294,24 +307,72 @@ class PlotManager:
             if k==onx:
                 active = i
 
+        funmaster = """
+        switch (window.voltPy1.command) {
+        case 'set1cursor':
+            if (cursors[0].location == null) {
+                cursors[0].location = cb_obj.x;
+                cursors[0].line_alpha = 1;
+            } else {
+                //cursor is set, do nothing.
+                return;
+            }
+            break;
+        case 'set2cursors':
+            if (cursors[0].location == null) {
+                cursors[0].location = cb_obj.x;
+                cursors[0].line_alpha = 1;
+            } else if (cursors[1].location == null) {
+                cursors[1].location = cb_obj.x;
+                cursors[1].line_alpha = 1;
+            } else {
+                //cursors are set, do nothing.
+                return;
+            }
+            break;
+        case 'set4cursors':
+            if (cursors[0].location == null) {
+                cursors[0].location = cb_obj.x;
+                cursors[0].line_alpha = 1;
+            } else if (cursors[1].location == null) {
+                cursors[1].location = cb_obj.x;
+                cursors[1].line_alpha = 1;
+            } else if (cursors[2].location == null) {
+                cursors[2].location = cb_obj.x;
+                cursors[2].line_alpha = 1;
+            } else if (cursors[3].location == null) {
+                cursors[3].location = cb_obj.x;
+                cursors[3].line_alpha = 1;
+            } else {
+                //cursors are set, do nothing.
+                return;
+            }
+            break;
+        default:
+            return;
+        }
+        """
+        js_globalBase = "var cursors = [cursor1, cursor2, cursor3, cursor4];"
         jsonurl = reverse('plotInteraction', args=[ user.id ])
-        jsfun = '\n'.join([
+
+        js_postRequired = '\n'.join([
+            js_globalBase,
             "var jsonurl = '" + jsonurl + "';",
             "var vtype = '" + vtype + "';",
             "var vid = '" + str(vid) + "';",
             "var uid = '" + str(user.id) + "';",
             "var token = '" + django.middleware.csrf.get_token(request) + "';",
-            "var object = $.extend({{}},{PYTHON},{{'csrfmiddlewaretoken': token, 'vtype': vtype, 'vid': vid}});",
-            "var cursors = [cursor1, cursor2, cursor3, cursor4];",
-            "$.post(jsonurl, object).done( function(data) {{ processData(data, plot, lineSrc, cursors); }});"
         ])
-        jsfun_plot = jsfun.format(PYTHON="{'query': 'methodmanager', 'x': cb_obj.x, 'y': cb_obj.y}")
+        js_plot = '\n'.join([
+            js_globalBase,
+            funmaster
+        ])
         srcEmpty = ColumnDataSource(data = dict( x=[], y=[]))
         self.p.line(x='x',y='y',source=srcEmpty, color='red', line_dash='dashed')
         cursors = []
         for i in range(4):
             C= Span(
-                location=0,
+                location=None,
                 dimension='height', 
                 line_color='green',
                 line_dash='dashed', 
@@ -329,25 +390,130 @@ class PlotManager:
             cursor3=cursors[2],
             cursor4=cursors[3]
         )
-        callback = CustomJS(args=args, code=jsfun_plot)
+        js_plot = '\n'.join([
+            js_globalBase,
+            funmaster
+        ])
+        callback = CustomJS(args=args, code=js_plot)
         self.p.js_on_event('tap', callback)
-        jsfun_buttons = jsfun.format(PYTHON="{'query': 'plotmanager', 'onx': cb_obj.active}")
+        js_axisSub = """
+        var object = { 
+            'query': 'plotmanager', 
+            'onx': cb_obj.active,
+            'csrfmiddlewaretoken': token, 
+        };
+        $.post(jsonurl, object).done(function(data){processJSONReply(data);});
+        """
+
+        js_xaxis = '\n'.join([
+            js_postRequired,
+            js_axisSub
+        ])
 
         radio_button_group = RadioButtonGroup(
             labels=labels, 
             active=active,
-            callback=CustomJS(args=args, code=jsfun_buttons)
+            callback=CustomJS(args=args, code=js_xaxis)
         )
-        #TODO: button scripts ... ;)
-        bforward = Button(label="Forward", width=250)
-        bback = Button(label="Back", width=250)
+
+        js_backSub = """
+        var coma = window.voltPy1.command;
+        if ( coma == 'set1cursor'
+        || coma == 'set2cursors'
+        || coma == 'set4cursors' ) {
+            for (i=cursors.length-1; i>=0; i--) {
+                if ( cursors[i].location != null ) {
+                    cursors[i].location = null;
+                    cursors[i].line_alpha = 0;
+                    break;
+                }
+            }
+        } else if ( coma == 'confirm' ) {
+            var object = { 
+                'query': 'methodmanager',
+                'command': 'cancel',
+                'csrfmiddlewaretoken': token, 
+                'vtype': vtype, 
+                'vid': vid
+            }
+            $.post(jsonurl, object).done(function(data) {processJSONReply(data, plot, lineSrc, cursors);});
+        }
+
+        """
+        js_back = '\n'.join([
+            js_postRequired,
+            js_backSub
+        ])
+
+        js_forwardSub = """
+        switch ( window.voltPy1.command ) {
+        case 'set1cursor':
+            if ( cursors[0].location == null ) {
+                alert('Please set one curosor on the plot');
+                return;
+            } 
+            break;
+        case 'set2cursors':
+            if ( ( cursors[0].location == null )
+            || ( cursors[1].location == null ) ) {
+                alert('Please set two cursors on the plot');
+                return;
+            }
+            break;
+        case 'set4cursors':
+            if ( ( cursors[0].location == null )
+            || ( cursors[1].location == null )
+            || ( cursors[2].location == null )
+            || ( cursors[3].location == null ) ) {
+                alert('Please set four cursors on the plot');
+                return;
+            }
+            break;
+        case 'confirm':
+            break;
+        default:
+            return;
+        }
+        var object = { 
+            'query': 'methodmanager',
+            'command': window.voltPy1.command,
+            'cursor1': cursors[0].location, 
+            'cursor2': cursors[1].location, 
+            'cursor3': cursors[2].location, 
+            'cursor4': cursors[3].location, 
+            'csrfmiddlewaretoken': token, 
+            'vtype': vtype, 
+            'vid': vid
+        }
+        $.post(jsonurl, object).done(function(data) {processJSONReply(data, plot, lineSrc, cursors);});
+        """
+        js_forward = '\n'.join([
+            js_postRequired,
+            js_forwardSub
+        ])
+
+
+        bforward = Button(
+            label="Forward", 
+            width=250,
+            callback=CustomJS(args=args, code=js_forward)
+        )
+        bback = Button(
+            label="Back", 
+            width=250, 
+            callback=CustomJS(args=args, code=js_back)
+        )
         p = Paragraph(text="""X axis:""", width=50)
-        w=widgetbox(radio_button_group)
-        xaxis = row([p,w,bback, bforward], width=self.plot_width)
-        if self.include_x_switch:
-            layout = column([ self.p, xaxis ])
+        if not self.interaction or self.interaction == 'none':
+            w=widgetbox(radio_button_group)
+            actionbar = row([p, w], width=self.plot_width)
         else:
-            layout = column([ self.p ])
+            w=widgetbox(radio_button_group)
+            actionbar = row([p, w, bback, bforward], width=self.plot_width)
+        if self.include_x_switch:
+            layout = column([self.p, actionbar])
+        else:
+            layout = column([self.p])
         return layout
 
 
@@ -361,7 +527,7 @@ class PlotManager:
                 if ( onx ):
                     try:
                         onx=int(onx)
-                    except:
+                    except ValueError:
                         return
                     ONX = OnXAxis.objects.get(user=user)
                     i=0
@@ -376,11 +542,6 @@ class PlotManager:
                     ONX.selected = newkey
                     ONX.save()
                     return { 'command': 'reload' }
-            elif ( query == 'methodmanager' ):
-                if not self.methodmanager:
-                    return None
-                self.methodmanager.process(request=request, user=user)
-                return self.methodmanager.getJSON()
 
 
     def __operation(self, data):
@@ -413,7 +574,15 @@ class PlotManager:
             self.p.line(x='xvec',y='yvec',source=data, color='red', line_dash='dashed')
             return
 
+    def setInteraction(self, name):
+        self.interaction = name
 
     def getEmbeded(self, request, user, vtype, vid):
         layout = self._prepareFigure(request, user, vtype, vid)
-        return components(layout) 
+        src,div = components(layout) 
+        src = '\n'.join([
+            src,
+            "<script type='text/javascript'>(function(){window.voltPy1 = { 'command': '" + \
+                    self.interaction + "' };})();</script>"
+        ])
+        return src,div

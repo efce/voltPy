@@ -1,70 +1,50 @@
 from copy import deepcopy
 from django.utils import timezone
-from manager.methodmanager import *
+import numpy as np
+import manager.methodmanager as mm
 from manager.helpers.bkghelpers import calc_abc
 
-class AutomaticBackgroundCorrection(ProcessingMethod):
-    steps = [ 
-                {
-                    'step': MethodManager.Step.end,
-                    'title': 'End',
-                    'data': ''
-                }
-            ]
+class AutomaticBackgroundCorrection(mm.ProcessingMethod):
+    _operations = [ 
+        {
+            'class': mm.OperationConfirmation,
+            'title': 'Config before proceding.',
+            'desc': 'Confirm before proceding.',
+        },
+    ]
     model = None
-
-
-    def __init__(self):
-        pass
-
 
     def __str__(self):
         return "Automatic Background Correction"
 
-
-    def getStep(self, stepNum):
-        if ( stepNum >= len(self.steps) ):
-            return None
-        return self.steps[stepNum]
-
-
-    def processStep(self, user, stepNum, data):
-        return True
-        
-
-
-    def finalize(self, *args, **kwargs):
-        import numpy as np
-        if self.model.curveSet.locked:
-            raise ValueError("CurveSet used by Analysis method cannot be changed.")
+    def finalize(self, user):
         for cd in self.model.curveSet.usedCurveData.all():
             newcd = deepcopy(cd)
             newcd.id = None
             newcd.pk = None
             xvec = range(len(cd.current))
-            yvec = cd.current
+            yvec = cd.yVector
             degree = 4
-            iterations = 40
-            self.model.customData['itererations'] = iterations
+            iterations = 50
+            self.model.customData['iterations'] = iterations
             self.model.customData['degree'] = degree
             yvec = calc_abc(xvec, yvec, degree, iterations)['yvec']
-            newcd.current = yvec
-            newcd.method=self.__repr__()
-            newcd.date=timezone.now()
-            newcd.processing=self.model
+            newcd.yVector = yvec
+            newcd.method = self.__repr__()
+            newcd.date = timezone.now()
+            newcd.processing = self.model
             newcd.save()
             self.model.curveSet.usedCurveData.remove(cd)
             self.model.curveSet.usedCurveData.add(newcd)
-            self.model.curveSet.save()
-            self.model.save()
-        return True
+        self.model.curveSet.save()
+        self.model.step = None
+        self.model.completed = True
+        self.model.save()
 
-
-    def printInfo(self, request, user):
+    def getInfo(self, request, user):
         return {
-                'head': '',
-                'body': ''
-            }
+            'head': '',
+            'body': ''
+        }
 
-def newInstance(*args, **kwargs):
-    return AutomaticBackgroundCorrection(*args, **kwargs)
+main_class = AutomaticBackgroundCorrection

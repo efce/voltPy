@@ -1,0 +1,8 @@
+<form method="post" action="" enctype="multipart/form-data">
+	{% csrf_token %}
+	<table>
+	<input type='hidden' name='query' value='methodmanager' />
+	{{ form.as_table|safe }}
+	<tr><td><input name="{{ submit }}" type="submit" value="Forward" /></td></tr>
+	</table>
+</form>

@@ -1,5 +1,6 @@
 from django.db import models
 from picklefield.fields import PickledObjectField
+from django.core.urlresolvers import reverse
 
 
 class Group(models.Model):
@@ -131,6 +132,46 @@ class CurveData(models.Model):
             else:
                 return int(value)
 
+    @property
+    def xVector(self):
+        user = User.objects.get(id=1) #TODO FIXME do zmiany !!
+        onx = OnXAxis.objects.get(user=user).selected
+        if ( onx == 'P' ):
+            return self.potential
+        if ( onx == 'T' ):
+            return self.time
+        if ( onx == 'S' ):
+            return range(len(self.probingData))
+
+    @xVector.setter
+    def xVector(self, val):
+        user = User.objects.get(id=1) #TODO FIXME do zmiany !!
+        onx = OnXAxis.objects.get(user=user).selected
+        if ( onx == 'P' ):
+            self.potential = val
+        if ( onx == 'T' ):
+            self.time = val
+        if ( onx == 'S' ):
+            pass
+
+    @property
+    def yVector(self):
+        user = User.objects.get(id=1) #TODO FIXME do zmiany !!
+        onx = OnXAxis.objects.get(user=user).selected
+        if ( onx == 'P' ) or ( onx == 'T' ):
+            return self.current
+        if ( onx == 'S' ):
+            return self.probingData
+
+    @yVector.setter
+    def yVector(self, val):
+        user = User.objects.get(id=1) #TODO FIXME do zmiany !!
+        onx = OnXAxis.objects.get(user=user).selected
+        if ( onx == 'P'
+        or onx == 'T' ):
+            self.current = val
+        if ( onx == 'S' ):
+            self.probingData = val
 
 class Analyte(models.Model):
     name=models.CharField(max_length=124, unique=True)
@@ -187,7 +228,7 @@ class Analysis(models.Model):
     analytes=models.ManyToManyField(Analyte)
     name = models.TextField()
     method = models.TextField()
-    step  = models.IntegerField(default=0)
+    step  = models.IntegerField(default=0, null=True)
     deleted = models.BooleanField(default=0)
     completed = models.BooleanField(default=0)
 
@@ -206,6 +247,8 @@ class Analysis(models.Model):
     def canBeReadBy(self, user):
         return self.isOwnedBy(user)
 
+    def getRedirectURL(self, user):
+        return reverse('showAnalysis', args=[ user.id, self.id ])
 
 class Processing(models.Model):
     id = models.AutoField(primary_key=True)
@@ -215,7 +258,7 @@ class Processing(models.Model):
     customData = PickledObjectField(default={})
     name = models.TextField()
     method = models.TextField()
-    step  = models.IntegerField(default=0)
+    step  = models.IntegerField(default=0, null=True)
     deleted = models.BooleanField(default=0)
     completed = models.BooleanField(default=0)
 
@@ -233,6 +276,9 @@ class Processing(models.Model):
 
     def canBeReadBy(self, user):
         return self.isOwnedBy(user)
+
+    def getRedirectURL(self, user):
+        return reverse('editCurveSet', args=[ user.id, self.curveSet.id ])
 
 
 class OnXAxis(models.Model):
