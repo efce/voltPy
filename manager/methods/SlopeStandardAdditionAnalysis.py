@@ -96,7 +96,7 @@ class SlopeStandardAdditionAnalysis(mm.AnalysisMethod):
                                 self.model.customData['result'],
                                 self.model.customData['resultStdDev']) 
                             ])
-            }
+        }
         return ret
 
     def __chooseTw(self, tptw):

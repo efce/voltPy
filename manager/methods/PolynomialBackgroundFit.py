@@ -12,7 +12,7 @@ class PolynomialBackgroundFit(mm.ProcessingMethod):
         },
         {
             'class': mm.OperationConfirmation,
-            'title': 'Choose two fit intervals.',
+            'title': 'Confirm background shape.',
             'desc': 'Confirm background shape.',
         },
     ]
@@ -22,11 +22,8 @@ class PolynomialBackgroundFit(mm.ProcessingMethod):
         return "3rd deg Polynomial Background Fit"
 
     def process(self, user, request):
-        print('step before %i', self.model.step)
         ret = super(mm.ProcessingMethod, self).process(user, request)
-        print('step after %i', self.model.step)
         if ( self.model.step == 1 ):
-            print( 'processing step for num: %i' % self.model.step)
             self.model.customData['fitCoeff'] = []
             for cd in self.model.curveSet.usedCurveData.all():
                 st1 = cd.xvalueToIndex(user, self.model.customData['range1'][0])
@@ -44,7 +41,6 @@ class PolynomialBackgroundFit(mm.ProcessingMethod):
 
     def getAddToPlot(self):
         currentStepNumber = self.model.step
-        print( 'addtoplot for num: %i' %currentStepNumber)
         if ( currentStepNumber == 1 ):
             fitlines = []
             for cd,fit in zip(self.model.curveSet.usedCurveData.all(), self.model.customData['fitCoeff']):
@@ -65,7 +61,6 @@ class PolynomialBackgroundFit(mm.ProcessingMethod):
             return None
 
     def finalize(self, user):
-        print('finalizing')
         import numpy as np
         if self.model.curveSet.locked:
             raise ValueError("CurveSet used by Analysis method cannot be changed.")
