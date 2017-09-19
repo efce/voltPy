@@ -18,14 +18,12 @@ class AutomaticBackgroundCorrection(mm.ProcessingMethod):
         return "Automatic Background Correction"
 
     def finalize(self, user):
-        if self.model.curveSet.locked:
-            raise ValueError("CurveSet used by Analysis method cannot be changed.")
         for cd in self.model.curveSet.usedCurveData.all():
             newcd = deepcopy(cd)
             newcd.id = None
             newcd.pk = None
             xvec = range(len(cd.current))
-            yvec = cd.xVector
+            yvec = cd.yVector
             degree = 4
             iterations = 40
             self.model.customData['iterations'] = iterations
@@ -38,10 +36,10 @@ class AutomaticBackgroundCorrection(mm.ProcessingMethod):
             newcd.save()
             self.model.curveSet.usedCurveData.remove(cd)
             self.model.curveSet.usedCurveData.add(newcd)
-            self.model.curveSet.save()
-            self.model.step = None
-            self.model.completed = True
-            self.model.save()
+        self.model.curveSet.save()
+        self.model.step = None
+        self.model.completed = True
+        self.model.save()
 
     def getInfo(self, request, user):
         return {

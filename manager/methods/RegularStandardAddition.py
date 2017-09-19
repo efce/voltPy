@@ -25,19 +25,16 @@ class RegularStandardAddition(mm.AnalysisMethod):
             endIndex = c.xvalueToIndex(user, selRange[1])
             if endIndex < startIndex:
                 endIndex,startIndex = startIndex,endIndex
-            yvalues.append(max(c.current[startIndex:endIndex])-min(c.current[startIndex:endIndex]))
+            yvalues.append(max(c.yVector[startIndex:endIndex])-min(c.yVector[startIndex:endIndex]))
             from manager.models import AnalyteInCurve
             conc = AnalyteInCurve.objects.filter(curve=c.curve)[0]
             xvalues.append(conc.concentration)
 
-        dm = [
-                [ int(b) for b in xvalues ],
-                [ int(b) for b in yvalues ]
-            ]
-        self.model.customData['matrix'] = dm
-        data = self.model.customData['matrix']
-        if not data:
-            return
+        data = [
+            [ float(b) for b in xvalues ],
+            [ float(b) for b in yvalues ]
+        ]
+        self.model.customData['matrix'] = data
         p = calc_normal_equation_fit(data[0], data[1])
         self.model.customData['fitEquation'] = p
         self.model.customData['result'] = p['intercept']/p['slope']
@@ -56,15 +53,15 @@ class RegularStandardAddition(mm.AnalysisMethod):
         p.plot_height = 500
         scr,div = p.getEmbeded(request, user, 'analysis', self.model.id)
         return {
-        'head': ''.join([p.required_scripts,scr]),
-        'body': ''.join([
-                    div,
-                    'Equation: y={2}*x+{3}<br />Result: {0}, STD: {1}'.format(
-                        self.model.customData['result'],
-                        self.model.customData['resultStdDev'],
-                        self.model.customData['fitEquation']['slope'],
-                        self.model.customData['fitEquation']['intercept'])
-                    ])
+            'head': ''.join([p.required_scripts, scr]),
+            'body': ''.join([
+                        div,
+                        'Equation: y={2}*x+{3}<br />Result: {0}, STD: {1}'.format(
+                            self.model.customData['result'],
+                            self.model.customData['resultStdDev'],
+                            self.model.customData['fitEquation']['slope'],
+                            self.model.customData['fitEquation']['intercept'])
+                        ])
         }
 
 main_class = RegularStandardAddition 

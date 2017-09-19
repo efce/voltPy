@@ -27,7 +27,7 @@ class SlopeStandardAdditionAnalysis(mm.AnalysisMethod):
         tptw = 0
         for cd in self.model.curveSet.usedCurveData.all():
             X.append(cd.probingData)
-            a = AnalyteInCurve.objects.get(curve=cd.curve)
+            a = models.AnalyteInCurve.objects.get(curve=cd.curve)
             Conc.append(a.concentration)
             tptw = cd.curve.params[Param.tp] + cd.curve.params[Param.tw]
 
