@@ -504,12 +504,16 @@ class PlotManager:
             callback=CustomJS(args=args, code=js_back)
         )
         p = Paragraph(text="""X axis:""", width=50)
-        w=widgetbox(radio_button_group)
-        xaxis = row([p,w,bback, bforward], width=self.plot_width)
-        if self.include_x_switch:
-            layout = column([ self.p, xaxis ])
+        if not self.interaction or self.interaction == 'none':
+            w=widgetbox(radio_button_group)
+            actionbar = row([p, w], width=self.plot_width)
         else:
-            layout = column([ self.p ])
+            w=widgetbox(radio_button_group)
+            actionbar = row([p, w, bback, bforward], width=self.plot_width)
+        if self.include_x_switch:
+            layout = column([self.p, actionbar])
+        else:
+            layout = column([self.p])
         return layout
 
 
