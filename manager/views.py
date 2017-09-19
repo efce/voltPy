@@ -195,14 +195,13 @@ def createCurveSet(request, user):
 
 @with_user
 def showAnalysis(request, user, analysis_id):
-
     try:
         an = Analysis.objects.get(id=analysis_id)
     except ObjectDoesNotExist:
         an = None
 
     if not an.canBeReadBy(user):
-        raise 3
+        raise PermissionError('Not allowed')
 
     if an.completed == False:
         return HttpResponseRedirect(reverse('analyze', args=[user.id, an.id]))
@@ -253,7 +252,7 @@ def showCurveSet(request, user, curveset_id):
         cs = None
 
     if not cs.canBeReadBy(user):
-        raise 3
+        raise PermissionError('Not allowed')
 
     template = loader.get_template('manager/showCurveSet.html')
     plotScr, plotDiv = generatePlot(
@@ -284,7 +283,7 @@ def editCurveSet(request,user,curveset_id):
         raise 404
 
     if not cs.canBeUpdatedBy(user):
-        raise 3
+        raise PermissionError('Not allowed')
 
     if ( cs.locked ):
         #show that is is locked
@@ -410,7 +409,7 @@ def showCurveFile(request, user, file_id):
         cf = None
 
     if not cf.canBeReadBy(user):
-        raise 3
+        raise PermissionError('Not allowed')
 
     if ( __debug__): 
         print(cf)
