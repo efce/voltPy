@@ -89,7 +89,7 @@ class AverageCurves(mm.ProcessingMethod):
                     cd = self.model.curveSet.usedCurveData.get(id=cid)
                     old = np.dot(newcd.yVector, cnt)
                     newBig = np.add(cd.yVector, old) 
-                    newcd.yVector = np.divide(newBig, cnt+1)
+                    newcd.yVector = np.divide(newBig, cnt+1).tolist()
                     cnt += 1
                     self.model.curveSet.usedCurveData.remove(cd)
                 newcd.method = self.__repr__()
