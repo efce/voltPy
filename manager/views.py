@@ -6,25 +6,34 @@ from django.views.decorators.cache import never_cache
 from django.core.urlresolvers import reverse
 from django.core.exceptions import ObjectDoesNotExist
 import json
-from manager.models import *
+import manager.models as mmodels
 from manager.forms import * 
 from manager.plotmanager import *
 from manager.methodmanager import *
 
+def with_user(fun):
+    def wrap(*args, **kwargs):
+        user_id = kwargs.pop('user_id', None)
+        try:
+            user_id = int(user_id)
+        except (TypeError, ValueError):
+            raise PermissionError('No user')
+        try:
+            user = mmodels.User.objects.get(id=user_id)
+        except ObjectDoesNotExist:
+            raise PermissionError('No user')
+        kwargs['user'] = user
+        return fun(*args, **kwargs)
+    return wrap
 
 def indexNoUser(request):
     template = loader.get_template('manager/index.html')
     return HttpResponse(template.render({'user' : None }, request))
 
-
-def index(request, user_id):
+@with_user
+def index(request, user):
     template = loader.get_template('manager/index.html')
-    try:
-        user = User.objects.get(id=user_id)
-    except ObjectDoesNotExist:
-        user=None
     return HttpResponse(template.render({ 'user': user }, request))
-
 
 def login(request):
     user_id = 1
@@ -35,17 +44,11 @@ def login(request):
         user.save()
     return HttpResponseRedirect(reverse('index', args=[ user.id ]))
 
-
 def logout(request):
     return HttpResponseRedirect(reverse('indexNoUser'))
 
-
-def browseCurveFile(request, user_id):
-    try:
-        user = User.objects.get(id=user_id)
-    except ObjectDoesNotExist:
-        user=None
-
+@with_user
+def browseCurveFile(request, user):
     files = CurveFile.objects.filter(owner=user, deleted=False)
 
     template = loader.get_template('manager/browse.html')
@@ -58,19 +61,13 @@ def browseCurveFile(request, user_id):
         'action2': "deleteCurveFile",
         'action2_text': '(delete)',
         'whenEmpty' : "You have no files uploaded. <a href=" +\
-                        reverse('upload', args=[user_id]) + ">Upload one</a>."
+                        reverse('upload', args=[user.id]) + ">Upload one</a>."
     }
     return HttpResponse(template.render(context, request))
 
-
-def browseAnalysis(request, user_id):
-    try:
-        user = User.objects.get(id=user_id)
-    except ObjectDoesNotExist:
-        user=None
-
+@with_user
+def browseAnalysis(request, user):
     anals = Analysis.objects.filter(owner=user, deleted=False)
-
     template = loader.get_template('manager/browse.html')
     context = {
         'scripts': PlotManager.required_scripts,
@@ -84,14 +81,9 @@ def browseAnalysis(request, user_id):
     }
     return HttpResponse(template.render(context, request))
 
-
-def browseCurveSet(request, user_id):
-    try:
-        user = User.objects.get(id=user_id)
-    except ObjectDoesNotExist:
-        user=None
-
-    csets = CurveSet.objects.filter(owner=user_id, deleted=False)
+@with_user
+def browseCurveSet(request, user):
+    csets = CurveSet.objects.filter(owner=user, deleted=False)
 
     if ( __debug__ ):
         print(csets)
@@ -105,21 +97,16 @@ def browseCurveSet(request, user_id):
         'action2': 'deleteCurveSet',
         'action2_text': ' (delete) ',
         'whenEmpty' : "You have no curve sets. <a href=" +\
-                        reverse('createCurveSet', args=[user_id]) + ">Prepare one</a>."
+                        reverse('createCurveSet', args=[user.id]) + ">Prepare one</a>."
     }
     return HttpResponse(template.render(context, request))
 
-
-def deleteGeneric(request, user_id, item):
+def deleteGeneric(request, user, item):
     if item == None:
         return HttpResponseRedirect(
-            reverse('index', args=[user_id])
+            reverse('index', args=[user.id])
         )
 
-    try:
-        user = User.objects.get(id=user_id)
-    except ObjectDoesNotExist:
-        user=None
     itemclass = str(item.__class__.__name__)
     try:
         if not item.canBeUpdatedBy(user):
@@ -128,7 +115,7 @@ def deleteGeneric(request, user_id, item):
         if ( __debug__ ):
             print("Not allowed to edit %s by %s" % (item,user))
         return HttpResponseRedirect(
-            reverse('browse'+itemclass, args=[user_id])
+            reverse('browse'+itemclass, args=[user.id])
         )
     if request.method == 'POST':
         form = DeleteForm(item, request.POST)
@@ -136,7 +123,7 @@ def deleteGeneric(request, user_id, item):
             a = form.process(user, item)
             if a:
                 return HttpResponseRedirect(
-                    reverse('browse'+itemclass, args=[user_id])
+                    reverse('browse'+itemclass, args=[user.id])
                 )
     else:
         form = DeleteForm(item)
@@ -149,32 +136,32 @@ def deleteGeneric(request, user_id, item):
     }
     return render(request, 'manager/deleteGeneric.html', context)
 
-
-def deleteCurveFile(request, user_id, file_id):
+@with_user
+def deleteCurveFile(request, user, file_id):
     try:
         cfile = CurveFile.objects.get(id=file_id)
     except ObjectDoesNotExist:
         cfile = None
-    return deleteGeneric(request, user_id, cfile)
+    return deleteGeneric(request, user, cfile)
 
-
-def deleteCurve(request, user_id, curve_id):
+@with_user
+def deleteCurve(request, user, curve_id):
     try:
         c = Curve.objects.get(id=curve_id)
     except ObjectDoesNotExist:
         c=None
-    return deleteGeneric(request, user_id, c)
+    return deleteGeneric(request, user, c)
 
-
-def deleteAnalysis(request, user_id, analysis_id):
+@with_user
+def deleteAnalysis(request, user, analysis_id):
     try:
         a = Analysis.objects.get(id=analysis_id)
     except ObjectDoesNotExist:
         a=None
-    return deleteGeneric(request, user_id, a)
+    return deleteGeneric(request, user, a)
 
-
-def deleteCurveSet(request, user_id, curveset_id):
+@with_user
+def deleteCurveSet(request, user, curveset_id):
     try:
         a = CurveSet.objects.get(id=curveset_id)
         if ( a.locked ):
@@ -182,22 +169,19 @@ def deleteCurveSet(request, user_id, curveset_id):
             #TODO: cannot be modified.
     except ObjectDoesNotExist:
         a=None
-    return deleteGeneric(request, user_id, a)
+    return deleteGeneric(request, user, a)
 
-
-def createCurveSet(request, user_id):
-    try:
-        user = User.objects.get(id=user_id)
-    except ObjectDoesNotExist:
-        user=None
-
+@with_user
+def createCurveSet(request, user):
     if request.method == 'POST':
         form = SelectCurvesForCurveSetForm(user, request.POST)
         if form.is_valid():
             if ( form.process(user) == True ):
                 cs_id = form.curvesetid
                 if cs_id and cs_id > -1:
-                    return HttpResponseRedirect(reverse('editCurveSet', args=[user_id, cs_id]))
+                    return HttpResponseRedirect(
+                            reverse('editCurveSet', args=[user.id, cs_id])
+                    )
     else:
         form = SelectCurvesForCurveSetForm(user)
 
@@ -209,11 +193,8 @@ def createCurveSet(request, user_id):
     return render(request, 'manager/createCurveSet.html', context)
 
 
-def showAnalysis(request, user_id, analysis_id):
-    try:
-        user = User.objects.get(id=user_id)
-    except ObjectDoesNotExist:
-        user=None
+@with_user
+def showAnalysis(request, user, analysis_id):
 
     try:
         an = Analysis.objects.get(id=analysis_id)
@@ -247,13 +228,8 @@ def showAnalysis(request, user_id, analysis_id):
     }
     return HttpResponse(template.render(context, request))
 
-
-def showProcessed(request, user_id, processing_id):
-    try:
-        user = User.objects.get(id=user_id)
-    except ObjectDoesNotExist:
-        user=None
-
+@with_user
+def showProcessed(request, user, processing_id):
     try:
         cf = Processing.objects.get(id=processing_id, owner=user)
     except ObjectDoesNotExist:
@@ -269,13 +245,8 @@ def showProcessed(request, user_id, processing_id):
     }
     return HttpResponse(template.render(context, request))
 
-
-def showCurveSet(request, user_id, curveset_id):
-    try:
-        user = User.objects.get(id=user_id)
-    except ObjectDoesNotExist:
-        user=None
-
+@with_user
+def showCurveSet(request, user, curveset_id):
     try:
         cs = CurveSet.objects.get(id=curveset_id)
     except ObjectDoesNotExist:
@@ -301,19 +272,12 @@ def showCurveSet(request, user_id, curveset_id):
     }
     return HttpResponse(template.render(context, request))
 
-
-
-def editAnalysis(request, user_id, analysis_id):
+@with_user
+def editAnalysis(request, user, analysis_id):
     pass
 
-
-
-def editCurveSet(request,user_id,curveset_id):
-    try:
-        user = User.objects.get(id=user_id)
-    except ObjectDoesNotExist:
-        user=None
-
+@with_user
+def editCurveSet(request,user,curveset_id):
     try:
         cs=CurveSet.objects.get(id=curveset_id)
     except ObjectDoesNotExist:
@@ -333,7 +297,7 @@ def editCurveSet(request,user_id,curveset_id):
             formGenerate = mm.getAnalysisSelectionForm(request.POST)
             if ( formGenerate.is_valid() ):
                 analyzeid = formGenerate.process(user,cs)
-                return HttpResponseRedirect(reverse('analyze', args=[user_id, analyzeid]))
+                return HttpResponseRedirect(reverse('analyze', args=[user.id, analyzeid]))
         else:
             formGenerate = mm.getAnalysisSelectionForm()
 
@@ -342,7 +306,7 @@ def editCurveSet(request,user_id,curveset_id):
             formProc = mm.getProcessingSelectionForm(request.POST)
             if ( formProc.is_valid() ):
                 procid = formProc.process(user,cs)
-                return HttpResponseRedirect(reverse('process', args=[user_id, procid]))
+                return HttpResponseRedirect(reverse('process', args=[user.id, procid]))
         else:
             formProc = mm.getProcessingSelectionForm()
 
@@ -350,7 +314,9 @@ def editCurveSet(request,user_id,curveset_id):
             formAnalyte = AddAnalytesForm(user, "CurveSet", curveset_id, request.POST)
             if formAnalyte.is_valid():
                 if ( formAnalyte.process(user) == True ):
-                    return HttpResponseRedirect(reverse('showCurveSet', args=[user_id, curveset_id]))
+                    return HttpResponseRedirect(
+                        reverse('showCurveSet', args=[user.id, curveset_id])
+                    )
         else:
             formAnalyte = AddAnalytesForm(user, "CurveSet", curveset_id)
 
@@ -387,19 +353,16 @@ def editCurveSet(request,user_id,curveset_id):
     }
     return render(request, 'manager/editCurveSet.html', context)
 
-
-def upload(request, user_id):
-    try:
-        user = User.objects.get(id=user_id)
-    except ObjectDoesNotExist:
-        user=None
-
+@with_user
+def upload(request, user):
     if request.method == 'POST':
         form = UploadFileForm(request.POST, request.FILES)
         if form.is_valid():
             if ( form.process(user, request) == True ):
                 file_id = form.file_id
-                return HttpResponseRedirect(reverse('editCurveFile', args=[user_id, file_id]))
+                return HttpResponseRedirect(
+                    reverse('editCurveFile', args=[user.id, file_id])
+                )
     else:
         form = UploadFileForm()
 
@@ -411,17 +374,15 @@ def upload(request, user_id):
     return render(request, 'manager/uploadFile.html', context)
 
 
-def editCurveFile(request, user_id, file_id,):
-    try:
-        user = User.objects.get(id=user_id)
-    except ObjectDoesNotExist:
-        user=None
-
+@with_user
+def editCurveFile(request, user, file_id,):
     if request.method == 'POST':
         form = AddAnalytesForm(user, "File", file_id, request.POST)
         if form.is_valid():
             if ( form.process(user) == True ):
-                return HttpResponseRedirect(reverse('browseCurveFile', args=[user_id]))
+                return HttpResponseRedirect(
+                    reverse('browseCurveFile', args=[user.id])
+                )
     else:
         form = AddAnalytesForm(user, "File", file_id)
     plotScr, plotDiv = generatePlot(
@@ -441,13 +402,8 @@ def editCurveFile(request, user_id, file_id,):
     }
     return render(request, 'manager/editFile.html', context)
 
-
-def showCurveFile(request, user_id, file_id):
-    try:
-        user = User.objects.get(id=user_id)
-    except ObjectDoesNotExist:
-        user=None
-
+@with_user
+def showCurveFile(request, user, file_id):
     try:
         cf = CurveFile.objects.get(id=file_id, deleted=False)
     except ObjectDoesNotExist:
@@ -476,33 +432,20 @@ def showCurveFile(request, user_id, file_id):
     }
     return HttpResponse(template.render(context, request))
 
-
-def analyze(request, user_id, analysis_id):
-    try:
-        user = User.objects.get(id=user_id)
-    except ObjectDoesNotExist:
-        user=None
+@with_user
+def analyze(request, user, analysis_id):
     mm = MethodManager(user=user, analysis_id=analysis_id)
     mm.process(request=request, user=user)
     return mm.getContent(request=request, user=user) 
 
-
-def process(request, user_id, processing_id):
-    try:
-        user = User.objects.get(id=user_id)
-    except ObjectDoesNotExist:
-        user=None
+@with_user
+def process(request, user, processing_id):
     mm = MethodManager(user=user, processing_id=processing_id)
     mm.process(request=request, user=user)
     return mm.getContent(request=request, user=user) 
 
-
-def plotInteraction(request, user_id):
-    try:
-        user = User.objects.get(id=user_id)
-    except ObjectDoesNotExist:
-        user=None
-
+@with_user
+def plotInteraction(request, user):
     if request.method != 'POST' or not request.POST.get('query', None):
         return HttpResponse('Error')
    
@@ -526,7 +469,6 @@ def plotInteraction(request, user_id):
         json.dumps(ret),
         'type=application/json'
     )
-        
 
 #@never_cache
 def generatePlot(request, user, plot_type, value_id, **kwargs):
