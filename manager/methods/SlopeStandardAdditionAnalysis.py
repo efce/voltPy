@@ -60,7 +60,7 @@ class SlopeStandardAdditionAnalysis(mm.AnalysisMethod):
         self.model.customData['resultStdDev'] = result['STD']
         self.model.customData['corrCoeff'] = result['R']
         self.model.completed = True
-        self.model.step = 0
+        self.model.step = None
         self.model.save()
 
     def getInfo(self, request, user):
