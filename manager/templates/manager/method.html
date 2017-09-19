@@ -1,0 +1,9 @@
+{% extends "manager/main.html" %}
+
+{% block title %} Analyze {% endblock %}
+
+{% block real_content %}
+<p>ID: {{ model.id }} </p>
+{{ method_content|safe}}
+
+{% endblock %}

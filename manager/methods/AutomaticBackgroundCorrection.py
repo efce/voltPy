@@ -25,7 +25,7 @@ class AutomaticBackgroundCorrection(mm.ProcessingMethod):
             xvec = range(len(cd.current))
             yvec = cd.yVector
             degree = 4
-            iterations = 40
+            iterations = 50
             self.model.customData['iterations'] = iterations
             self.model.customData['degree'] = degree
             yvec = calc_abc(xvec, yvec, degree, iterations)['yvec']

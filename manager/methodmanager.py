@@ -82,7 +82,6 @@ class MethodManager:
         self.methods[mclass.type()][str(mclass.__name__)] = mclass
 
     def __activateMethod(self):
-        #import pdb; pdb.set_trace()
         mclass = self.methods[self.__type].get(self.__model.method, None)
         if mclass:
             self.__method = mclass(self.__model)
@@ -112,7 +111,10 @@ class MethodManager:
         )
 
         if self.__method.operation:
-            operationText = self.__method.getOperationText()
+            operationText = self.__method.getOperationHTML(
+                user=user,
+                request=request
+            )
 
             plotScr, plotDiv = manager.views.generatePlot(
                 request=request, 
@@ -131,9 +133,12 @@ class MethodManager:
                                        pm.PlotManager.required_scripts, 
                                        operationText.get('head','') ]),
                 'mainPlot': plotDiv,
-                'analyze_content': operationText.get("body",''),
+                'method_content': ''.join([
+                                        operationText.get('desc',''),
+                                        operationText.get('body',''),
+                                    ]),
                 'user': user,
-                'analysis_id': self.__model.id,
+                'model': self.__model,
                 'curveset_id': self.__model.curveSet.id,
                 'plot_width' : pm.PlotManager.plot_width,
                 'plot_height' : pm.PlotManager.plot_height
@@ -281,11 +286,20 @@ class Method(ABC):
             self.model.save()
             self.operation = None
 
-    def getOperationText(self):
+    def getOperationHTML(self, user, request):
         if self.operation and self.operation.get('object', None):
-            return { 'head': self.operation.get('head',''), 'body': self.operation['desc'] }
+            opHTML = self.operation['object'].getHTML(
+                user=user,
+                request=request, 
+                model=self.model
+            )
+            return { 
+                'head': opHTML.get('head',''), 
+                'body': opHTML.get('body',''), 
+                'desc': self.operation.get('desc','')
+            }
         else:
-            return { 'head': '', 'body': '' }
+            return { 'head': '', 'body': '' , 'desc': ''}
 
     def getAddToPlot(self):
         return None
@@ -323,7 +337,15 @@ class ProcessingMethod(Method):
     def type(self):
         return 'processing'
 
-class OperationSelectTwoRanges:
+class Operation(ABC):
+    @abstractmethod
+    def process(self, user, request, model):
+        pass
+
+    def getHTML(self, user, request, model):
+        return { 'head': '', 'body' : '' }
+
+class OperationSelectTwoRanges(Operation):
     plot_interaction = 'set4cursors'
 
     def process(self, user, request, model):
@@ -342,7 +364,7 @@ class OperationSelectTwoRanges:
             return True
         return False
 
-class OperationSelectRange:
+class OperationSelectRange(Operation):
     plot_interaction = 'set2cursors'
 
     def process(self, user, request, model):
@@ -360,7 +382,7 @@ class OperationSelectRange:
             return True
         return False
 
-class OperationSelectPoint:
+class OperationSelectPoint(Operation):
     plot_interaction = 'set1cursor'
 
     def process(self, user, request, model):
@@ -378,7 +400,7 @@ class OperationSelectPoint:
             return True
         return False
 
-class OperationConfirmation:
+class OperationConfirmation(Operation):
     plot_interaction = 'confirm'
 
     def process(self, user, request, model):
