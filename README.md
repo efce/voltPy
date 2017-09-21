@@ -5,4 +5,4 @@ The idea of the project is to provide the electrochemist with easy tool for stor
 The project requires following python modules: django, unipath, bokeh, numpy, scipy, pandas, django-picklefield.
 
 # Usage
-The project start as regular Django service (with 'python manage.py runserver'), and is avaiable under http://127.0.0.1:8000/manager/. The test file is included from 'EAQt - electrochemical analyzer' to upload, and check and possibilities of the service. The file is in the main directory with *:setlocal spell spelllang=en_us.volt extension.
+The project start as regular Django service (with 'python manage.py runserver'), and is avaiable under http://127.0.0.1:8000/manager/. The test file is included from 'EAQt - electrochemical analyzer' to upload, and check and possibilities of the service. The file is in the main directory with *.volt extensionn.
