@@ -1,17 +1,14 @@
 import sys
 from abc import ABC, abstractmethod
-from enum import IntEnum
-from django.core.urlresolvers import reverse
 from django import forms
-from django.utils import timezone
+from django.core.exceptions import ObjectDoesNotExist
+from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect
 from django.http import HttpResponse
 from django.template import loader
-from django.core.urlresolvers import reverse
-from django.core.exceptions import ObjectDoesNotExist
-from .models import *
+from django.utils import timezone
+import manager.models as mmodels
 import manager.plotmanager as pm
-import json
 import manager.views
 
 class MethodManager:
@@ -45,7 +42,7 @@ class MethodManager:
             self.__type = 'processing'
             _id = int(kwargs.get('processing_id', kwargs.get('processing')))
             try:
-                self.__model = Processing.objects.get(id=_id)
+                self.__model = mmodels.Processing.objects.get(id=_id)
                 self.__curveset_id = self.__model.curveSet.id
             except ObjectDoesNotExist:
                 raise 404
@@ -53,7 +50,7 @@ class MethodManager:
             self.__type = 'analysis'
             _id = int(kwargs.get('analysis_id', kwargs.get('analysis')))
             try:
-                self.__model = Analysis.objects.get(id=_id)
+                self.__model = mmodels.Analysis.objects.get(id=_id)
             except ObjectDoesNotExist:
                 raise 404
         else:
@@ -204,7 +201,7 @@ class MethodManager:
         def process(self, user, curveset):
             if self.type == 'processing':
                 if self.cleaned_data.get('method') in self.methods:
-                    a = Processing(
+                    a = mmodels.Processing(
                         owner = user,
                         curveSet = curveset,
                         date = timezone.now(),
@@ -220,7 +217,7 @@ class MethodManager:
                     return None
             elif self.type == 'analysis':
                 if self.cleaned_data.get('method') in self.methods:
-                    a = Analysis(
+                    a = mmodels.Analysis(
                         owner = user,
                         curveSet = curveset,
                         date = timezone.now(),

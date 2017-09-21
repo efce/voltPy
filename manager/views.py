@@ -1,15 +1,15 @@
-from django.shortcuts import render
-from django.http import HttpResponse
-from django.http import HttpResponseRedirect
-from django.template import loader
-from django.views.decorators.cache import never_cache
 from django.core.urlresolvers import reverse
 from django.core.exceptions import ObjectDoesNotExist
+from django.http import HttpResponse
+from django.http import HttpResponseRedirect
+from django.shortcuts import render
+from django.template import loader
+from django.views.decorators.cache import never_cache
 import json
 import manager.models as mmodels
-from manager.forms import * 
-from manager.plotmanager import *
-from manager.methodmanager import *
+import manager.forms as mforms
+import manager.plotmanager as mpm
+import manager.methodmanager as mmm
 
 def with_user(fun):
     def wrap(*args, **kwargs):
@@ -38,9 +38,9 @@ def index(request, user):
 def login(request):
     user_id = 1
     try:
-        user = User.objects.get(id=user_id)
+        user = mmodels.User.objects.get(id=user_id)
     except ObjectDoesNotExist:
-        user = User(name="Użytkownik numer %i" % user_id)
+        user = mmodels.User(name="Użytkownik numer %i" % user_id)
         user.save()
     return HttpResponseRedirect(reverse('index', args=[ user.id ]))
 
@@ -49,11 +49,11 @@ def logout(request):
 
 @with_user
 def browseCurveFile(request, user):
-    files = CurveFile.objects.filter(owner=user, deleted=False)
+    files = mmodels.CurveFile.objects.filter(owner=user, deleted=False)
 
     template = loader.get_template('manager/browse.html')
     context = {
-        'scripts': PlotManager.required_scripts,
+        'scripts': mpm.PlotManager.required_scripts,
         'browse_by' : 'files',
         'user' : user,
         'disp' : files,
@@ -67,10 +67,10 @@ def browseCurveFile(request, user):
 
 @with_user
 def browseAnalysis(request, user):
-    anals = Analysis.objects.filter(owner=user, deleted=False)
+    anals = mmodels.Analysis.objects.filter(owner=user, deleted=False)
     template = loader.get_template('manager/browse.html')
     context = {
-        'scripts': PlotManager.required_scripts,
+        'scripts': mpm.PlotManager.required_scripts,
         'browse_by' : 'Analysis',
         'user' : user,
         'disp' : anals,
@@ -83,13 +83,13 @@ def browseAnalysis(request, user):
 
 @with_user
 def browseCurveSet(request, user):
-    csets = CurveSet.objects.filter(owner=user, deleted=False)
+    csets = mmodels.CurveSet.objects.filter(owner=user, deleted=False)
 
     if ( __debug__ ):
         print(csets)
     template = loader.get_template('manager/browse.html')
     context = {
-        'scripts': PlotManager.required_scripts,
+        'scripts': mpm.PlotManager.required_scripts,
         'browse_by' : 'Curve Set',
         'user' : user,
         'disp' : csets,
@@ -118,7 +118,7 @@ def deleteGeneric(request, user, item):
             reverse('browse'+itemclass, args=[user.id])
         )
     if request.method == 'POST':
-        form = DeleteForm(item, request.POST)
+        form = mforms.DeleteForm(item, request.POST)
         if form.is_valid():
             a = form.process(user, item)
             if a:
@@ -126,10 +126,10 @@ def deleteGeneric(request, user, item):
                     reverse('browse'+itemclass, args=[user.id])
                 )
     else:
-        form = DeleteForm(item)
+        form = mforms.DeleteForm(item)
 
     context = { 
-        'scripts': PlotManager.required_scripts,
+        'scripts': mpm.PlotManager.required_scripts,
         'form': form,
         'item': item,
         'user': user
@@ -139,7 +139,7 @@ def deleteGeneric(request, user, item):
 @with_user
 def deleteCurveFile(request, user, file_id):
     try:
-        cfile = CurveFile.objects.get(id=file_id)
+        cfile = mmodels.CurveFile.objects.get(id=file_id)
     except ObjectDoesNotExist:
         cfile = None
     return deleteGeneric(request, user, cfile)
@@ -147,7 +147,7 @@ def deleteCurveFile(request, user, file_id):
 @with_user
 def deleteCurve(request, user, curve_id):
     try:
-        c = Curve.objects.get(id=curve_id)
+        c = mmodels.Curve.objects.get(id=curve_id)
     except ObjectDoesNotExist:
         c=None
     return deleteGeneric(request, user, c)
@@ -155,7 +155,7 @@ def deleteCurve(request, user, curve_id):
 @with_user
 def deleteAnalysis(request, user, analysis_id):
     try:
-        a = Analysis.objects.get(id=analysis_id)
+        a = mmodels.Analysis.objects.get(id=analysis_id)
     except ObjectDoesNotExist:
         a=None
     return deleteGeneric(request, user, a)
@@ -163,7 +163,7 @@ def deleteAnalysis(request, user, analysis_id):
 @with_user
 def deleteCurveSet(request, user, curveset_id):
     try:
-        a = CurveSet.objects.get(id=curveset_id)
+        a = mmodels.CurveSet.objects.get(id=curveset_id)
         if ( a.locked ):
             pass
             #TODO: cannot be modified.
@@ -174,7 +174,7 @@ def deleteCurveSet(request, user, curveset_id):
 @with_user
 def createCurveSet(request, user):
     if request.method == 'POST':
-        form = SelectCurvesForCurveSetForm(user, request.POST)
+        form = mforms.SelectCurvesForCurveSetForm(user, request.POST)
         if form.is_valid():
             if ( form.process(user) == True ):
                 cs_id = form.curvesetid
@@ -183,10 +183,10 @@ def createCurveSet(request, user):
                             reverse('editCurveSet', args=[user.id, cs_id])
                     )
     else:
-        form = SelectCurvesForCurveSetForm(user)
+        form = mforms.SelectCurvesForCurveSetForm(user)
 
     context = {
-        'scripts': PlotManager.required_scripts,
+        'scripts': mpm.PlotManager.required_scripts,
         'form': form, 
         'user': user
     }
@@ -196,7 +196,7 @@ def createCurveSet(request, user):
 @with_user
 def showAnalysis(request, user, analysis_id):
     try:
-        an = Analysis.objects.get(id=analysis_id)
+        an = mmodels.Analysis.objects.get(id=analysis_id)
     except ObjectDoesNotExist:
         an = None
 
@@ -206,7 +206,7 @@ def showAnalysis(request, user, analysis_id):
     if an.completed == False:
         return HttpResponseRedirect(reverse('analyze', args=[user.id, an.id]))
 
-    mm = MethodManager(user=user, analysis_id=analysis_id)
+    mm = mmm.MethodManager(user=user, analysis_id=analysis_id)
     template = loader.get_template('manager/showAnalysis.html')
     info = mm.getInfo(request=request, user=user)
     plotScr, plotDiv = generatePlot(
@@ -216,13 +216,13 @@ def showAnalysis(request, user, analysis_id):
         value_id=an.curveSet.id
     )
     context = {
-        'scripts': PlotManager.required_scripts + plotScr,
+        'scripts': mpm.PlotManager.required_scripts + plotScr,
         'mainPlot': plotDiv,
         'head': info.get('head',''),
         'user' : user,
         'analysis': an,
-        'plot_width' : PlotManager.plot_width,
-        'plot_height' : PlotManager.plot_height,
+        'plot_width' : mpm.PlotManager.plot_width,
+        'plot_height' : mpm.PlotManager.plot_height,
         'text': info.get('body','')
     }
     return HttpResponse(template.render(context, request))
@@ -230,24 +230,24 @@ def showAnalysis(request, user, analysis_id):
 @with_user
 def showProcessed(request, user, processing_id):
     try:
-        cf = Processing.objects.get(id=processing_id, owner=user)
+        cf = mmodels.Processing.objects.get(id=processing_id, owner=user)
     except ObjectDoesNotExist:
         cf = None
 
     template = loader.get_template('manager/showAnalysis.html')
     context = {
-        'scripts': PlotManager.required_scripts,
+        'scripts': mpm.PlotManager.required_scripts,
         'user' : user,
         'processing': processing_id,
-        'plot_width' : PlotManager.plot_width,
-        'plot_height' : PlotManager.plot_height,
+        'plot_width' : mpm.PlotManager.plot_width,
+        'plot_height' : mpm.PlotManager.plot_height,
     }
     return HttpResponse(template.render(context, request))
 
 @with_user
 def showCurveSet(request, user, curveset_id):
     try:
-        cs = CurveSet.objects.get(id=curveset_id)
+        cs = mmodels.CurveSet.objects.get(id=curveset_id)
     except ObjectDoesNotExist:
         cs = None
 
@@ -262,12 +262,12 @@ def showCurveSet(request, user, curveset_id):
         value_id = cs.id
     )
     context = {
-        'scripts': PlotManager.required_scripts + plotScr,
+        'scripts': mpm.PlotManager.required_scripts + plotScr,
         'mainPlot' : plotDiv,
         'user' : user,
         'curveset_id': curveset_id,
-        'plot_width' : PlotManager.plot_width,
-        'plot_height' : PlotManager.plot_height,
+        'plot_width' : mpm.PlotManager.plot_width,
+        'plot_height' : mpm.PlotManager.plot_height,
     }
     return HttpResponse(template.render(context, request))
 
@@ -278,7 +278,7 @@ def editAnalysis(request, user, analysis_id):
 @with_user
 def editCurveSet(request,user,curveset_id):
     try:
-        cs=CurveSet.objects.get(id=curveset_id)
+        cs = mmodels.CurveSet.objects.get(id=curveset_id)
     except ObjectDoesNotExist:
         raise 404
 
@@ -289,7 +289,7 @@ def editCurveSet(request,user,curveset_id):
         #show that is is locked
         pass
 
-    mm = MethodManager(user=user, curveset_id=curveset_id)
+    mm = mmm.MethodManager(user=user, curveset_id=curveset_id)
 
     if request.method == 'POST':
         if ( 'startAnalyze' in request.POST ):
@@ -310,22 +310,22 @@ def editCurveSet(request,user,curveset_id):
             formProc = mm.getProcessingSelectionForm()
 
         if ( 'submitFormAnalyte' in request.POST ):
-            formAnalyte = AddAnalytesForm(user, "CurveSet", curveset_id, request.POST)
+            formAnalyte = mforms.AddAnalytesForm(user, "CurveSet", curveset_id, request.POST)
             if formAnalyte.is_valid():
                 if ( formAnalyte.process(user) == True ):
                     return HttpResponseRedirect(
                         reverse('showCurveSet', args=[user.id, curveset_id])
                     )
         else:
-            formAnalyte = AddAnalytesForm(user, "CurveSet", curveset_id)
+            formAnalyte = mforms.AddAnalytesForm(user, "CurveSet", curveset_id)
 
     else:
-        formAnalyte = AddAnalytesForm(user, "CurveSet", curveset_id)
+        formAnalyte = mforms.AddAnalytesForm(user, "CurveSet", curveset_id)
         formGenerate = mm.getAnalysisSelectionForm()
         formProc = mm.getProcessingSelectionForm()
 
     try:
-        cs = CurveSet.objects.get(id=curveset_id)
+        cs = mmodels.CurveSet.objects.get(id=curveset_id)
         if not cs.canBeReadBy(user):
             raise PermissionError('Not allowed')
     except PermissionError:
@@ -339,15 +339,15 @@ def editCurveSet(request,user,curveset_id):
         value_id=cs.id
     )
     context = { 
-        'scripts': PlotManager.required_scripts + plotScr,
+        'scripts': mpm.PlotManager.required_scripts + plotScr,
         'mainPlot' : plotDiv,
         'formAnalyte': formAnalyte, 
         'startAnalyze' : formGenerate,
         'startProcessing' : formProc,
         'user' : user, 
         'curveset_id' : curveset_id, 
-        'plot_width' : PlotManager.plot_width,
-        'plot_height' : PlotManager.plot_height,
+        'plot_width' : mpm.PlotManager.plot_width,
+        'plot_height' : mpm.PlotManager.plot_height,
         'cal_disp': cal_disp
     }
     return render(request, 'manager/editCurveSet.html', context)
@@ -355,7 +355,7 @@ def editCurveSet(request,user,curveset_id):
 @with_user
 def upload(request, user):
     if request.method == 'POST':
-        form = UploadFileForm(request.POST, request.FILES)
+        form = mforms.UploadFileForm(request.POST, request.FILES)
         if form.is_valid():
             if ( form.process(user, request) == True ):
                 file_id = form.file_id
@@ -363,10 +363,10 @@ def upload(request, user):
                     reverse('editCurveFile', args=[user.id, file_id])
                 )
     else:
-        form = UploadFileForm()
+        form = mforms.UploadFileForm()
 
     context = {
-        'scripts': PlotManager.required_scripts,
+        'scripts': mpm.PlotManager.required_scripts,
         'form': form, 
         'user': user
     }
@@ -376,14 +376,14 @@ def upload(request, user):
 @with_user
 def editCurveFile(request, user, file_id,):
     if request.method == 'POST':
-        form = AddAnalytesForm(user, "File", file_id, request.POST)
+        form = mforms.AddAnalytesForm(user, "File", file_id, request.POST)
         if form.is_valid():
             if ( form.process(user) == True ):
                 return HttpResponseRedirect(
                     reverse('browseCurveFile', args=[user.id])
                 )
     else:
-        form = AddAnalytesForm(user, "File", file_id)
+        form = mforms.AddAnalytesForm(user, "File", file_id)
     plotScr, plotDiv = generatePlot(
         request=request, 
         user=user, 
@@ -391,20 +391,20 @@ def editCurveFile(request, user, file_id,):
         value_id=file_id
     )
     context = { 
-        'scripts': PlotManager.required_scripts + plotScr,
+        'scripts': mpm.PlotManager.required_scripts + plotScr,
         'mainPlot' : plotDiv,
         'user' : user, 
         'file_id' : file_id,
         'form': form,
-        'plot_width' : PlotManager.plot_width,
-        'plot_height' : PlotManager.plot_height
+        'plot_width' : mpm.PlotManager.plot_width,
+        'plot_height' : mpm.PlotManager.plot_height
     }
     return render(request, 'manager/editFile.html', context)
 
 @with_user
 def showCurveFile(request, user, file_id):
     try:
-        cf = CurveFile.objects.get(id=file_id, deleted=False)
+        cf = mmodels.CurveFile.objects.get(id=file_id, deleted=False)
     except ObjectDoesNotExist:
         cf = None
 
@@ -421,25 +421,25 @@ def showCurveFile(request, user, file_id):
         value_id=cf.id
     )
     context = { 
-        'scripts': PlotManager.required_scripts + plotScr,
+        'scripts': mpm.PlotManager.required_scripts + plotScr,
         'mainPlot' : plotDiv,
         'user' : user,
         'curvefile_id': curvefile_id,
-        'plot_width' : PlotManager.plot_width,
-        'plot_height' : PlotManager.plot_height,
+        'plot_width' : mpm.PlotManager.plot_width,
+        'plot_height' : mpm.PlotManager.plot_height,
         'form' : form
     }
     return HttpResponse(template.render(context, request))
 
 @with_user
 def analyze(request, user, analysis_id):
-    mm = MethodManager(user=user, analysis_id=analysis_id)
+    mm = mmm.MethodManager(user=user, analysis_id=analysis_id)
     mm.process(request=request, user=user)
     return mm.getContent(request=request, user=user) 
 
 @with_user
 def process(request, user, processing_id):
-    mm = MethodManager(user=user, processing_id=processing_id)
+    mm = mmm.MethodManager(user=user, processing_id=processing_id)
     mm.process(request=request, user=user)
     return mm.getContent(request=request, user=user) 
 
@@ -455,11 +455,11 @@ def plotInteraction(request, user):
         kwrg = {
             vtype: vid
         }
-        mm = MethodManager(user=user, **kwrg)
+        mm = mmm.MethodManager(user=user, **kwrg)
         mm.process(request=request, user=user)
         ret = mm.getJSON(user=user)
     elif (request.POST.get('query') == 'plotmanager' ): 
-        pm = PlotManager()
+        pm = mpm.PlotManager()
         ret = pm.plotInteraction(request=request, user=user)
     else:
         raise NameError('Unknown query type')
@@ -483,7 +483,7 @@ def generatePlot(request, user, plot_type, value_id, **kwargs):
     vid = kwargs.get('vid', value_id)
     addTo = kwargs.get('add', None)
 
-    pm = PlotManager()
+    pm = mpm.PlotManager()
     data=[]
     if (plot_type == 'file' ):
         data=pm.fileHelper(user, value_id)
