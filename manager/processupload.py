@@ -35,42 +35,65 @@ class ProcessUpload:
             if ( ufile.name.lower().endswith(".voltc") ):
                 isCompressed = True
             self._parseVolt(isCompressed)
-            sid=transaction.savepoint()
-            try:
-                self._createModels()
-            except Exception as e:
-                # doesnt matter what error it was, we need to rollback
-                if ( __debug__ ):
-                    print("Query failed, rolling back transaction. Exception:" + "%s" % e)
-                transaction.savepoint_rollback(sid)
-                self.status = False
-                return
-            if ( __debug__ ):
-                print("Query succesful, commiting.")
-            transaction.savepoint_commit(sid)
-            self.status = True
-        
         elif ( ufile.name.lower().endswith(".vol") ):
             self._parseVol()
-            sid=transaction.savepoint()
-            try:
-                self._createModels()
-            except Exception as e:
-                # doesnt matter what error it was, we need to rollback
-                if ( __debug__ ):
-                    print("Query failed, rolling back transaction. Exception:" + "%s" % e)
-                transaction.savepoint_rollback(sid)
-                self.status = False
-                return
-            if ( __debug__ ):
-                print("Query succesful, commiting.")
-            transaction.savepoint_commit(sid)
-            self.status = True
-        
+        elif ( ufile.name.lower().endswith(".txt") ):
+            self._parseTxt()
         else:
             if ( __debug__ ):
                 print("Unknown extension")
+            raise TypeError('Unkown extension')
+
+        sid=transaction.savepoint()
+        try:
+            self._createModels()
+        except Exception as e:
+            # doesnt matter what error it was, we need to rollback
+            if ( __debug__ ):
+                print("Query failed, rolling back transaction. Exception:" + "%s" % e)
+            transaction.savepoint_rollback(sid)
+            self.status = False
+            return
+        if ( __debug__ ):
+            print("Query succesful, commiting.")
+        transaction.savepoint_commit(sid)
+        self.status = True
     
+
+    def _parseTxt(self):
+        class CurveTxt:
+            vec_probing = []
+            vec_param = {}
+            comment = ''
+            def __init__(self, x, y, name):
+                self.name = name
+                self.vec_current = y
+                self.vec_time = range(0,len(y))
+                self.vec_potential = x
+            def getDate(self):
+                return timezone.now()
+
+        import pandas as pd
+        sdata = pd.read_table(self._ufile.file, delimiter="\t|\s+", header=None)
+        isx = sdata[0]
+        isxstep = isx[1]-isx[0]
+        isxtrue = True
+        for a in range(2,len(isx)):
+            if (isx[a]-isx[a-1]) != isxstep:
+                isxtrue = False
+                break
+        if ( isxtrue ):
+            x = isx
+            ys = sdata[1:]
+        else:
+            x = range(len(sdata[0]))
+            ys = sdata
+
+        for i in range(len(ys.columns)):
+            self._curves.append(
+                CurveTxt(list(x), list(ys[i]), str(i))
+            )
+
 
     def _parseVol(self):
         fileContent = self._ufile.read();
@@ -130,12 +153,13 @@ class ProcessUpload:
 
     def _createModels(self):
         cf = CurveFile(
-                owner=self._user, 
-                name=self._fname,
-                comment=self._fcomment,
-                filename = self._ufile.name,
-                fileDate=timezone.now(), 
-                uploadDate=timezone.now() )
+            owner=self._user, 
+            name=self._fname,
+            comment=self._fcomment,
+            filename = self._ufile.name,
+            fileDate=timezone.now(), 
+            uploadDate=timezone.now() 
+        )
         cf.save()
 
         self._file_id = cf.id;
@@ -143,12 +167,13 @@ class ProcessUpload:
         order=0
         for c in self._curves:
             cb = Curve(        
-                    curveFile=cf,    
-                    orderInFile=order,  
-                    name=c.name,  
-                    comment=c.comment, 
-                    params=c.vec_param, 
-                    date=c.getDate() )
+                curveFile=cf,    
+                orderInFile=order,  
+                name=c.name,  
+                comment=c.comment, 
+                params=c.vec_param, 
+                date=c.getDate() 
+            )
             cb.save()
 
 #            if ( c.vec_param[Param.nonaveragedsampling] == 0 ):
@@ -158,27 +183,29 @@ class ProcessUpload:
 #
             pr = c.vec_probing
             cv = CurveData(
-                    curve = cb, 
-                    date = c.getDate(), 
-                    processing = None,
-                    time = c.vec_time, 
-                    potential = c.vec_potential,
-                    current = c.vec_current, 
-                    probingData = pr )
+                curve = cb, 
+                date = c.getDate(), 
+                processing = None,
+                time = c.vec_time, 
+                potential = c.vec_potential,
+                current = c.vec_current, 
+                probingData = pr 
+            )
             cv.save()
 
             ci = CurveIndex( 
-                    curve = cb, 
-                    potential_min = min(c.vec_potential), 
-                    potential_max = max(c.vec_potential), 
-                    potential_step = c.vec_potential[1] - c.vec_potential[0], 
-                    time_min = min(c.vec_time), 
-                    time_max = max(c.vec_time), 
-                    time_step = c.vec_time[1] - c.vec_time[0], 
-                    current_min = min(c.vec_current), 
-                    current_max = max(c.vec_current), 
-                    current_range = max(c.vec_current) - min(c.vec_current), 
-                    probingRate = c.vec_param[Param.nonaveragedsampling] )
+                curve = cb, 
+                potential_min = min(c.vec_potential), 
+                potential_max = max(c.vec_potential), 
+                potential_step = c.vec_potential[1] - c.vec_potential[0], 
+                time_min = min(c.vec_time), 
+                time_max = max(c.vec_time), 
+                time_step = c.vec_time[1] - c.vec_time[0], 
+                current_min = min(c.vec_current), 
+                current_max = max(c.vec_current), 
+                current_range = max(c.vec_current) - min(c.vec_current), 
+                probingRate = c.vec_param.get(Param.nonaveragedsampling,0)
+            )
             ci.save()
             order+=1
 
