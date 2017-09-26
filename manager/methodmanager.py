@@ -204,7 +204,6 @@ class MethodManager:
                     a = mmodels.Processing(
                         owner = user,
                         curveSet = curveset,
-                        date = timezone.now(),
                         method = self.cleaned_data.get('method'), 
                         name = "",
                         step = 0,
@@ -220,7 +219,6 @@ class MethodManager:
                     a = mmodels.Analysis(
                         owner = user,
                         curveSet = curveset,
-                        date = timezone.now(),
                         method = self.cleaned_data.get('method'),
                         name = "",
                         step = 0,

@@ -156,9 +156,8 @@ class ProcessUpload:
             owner=self._user, 
             name=self._fname,
             comment=self._fcomment,
-            filename = self._ufile.name,
-            fileDate=timezone.now(), 
-            uploadDate=timezone.now() 
+            filename=self._ufile.name,
+            fileDate=self._curves[0].getDate(),
         )
         cf.save()
 

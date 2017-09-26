@@ -22,6 +22,7 @@ class AutomaticBackgroundCorrection(mm.ProcessingMethod):
             newcd = deepcopy(cd)
             newcd.id = None
             newcd.pk = None
+            newcd.date = None
             xvec = range(len(cd.current))
             yvec = cd.yVector
             degree = 4

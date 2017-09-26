@@ -83,6 +83,7 @@ class AverageCurves(mm.ProcessingMethod):
                 self.model.curveSet.usedCurveData.remove(orgcd)
                 newcd.pk = None
                 newcd.id = None
+                newcd.date = None
                 cnt = 1
                 for cid in f[1:]:
                     #running average to prevent overflows

@@ -54,6 +54,7 @@ class FFTLowPass(mm.ProcessingMethod):
             newcd = deepcopy(cd)
             newcd.id = None
             newcd.pk = None
+            newcd.date = None
             iffty = np.fft.ifft(ffty)
             newcd.yVector = np.real(iffty).tolist()
             newcd.method = self.__repr__()

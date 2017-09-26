@@ -6,7 +6,7 @@ class CurveVol(CurveEA):
     
     def __init__(self, name, params):
         self.name = name
-        self.vec_param = Param.PARAMNUM * [0]
+        #self.vec_param = Param.PARAMNUM * [0]
         for i, val in enumerate(params):
             self.vec_param[i] = val
 

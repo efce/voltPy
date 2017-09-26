@@ -68,6 +68,7 @@ class PolynomialBackgroundFit(mm.ProcessingMethod):
             newcd = deepcopy(cd)
             newcd.id = None
             newcd.pk = None
+            newcd.date = None
             yvec = cd.yVector
             xvec = cd.xVector
             polyval = lambda x: (
