@@ -13,6 +13,7 @@ from bokeh.models.callbacks import CustomJS
 from bokeh.models import Span
 from bokeh.layouts import widgetbox, column, row
 from bokeh.models.widgets import RadioButtonGroup, Button, Paragraph
+import bokeh
 
 class PlotManager:
     methodmanager = None
@@ -21,13 +22,14 @@ class PlotManager:
     title = ''
     xlabel = "x"
     ylabel = "y"
+    bver = bokeh.__version__
     plot_width = 850
     plot_height = 700
     required_scripts = """
-    <link href="http://cdn.pydata.org/bokeh/release/bokeh-0.12.6.min.css" rel="stylesheet" type="text/css"> 
-    <link href="http://cdn.pydata.org/bokeh/release/bokeh-widgets-0.12.6.min.css" rel="stylesheet" type="text/css"> 
-    <script src="http://cdn.pydata.org/bokeh/release/bokeh-0.12.6.min.js"></script> 
-    <script src="http://cdn.pydata.org/bokeh/release/bokeh-widgets-0.12.6.min.js"></script>
+    <link href="http://cdn.pydata.org/bokeh/release/bokeh-%(bver)s.min.css" rel="stylesheet" type="text/css"> 
+    <link href="http://cdn.pydata.org/bokeh/release/bokeh-widgets-%(bver)s.min.css" rel="stylesheet" type="text/css"> 
+    <script src="http://cdn.pydata.org/bokeh/release/bokeh-%(bver)s.min.js"></script> 
+    <script src="http://cdn.pydata.org/bokeh/release/bokeh-widgets-%(bver)s.min.js"></script>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
     <script type="text/javascript">
     function sleep (time) {
@@ -72,7 +74,7 @@ class PlotManager:
         }
     }
     </script>
-    """
+    """ % { 'bver': bver }
     def __init__(self):
         self.__random = str(random.random()).replace(".","")
         self.__line = []
