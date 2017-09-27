@@ -18,7 +18,8 @@ class PolynomialBackgroundFit(mm.ProcessingMethod):
     ]
     degree = 3
 
-    def __str__(self):
+    @classmethod
+    def __str__(cls):
         return "3rd deg Polynomial Background Fit"
 
     def process(self, user, request):

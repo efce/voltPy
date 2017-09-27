@@ -41,7 +41,8 @@ class FFTLowPass(mm.ProcessingMethod):
         },
     ]
 
-    def __str__(self):
+    @classmethod
+    def __str__(cls):
         return "Low Pass FFT filter"
 
     def finalize(self, user):

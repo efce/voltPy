@@ -71,7 +71,8 @@ class AverageCurves(mm.ProcessingMethod):
         },
     ]
 
-    def __str__(self):
+    @classmethod
+    def __str__(cls):
         return "Average Curves"
 
     def finalize(self, user):

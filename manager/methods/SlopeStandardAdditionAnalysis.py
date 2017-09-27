@@ -12,7 +12,8 @@ class SlopeStandardAdditionAnalysis(mm.AnalysisMethod):
         },
     )
 
-    def __str__(self):
+    @classmethod
+    def __str__(cls):
         return "Slope Standard Addition Analysis"
 
     def finalize(self, user):

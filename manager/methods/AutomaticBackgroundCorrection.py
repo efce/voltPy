@@ -14,7 +14,8 @@ class AutomaticBackgroundCorrection(mm.ProcessingMethod):
     ]
     model = None
 
-    def __str__(self):
+    @classmethod
+    def __str__(cls):
         return "Automatic Background Correction"
 
     def finalize(self, user):

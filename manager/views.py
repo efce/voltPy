@@ -108,15 +108,8 @@ def deleteGeneric(request, user, item):
         )
 
     itemclass = str(item.__class__.__name__)
-    try:
-        if not item.canBeUpdatedBy(user):
-            raise PermissionError("Not allowed")
-    except PermissionError: #TODO: let it go
-        if ( __debug__ ):
-            print("Not allowed to edit %s by %s" % (item,user))
-        return HttpResponseRedirect(
-            reverse('browse'+itemclass, args=[user.id])
-        )
+    if not item.canBeUpdatedBy(user):
+        raise PermissionError("Not allowed")
     if request.method == 'POST':
         form = mforms.DeleteForm(item, request.POST)
         if form.is_valid():
@@ -164,9 +157,6 @@ def deleteAnalysis(request, user, analysis_id):
 def deleteCurveSet(request, user, curveset_id):
     try:
         a = mmodels.CurveSet.objects.get(id=curveset_id)
-        if ( a.locked ):
-            pass
-            #TODO: cannot be modified.
     except ObjectDoesNotExist:
         a=None
     return deleteGeneric(request, user, a)
@@ -285,9 +275,9 @@ def editCurveSet(request,user,curveset_id):
     if not cs.canBeUpdatedBy(user):
         raise PermissionError('Not allowed')
 
+    txt = ''
     if ( cs.locked ):
-        #show that is is locked
-        pass
+        txt = "This curveset is used by analysis method and cannot be modified."
 
     mm = mmm.MethodManager(user=user, curveset_id=curveset_id)
 
@@ -307,7 +297,7 @@ def editCurveSet(request,user,curveset_id):
                 procid = formProc.process(user,cs)
                 return HttpResponseRedirect(reverse('process', args=[user.id, procid]))
         else:
-            formProc = mm.getProcessingSelectionForm()
+            formProc = mm.getProcessingSelectionForm(disabled=cs.locked)
 
         if ( 'submitFormAnalyte' in request.POST ):
             formAnalyte = mforms.AddAnalytesForm(user, "CurveSet", curveset_id, request.POST)
@@ -322,14 +312,14 @@ def editCurveSet(request,user,curveset_id):
     else:
         formAnalyte = mforms.AddAnalytesForm(user, "CurveSet", curveset_id)
         formGenerate = mm.getAnalysisSelectionForm()
-        formProc = mm.getProcessingSelectionForm()
+        formProc = mm.getProcessingSelectionForm(disabled=cs.locked)
 
     try:
         cs = mmodels.CurveSet.objects.get(id=curveset_id)
         if not cs.canBeReadBy(user):
             raise PermissionError('Not allowed')
-    except PermissionError:
-        raise 404
+    except ObjectDoesNotExist:
+        raise PermissionError('Does not exists')
 
     cal_disp = ""
     plotScr, plotDiv = generatePlot(
@@ -406,7 +396,7 @@ def showCurveFile(request, user, file_id):
     try:
         cf = mmodels.CurveFile.objects.get(id=file_id, deleted=False)
     except ObjectDoesNotExist:
-        cf = None
+        raise PermissionError("Does not exists")
 
     if not cf.canBeReadBy(user):
         raise PermissionError('Not allowed')

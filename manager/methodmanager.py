@@ -1,5 +1,6 @@
 import sys
-from abc import ABC, abstractmethod
+import os
+from abc import ABC, abstractmethod, abstractclassmethod
 from django import forms
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.urlresolvers import reverse
@@ -58,13 +59,11 @@ class MethodManager:
         self.__activateMethod()
 
     def __loadMethods(self):
-        import os
         dir_path = os.path.dirname(os.path.realpath(__file__))
-        from os import listdir
-        from os.path import isfile, join
         methodspath = dir_path + "/methods/"
-        onlyfiles = [f for f in listdir(methodspath) if isfile(join(methodspath, f))  and
-            f.endswith('.py')]
+        onlyfiles = [ 
+            f for f in os.listdir(methodspath) if os.path.isfile(os.path.join(methodspath, f)) and f.endswith('.py')
+        ]
         sys.path.append(methodspath)
         for fm in onlyfiles:
             if not fm == '__init__.py':
@@ -75,7 +74,7 @@ class MethodManager:
 
     def __registerMethod(self,mclass):
         if str(mclass.__name__) == self.methods[mclass.type()]:
-            raise NameError("Name " + str(mclass.__name__) + " already exists in " + mclass.type())
+            raise NameError("Name " + repr(mclass) + " already exists in " + mclass.type())
         self.methods[mclass.type()][str(mclass.__name__)] = mclass
 
     def __activateMethod(self):
@@ -100,7 +99,7 @@ class MethodManager:
         if self.__method.has_next == False or self.__method.operation is None:
             return HttpResponseRedirect(self.__model.getRedirectURL(user))
         elif not self.isMethodSelected():
-            return HttpResponseRedirect( reverse("browseCurveSet") )
+            return HttpResponseRedirect(reverse("browseCurveSet"))
 
         operationText = dict( 
             head= '', 
@@ -186,8 +185,8 @@ class MethodManager:
             self.parent = parent
             choices = list(
                 zip(
-                    [ str(x) for x in methods ],
-                    methods
+                    [ str(k) for k,v in methods.items() ],
+                    [ v.__str__() for k,v in methods.items() ]
                 )
             )
 
@@ -303,8 +302,11 @@ class Method(ABC):
     def getInfo(self, request, user):
         pass
 
-    @abstractmethod
-    def __str__(self):
+    @abstractclassmethod
+    def __str__(cls):
+        """
+        This is displayed to user as name of method
+        """
         pass
 
     def __repr__(self):
