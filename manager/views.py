@@ -10,6 +10,26 @@ import manager.models as mmodels
 import manager.forms as mforms
 import manager.plotmanager as mpm
 from manager import methodmanager as mmm
+from manager.exceptions import VoltPyNotAllowed, VoltPyDoesNotExists
+
+def redirect_on_voltpyexceptions(fun):
+    def wrap(*args, **kwargs):
+        user = kwargs.get('user', None)
+        try:
+            return fun(*args, **kwargs)
+        except VoltPyNotAllowed as e:
+            print("Got not allowed! ", repr(e))
+            if user is None:
+                return HttpResponseRedirect(reverse('indexNoUser'))
+            else:
+                return HttpResponseRedirect(reverse('index'))
+        except VoltPyDoesNotExists as e:
+            print("Got does not exists! ", repr(e))
+            if user is None:
+                return HttpResponseRedirect(reverse('indexNoUser'))
+            else:
+                return HttpResponseRedirect(reverse('index'))
+    return wrap
 
 def with_user(fun):
     def wrap(*args, **kwargs):
@@ -17,24 +37,28 @@ def with_user(fun):
         try:
             user_id = int(user_id)
         except (TypeError, ValueError):
-            raise PermissionError('No user')
+            raise VoltPyNotAllowed(None)
         try:
             user = mmodels.User.objects.get(id=user_id)
         except ObjectDoesNotExist:
-            raise PermissionError('No user')
+            raise VoltPyNotAllowed(None)
         kwargs['user'] = user
         return fun(*args, **kwargs)
     return wrap
 
+
+@redirect_on_voltpyexceptions
 def indexNoUser(request):
     template = loader.get_template('manager/index.html')
     return HttpResponse(template.render({'user' : None }, request))
 
+@redirect_on_voltpyexceptions
 @with_user
 def index(request, user):
     template = loader.get_template('manager/index.html')
     return HttpResponse(template.render({ 'user': user }, request))
 
+@redirect_on_voltpyexceptions
 def login(request):
     user_id = 1
     try:
@@ -47,6 +71,7 @@ def login(request):
 def logout(request):
     return HttpResponseRedirect(reverse('indexNoUser'))
 
+@redirect_on_voltpyexceptions
 @with_user
 def browseCurveFile(request, user):
     files = mmodels.CurveFile.objects.filter(owner=user, deleted=False)
@@ -69,6 +94,7 @@ def browseCurveFile(request, user):
     }
     return HttpResponse(template.render(context, request))
 
+@redirect_on_voltpyexceptions
 @with_user
 def browseAnalysis(request, user):
     anals = mmodels.Analysis.objects.filter(owner=user, deleted=False)
@@ -90,6 +116,7 @@ def browseAnalysis(request, user):
     }
     return HttpResponse(template.render(context, request))
 
+@redirect_on_voltpyexceptions
 @with_user
 def browseCurveSet(request, user):
     csets = mmodels.CurveSet.objects.filter(owner=user, deleted=False)
@@ -122,7 +149,7 @@ def deleteGeneric(request, user, item):
 
     itemclass = str(item.__class__.__name__)
     if not item.canBeUpdatedBy(user):
-        raise PermissionError("Not allowed")
+        raise VoltPyNotAllowed(user)
     if request.method == 'POST':
         form = mforms.DeleteForm(item, request.POST)
         if form.is_valid():
@@ -142,6 +169,7 @@ def deleteGeneric(request, user, item):
     }
     return render(request, 'manager/deleteGeneric.html', context)
 
+@redirect_on_voltpyexceptions
 @with_user
 def deleteCurveFile(request, user, file_id):
     try:
@@ -150,6 +178,7 @@ def deleteCurveFile(request, user, file_id):
         cfile = None
     return deleteGeneric(request, user, cfile)
 
+@redirect_on_voltpyexceptions
 @with_user
 def deleteCurve(request, user, curve_id):
     try:
@@ -158,6 +187,7 @@ def deleteCurve(request, user, curve_id):
         c=None
     return deleteGeneric(request, user, c)
 
+@redirect_on_voltpyexceptions
 @with_user
 def deleteAnalysis(request, user, analysis_id):
     try:
@@ -166,6 +196,7 @@ def deleteAnalysis(request, user, analysis_id):
         a=None
     return deleteGeneric(request, user, a)
 
+@redirect_on_voltpyexceptions
 @with_user
 def deleteCurveSet(request, user, curveset_id):
     try:
@@ -174,6 +205,7 @@ def deleteCurveSet(request, user, curveset_id):
         a=None
     return deleteGeneric(request, user, a)
 
+@redirect_on_voltpyexceptions
 @with_user
 def createCurveSet(request, user):
     if request.method == 'POST':
@@ -195,7 +227,7 @@ def createCurveSet(request, user):
     }
     return render(request, 'manager/createCurveSet.html', context)
 
-
+@redirect_on_voltpyexceptions
 @with_user
 def showAnalysis(request, user, analysis_id):
     try:
@@ -204,7 +236,7 @@ def showAnalysis(request, user, analysis_id):
         an = None
 
     if not an.canBeReadBy(user):
-        raise PermissionError('Not allowed')
+        raise VoltPyNotAllowed(user)
 
     if an.completed == False:
         return HttpResponseRedirect(reverse('analyze', args=[user.id, an.id]))
@@ -230,6 +262,7 @@ def showAnalysis(request, user, analysis_id):
     }
     return HttpResponse(template.render(context, request))
 
+@redirect_on_voltpyexceptions
 @with_user
 def showProcessed(request, user, processing_id):
     try:
@@ -247,6 +280,7 @@ def showProcessed(request, user, processing_id):
     }
     return HttpResponse(template.render(context, request))
 
+@redirect_on_voltpyexceptions
 @with_user
 def showCurveSet(request, user, curveset_id):
     try:
@@ -255,7 +289,7 @@ def showCurveSet(request, user, curveset_id):
         cs = None
 
     if not cs.canBeReadBy(user):
-        raise PermissionError('Not allowed')
+        raise VoltPyNotAllowed(user)
 
     template = loader.get_template('manager/showCurveSet.html')
     plotScr, plotDiv = generatePlot(
@@ -274,19 +308,21 @@ def showCurveSet(request, user, curveset_id):
     }
     return HttpResponse(template.render(context, request))
 
+@redirect_on_voltpyexceptions
 @with_user
 def editAnalysis(request, user, analysis_id):
     pass
 
+@redirect_on_voltpyexceptions
 @with_user
 def editCurveSet(request,user,curveset_id):
     try:
         cs = mmodels.CurveSet.objects.get(id=curveset_id)
     except ObjectDoesNotExist:
-        raise 404
+        raise VoltPyDoesNotExists('Cannot be accessed.')
 
     if not cs.canBeUpdatedBy(user):
-        raise PermissionError('Not allowed')
+        raise VoltPyNotAllowed(user)
 
     txt = ''
     if ( cs.locked ):
@@ -330,9 +366,9 @@ def editCurveSet(request,user,curveset_id):
     try:
         cs = mmodels.CurveSet.objects.get(id=curveset_id)
         if not cs.canBeReadBy(user):
-            raise PermissionError('Not allowed')
+            raise VoltPyNotAllowed(user)
     except ObjectDoesNotExist:
-        raise PermissionError('Does not exists')
+        raise VoltPyNotAllowed(user)
 
     cal_disp = ""
     plotScr, plotDiv = generatePlot(
@@ -355,12 +391,13 @@ def editCurveSet(request,user,curveset_id):
     }
     return render(request, 'manager/editCurveSet.html', context)
 
+@redirect_on_voltpyexceptions
 @with_user
 def upload(request, user):
     if request.method == 'POST':
         form = mforms.UploadFileForm(request.POST, request.FILES)
         if form.is_valid():
-            if ( form.process(user, request) == True ):
+            if (form.process(user, request) == True):
                 file_id = form.file_id
                 return HttpResponseRedirect(
                     reverse('editCurveFile', args=[user.id, file_id])
@@ -375,7 +412,7 @@ def upload(request, user):
     }
     return render(request, 'manager/uploadFile.html', context)
 
-
+@redirect_on_voltpyexceptions
 @with_user
 def editCurveFile(request, user, file_id,):
     if request.method == 'POST':
@@ -404,15 +441,16 @@ def editCurveFile(request, user, file_id,):
     }
     return render(request, 'manager/editFile.html', context)
 
+@redirect_on_voltpyexceptions
 @with_user
 def showCurveFile(request, user, file_id):
     try:
         cf = mmodels.CurveFile.objects.get(id=file_id, deleted=False)
     except ObjectDoesNotExist:
-        raise PermissionError("Does not exists")
+        raise VoltPyNotAllowed(user)
 
     if not cf.canBeReadBy(user):
-        raise PermissionError('Not allowed')
+        raise VoltPyNotAllowed(user)
 
     if ( __debug__): 
         print(cf)
@@ -434,12 +472,14 @@ def showCurveFile(request, user, file_id):
     }
     return HttpResponse(template.render(context, request))
 
+@redirect_on_voltpyexceptions
 @with_user
 def analyze(request, user, analysis_id):
     mm = mmm.MethodManager(user=user, analysis_id=analysis_id)
     mm.process(request=request, user=user)
     return mm.getContent(request=request, user=user) 
 
+@redirect_on_voltpyexceptions
 @with_user
 def process(request, user, processing_id):
     mm = mmm.MethodManager(user=user, processing_id=processing_id)
