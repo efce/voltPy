@@ -53,15 +53,19 @@ def browseCurveFile(request, user):
 
     template = loader.get_template('manager/browse.html')
     context = {
-        'scripts': mpm.PlotManager.required_scripts,
-        'browse_by' : 'files',
         'user' : user,
-        'disp' : files,
+        'scripts': mpm.PlotManager.required_scripts,
+        'list_header' : 'Displaying Uploaded files:',
+        'list_to_disp' : files,
         'action1': "editCurveFile",
         'action2': "deleteCurveFile",
-        'action2_text': '(delete)',
-        'whenEmpty' : "You have no files uploaded. <a href=" +\
-                        reverse('upload', args=[user.id]) + ">Upload one</a>."
+        'action2_text': ' (delete) ',
+        'whenEmpty' : ''.join([
+                            "You have no files uploaded. ",
+                            "<a href='{url}'>Upload one</a>.".format( 
+                                url=reverse('upload', args=[user.id])
+                            ),
+                        ])
     }
     return HttpResponse(template.render(context, request))
 
@@ -70,14 +74,19 @@ def browseAnalysis(request, user):
     anals = mmodels.Analysis.objects.filter(owner=user, deleted=False)
     template = loader.get_template('manager/browse.html')
     context = {
-        'scripts': mpm.PlotManager.required_scripts,
-        'browse_by' : 'Analysis',
         'user' : user,
-        'disp' : anals,
+        'scripts': mpm.PlotManager.required_scripts,
+        'list_header' : 'Displaying Analysis:',
+        'list_to_disp' : anals,
         'action1': "showAnalysis",
         'action2': "deleteAnalysis",
-        'action2_text': '(delete)',
-        'whenEmpty' : "Analysis can only be performed on the CurveSet" 
+        'action2_text': ' (delete) ',
+        'whenEmpty' : ''.join([
+                            "Analysis can only be performed on the CurveSet. ",
+                            "<a href='{url}'>Choose one</a>.".format( 
+                                url=reverse('browseCurveSet', args=[user.id])
+                            ),
+                        ])
     }
     return HttpResponse(template.render(context, request))
 
@@ -89,15 +98,19 @@ def browseCurveSet(request, user):
         print(csets)
     template = loader.get_template('manager/browse.html')
     context = {
-        'scripts': mpm.PlotManager.required_scripts,
-        'browse_by' : 'Curve Set',
         'user' : user,
-        'disp' : csets,
+        'scripts': mpm.PlotManager.required_scripts,
+        'list_header' : 'Displaying CurveSets:',
+        'list_to_disp' : csets,
         'action1': 'editCurveSet',
         'action2': 'deleteCurveSet',
         'action2_text': ' (delete) ',
-        'whenEmpty' : "You have no curve sets. <a href=" +\
-                        reverse('createCurveSet', args=[user.id]) + ">Prepare one</a>."
+        'whenEmpty' : ''.join([
+                            "You have no CurveSets. ",
+                            "<a href='{url}'>Prepare one</a>.".format( 
+                                url=reverse('createCurveSet', args=[user.id])
+                            ),
+                        ])
     }
     return HttpResponse(template.render(context, request))
 
