@@ -1,3 +1,5 @@
+from django.core.urlresolvers import reverse
+from django.http import HttpResponseRedirect
 from django.shortcuts import render
 from manager.exceptions import VoltPyNotAllowed, VoltPyDoesNotExists
 import manager.plotmanager as mpm
