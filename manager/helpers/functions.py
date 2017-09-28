@@ -5,6 +5,10 @@ import manager.forms as mforms
 import collections
 
 def voltpy_render(*args, **kwargs):
+    """
+    This is proxy function which sets usually needed context elemenets.
+    It is very much prefered over django default.
+    """
     request = kwargs['request']
     context = kwargs.pop('context', {})
     con_scr = context.get('scripts','')
@@ -31,6 +35,10 @@ def add_notification(request, text, severity=0):
     request.session['VOLTPY_notification'] = notifications
 
 def delete_generic(request, user, item):
+    """
+    The generic function to which offers ability to delete
+    model istance with user confirmation.
+    """
     if item == None:
         return HttpResponseRedirect(
             reverse('index', args=[user.id])
@@ -56,7 +64,7 @@ def delete_generic(request, user, item):
         'item': item,
         'user': user
     }
-    return render_with_notifications(
+    return voltpy_render(
         request=request, 
         template_name='manager/deleteGeneric.html',
         context=context

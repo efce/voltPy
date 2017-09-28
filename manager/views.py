@@ -454,7 +454,6 @@ def process(request, user, processing_id):
 
 @with_user
 def plotInteraction(request, user):
-    import manager.plotmanager as mpm
     if request.method != 'POST' or not request.POST.get('query', None):
         return HttpResponse('Error')
    
@@ -469,6 +468,7 @@ def plotInteraction(request, user):
         mm.process(request=request, user=user)
         ret = mm.getJSON(user=user)
     elif (request.POST.get('query') == 'plotmanager' ): 
+        import manager.plotmanager as mpm
         pm = mpm.PlotManager()
         ret = pm.plotInteraction(request=request, user=user)
     else:
