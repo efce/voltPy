@@ -23,8 +23,6 @@ urlpatterns = [
         views.showCurveFile, name='showCurveFile'),
     url(r'^(?P<user_id>[0-9]+)/delete-curve/(?P<curve_id>[0-9]+)/$', 
         views.deleteCurve, name='deleteCurve'),
-    url(r'^(?P<user_id>[0-9]+)/generate-plot/(?P<plot_type>[a-z]+)/(?P<value_id>[0-9,]+)/$',
-        views.generatePlot, name='generatePlot'),
     url(r'^(?P<user_id>[0-9]+)/browse-curvesets/$', 
         views.browseCurveSet, name='browseCurveSet'),
     url(r'^(?P<user_id>[0-9]+)/create-curve-set/$', 

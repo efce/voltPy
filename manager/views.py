@@ -1,72 +1,22 @@
 from django.core.urlresolvers import reverse
 from django.core.exceptions import ObjectDoesNotExist
-from django.http import HttpResponse
 from django.http import HttpResponseRedirect
-from django.shortcuts import render
-from django.views.decorators.cache import never_cache
 import json
 import manager.models as mmodels
 import manager.forms as mforms
-import manager.plotmanager as mpm
 from manager import methodmanager as mmm
 from manager.exceptions import VoltPyNotAllowed, VoltPyDoesNotExists
-
-def redirect_on_voltpyexceptions(fun):
-    def wrap(*args, **kwargs):
-        user = kwargs.get('user', None)
-        try:
-            return fun(*args, **kwargs)
-        except VoltPyNotAllowed as e:
-            print("Got not allowed! ", repr(e))
-            if user is None:
-                return HttpResponseRedirect(reverse('indexNoUser'))
-            else:
-                return HttpResponseRedirect(reverse('index'))
-        except VoltPyDoesNotExists as e:
-            print("Got does not exists! ", repr(e))
-            if user is None:
-                return HttpResponseRedirect(reverse('indexNoUser'))
-            else:
-                return HttpResponseRedirect(reverse('index'))
-    return wrap
-
-def with_user(fun):
-    def wrap(*args, **kwargs):
-        user_id = kwargs.pop('user_id', None)
-        try:
-            user_id = int(user_id)
-        except (TypeError, ValueError):
-            raise VoltPyNotAllowed(None)
-        try:
-            user = mmodels.User.objects.get(id=user_id)
-        except ObjectDoesNotExist:
-            raise VoltPyNotAllowed(None)
-        kwargs['user'] = user
-        return fun(*args, **kwargs)
-    return wrap
-
-def add_notification(request, text, severity=0):
-    import collections
-    notifications = request.session.get('VOLTPY_notification', [])
-    notifications.append( {'text': text, 'severity':severity} )
-    request.session['VOLTPY_notification'] = notifications
-
-def render_with_notifications(*args, **kwargs):
-    request = kwargs['request']
-    notifications = request.session.pop('VOLTPY_notification', [])
-    if ( len(notifications) > 0 ):
-        context = kwargs.pop('context', {})
-        con_note = context.get('notifications',[])
-        con_note.extend(notifications)
-        context['notifications'] = con_note
-        return render(*args, **kwargs, context=context)
-    else:
-        return render(*args, **kwargs)
+from manager.helpers.functions import add_notification
+from manager.helpers.functions import delete_generic
+from manager.helpers.functions import generate_plot
+from manager.helpers.functions import voltpy_render
+from manager.helpers.decorators import with_user
+from manager.helpers.decorators import redirect_on_voltpyexceptions
 
 @redirect_on_voltpyexceptions
 def indexNoUser(request):
     context = {'user': None}
-    return render_with_notifications(
+    return voltpy_render(
         request=request, 
         template_name='manager/index.html', 
         context=context
@@ -76,7 +26,7 @@ def indexNoUser(request):
 @with_user
 def index(request, user):
     context = {'user': user}
-    return render_with_notifications(
+    return voltpy_render(
         request=request, 
         template_name='manager/index.html', 
         context=context
@@ -84,6 +34,7 @@ def index(request, user):
 
 @redirect_on_voltpyexceptions
 def login(request):
+    #TODO: temp
     user_id = 1
     try:
         user = mmodels.User.objects.get(id=user_id)
@@ -103,7 +54,6 @@ def browseCurveFile(request, user):
     files = mmodels.CurveFile.objects.filter(owner=user, deleted=False)
     context = {
         'user' : user,
-        'scripts': mpm.PlotManager.required_scripts,
         'list_header' : 'Displaying Uploaded files:',
         'list_to_disp' : files,
         'action1': "editCurveFile",
@@ -116,7 +66,7 @@ def browseCurveFile(request, user):
                             ),
                         ])
     }
-    return render_with_notifications(
+    return voltpy_render(
         request=request, 
         template_name='manager/browse.html',
         context=context
@@ -128,7 +78,6 @@ def browseAnalysis(request, user):
     anals = mmodels.Analysis.objects.filter(owner=user, deleted=False)
     context = {
         'user' : user,
-        'scripts': mpm.PlotManager.required_scripts,
         'list_header' : 'Displaying Analysis:',
         'list_to_disp' : anals,
         'action1': "showAnalysis",
@@ -141,7 +90,7 @@ def browseAnalysis(request, user):
                             ),
                         ])
     }
-    return render_with_notifications(
+    return voltpy_render(
         request=request, 
         template_name='manager/browse.html',
         context=context
@@ -156,7 +105,6 @@ def browseCurveSet(request, user):
         print(csets)
     context = {
         'user' : user,
-        'scripts': mpm.PlotManager.required_scripts,
         'list_header' : 'Displaying CurveSets:',
         'list_to_disp' : csets,
         'action1': 'editCurveSet',
@@ -169,41 +117,9 @@ def browseCurveSet(request, user):
                             ),
                         ])
     }
-    return render_with_notifications(
+    return voltpy_render(
         request=request, 
         template_name='manager/browse.html',
-        context=context
-    )
-
-def deleteGeneric(request, user, item):
-    if item == None:
-        return HttpResponseRedirect(
-            reverse('index', args=[user.id])
-        )
-
-    itemclass = str(item.__class__.__name__)
-    if not item.canBeUpdatedBy(user):
-        raise VoltPyNotAllowed(user)
-    if request.method == 'POST':
-        form = mforms.DeleteForm(item, request.POST)
-        if form.is_valid():
-            a = form.process(user, item)
-            if a:
-                return HttpResponseRedirect(
-                    reverse('browse'+itemclass, args=[user.id])
-                )
-    else:
-        form = mforms.DeleteForm(item)
-
-    context = { 
-        'scripts': mpm.PlotManager.required_scripts,
-        'form': form,
-        'item': item,
-        'user': user
-    }
-    return render_with_notifications(
-        request=request, 
-        template_name='manager/deleteGeneric.html',
         context=context
     )
 
@@ -214,7 +130,7 @@ def deleteCurveFile(request, user, file_id):
         cfile = mmodels.CurveFile.objects.get(id=file_id)
     except ObjectDoesNotExist:
         cfile = None
-    return deleteGeneric(request, user, cfile)
+    return delete_generic(request, user, cfile)
 
 @redirect_on_voltpyexceptions
 @with_user
@@ -223,7 +139,7 @@ def deleteCurve(request, user, curve_id):
         c = mmodels.Curve.objects.get(id=curve_id)
     except ObjectDoesNotExist:
         c=None
-    return deleteGeneric(request, user, c)
+    return delete_generic(request, user, c)
 
 @redirect_on_voltpyexceptions
 @with_user
@@ -232,7 +148,7 @@ def deleteAnalysis(request, user, analysis_id):
         a = mmodels.Analysis.objects.get(id=analysis_id)
     except ObjectDoesNotExist:
         a=None
-    return deleteGeneric(request, user, a)
+    return delete_generic(request, user, a)
 
 @redirect_on_voltpyexceptions
 @with_user
@@ -241,7 +157,7 @@ def deleteCurveSet(request, user, curveset_id):
         a = mmodels.CurveSet.objects.get(id=curveset_id)
     except ObjectDoesNotExist:
         a=None
-    return deleteGeneric(request, user, a)
+    return delete_generic(request, user, a)
 
 @redirect_on_voltpyexceptions
 @with_user
@@ -259,11 +175,10 @@ def createCurveSet(request, user):
         form = mforms.SelectCurvesForCurveSetForm(user)
 
     context = {
-        'scripts': mpm.PlotManager.required_scripts,
         'form': form, 
         'user': user
     }
-    return render_with_notifications(
+    return voltpy_render(
         request=request, 
         template_name='manager/createCurveSet.html',
         context=context
@@ -285,23 +200,21 @@ def showAnalysis(request, user, analysis_id):
 
     mm = mmm.MethodManager(user=user, analysis_id=analysis_id)
     info = mm.getInfo(request=request, user=user)
-    plotScr, plotDiv = generatePlot(
+    plotScr, plotDiv = generate_plot(
         request=request, 
         user=user, 
         plot_type='curveset',
         value_id=an.curveSet.id
     )
     context = {
-        'scripts': mpm.PlotManager.required_scripts + plotScr,
+        'scripts': plotScr,
         'mainPlot': plotDiv,
         'head': info.get('head',''),
         'user' : user,
         'analysis': an,
-        'plot_width' : mpm.PlotManager.plot_width,
-        'plot_height' : mpm.PlotManager.plot_height,
         'text': info.get('body','')
     }
-    return render_with_notifications(
+    return voltpy_render(
         request=request, 
         template_name='manager/showAnalysis.html',
         context=context
@@ -315,13 +228,10 @@ def showProcessed(request, user, processing_id):
     except ObjectDoesNotExist:
         cf = None
     context = {
-        'scripts': mpm.PlotManager.required_scripts,
         'user' : user,
         'processing': processing_id,
-        'plot_width' : mpm.PlotManager.plot_width,
-        'plot_height' : mpm.PlotManager.plot_height,
     }
-    return render_with_notifications(
+    return voltpy_render(
         request=request, 
         template_name='manager/showAnalysis.html',
         context=context
@@ -338,21 +248,19 @@ def showCurveSet(request, user, curveset_id):
     if not cs.canBeReadBy(user):
         raise VoltPyNotAllowed(user)
 
-    plotScr, plotDiv = generatePlot(
+    plotScr, plotDiv = generate_plot(
         request=request, 
         user=user, 
         plot_type ='curveset',
         value_id = cs.id
     )
     context = {
-        'scripts': mpm.PlotManager.required_scripts + plotScr,
+        'scripts': plotScr,
         'mainPlot' : plotDiv,
         'user' : user,
         'curveset_id': curveset_id,
-        'plot_width' : mpm.PlotManager.plot_width,
-        'plot_height' : mpm.PlotManager.plot_height,
     }
-    return render_with_notifications(
+    return voltpy_render(
         request=request, 
         template_name='manager/showCurveSet.html',
         context=context
@@ -421,25 +329,23 @@ def editCurveSet(request,user,curveset_id):
         raise VoltPyNotAllowed(user)
 
     cal_disp = ""
-    plotScr, plotDiv = generatePlot(
+    plotScr, plotDiv = generate_plot(
         request=request, 
         user=user, 
         plot_type='curveset',
         value_id=cs.id
     )
     context = { 
-        'scripts': mpm.PlotManager.required_scripts + plotScr,
+        'scripts': plotScr,
         'mainPlot' : plotDiv,
         'formAnalyte': formAnalyte, 
         'startAnalyze' : formGenerate,
         'startProcessing' : formProc,
         'user' : user, 
         'curveset_id' : curveset_id, 
-        'plot_width' : mpm.PlotManager.plot_width,
-        'plot_height' : mpm.PlotManager.plot_height,
         'cal_disp': cal_disp
     }
-    return render_with_notifications(
+    return voltpy_render(
         request=request, 
         template_name='manager/editCurveSet.html',
         context=context
@@ -460,11 +366,10 @@ def upload(request, user):
         form = mforms.UploadFileForm()
 
     context = {
-        'scripts': mpm.PlotManager.required_scripts,
         'form': form, 
         'user': user
     }
-    return render_with_notifications(
+    return voltpy_render(
         request=request, 
         template_name='manager/uploadFile.html',
         context=context
@@ -482,22 +387,20 @@ def editCurveFile(request, user, file_id,):
                 )
     else:
         form = mforms.AddAnalytesForm(user, "File", file_id)
-    plotScr, plotDiv = generatePlot(
+    plotScr, plotDiv = generate_plot(
         request=request, 
         user=user, 
         plot_type='file',
         value_id=file_id
     )
     context = { 
-        'scripts': mpm.PlotManager.required_scripts + plotScr,
+        'scripts': plotScr,
         'mainPlot' : plotDiv,
         'user' : user, 
         'file_id' : file_id,
         'form': form,
-        'plot_width' : mpm.PlotManager.plot_width,
-        'plot_height' : mpm.PlotManager.plot_height
     }
-    return render_with_notifications(
+    return voltpy_render(
         request=request, 
         template_name='manager/editFile.html',
         context=context
@@ -516,22 +419,20 @@ def showCurveFile(request, user, file_id):
 
     if ( __debug__): 
         print(cf)
-    plotScr, plotDiv = generatePlot(
+    plotScr, plotDiv = generate_plot(
         request=request, 
         user=user, 
         plot_type='file',
         value_id=cf.id
     )
     context = { 
-        'scripts': mpm.PlotManager.required_scripts + plotScr,
+        'scripts': plotScr,
         'mainPlot' : plotDiv,
         'user' : user,
         'curvefile_id': curvefile_id,
-        'plot_width' : mpm.PlotManager.plot_width,
-        'plot_height' : mpm.PlotManager.plot_height,
         'form' : form
     }
-    return render_with_notifications(
+    return voltpy_render(
         request=request, 
         template_name='manager/showFile.html',
         context=context
@@ -553,6 +454,7 @@ def process(request, user, processing_id):
 
 @with_user
 def plotInteraction(request, user):
+    import manager.plotmanager as mpm
     if request.method != 'POST' or not request.POST.get('query', None):
         return HttpResponse('Error')
    
@@ -576,49 +478,3 @@ def plotInteraction(request, user):
         json.dumps(ret),
         'type=application/json'
     )
-
-#@never_cache
-def generatePlot(request, user, plot_type, value_id, **kwargs):
-    allowedTypes = [
-        'file',
-        'analysis',
-        'curveset',
-        'curves'
-    ]
-    if not ( plot_type in allowedTypes ):
-        return
-    vtype = kwargs.get('vtype', plot_type)
-    vid = kwargs.get('vid', value_id)
-    addTo = kwargs.get('add', None)
-
-    pm = mpm.PlotManager()
-    data=[]
-    if (plot_type == 'file' ):
-        data=pm.fileHelper(user, value_id)
-        pm.xlabel = pm.xLabelHelper(user)
-        pm.include_x_switch = True
-    elif (plot_type == 'curveset'):
-        data=pm.curveSetHelper(user, value_id)
-        pm.xlabel = pm.xLabelHelper(user)
-        pm.include_x_switch = True
-    elif (plot_type == 'analysis'):
-        data=pm.analysisHelper(user, value_id)
-        xlabel = pm.xLabelHelper(user)
-        pm.include_x_switch = False
-    elif (plot_type == 'curves'):
-        data=pm.curvesHelper(user, value_id)
-        pm.xlabel = pm.xLabelHelper(user)
-        pm.include_x_switch = True
-
-
-    pm.ylabel = 'i / µA'
-    pm.setInteraction(kwargs.get('interactionName', 'none'))
-
-    for d in data:
-        pm.add(**d)
-
-    if addTo:
-        for a in addTo:
-            pm.add(**a)
-
-    return pm.getEmbeded(request, user, vtype, vid) 

@@ -10,7 +10,7 @@ from django.template import loader
 from django.utils import timezone
 import manager.models as mmodels
 import manager.plotmanager as pm
-from manager import views as mv
+from manager.helpers.functions import generate_plot
 
 class MethodManager:
     """
@@ -112,7 +112,7 @@ class MethodManager:
                 request=request
             )
 
-            plotScr, plotDiv = mv.generatePlot(
+            plotScr, plotDiv = generate_plot(
                 request=request, 
                 user=user, 
                 plot_type='curveset',
