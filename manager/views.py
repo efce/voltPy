@@ -9,7 +9,7 @@ import json
 import manager.models as mmodels
 import manager.forms as mforms
 import manager.plotmanager as mpm
-import manager.methodmanager as mmm
+from manager import methodmanager as mmm
 
 def with_user(fun):
     def wrap(*args, **kwargs):
