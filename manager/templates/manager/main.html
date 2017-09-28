@@ -12,17 +12,18 @@
 #topmenu li a:hover { background-color: #111; }
 .wht { background: white; color: black ;  text-align: center; padding: 12px 14px; text-decoration: none; }
 #notification { background: #229; color: white; }
-{% block style %} {% endblock %}
+{% block style %} 
+{% endblock %}
 </style>
 {{ scripts | safe }}
-{% block scripts %} {% endblock %}
+{% block scripts %} 
+{% endblock %}
 </head>
 
 <body>
 
 {% block content %}
 <div id="content">
-
 {% block navigation %}
 <div id="topmenu">
 <ul>
@@ -42,8 +43,12 @@
 </ul>
 </div>
 {% endblock %}
-{% if norification %}
-<p id="notification">{{ notification }}</p>
+{% if notifications %}
+<div id="notifications">
+	{% for n in notifications %}
+	<p class="{{ n.severity }}">{{ n.text }}</p>
+	{% endfor %}
+</div>
 {% endif %}
 
 {% if mainPlot %}

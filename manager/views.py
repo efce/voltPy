@@ -3,7 +3,6 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpResponse
 from django.http import HttpResponseRedirect
 from django.shortcuts import render
-from django.template import loader
 from django.views.decorators.cache import never_cache
 import json
 import manager.models as mmodels
@@ -46,17 +45,42 @@ def with_user(fun):
         return fun(*args, **kwargs)
     return wrap
 
+def add_notification(request, text, severity=0):
+    import collections
+    notifications = request.session.get('VOLTPY_notification', [])
+    notifications.append( {'text': text, 'severity':severity} )
+    request.session['VOLTPY_notification'] = notifications
+
+def render_with_notifications(*args, **kwargs):
+    request = kwargs['request']
+    notifications = request.session.pop('VOLTPY_notification', [])
+    if ( len(notifications) > 0 ):
+        context = kwargs.pop('context', {})
+        con_note = context.get('notifications',[])
+        con_note.extend(notifications)
+        context['notifications'] = con_note
+        return render(*args, **kwargs, context=context)
+    else:
+        return render(*args, **kwargs)
 
 @redirect_on_voltpyexceptions
 def indexNoUser(request):
-    template = loader.get_template('manager/index.html')
-    return HttpResponse(template.render({'user' : None }, request))
+    context = {'user': None}
+    return render_with_notifications(
+        request=request, 
+        template_name='manager/index.html', 
+        context=context
+    )
 
 @redirect_on_voltpyexceptions
 @with_user
 def index(request, user):
-    template = loader.get_template('manager/index.html')
-    return HttpResponse(template.render({ 'user': user }, request))
+    context = {'user': user}
+    return render_with_notifications(
+        request=request, 
+        template_name='manager/index.html', 
+        context=context
+    )
 
 @redirect_on_voltpyexceptions
 def login(request):
@@ -66,17 +90,17 @@ def login(request):
     except ObjectDoesNotExist:
         user = mmodels.User(name="Użytkownik numer %i" % user_id)
         user.save()
+    add_notification(request, "Logged in successfuly.", 0)
     return HttpResponseRedirect(reverse('index', args=[ user.id ]))
 
 def logout(request):
+    add_notification(request, "Logged out successfuly.", 0)
     return HttpResponseRedirect(reverse('indexNoUser'))
 
 @redirect_on_voltpyexceptions
 @with_user
 def browseCurveFile(request, user):
     files = mmodels.CurveFile.objects.filter(owner=user, deleted=False)
-
-    template = loader.get_template('manager/browse.html')
     context = {
         'user' : user,
         'scripts': mpm.PlotManager.required_scripts,
@@ -92,13 +116,16 @@ def browseCurveFile(request, user):
                             ),
                         ])
     }
-    return HttpResponse(template.render(context, request))
+    return render_with_notifications(
+        request=request, 
+        template_name='manager/browse.html',
+        context=context
+    )
 
 @redirect_on_voltpyexceptions
 @with_user
 def browseAnalysis(request, user):
     anals = mmodels.Analysis.objects.filter(owner=user, deleted=False)
-    template = loader.get_template('manager/browse.html')
     context = {
         'user' : user,
         'scripts': mpm.PlotManager.required_scripts,
@@ -114,7 +141,11 @@ def browseAnalysis(request, user):
                             ),
                         ])
     }
-    return HttpResponse(template.render(context, request))
+    return render_with_notifications(
+        request=request, 
+        template_name='manager/browse.html',
+        context=context
+    )
 
 @redirect_on_voltpyexceptions
 @with_user
@@ -123,7 +154,6 @@ def browseCurveSet(request, user):
 
     if ( __debug__ ):
         print(csets)
-    template = loader.get_template('manager/browse.html')
     context = {
         'user' : user,
         'scripts': mpm.PlotManager.required_scripts,
@@ -139,7 +169,11 @@ def browseCurveSet(request, user):
                             ),
                         ])
     }
-    return HttpResponse(template.render(context, request))
+    return render_with_notifications(
+        request=request, 
+        template_name='manager/browse.html',
+        context=context
+    )
 
 def deleteGeneric(request, user, item):
     if item == None:
@@ -167,7 +201,11 @@ def deleteGeneric(request, user, item):
         'item': item,
         'user': user
     }
-    return render(request, 'manager/deleteGeneric.html', context)
+    return render_with_notifications(
+        request=request, 
+        template_name='manager/deleteGeneric.html',
+        context=context
+    )
 
 @redirect_on_voltpyexceptions
 @with_user
@@ -225,7 +263,11 @@ def createCurveSet(request, user):
         'form': form, 
         'user': user
     }
-    return render(request, 'manager/createCurveSet.html', context)
+    return render_with_notifications(
+        request=request, 
+        template_name='manager/createCurveSet.html',
+        context=context
+    )
 
 @redirect_on_voltpyexceptions
 @with_user
@@ -242,7 +284,6 @@ def showAnalysis(request, user, analysis_id):
         return HttpResponseRedirect(reverse('analyze', args=[user.id, an.id]))
 
     mm = mmm.MethodManager(user=user, analysis_id=analysis_id)
-    template = loader.get_template('manager/showAnalysis.html')
     info = mm.getInfo(request=request, user=user)
     plotScr, plotDiv = generatePlot(
         request=request, 
@@ -260,7 +301,11 @@ def showAnalysis(request, user, analysis_id):
         'plot_height' : mpm.PlotManager.plot_height,
         'text': info.get('body','')
     }
-    return HttpResponse(template.render(context, request))
+    return render_with_notifications(
+        request=request, 
+        template_name='manager/showAnalysis.html',
+        context=context
+    )
 
 @redirect_on_voltpyexceptions
 @with_user
@@ -269,8 +314,6 @@ def showProcessed(request, user, processing_id):
         cf = mmodels.Processing.objects.get(id=processing_id, owner=user)
     except ObjectDoesNotExist:
         cf = None
-
-    template = loader.get_template('manager/showAnalysis.html')
     context = {
         'scripts': mpm.PlotManager.required_scripts,
         'user' : user,
@@ -278,7 +321,11 @@ def showProcessed(request, user, processing_id):
         'plot_width' : mpm.PlotManager.plot_width,
         'plot_height' : mpm.PlotManager.plot_height,
     }
-    return HttpResponse(template.render(context, request))
+    return render_with_notifications(
+        request=request, 
+        template_name='manager/showAnalysis.html',
+        context=context
+    )
 
 @redirect_on_voltpyexceptions
 @with_user
@@ -286,12 +333,11 @@ def showCurveSet(request, user, curveset_id):
     try:
         cs = mmodels.CurveSet.objects.get(id=curveset_id)
     except ObjectDoesNotExist:
-        cs = None
-
+        raise VoltPyDoesNotExists()
+        
     if not cs.canBeReadBy(user):
         raise VoltPyNotAllowed(user)
 
-    template = loader.get_template('manager/showCurveSet.html')
     plotScr, plotDiv = generatePlot(
         request=request, 
         user=user, 
@@ -306,7 +352,11 @@ def showCurveSet(request, user, curveset_id):
         'plot_width' : mpm.PlotManager.plot_width,
         'plot_height' : mpm.PlotManager.plot_height,
     }
-    return HttpResponse(template.render(context, request))
+    return render_with_notifications(
+        request=request, 
+        template_name='manager/showCurveSet.html',
+        context=context
+    )
 
 @redirect_on_voltpyexceptions
 @with_user
@@ -389,7 +439,11 @@ def editCurveSet(request,user,curveset_id):
         'plot_height' : mpm.PlotManager.plot_height,
         'cal_disp': cal_disp
     }
-    return render(request, 'manager/editCurveSet.html', context)
+    return render_with_notifications(
+        request=request, 
+        template_name='manager/editCurveSet.html',
+        context=context
+    )
 
 @redirect_on_voltpyexceptions
 @with_user
@@ -410,7 +464,11 @@ def upload(request, user):
         'form': form, 
         'user': user
     }
-    return render(request, 'manager/uploadFile.html', context)
+    return render_with_notifications(
+        request=request, 
+        template_name='manager/uploadFile.html',
+        context=context
+    )
 
 @redirect_on_voltpyexceptions
 @with_user
@@ -439,7 +497,11 @@ def editCurveFile(request, user, file_id,):
         'plot_width' : mpm.PlotManager.plot_width,
         'plot_height' : mpm.PlotManager.plot_height
     }
-    return render(request, 'manager/editFile.html', context)
+    return render_with_notifications(
+        request=request, 
+        template_name='manager/editFile.html',
+        context=context
+    )
 
 @redirect_on_voltpyexceptions
 @with_user
@@ -454,7 +516,6 @@ def showCurveFile(request, user, file_id):
 
     if ( __debug__): 
         print(cf)
-    template = loader.get_template('manager/showFile.html')
     plotScr, plotDiv = generatePlot(
         request=request, 
         user=user, 
@@ -470,7 +531,11 @@ def showCurveFile(request, user, file_id):
         'plot_height' : mpm.PlotManager.plot_height,
         'form' : form
     }
-    return HttpResponse(template.render(context, request))
+    return render_with_notifications(
+        request=request, 
+        template_name='manager/showFile.html',
+        context=context
+    )
 
 @redirect_on_voltpyexceptions
 @with_user
