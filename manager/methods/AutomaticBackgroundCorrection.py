@@ -14,7 +14,8 @@ class AutomaticBackgroundCorrection(mm.ProcessingMethod):
     ]
     model = None
 
-    def __str__(self):
+    @classmethod
+    def __str__(cls):
         return "Automatic Background Correction"
 
     def finalize(self, user):
@@ -22,6 +23,7 @@ class AutomaticBackgroundCorrection(mm.ProcessingMethod):
             newcd = deepcopy(cd)
             newcd.id = None
             newcd.pk = None
+            newcd.date = None
             xvec = range(len(cd.current))
             yvec = cd.yVector
             degree = 4

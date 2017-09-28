@@ -13,7 +13,8 @@ class RegularStandardAddition(mm.AnalysisMethod):
         },
     ]
 
-    def __str__(self):
+    @classmethod
+    def __str__(cls):
         return "Regular Standard Addition"
 
     def finalize(self, user):

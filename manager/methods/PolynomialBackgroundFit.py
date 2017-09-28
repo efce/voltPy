@@ -18,7 +18,8 @@ class PolynomialBackgroundFit(mm.ProcessingMethod):
     ]
     degree = 3
 
-    def __str__(self):
+    @classmethod
+    def __str__(cls):
         return "3rd deg Polynomial Background Fit"
 
     def process(self, user, request):
@@ -68,6 +69,7 @@ class PolynomialBackgroundFit(mm.ProcessingMethod):
             newcd = deepcopy(cd)
             newcd.id = None
             newcd.pk = None
+            newcd.date = None
             yvec = cd.yVector
             xvec = cd.xVector
             polyval = lambda x: (

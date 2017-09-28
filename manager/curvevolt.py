@@ -48,7 +48,9 @@ class CurveVolt(CurveEA):
         if ( __debug__ ):
             print('Number of params: %i' % paramNum)
         index += 4
-        self.vec_param =struct.unpack('<'+paramNum*'i', dataUnc[index:index+4*paramNum])
+        listparam = struct.unpack('<'+paramNum*'i', dataUnc[index:index+4*paramNum])
+        for i,v in enumerate(listparam):
+            self.vec_param[i] = v
         index+= (4*paramNum)
 
         #Decode vectors

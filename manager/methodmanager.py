@@ -1,18 +1,16 @@
 import sys
-from abc import ABC, abstractmethod
-from enum import IntEnum
-from django.core.urlresolvers import reverse
+import os
+from abc import ABC, abstractmethod, abstractclassmethod
 from django import forms
-from django.utils import timezone
+from django.core.exceptions import ObjectDoesNotExist
+from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect
 from django.http import HttpResponse
 from django.template import loader
-from django.core.urlresolvers import reverse
-from django.core.exceptions import ObjectDoesNotExist
-from .models import *
+from django.utils import timezone
+import manager.models as mmodels
 import manager.plotmanager as pm
-import json
-import manager.views
+from manager import views as mv
 
 class MethodManager:
     """
@@ -45,7 +43,7 @@ class MethodManager:
             self.__type = 'processing'
             _id = int(kwargs.get('processing_id', kwargs.get('processing')))
             try:
-                self.__model = Processing.objects.get(id=_id)
+                self.__model = mmodels.Processing.objects.get(id=_id)
                 self.__curveset_id = self.__model.curveSet.id
             except ObjectDoesNotExist:
                 raise 404
@@ -53,7 +51,7 @@ class MethodManager:
             self.__type = 'analysis'
             _id = int(kwargs.get('analysis_id', kwargs.get('analysis')))
             try:
-                self.__model = Analysis.objects.get(id=_id)
+                self.__model = mmodels.Analysis.objects.get(id=_id)
             except ObjectDoesNotExist:
                 raise 404
         else:
@@ -61,13 +59,11 @@ class MethodManager:
         self.__activateMethod()
 
     def __loadMethods(self):
-        import os
         dir_path = os.path.dirname(os.path.realpath(__file__))
-        from os import listdir
-        from os.path import isfile, join
         methodspath = dir_path + "/methods/"
-        onlyfiles = [f for f in listdir(methodspath) if isfile(join(methodspath, f))  and
-            f.endswith('.py')]
+        onlyfiles = [ 
+            f for f in os.listdir(methodspath) if os.path.isfile(os.path.join(methodspath, f)) and f.endswith('.py')
+        ]
         sys.path.append(methodspath)
         for fm in onlyfiles:
             if not fm == '__init__.py':
@@ -78,7 +74,7 @@ class MethodManager:
 
     def __registerMethod(self,mclass):
         if str(mclass.__name__) == self.methods[mclass.type()]:
-            raise NameError("Name " + str(mclass.__name__) + " already exists in " + mclass.type())
+            raise NameError("Name " + repr(mclass) + " already exists in " + mclass.type())
         self.methods[mclass.type()][str(mclass.__name__)] = mclass
 
     def __activateMethod(self):
@@ -103,7 +99,7 @@ class MethodManager:
         if self.__method.has_next == False or self.__method.operation is None:
             return HttpResponseRedirect(self.__model.getRedirectURL(user))
         elif not self.isMethodSelected():
-            return HttpResponseRedirect( reverse("browseCurveSet") )
+            return HttpResponseRedirect(reverse("browseCurveSet"))
 
         operationText = dict( 
             head= '', 
@@ -116,7 +112,7 @@ class MethodManager:
                 request=request
             )
 
-            plotScr, plotDiv = manager.views.generatePlot(
+            plotScr, plotDiv = mv.generatePlot(
                 request=request, 
                 user=user, 
                 plot_type='curveset',
@@ -189,8 +185,8 @@ class MethodManager:
             self.parent = parent
             choices = list(
                 zip(
-                    [ str(x) for x in methods ],
-                    methods
+                    [ str(k) for k,v in methods.items() ],
+                    [ v.__str__() for k,v in methods.items() ]
                 )
             )
 
@@ -204,10 +200,9 @@ class MethodManager:
         def process(self, user, curveset):
             if self.type == 'processing':
                 if self.cleaned_data.get('method') in self.methods:
-                    a = Processing(
+                    a = mmodels.Processing(
                         owner = user,
                         curveSet = curveset,
-                        date = timezone.now(),
                         method = self.cleaned_data.get('method'), 
                         name = "",
                         step = 0,
@@ -220,10 +215,9 @@ class MethodManager:
                     return None
             elif self.type == 'analysis':
                 if self.cleaned_data.get('method') in self.methods:
-                    a = Analysis(
+                    a = mmodels.Analysis(
                         owner = user,
                         curveSet = curveset,
-                        date = timezone.now(),
                         method = self.cleaned_data.get('method'),
                         name = "",
                         step = 0,
@@ -308,8 +302,11 @@ class Method(ABC):
     def getInfo(self, request, user):
         pass
 
-    @abstractmethod
-    def __str__(self):
+    @abstractclassmethod
+    def __str__(cls):
+        """
+        This is displayed to user as name of method
+        """
         pass
 
     def __repr__(self):

@@ -71,7 +71,8 @@ class AverageCurves(mm.ProcessingMethod):
         },
     ]
 
-    def __str__(self):
+    @classmethod
+    def __str__(cls):
         return "Average Curves"
 
     def finalize(self, user):
@@ -83,6 +84,7 @@ class AverageCurves(mm.ProcessingMethod):
                 self.model.curveSet.usedCurveData.remove(orgcd)
                 newcd.pk = None
                 newcd.id = None
+                newcd.date = None
                 cnt = 1
                 for cid in f[1:]:
                     #running average to prevent overflows

@@ -41,7 +41,8 @@ class FFTLowPass(mm.ProcessingMethod):
         },
     ]
 
-    def __str__(self):
+    @classmethod
+    def __str__(cls):
         return "Low Pass FFT filter"
 
     def finalize(self, user):
@@ -54,6 +55,7 @@ class FFTLowPass(mm.ProcessingMethod):
             newcd = deepcopy(cd)
             newcd.id = None
             newcd.pk = None
+            newcd.date = None
             iffty = np.fft.ifft(ffty)
             newcd.yVector = np.real(iffty).tolist()
             newcd.method = self.__repr__()

@@ -25,8 +25,8 @@ class CurveFile(models.Model):
     name = models.TextField()
     comment = models.TextField()
     filename = models.TextField()
-    fileDate = models.DateField()
-    uploadDate = models.DateField()
+    fileDate = models.DateField(auto_now=False, auto_now_add=False)
+    uploadDate = models.DateField(auto_now_add=True)
     deleted = models.BooleanField(default=0)
 
     def __str__(self):
@@ -52,7 +52,7 @@ class Curve(models.Model):
     name    = models.TextField()
     comment = models.TextField()
     params  = PickledObjectField()# JSON List 
-    date = models.DateField()
+    date = models.DateField(auto_now=False, auto_now_add=False)
     deleted = models.BooleanField(default=0)
 
     def __str__(self):
@@ -98,7 +98,7 @@ class CurveIndex(models.Model):
 class CurveData(models.Model):
     id = models.AutoField(primary_key=True)
     curve = models.ForeignKey(Curve, on_delete=models.CASCADE)
-    date = models.DateField()
+    date = models.DateField(auto_now_add=True)
     processing = models.ForeignKey('Processing', null=True, default=None) #What it was processed with
     time = PickledObjectField()
     potential = PickledObjectField()# JSON List 
@@ -200,7 +200,7 @@ class CurveSet(models.Model):
     id = models.AutoField(primary_key=True)
     owner = models.ForeignKey(User)
     name = models.CharField(max_length=128)
-    date = models.DateField()
+    date = models.DateField(auto_now_add=True)
     usedCurveData = models.ManyToManyField(CurveData)
     locked = models.BooleanField(default=0)
     deleted = models.BooleanField(default=0)
@@ -223,7 +223,7 @@ class Analysis(models.Model):
     id = models.AutoField(primary_key=True)
     owner = models.ForeignKey(User)
     curveSet = models.ForeignKey(CurveSet)
-    date = models.DateField()
+    date = models.DateField(auto_now_add=True)
     customData=PickledObjectField(default={})
     analytes=models.ManyToManyField(Analyte)
     name = models.TextField()
@@ -254,7 +254,7 @@ class Processing(models.Model):
     id = models.AutoField(primary_key=True)
     owner = models.ForeignKey(User)
     curveSet = models.ForeignKey(CurveSet)
-    date = models.DateField()
+    date = models.DateField(auto_now_add=True)
     customData = PickledObjectField(default={})
     name = models.TextField()
     method = models.TextField()
