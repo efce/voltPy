@@ -1,6 +1,7 @@
 from django.core.urlresolvers import reverse
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpResponseRedirect
+from django.http import JsonResponse
 import json
 import manager.models as mmodels
 import manager.forms as mforms
@@ -474,7 +475,4 @@ def plotInteraction(request, user):
     else:
         raise NameError('Unknown query type')
 
-    return HttpResponse(
-        json.dumps(ret),
-        'type=application/json'
-    )
+    return JsonResponse(ret)
