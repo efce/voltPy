@@ -25,17 +25,20 @@ class PlotManager:
     bver = bokeh.__version__
     plot_width = 850
     plot_height = 700
-    required_scripts = """
+    required_scripts = ''.join([
+    """
     <link href="http://cdn.pydata.org/bokeh/release/bokeh-%(bver)s.min.css" rel="stylesheet" type="text/css"> 
     <link href="http://cdn.pydata.org/bokeh/release/bokeh-widgets-%(bver)s.min.css" rel="stylesheet" type="text/css"> 
     <script src="http://cdn.pydata.org/bokeh/release/bokeh-%(bver)s.min.js"></script> 
     <script src="http://cdn.pydata.org/bokeh/release/bokeh-widgets-%(bver)s.min.js"></script>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
     <script type="text/javascript">
+    """ % { 'bver': bver },
+    """
     function sleep (time) {
         return new Promise((resolve) => setTimeout(resolve, time));
     }
-    function processJSONReply (data,plot='',lineData='',cursors='') {
+    function processJSONReply (data, plot='',lineData='',cursors='') {
         switch (data.command) {
         case 'none':
             return;
@@ -73,8 +76,36 @@ class PlotManager:
             alert('Not implemented...');
         }
     }
+    function queryServer(url, object, plot=null, lineData=null, cursors=null) {
+    alert('querying server');
+            window.scrollTo(0, 0);
+            $('body').css('overflow','hidden');
+            $('#voltpy-loading').css('position', 'absolute');
+            $('#voltpy-loading').css('top','0px');
+            $('#voltpy-loading').css('left','0px');
+            $('#voltpy-loading').css('width','100%');
+            $('#voltpy-loading').css('font-size','large');
+            $('#voltpy-loading').css('height','100%');
+            $('#voltpy-loading').css('z-index','999');
+            $('#voltpy-loading').css('background-color','white');
+            $('#voltpy-loading').css('color','black');
+            $('#voltpy-loading').css('display','block');
+            $('#voltpy-loading').css('text-align','center');
+            $('#voltpy-loading').css('vertical-align','middle');
+            $('#voltpy-loading').css('opacity','0.9');
+            $('#voltpy-loading').css('line-height',$('#voltpy-loading').css('height'));
+            $('#voltpy-loading').text('Loading ...');
+            $.post(url, object).done(
+                function(data) {
+                    processJSONReply(data, plot, lineData, cursors);
+                    $('#voltpy-loading').css('display','none');
+                    $('body').css('overflow','scroll');
+                }
+            );
+    };
     </script>
-    """ % { 'bver': bver }
+    """
+    ])
     def __init__(self):
         self.__random = str(random.random()).replace(".","")
         self.__line = []
@@ -404,7 +435,7 @@ class PlotManager:
             'onx': cb_obj.active,
             'csrfmiddlewaretoken': token, 
         };
-        $.post(jsonurl, object).done(function(data){processJSONReply(data);});
+        queryServer(jsonurl, object);
         """
 
         js_xaxis = '\n'.join([
@@ -438,7 +469,7 @@ class PlotManager:
                 'vtype': vtype, 
                 'vid': vid
             }
-            $.post(jsonurl, object).done(function(data) {processJSONReply(data, plot, lineSrc, cursors);});
+            queryServer(jsonurl, object, plot, lineSrc, cursors);
         }
 
         """
@@ -487,7 +518,7 @@ class PlotManager:
             'vtype': vtype, 
             'vid': vid
         }
-        $.post(jsonurl, object).done(function(data) {processJSONReply(data, plot, lineSrc, cursors);});
+        queryServer(jsonurl, object, plot, lineSrc, cursors);
         """
         js_forward = '\n'.join([
             js_postRequired,
