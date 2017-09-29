@@ -1,5 +1,3 @@
-if ( __debug__):
-    import matplotlib.pyplot as plt
 import numpy as np
 from scipy.signal import savgol_filter
 from scipy.stats import t
@@ -218,6 +216,7 @@ def slopeStandardAdditionAnalysis(DATACELL, peakLocation, options):
                     r['OK'] = False
                     print('Slopes for two sensitivities are too similar for %s' % r_l_avg )
 
+    """
     if ( __debug__ ):
         c = { 'L': 'y', 'R': 'r', 'AVG': 'b' }
         for r_l_avg,r in result.items():
@@ -231,6 +230,7 @@ def slopeStandardAdditionAnalysis(DATACELL, peakLocation, options):
                     plt.plot(r['CONC'], d, c[r_l_avg]+'o')
                     y=[ r['Fit'][s]['slope']*x+r['Fit'][s]['intercept'] for x in X ]
                     plt.plot(X,y,'-'+c[r_l_avg])
+    """
                 
 
     # Here, is a little trick, to remove the intersection points
@@ -471,4 +471,6 @@ if ( __name__ == '__main__' ):
     finalResult = slopeStandardAdditionAnalysis(stru, 105, {'forceSamePoints':True})
     import pprint
     pprint.pprint(finalResult)
+    """
     plt.show()
+    """
