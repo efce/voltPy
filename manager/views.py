@@ -336,7 +336,7 @@ def editCurveSet(request,user,curveset_id):
         value_id=cs.id
     )
     context = { 
-        'scripts': plotScr,
+        'scripts': plotScr + formProc.getJS(request) + formGenerate.getJS(request),
         'mainPlot' : plotDiv,
         'formAnalyte': formAnalyte, 
         'startAnalyze' : formGenerate,

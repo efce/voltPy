@@ -4,7 +4,7 @@ import numpy as np
 import manager.methodmanager as mm
 from manager.helpers.bkghelpers import calc_abc
 
-class AutomaticBackgroundCorrection(mm.ProcessingMethod):
+class AutomaticBaselineCorrection(mm.ProcessingMethod):
     _operations = [ 
         {
             'class': mm.OperationConfirmation,
@@ -13,10 +13,21 @@ class AutomaticBackgroundCorrection(mm.ProcessingMethod):
         },
     ]
     model = None
+    description = """
+    Automatic Baseline Correction (ABC) removes the background by the means
+    of automatic polynomial fitting. This implementation is taken from [1].
+    ABC usually two parameters to work, however, there are some values
+    which offer better performance, therefore, here the number of iterations
+    and polynomial degree are set to 40 and 4 respectivly.
+
+    [1] Górski, Ł., Ciepiela, F., & Jakubowska, M. (2014). Automatic
+    baseline correction in voltammetry. Electrochimica Acta, 136, 195–203.
+    https://doi.org/10.1016/j.electacta.2014.05.076
+    """
 
     @classmethod
     def __str__(cls):
-        return "Automatic Background Correction"
+        return "Automatic Baseline Correction"
 
     def finalize(self, user):
         for cd in self.model.curveSet.usedCurveData.all():
@@ -49,4 +60,4 @@ class AutomaticBackgroundCorrection(mm.ProcessingMethod):
             'body': ''
         }
 
-main_class = AutomaticBackgroundCorrection
+main_class = AutomaticBaselineCorrection

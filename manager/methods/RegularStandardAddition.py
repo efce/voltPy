@@ -12,6 +12,10 @@ class RegularStandardAddition(mm.AnalysisMethod):
             'desc': 'Select range containing peak.',
         },
     ]
+    description = """
+    This is standard addition method, where the height of the signal is
+    calculated as a difference between max and min signal in the given range.
+    """
 
     @classmethod
     def __str__(cls):

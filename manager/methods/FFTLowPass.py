@@ -40,6 +40,16 @@ class FFTLowPass(mm.ProcessingMethod):
             'desc': 'Select frequency treshhold.',
         },
     ]
+    description = """
+    This is low pass frequency filter used primarly for signal smoothing. The
+    procedure consists of two steps:
+    - The signal is transformed to the frequency domain and the power spectrum
+      is presented to the user.
+    - The user selects the cut off treshold, above which the frequences are
+      considered noise.
+    The procedure automatically removes this frequencies and transforms the
+    signal back to the original domain.
+    """
 
     @classmethod
     def __str__(cls):

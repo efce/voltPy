@@ -146,6 +146,7 @@ class MethodManager:
             self, 
             self.methods['analysis'],
             type='analysis', 
+            prefix='analysis',
             *args, 
             **kwargs
         )
@@ -155,6 +156,7 @@ class MethodManager:
             self, 
             self.methods['processing'],
             type='processing', 
+            prefix='processing',
             *args, 
             **kwargs
         )
@@ -196,6 +198,36 @@ class MethodManager:
                 label=label,
                 disabled=disabled
             )
+            self.fields['method-description'] = forms.CharField(
+                widget=forms.Textarea(attrs={'readonly':'readonly'}),
+                required=False,
+                initial=self.methods[list(self.methods)[0]].description,
+                label="Description:"
+            )
+
+        def getJS(self, request):
+            import json
+            js_dict = json.dumps(
+                dict(
+                    zip(
+                        [ str(k) for k,v in self.methods.items() ],
+                        [ v.description for k,v in self.methods.items() ],
+                    )
+                )
+            )
+            active_field_id = 'id_' + self.prefix + '-method'
+            js_data = """
+<script type='text/javascript'>
+$(function(){{
+    $('#{field_id}').change(function(){{
+        dict = {js_dict};
+        active =  $('#{field_id}').val();
+        mess = dict[active];
+        $('#{field_id}-description').val(mess);
+    }});
+}});
+</script>""".format(field_id=active_field_id, js_dict=js_dict)
+            return js_data
 
         def process(self, user, curveset):
             if self.type == 'processing':
@@ -239,6 +271,7 @@ class Method(ABC):
     operation = None
     model = None
     has_next = True
+    description = None
 
     def __init__(self, model):
         if not model:

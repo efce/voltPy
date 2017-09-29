@@ -11,6 +11,19 @@ class SlopeStandardAdditionAnalysis(mm.AnalysisMethod):
             'desc': 'Enter approx. X value of peak of interest.',
         },
     )
+    description = """
+    Slope Standard Addition Analysis is advanced signal analysis method, 
+    which requires that the data was registerd without current sample averaging
+    (called also multisampling). The method performs then analysis of the slope
+    of the peaks of interest in the inflection point, for a few different
+    measurement intervals. The method is descibed in [1], however, this is more
+    advanced implementation which chooses ever paramter automatically, and
+    requires only general position of peak of interest.
+
+    [1] Ciepiela, F., & Węgiel, K. (2017). Novel method for standard addition
+    signal analysis in voltammetry. The Analyst, 142(10), 1729–1734.
+    https://doi.org/10.1039/C7AN00185A
+    """
 
     @classmethod
     def __str__(cls):

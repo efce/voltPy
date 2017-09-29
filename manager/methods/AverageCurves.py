@@ -70,6 +70,10 @@ class AverageCurves(mm.ProcessingMethod):
             'desc': 'Set the same alphanumeric value to the curves you want to average.',
         },
     ]
+    description = """
+    This is simple averaging method which allow to calculate the average from
+    given number of plots.
+    """
 
     @classmethod
     def __str__(cls):
