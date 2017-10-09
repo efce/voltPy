@@ -53,7 +53,6 @@ def selfReferencingBackgroundCorrection(yvectors, concs, sens, peak_ranges):
         if width_multiply < requested_multiplier:
             peak_half_width = np.floor(peak_max/4.3)-1
 
-    width_bkg_ctr = 0
     if ( peak_half_width/3 > 3 ):
         start_width = np.ceil(peak_half_width/3)
     else:
@@ -92,18 +91,20 @@ def selfReferencingBackgroundCorrection(yvectors, concs, sens, peak_ranges):
         dy.shape[0] * dy.shape[1] * dy.shape[2] * dy.shape[3] * dy.shape[4]
     )
     total_ex = [ [True]*total_calc ] * len(concs)
+    print('Total operations: {opnum}'.format(opnum=total_calc))
     
     test_iterator = 1
     
     # DA OPERATION:
+    width_bkg_ctr = -1
     for width_bkg in width_vector:
-        procentos = np.floor(width_bkg_ctr/len(width_vector))*100
-        print('{proce}% completed ...'.format(proce=procentos))
         width_bkg_ctr += 1
-        pos_bkg_ctr = 0
+        procentos = np.floor(width_bkg_ctr/len(width_vector)*100)
+        print('{proce}% completed ...'.format(proce=procentos))
+        pos_bkg_ctr = -1
         for pos_bkg in span_vector:
             pos_bkg_ctr += 1
-            push_bkg_ctr = 0
+            push_bkg_ctr = -1
             for push_bkg in ecc_vector:
                 if ( (peak_max - push_bkg - pos_bkg - width_bkg) < 1
                 or (peak_max + push_bkg + pos_bkg + width_bkg) > len(sig)):
@@ -121,11 +122,12 @@ def selfReferencingBackgroundCorrection(yvectors, concs, sens, peak_ranges):
                         (peak_max + pos_bkg + push_bkg + width_bkg)
                     )
                 )
-                #prepare for normal cubic fit
+
                 Xvec = np.hstack([
                     np.arange(fitintervals[0][0],fitintervals[0][1]+1),
                     np.arange(fitintervals[1][0],fitintervals[1][1]+1)
                 ])
+                """
                 Xmat1 = np.array(Xvec)
                 Xmat0 = Xmat1 ** 0
                 Xmat2 = Xmat1 ** 2
@@ -136,25 +138,44 @@ def selfReferencingBackgroundCorrection(yvectors, concs, sens, peak_ranges):
                 normalFit = np.linalg.pinv(XX)
                 normalFit = np.dot(normalFit, Xmat);
                 normalFit = np.transpose(normalFit)
-                import pdb; pdb.set_trace()
+                """
 
+                sens_ctr = -1
                 for ks, vs in signals.items():
                     concs = list(vs)
+                    sens_ctr += 1
+                    conc_ctr = -1
                     for conc in sorted(concs,reverse=True):
+                        conc_ctr += 1
                         s = vs[conc]
+                        xl = np.arange(len(s))
                         yvec = np.hstack([
                             s[int(fitintervals[0][0]):int(fitintervals[0][1])+1],
                             s[int(fitintervals[1][0]):int(fitintervals[1][1])+1]
                         ])
+                        """
                         poly_coef = np.dot(normalFit, yvec)
-                        xl = np.arange(len(s))
                         bkg = poly_coef[3] * xl**3 + poly_coef[2] * xl**2 + poly_coef[1] * xl + poly_coef[0]
-                        import matplotlib.pyplot as plt
-                        plt.plot(s,'b')
-                        plt.plot(bkg,'--r')
-                        plt.show()
-                        << #TODO: POROWNAC Z POLYFITEM !!! >>
+                        """
+                        p = np.polyfit(Xvec, yvec, 3)
+                        bkg = np.polyval(p, xl)
+                        no_bkg = s - bkg
+                        peakh = (
+                            max(no_bkg[peak_ranges[0][0]:peak_ranges[0][1]])
+                            - min(no_bkg[peak_ranges[0][0]:peak_ranges[0][1]]) 
+                        )
+                        dy[width_bkg_ctr, pos_bkg_ctr, push_bkg_ctr, sens_ctr, conc_ctr] = peakh
 
+                        import matplotlib.pyplot as plt
+                        plt.plot(Xvec, yvec, '*y')
+                        plt.plot(bkg, '--g')
+                        plt.plot(s,'b')
+                        plt.plot(no_bkg, 'k')
+                        plt.show()
+                        print(peakh)
+    print('===============\nAnalyzing Data:\n==========')
+    (best_result, all_analyzedData) = fullDataAnalysis(dy, concs)
+    print(best_result)
 
 def peakParameters(curve):
     from manager.helpers.bkghelpers import calc_abc
@@ -209,4 +230,48 @@ def peakParameters(curve):
         'peak_max_index': int(np.round(peak_max)),
         'peak_half_width': int(half_width),
     }
+
+def fullDataAnalysis(dy, concs):
+    import manager.helpers.fithelpers as fithelpers
+    xvec = np.matrix(concs)
+    xvec = xvec.transpose()
+    unitVec = np.ones((len(concs),1), dtype='float')
+    X = np.concatenate((unitVec, xvec), axis=1)
+    XX = np.dot(X, np.transpose(X))
+    normalFit = np.linalg.pinv(XX)
+    normalFit = np.dot(normalFit, X);
+    normalFit = np.transpose(normalFit)
+    results = {}
+    minstd = float('inf')
+    for wi,width in enumerate(dy):
+        if width is None:
+            continue
+        results[wi] = {}
+        for spi,span in enumerate(width):
+            if span is None:
+                continue
+            results[wi][spi] = {}
+            for ei,ecc in enumerate(span):
+                if ecc is None:
+                    continue
+                results[wi][spi][ei] = {}
+                results[wi][spi][ei]['__RES__'] = []
+                for sei,sens in enumerate(ecc):
+                    if sens is None:
+                        continue
+                    results[wi][spi][ei][sei] = {}
+                    fit = np.dot(normalFit, sens)
+                    results[wi][spi][ei][sei]['fit'] = {'slope': fit[0,1], 'intercept': fit[0,0]}
+                    results[wi][spi][ei][sei]['sx0'] = fithelpers.calc_sx0(fit[0,1], fit[0,0], concs, sens)
+                    results[wi][spi][ei][sei]['rsq'] = np.corrcoef(concs, sens)[0,1] ** 2
+                    results[wi][spi][ei]['__RES__'].append( fit[0,0]/fit[0,1])
+                results[wi][spi][ei]['__STD__'] = np.std(results[wi][spi][ei]['__RES__'])
+                results[wi][spi][ei]['__AVG__'] = np.average(results[wi][spi][ei]['__RES__'])
+                print('std and result:')
+                print(results[wi][spi][ei]['__STD__'])
+                print(results[wi][spi][ei]['__AVG__'])
+                if ( results[wi][spi][ei]['__STD__'] < minstd ):
+                    best_result = results[wi][spi][ei]
+                    minstd = results[wi][spi][ei]['__STD__']
+    return (best_result, results)
 
