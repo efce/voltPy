@@ -6,39 +6,37 @@ def selfReferencingBackgroundCorrection(yvectors, concs, sens, peak_ranges):
 
     requested_multiplier = 4.3
 
-    # Complicated way of averaging of curves with the same sens and conc
-    signals = {}
-    rep = {}
-    for i,sen in enumerate(sens):
-        onesens = signals.get(sen, {})
-        concsens = onesens.get(concs[i], np.array([0.0]))
-        concsens = concsens + np.array(yvectors[i])
-        onesens[concs[i]] = concsens
-        signals[sen] = onesens
-        rs = rep.get(sen,{})
-        rc = rs.get(concs[i],0)
-        rc += 1
-        rs[concs[i]] = rc
-        rep[sen] = rs
 
-    for ks, vs in signals.items():
-        for kc, vc in vs.items():
-            vc = vc / rep[ks][kc]
-    # done -- averaged 
+    sens_yvec = {}
+    sens_conc = {}
+    uniq_sens = set(sens)
+    for us in uniq_sens:
+      selector = (np.array(sens) == us)
+      us_conc = np.array(concs)[selector]
+      us_yvec = np.array(yvectors)[selector]
+      us_uc = set(us_conc)
+      for uc in us_uc:
+          selector_conc = (np.array(us_conc) == uc)
+          mean_vec = np.mean(us_yvec[selector_conc], axis=0)
+          ysens = sens_yvec.get(us,[])
+          ysens.append([])
+          ysens[-1] = mean_vec
+          sens_yvec[us] = ysens
+          csens = sens_conc.get(us, [])
+          csens.append(uc)
+          sens_conc[us] = csens
+
     sig = []
     peak_max = None
     peak_half_width = None
-    for ks, vs in signals.items():
-        for kc, vc in vs.items():
-            peak_param = peakParameters(vc)
-            if peak_param is not None:
-                peak_max = peak_param['peak_max_index']
-                peak_half_width = peak_param['peak_half_width']
-                sig = vc
-                break
-        else:
-            continue
-        break
+    for sen, yvecs in sens_yvec.items():
+        maxconc = np.argmax(sens_conc[sen])
+        peak_param = peakParameters(yvecs[maxconc])
+        if peak_param is not None:
+            peak_max = peak_param['peak_max_index']
+            peak_half_width = peak_param['peak_half_width']
+            sig = yvecs[maxconc]
+            break
     else:
         raise ValueError('Could not obtain result')
 
@@ -79,6 +77,7 @@ def selfReferencingBackgroundCorrection(yvectors, concs, sens, peak_ranges):
         dtype=float
     )
     dy.fill(np.NAN)
+    dconc = np.zeros(shape=dy.shape, dtype=float)
     param = np.zeros(
         shape=(
             dy.shape[0], 
@@ -141,31 +140,30 @@ def selfReferencingBackgroundCorrection(yvectors, concs, sens, peak_ranges):
                 """
 
                 sens_ctr = -1
-                for ks, vs in signals.items():
-                    concs = list(vs)
+                for sen, yvecs in sens_yvec.items():
                     sens_ctr += 1
-                    conc_ctr = -1
-                    for conc in sorted(concs,reverse=True):
-                        conc_ctr += 1
-                        s = vs[conc]
-                        xl = np.arange(len(s))
-                        yvec = np.hstack([
-                            s[int(fitintervals[0][0]):int(fitintervals[0][1])+1],
-                            s[int(fitintervals[1][0]):int(fitintervals[1][1])+1]
+                    yvec_ctr = -1
+                    for yvec, yvec_conc in zip(yvecs, sens_conc[sen]):
+                        yvec_ctr += 1
+                        xl = np.arange(len(yvec))
+                        yvec_range = np.hstack([
+                            yvec[int(fitintervals[0][0]):int(fitintervals[0][1])+1],
+                            yvec[int(fitintervals[1][0]):int(fitintervals[1][1])+1]
                         ])
                         """
                         poly_coef = np.dot(normalFit, yvec)
                         bkg = poly_coef[3] * xl**3 + poly_coef[2] * xl**2 + poly_coef[1] * xl + poly_coef[0]
                         """
-                        p = np.polyfit(Xvec, yvec, 3)
+                        p = np.polyfit(Xvec, yvec_range, 3)
                         bkg = np.polyval(p, xl)
-                        no_bkg = s - bkg
+                        no_bkg = yvec - bkg
                         peakh = (
                             max(no_bkg[peak_ranges[0][0]:peak_ranges[0][1]])
                             - min(no_bkg[peak_ranges[0][0]:peak_ranges[0][1]]) 
                         )
-                        dy[width_bkg_ctr, pos_bkg_ctr, push_bkg_ctr, sens_ctr, conc_ctr] = peakh
-
+                        dy[width_bkg_ctr, pos_bkg_ctr, push_bkg_ctr, sens_ctr, yvec_ctr] = peakh
+                        dconc[width_bkg_ctr, pos_bkg_ctr, push_bkg_ctr, sens_ctr, yvec_ctr] = yvec_conc
+                        """
                         import matplotlib.pyplot as plt
                         plt.plot(Xvec, yvec, '*y')
                         plt.plot(bkg, '--g')
@@ -173,15 +171,17 @@ def selfReferencingBackgroundCorrection(yvectors, concs, sens, peak_ranges):
                         plt.plot(no_bkg, 'k')
                         plt.show()
                         print(peakh)
+                        """
     print('===============\nAnalyzing Data:\n==========')
-    (best_result, all_analyzedData) = fullDataAnalysis(dy, concs)
+    (best_result, all_analyzedData) = fullDataAnalysis(dy, dconc)
     print(best_result)
+    return best_result
 
 def peakParameters(curve):
     from manager.helpers.bkghelpers import calc_abc
     import scipy.signal
     peak_is_sure = False
-    no_bkg = calc_abc(list(range(len(curve))), curve, 5, 30)['yvec']
+    no_bkg = calc_abc(list(range(len(curve))), curve, 6, 20)['yvec']
     no_bkg = scipy.signal.savgol_filter(np.array(no_bkg),11, 3)
     maxindx = no_bkg.argmax()
     to_left = maxindx - 1
@@ -224,8 +224,11 @@ def peakParameters(curve):
         if (new_diff < diff):
             diff = new_diff
             half_index_right = i+maxindx
-    peak_max = (maxindx + (half_index_left+half_index_right)/2)/2
-    half_width = 2*(abs(peak_max-half_index_left))
+    peak_max = maxindx# + (half_index_left+half_index_right)/2)/2
+    if (abs(peak_max-half_index_left) > abs(peak_max-half_index_right)):
+        half_width = (abs(peak_max-half_index_right))
+    else:
+        half_width = (abs(peak_max-half_index_left))
     return {
         'peak_max_index': int(np.round(peak_max)),
         'peak_half_width': int(half_width),
@@ -233,14 +236,6 @@ def peakParameters(curve):
 
 def fullDataAnalysis(dy, concs):
     import manager.helpers.fithelpers as fithelpers
-    xvec = np.matrix(concs)
-    xvec = xvec.transpose()
-    unitVec = np.ones((len(concs),1), dtype='float')
-    X = np.concatenate((unitVec, xvec), axis=1)
-    XX = np.dot(X, np.transpose(X))
-    normalFit = np.linalg.pinv(XX)
-    normalFit = np.dot(normalFit, X);
-    normalFit = np.transpose(normalFit)
     results = {}
     minstd = float('inf')
     for wi,width in enumerate(dy):
@@ -260,18 +255,28 @@ def fullDataAnalysis(dy, concs):
                     if sens is None:
                         continue
                     results[wi][spi][ei][sei] = {}
-                    fit = np.dot(normalFit, sens)
-                    results[wi][spi][ei][sei]['fit'] = {'slope': fit[0,1], 'intercept': fit[0,0]}
-                    results[wi][spi][ei][sei]['sx0'] = fithelpers.calc_sx0(fit[0,1], fit[0,0], concs, sens)
-                    results[wi][spi][ei][sei]['rsq'] = np.corrcoef(concs, sens)[0,1] ** 2
-                    results[wi][spi][ei]['__RES__'].append( fit[0,0]/fit[0,1])
+                    yvconc = concs[wi,spi,wi,sei,:]
+                    p = np.polyfit(yvconc, sens, 1)
+                    results[wi][spi][ei][sei]['fit'] = {'slope': p[0], 'intercept': p[1]}
+                    results[wi][spi][ei][sei]['sx0'] = fithelpers.calc_sx0(p[0], p[1], yvconc, sens)
+                    results[wi][spi][ei][sei]['rsq'] = np.corrcoef(yvconc, sens)[0,1] ** 2
+                    results[wi][spi][ei]['__RES__'].append( p[1]/p[0])
+                    """
+                    import matplotlib.pyplot as plt
+                    plt.plot(yvconc, sens, '*r')
+                    cpoly = np.vectorize(lambda x: p[0]*x+p[1])
+                    caly = cpoly(yvconc)
+                    plt.plot(yvconc, caly.reshape(5,1), '-b')
+                    plt.show()
+                    """
                 results[wi][spi][ei]['__STD__'] = np.std(results[wi][spi][ei]['__RES__'])
                 results[wi][spi][ei]['__AVG__'] = np.average(results[wi][spi][ei]['__RES__'])
+                """
                 print('std and result:')
                 print(results[wi][spi][ei]['__STD__'])
                 print(results[wi][spi][ei]['__AVG__'])
+                """
                 if ( results[wi][spi][ei]['__STD__'] < minstd ):
                     best_result = results[wi][spi][ei]
                     minstd = results[wi][spi][ei]['__STD__']
     return (best_result, results)
-

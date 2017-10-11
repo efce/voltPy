@@ -92,12 +92,29 @@ class SelfReferencingBackgroundCorrection(mm.AnalysisMethod):
                 RANGES.append([])
                 RANGES[-1] = rng
         result = sbcm.selfReferencingBackgroundCorrection(Y, CONC, SENS, RANGES)
+        self.model.customData['result'] = result['__AVG__']
+        self.model.customData['resultStdDev'] = result['__STD__']
+        self.model.customData['fitEquations'] = {}
+        for k, v in result.items():
+            if isinstance(k, str):
+                if k.startswith('_'):
+                    continue
+            self.model.customData['fitEquations'][k] = v
+        self.model.save()
         return True
 
     def getInfo(self, request, user):
+        info = """
+        <p>Final result: {res}</br>Std dev: {stddev}</p>
+        <p>Equations:<br>{eqs}</p>
+        """.format(
+            res=self.model.customData['result'],
+            stddev=self.model.customData['resultStdDev'],
+            eqs=self.model.customData['fitEquations']
+        )
         return {
             'head': '',
-            'body': ''
+            'body': info,
         }
 
 main_class = SelfReferencingBackgroundCorrection
