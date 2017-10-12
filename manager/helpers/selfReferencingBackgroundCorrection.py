@@ -174,7 +174,6 @@ def selfReferencingBackgroundCorrection(yvectors, concs, sens, peak_ranges):
                         """
     print('===============\nAnalyzing Data:\n==========')
     (best_result, all_analyzedData) = fullDataAnalysis(dy, dconc)
-    print(best_result)
     return best_result
 
 def peakParameters(curve):

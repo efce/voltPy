@@ -119,7 +119,7 @@ class MethodManager:
                 value_id=self.__model.curveSet.id,
                 vtype=self.__method.type(),
                 vid=self.__model.id,
-                interactionName = self.__method.operation['object'].plot_interaction,
+                interactionName = self.__method.operation['class'].plot_interaction,
                 add = self.__method.getAddToPlot()
             )
 
