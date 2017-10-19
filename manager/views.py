@@ -163,6 +163,12 @@ def deleteCurveSet(request, user, curveset_id):
 @redirect_on_voltpyexceptions
 @with_user
 def createCurveSet(request, user):
+    """
+    from pyinstrument import Profiler
+    profiler = Profiler(use_signal=False)
+    profiler.start()
+    """
+
     if request.method == 'POST':
         form = mforms.SelectCurvesForCurveSetForm(user, request.POST)
         if form.is_valid():
@@ -176,14 +182,19 @@ def createCurveSet(request, user):
         form = mforms.SelectCurvesForCurveSetForm(user)
 
     context = {
-        'form': form, 
+        'formHTML': form.drawByHand(request), 
         'user': user
     }
-    return voltpy_render(
+    ret = voltpy_render(
         request=request, 
         template_name='manager/createCurveSet.html',
         context=context
     )
+    """
+    profiler.stop()
+    print(profiler.output_text())
+    """
+    return ret
 
 @redirect_on_voltpyexceptions
 @with_user

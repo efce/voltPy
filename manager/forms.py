@@ -1,3 +1,4 @@
+import django
 from django import forms
 from django.db.models import Q
 from django.utils import timezone
@@ -141,119 +142,142 @@ class SelectXForm(forms.Form):
 class SelectCurvesForCurveSetForm(forms.Form):
     name = forms.CharField(max_length=124, required=True)
     curvesetid = -1
-
     def __init__(self, user,  *args, **kwargs):
-
         super(SelectCurvesForCurveSetForm, self).__init__(*args, **kwargs)
         from django.db.models import Prefetch
-        order = ['name']
+        self.fields['name'].maintype = 'name'
+        self.fields['name'].mainid = 0
 
         files = CurveFile.objects.filter(owner=user, deleted=False).only("id", "name", "filename")
-        self.fields['FILES'] = forms.CharField(
-            label='',
-            required=False,
-            initial='Files:'
-        )
-        self.fields['FILES'].widget.attrs['readonly'] = True
-        order.append('FILES')
         for f in files:
             fname = 'curveFile_{0}'.format(f.id)
             self.fields[fname] = forms.BooleanField(label=f,required=False)
             self.fields[fname].widget.attrs['class'] = 'parent'
-            order.append(fname)
+            self.fields[fname].maintype = 'curvefile'
+            self.fields[fname].cptype = 'parent'
             cf = Curve.objects.filter(curveFile=f).values("id", "name")
             for c in cf:
-                cname = "curve_{0}_curveFile_{1}".format(c['id'], f.id)
+                cname = "curveFile_{1}_curve_{0}".format(c['id'], f.id)
                 self.fields[cname] = forms.BooleanField(label=c['name'], required=False)
                 self.fields[cname].widget.attrs['class'] = 'child'
-                order.append(cname)
-            self.fields['end_'+fname] = forms.CharField( 
-                label='', 
-                required=False,
-                initial=''
-            )
-            self.fields['end_'+fname].widget.attrs['readonly'] = True
-            self.fields['end_'+fname].widget.attrs['class'] = 'invisible'
-            order.append('end_'+fname)
+                self.fields[cname].maintype = 'curvefile'
+                self.fields[cname].cptype = 'child'
 
         css = CurveSet.objects.filter(owner=user, deleted=False).only("id", "name") 
-        self.fields['CURVESETS'] = forms.CharField(
-            label='',
-            required=False,
-            initial='Curve Sets:'
-        )
-        self.fields['CURVESETS'].widget.attrs['readonly'] = True
-        order.append('CURVESETS')
         for cs in css:
             csname = 'curveSet_{0}'.format(cs.id)
             self.fields[csname] = forms.BooleanField(
                 label=cs,
-                help_text='asdasdasd',
                 required=False
             )
+            self.fields[csname].maintype = 'curveset'
             self.fields[csname].widget.attrs['class'] = 'parent'
-            order.append(csname)
+            self.fields[csname].cptype = 'parent'
             for c in cs.usedCurveData.only("id", "curve").prefetch_related(
                     Prefetch('curve', queryset=Curve.objects.only('id','name'))
                 ):
-                cname = "curveData_{0}_curveSet_{1}".format(c.id, cs.id)
+                cname = "curveSet_{1}_curveData_{0}".format(c.id, cs.id)
                 self.fields[cname] = forms.BooleanField(label=c.curve, required=False)
                 self.fields[cname].widget.attrs['class'] = 'child'
-                order.append(cname)
-            self.fields['end_'+csname] = forms.CharField( 
-                label='', 
-                required=False,
-                initial=''
-            )
-            self.fields['end_'+csname].widget.attrs['readonly'] = True
-            self.fields['end_'+csname].widget.attrs['class'] = 'invisible'
-            order.append('end_'+csname)
-        self.keyOrder=order
+                self.fields[cname].maintype = 'curveset'
+                self.fields[cname].cptype = 'child'
 
+    def drawByHand(self, request):
+        #TODO: Django template is order of magnitude too slow for this, so do it by hand ...
+        token = django.middleware.csrf.get_token(request)
+        ret = {}
+        ret['start'] = """<form action="" method="post" id="SelectCurvesForCurveSetForm">
+        <input type='hidden' name='csrfmiddlewaretoken' value='{token}' />
+        <ul>""".format(token=token)
+        ret['curveset'] = []
+        ret['curvefile'] = []
+        namefield = self.fields.pop('name')
+        ret['start'] += """<li><input type="text" value="" name="name" /></li>"""
+        prev_parent = ''
+        for key,field in self.fields.items():
+            if ( hasattr(self, 'cleaned_data' ) ):
+                checked = self.cleaned_data.get(key, False)
+            else:
+                checked = False
+            checkedtext = ''
+            label = field.label
+            if checked:
+                checkedtext = ' checked'
+            if field.cptype == 'parent':
+                if prev_parent:
+                    ret[prev_parent].append('</ul></li>')
+                ret[field.maintype].append(
+                    '<li class="menuItem parentLI invisible"><input class="parent" type="checkbox" name="{name}"{checkedText} /><label for="id_{name}">{label} </label><img src="https://upload.wikimedia.org/wikipedia/commons/f/f0/1DownRedArrow.png" class="EXPAND upsideup" /><ul>'.format(
+                        name=key,
+                        label=label,
+                        checkedText=checkedtext
+                    )
+                )
+                prev_parent = field.maintype
+            else:
+                ret[field.maintype].append(
+                    '<li class="menuItem childClass invisible"><input class="child" type="checkbox" name="{name}"{checkedText} /><label for="id_{name}">{label}</label></li>'.format(
+                        name=key,
+                        label=label,
+                        checkedText=checkedtext
+                    )
+                )
+        if prev_parent:
+            ret[prev_parent].append('</ul></li>')
+        ret['end'] = '<li><input type="submit" name="Submit" value="submit" /></li></ul></form>'
+        self.fields['name'] = namefield
+        return ''.join([
+            ret['start'], 
+            '<li class="topClass">Files <img src="https://upload.wikimedia.org/wikipedia/commons/f/f0/1DownRedArrow.png" class="EXPAND upsideup" /><ul>',
+            '\n'.join(ret['curvefile']),
+            '</ul></li><li class="topClass">Curve sets <img src="https://upload.wikimedia.org/wikipedia/commons/f/f0/1DownRedArrow.png" class="EXPAND upsideup" /><ul>',
+            '\n'.join(ret['curveset']), 
+            '</ul></li>',
+            ret['end']
+        ])
 
     def process(self, user):
         final_curvedatas = []
         for name,val in self.cleaned_data.items():
             if ( '_' in name ):
                 nameSplit = name.split('_')
-                if "end" == nameSplit[0]:
-                    continue
-                if "curve" == nameSplit[0]:
-                    if ( val == True ) :
-                        vid = int(nameSplit[1])
-                        c = Curve.objects.get(id=vid)
-                        if not c.canBeReadBy(user):
-                            raise 3
-                        cd = CurveData.objects.get(curve=c, processing=None)
-                        final_curvedatas.append(cd)
-                        
-                elif "curveData" == nameSplit[0]:
-                    if ( val == True ) :
-                        vid = int(nameSplit[1])
-                        cd = CurveData.objects.get(id=vid)
-                        if not cd.canBeReadBy(user):
-                            raise 3
-                        final_curvedatas.append(cd)
-
-                elif "curveFile" == nameSplit[0]:
-                    if ( val == True ) :
-                        vid = int(nameSplit[1])
-                        cf = CurveFile.objects.get(id=vid)
-                        if not cf.canBeReadBy(user):
-                            raise 3
-                        cc = Curve.objects.filter(curveFile=cf, deleted=False)
-                        for c in cc.all():
+                if ( len(nameSplit) > 2 ):
+                    if "curve" == nameSplit[2]:
+                        if ( val == True ) :
+                            vid = int(nameSplit[3])
+                            c = Curve.objects.get(id=vid)
+                            if not c.canBeReadBy(user):
+                                raise 3
                             cd = CurveData.objects.get(curve=c, processing=None)
                             final_curvedatas.append(cd)
-
-                elif "curveSet" == nameSplit[0]:
-                    if ( val == True ) :
-                        vid = int(nameSplit[1])
-                        cs = CurveSet.objects.get(id=vid)
-                        if not cs.canBeReadBy(user):
-                            raise 3
-                        for cd in cs.usedCurveData.all():
+                            
+                    elif "curveData" == nameSplit[2]:
+                        if ( val == True ):
+                            vid = int(nameSplit[3])
+                            cd = CurveData.objects.get(id=vid)
+                            if not cd.canBeReadBy(user):
+                                raise 3
                             final_curvedatas.append(cd)
+                else:
+                    if "curveFile" == nameSplit[0]:
+                        if ( val == True ) :
+                            vid = int(nameSplit[1])
+                            cf = CurveFile.objects.get(id=vid)
+                            if not cf.canBeReadBy(user):
+                                raise 3
+                            cc = Curve.objects.filter(curveFile=cf, deleted=False)
+                            for c in cc.all():
+                                cd = CurveData.objects.get(curve=c, processing=None)
+                                final_curvedatas.append(cd)
+
+                    elif "curveSet" == nameSplit[0]:
+                        if ( val == True ) :
+                            vid = int(nameSplit[1])
+                            cs = CurveSet.objects.get(id=vid)
+                            if not cs.canBeReadBy(user):
+                                raise 3
+                            for cd in cs.usedCurveData.all():
+                                final_curvedatas.append(cd)
 
         if len(final_curvedatas) == 0:
             return False

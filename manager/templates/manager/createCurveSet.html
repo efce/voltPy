@@ -6,16 +6,13 @@
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
 <script type="text/javascript">
 $(function() {
-  $('#id_FILES, #id_CURVESETS').on('click', function(e) {
-    $(e.target).siblings('.parentUL').toggleClass('visible invisible');
-  });
   $('.EXPAND').on('click', function (e) {
-    $(e.target).closest('ul').children(".childClass").toggleClass("visible invisible");
+    $(e.target).next('ul').children('li').toggleClass("visible invisible");
     $(e.target).toggleClass("upsidedown upsideup")
   });
-  $('.parent').change(function() {
-    $(this).closest('.parentUL').find('.child').prop('checked', this.checked);
-    $(this).closest('.parentUL').find('.child').prop('disabled', this.checked);
+  $('.parent').on('change', function(e) {
+    $(e.target).parent().find('ul').find('.child').prop('checked', this.checked);
+    $(e.target).parent().find('ul').find('.child').prop('disabled', this.checked);
   });
 });
 </script>
@@ -37,19 +34,24 @@ li {
 .parentLI:hover {
   background-color: #000;
 }
+.topClass {
+  background-color: #222;
+  color: #EEE;
+  border: 1px solid blue;
+}
 .childClass {
-  background-color: #ddd;
+  background-color: #333;
   font-size: 13px;
   line-height: 30px;
   padding: 0px;
-  height: 0px;
 }
 .childClass:hover {
-  background-color: #FFF;
+  background-color: #111;
 }
 .invisible {
-  height: 0px;
-  overflow: hidden;
+  height: 0px !important;
+  overflow: hidden !important;
+  padding: 0px !important;
 }
 .visible {
   height: auto;
@@ -68,23 +70,5 @@ li {
 {% endblock %}
 
 {% block real_content %}
-<form method="post" action="{{ url }}" enctype="multipart/form-data">
-    <ul><li>
-	{% csrf_token %}
-	{% for field in form %}
-		{% if  "name" in field.name %}
-        </li><li class="parentLI"><label for="{{ field.name }}">{{ field.label }}</label>{{ field }}
-		{% elif  "end_" in field.name %}
-		</ul>
-		{% elif  "curveData_" in field.name or  "curve_" in field.name %}
-		<li class="menuItem childClass invisible"><label for="{{ field.name }}">{{ field.label }}</label>{{ field }}</li>
-		{% elif  "curveSet_" in field.name or  "curveFile_" in field.name %}
-		<ul class="menuItem parentUL invisible"><li class="parentLI"><label for="{{ field.name }}">{{ field.label }}</label>{{ field }}<img src="https://upload.wikimedia.org/wikipedia/commons/f/f0/1DownRedArrow.png" class="EXPAND upsideup" /></li>
-		{% else %}
-		<li class="topClass"><label for="{{ field.name }}">{{ field.label }}</label>{{ field }}
-		{% endif %}
-	{% endfor %}
-	<li><input type="submit" value="Generate" /></li>
-	</ul>
-</form>
+    {{ formHTML|safe }}
 {% endblock %}
