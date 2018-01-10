@@ -557,19 +557,19 @@ class PlotManager:
             query = data.get('query', '')  
             if ( query == 'plotmanager' ):
                 onx = data.get('onx', None)
-                if ( onx ):
+                if ( onx is not None ):
                     try:
-                        onx=int(onx)
+                        onx = int(onx)
                     except ValueError:
+                        print('value error')
                         return
                     ONX = OnXAxis.objects.get(user=user)
-                    newkey = 0
                     for k,v in enumerate(dict(OnXAxis.AVAILABLE).keys()):
                         if onx == k:
-                            newkey=k
+                            newkey = v
                             break
                         else:
-                            i+=1
+                            i += 1
                     else:
                         return
                     ONX.selected = newkey
