@@ -564,7 +564,7 @@ class PlotManager:
                         return
                     ONX = OnXAxis.objects.get(user=user)
                     newkey = 0
-                    for k,v in enumerate(OnXAxis.AVAILABLE):
+                    for k,v in enumerate(dict(OnXAxis.AVAILABLE).keys()):
                         if onx == k:
                             newkey=k
                             break
