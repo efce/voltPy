@@ -568,8 +568,6 @@ class PlotManager:
                         if onx == k:
                             newkey = v
                             break
-                        else:
-                            i += 1
                     else:
                         return
                     ONX.selected = newkey
