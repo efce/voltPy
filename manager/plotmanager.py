@@ -563,9 +563,9 @@ class PlotManager:
                     except ValueError:
                         return
                     ONX = OnXAxis.objects.get(user=user)
-                    i=0
-                    for k,v in OnXAxis.AVAILABLE:
-                        if onx == i:
+                    newkey = 0
+                    for k,v in enumerate(OnXAxis.AVAILABLE):
+                        if onx == k:
                             newkey=k
                             break
                         else:
