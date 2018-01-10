@@ -30,6 +30,8 @@ class PlotManager:
     <link href="http://cdn.pydata.org/bokeh/release/bokeh-%(bver)s.min.css" rel="stylesheet" type="text/css"> 
     <link href="http://cdn.pydata.org/bokeh/release/bokeh-widgets-%(bver)s.min.css" rel="stylesheet" type="text/css"> 
     <script src="http://cdn.pydata.org/bokeh/release/bokeh-%(bver)s.min.js"></script> 
+    <script src="http://cdn.pydata.org/bokeh/release/bokeh-%(bver)s.min.js"></script> 
+    <script src="http://cdn.pydata.org/bokeh/release/bokeh-api-%(bver)s.min.js"></script> 
     <script src="http://cdn.pydata.org/bokeh/release/bokeh-widgets-%(bver)s.min.js"></script>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
     <script type="text/javascript">
@@ -429,7 +431,22 @@ class PlotManager:
         ])
         callback = CustomJS(args=args, code=js_plot)
         self.p.js_on_event('tap', callback)
+        # SUPER HACK -- COVER PLOT UNTIL NEW IS READY:
         js_axisSub = """
+        var yheight = (plot.y_range.end - plot.y_range.start);
+        var yavg = yheight/2 + plot.y_range.start;
+        var source = new Bokeh.ColumnDataSource({ data: { 
+                x: [plot.x_range.start, plot.x_range.end],
+                y: [yavg, yavg] 
+            } 
+        });
+        var cover = new Bokeh.Line({
+            x: { field: "x" }, 
+            y: { field: "y"}, 
+            line_color: "#FFFFFF", 
+            line_width: plot.plot_height,
+        }); 
+        plot.add_glyph(cover, source);
         var object = { 
             'query': 'plotmanager', 
             'onx': cb_obj.active,
