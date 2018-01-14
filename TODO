@@ -1,0 +1,16 @@
+- User login system
+- Rework of UI/UX with themes (?)
+- User settings panel/priviledges
+- Sharing of curves/curvesets/analyses via link (readonly/editable)
+- Classes instead of functions for views
+- Debugging of Bokeh plot switching
+- Better plots with legends (or color markings of curve name/comments in html table)
+- Rework of curves selection for curveset
+- Curve processing history browsable lists
+- Separation of JavaScripts from py files / code cleanups
+- Additional processing/analysis methods:
+  - splines
+  - wavelets
+  - ATLD
+  - ICA
+  - Calibration method
