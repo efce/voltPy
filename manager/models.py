@@ -1,6 +1,6 @@
 from django.db import models
 from picklefield.fields import PickledObjectField
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 
 
 class Group(models.Model):
@@ -21,7 +21,7 @@ class User(models.Model):
 
 class CurveFile(models.Model):
     id = models.AutoField(primary_key=True)
-    owner = models.ForeignKey(User)
+    owner = models.ForeignKey(User, on_delete=models.DO_NOTHING)
     name = models.TextField()
     comment = models.TextField()
     filename = models.TextField()
@@ -99,7 +99,7 @@ class CurveData(models.Model):
     id = models.AutoField(primary_key=True)
     curve = models.ForeignKey(Curve, on_delete=models.CASCADE)
     date = models.DateField(auto_now_add=True)
-    processing = models.ForeignKey('Processing', null=True, default=None) #What it was processed with
+    processing = models.ForeignKey('Processing', null=True, default=None, on_delete=models.DO_NOTHING) #What it was processed with
     time = PickledObjectField()
     potential = PickledObjectField()# JSON List 
     current   = PickledObjectField()# JSON List 
@@ -182,8 +182,8 @@ class Analyte(models.Model):
 
 class AnalyteInCurve(models.Model):
     id = models.AutoField(primary_key=True)
-    curve=models.ForeignKey(Curve)
-    analyte=models.ForeignKey(Analyte)
+    curve=models.ForeignKey(Curve, on_delete=models.DO_NOTHING)
+    analyte=models.ForeignKey(Analyte, on_delete=models.DO_NOTHING)
     concentration=models.FloatField()
 
     def isOwnedBy(self, user):
@@ -198,7 +198,7 @@ class AnalyteInCurve(models.Model):
 
 class CurveSet(models.Model):
     id = models.AutoField(primary_key=True)
-    owner = models.ForeignKey(User)
+    owner = models.ForeignKey(User, on_delete=models.DO_NOTHING)
     name = models.CharField(max_length=128)
     date = models.DateField(auto_now_add=True)
     usedCurveData = models.ManyToManyField(CurveData)
@@ -221,8 +221,8 @@ class CurveSet(models.Model):
 
 class Analysis(models.Model):
     id = models.AutoField(primary_key=True)
-    owner = models.ForeignKey(User)
-    curveSet = models.ForeignKey(CurveSet)
+    owner = models.ForeignKey(User, on_delete=models.DO_NOTHING)
+    curveSet = models.ForeignKey(CurveSet, on_delete=models.DO_NOTHING)
     date = models.DateField(auto_now_add=True)
     customData=PickledObjectField(default={})
     analytes=models.ManyToManyField(Analyte)
@@ -252,8 +252,8 @@ class Analysis(models.Model):
 
 class Processing(models.Model):
     id = models.AutoField(primary_key=True)
-    owner = models.ForeignKey(User)
-    curveSet = models.ForeignKey(CurveSet)
+    owner = models.ForeignKey(User, on_delete=models.DO_NOTHING)
+    curveSet = models.ForeignKey(CurveSet, on_delete=models.DO_NOTHING)
     date = models.DateField(auto_now_add=True)
     customData = PickledObjectField(default={})
     name = models.TextField()
@@ -287,7 +287,7 @@ class OnXAxis(models.Model):
             ( 'T', 'Time'), 
             ( 'S', 'Samples'))
     selected = models.CharField(max_length=1, choices=AVAILABLE, default='P')
-    user = models.OneToOneField(User)
+    user = models.OneToOneField(User, on_delete=models.DO_NOTHING)
     
     def __str__(self):
         return self.selected;

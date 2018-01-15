@@ -5,7 +5,7 @@ import numpy as np
 import json 
 import django
 import random
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.core.exceptions import ObjectDoesNotExist
 from bokeh.plotting import figure, ColumnDataSource
 from bokeh.embed import components
