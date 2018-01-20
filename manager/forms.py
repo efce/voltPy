@@ -62,10 +62,10 @@ class AddAnalytesForm(forms.Form):
 
         analytesFromDb = mmodels.Analyte.objects.all()
         aic = mmodels.AnalyteInCurve.objects.filter(curves_filter_qs)
-        existingAnalytes = [ (0, 'Add new') ]
-        if analytesFromDb is not None:
-            for i, an in enumerate(analytesFromDb):
-                existingAnalytes.append( (i+1, an.name) )
+        existingAnalytes = [ (-1, 'Add new') ]
+        if analytesFromDb:
+            for an in analytesFromDb:
+                existingAnalytes.append( (an.id, an.name) )
 
         eaDefault = 0
         if aic:
@@ -98,11 +98,18 @@ class AddAnalytesForm(forms.Form):
                         label = c.name + ":\n" + c.comment ,
                         required = True )
 
+    def clean(self):
+        super().clean()
+        if int(self.cleaned_data.get('existingAnalyte', -1)) == -1:
+            if not self.cleaned_data.get('newAnalyte', '').strip():
+                raise forms.ValidationError(
+                    'New analyte cannot be empty string.'
+                )
+
 
     def process(self, user):
-
-        if self.cleaned_data.get('existingAnalyte') == 0:
-            analyteName = self.cleaned_data.get('newAnalyte').strip()
+        if int(self.cleaned_data.get('existingAnalyte', -1)) == -1:
+            analyteName = self.cleaned_data.get('newAnalyte', '').strip()
             if not analyteName:
                 #TODO: meaningful exception -- analyte cannot be empty
                 raise 3 
