@@ -58,7 +58,7 @@ class RegularStandardAddition(mm.AnalysisMethod):
         p.plot_height = 500
         scr,div = p.getEmbeded(request, user, 'analysis', self.model.id)
         return {
-            'head': ''.join([p.required_scripts, scr]),
+            'head': scr,
             'body': ''.join([
                         div,
                         'Equation: y={2}*x+{3}<br />Result: {0}, STD: {1}'.format(

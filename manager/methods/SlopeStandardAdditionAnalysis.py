@@ -105,7 +105,7 @@ class SlopeStandardAdditionAnalysis(mm.AnalysisMethod):
 
         scripts,div = p.getEmbeded(request, user, 'analysis', self.model.id)
         ret = { 
-            'head': ''.join([p.required_scripts,scripts]),
+            'head': scripts,
             'body': ''.join([div, '<p>Result: {0}<br />STD: {1}</p>'.format(
                                 self.model.customData['result'],
                                 self.model.customData['resultStdDev']) 

@@ -15,11 +15,10 @@ def voltpy_render(*args, **kwargs):
     context = kwargs.pop('context', {})
     con_scr = context.get('scripts','')
     scr = ''.join([
-        mpm.PlotManager.required_scripts,
         "\n",
         con_scr,
     ])
-    context['scripts'] = scr
+    context['bokeh_scripts'] = scr
     context['plot_width'] = mpm.PlotManager.plot_width
     context['plot_height'] = mpm.PlotManager.plot_height
     notifications = request.session.pop('VOLTPY_notification', [])
@@ -61,7 +60,6 @@ def delete_generic(request, user, item):
         form = mforms.DeleteForm(item)
 
     context = { 
-        'scripts': mpm.PlotManager.required_scripts,
         'form': form,
         'item': item,
         'user': user

@@ -1,0 +1,49 @@
+#topmenu div { 
+  margin: auto; 
+}
+#topmenu ul { 
+  list-style-type: none; 
+  margin: 0; 
+  padding: 0; 
+  overflow: hidden; 
+  background-color: #333; 
+}
+#topmenu li { 
+  float: left; 
+} 
+#topmenu li a { 
+  display: block; 
+  color: white; 
+  text-align: center; 
+  padding: 12px 14px; 
+  text-decoration: none; 
+}
+#topmenu li a:hover { 
+  background-color: #111; 
+}
+.wht { 
+  background: white; 
+  color: black ;  
+  text-align: center; 
+  padding: 12px 14px; 
+  text-decoration: none; 
+}
+#notification { 
+  background: #229; 
+  color: white; 
+}
+#loading-cover {
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  width: 100%;
+  font-size: large;
+  height: 100%;
+  z-index: 999;
+  background-color: white;
+  color: black;
+  display: block;
+  text-align: center;
+  vertical-align: middle;
+  opacity: 0.9;
+}

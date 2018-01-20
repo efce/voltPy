@@ -22,92 +22,9 @@ class PlotManager:
     title = ''
     xlabel = "x"
     ylabel = "y"
-    bver = bokeh.__version__
     plot_width = 850
     plot_height = 700
-    required_scripts = ''.join([
-    """
-    <link href="http://cdn.pydata.org/bokeh/release/bokeh-%(bver)s.min.css" rel="stylesheet" type="text/css"> 
-    <link href="http://cdn.pydata.org/bokeh/release/bokeh-widgets-%(bver)s.min.css" rel="stylesheet" type="text/css"> 
-    <script src="http://cdn.pydata.org/bokeh/release/bokeh-%(bver)s.min.js"></script> 
-    <script src="http://cdn.pydata.org/bokeh/release/bokeh-%(bver)s.min.js"></script> 
-    <script src="http://cdn.pydata.org/bokeh/release/bokeh-api-%(bver)s.min.js"></script> 
-    <script src="http://cdn.pydata.org/bokeh/release/bokeh-widgets-%(bver)s.min.js"></script>
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
-    <script type="text/javascript">
-    """ % { 'bver': bver },
-    """
-    function sleep (time) {
-        return new Promise((resolve) => setTimeout(resolve, time));
-    }
-    function processJSONReply (data, plot='',lineData='',cursors='') {
-        switch (data.command) {
-        case 'none':
-            return;
-        case 'reload':
-            sleep(500).then(()=>{location.reload();});
-            break;
-        case 'redirect':
-            location = data.location;
-            break;
-        case 'setCursor':
-            cursors[data.number].location = parseFloat(data.x);
-            cursors[data.number].line_alpha = 1;
-            break;
-        case 'setLineData':
-            var xv = lineData.data['x'];
-            var yv = lineData.data['y'];
-            for (i = 0; i < data.x.length; i++) {
-                xv[i] = data.x[i];
-                yv[i] = data.y[i];
-            }
-            xv.length = data.x.length;
-            yv.length = data.x.length;
-            lineData.trigger('change');
-            break;
-        case 'removeLine':
-            lineData.x = [];
-            lineData.y = [];
-            lineData.trigger('change');
-            break;
-        case 'removeCursor':
-            cursors[data.number].line_alpha = 0;
-            break;
-        case 'changeColor':
-        default:
-            alert('Not implemented...');
-        }
-    }
-    function queryServer(url, object, plot=null, lineData=null, cursors=null) {
-    alert('querying server');
-            window.scrollTo(0, 0);
-            $('body').css('overflow','hidden');
-            $('#voltpy-loading').css('position', 'absolute');
-            $('#voltpy-loading').css('top','0px');
-            $('#voltpy-loading').css('left','0px');
-            $('#voltpy-loading').css('width','100%');
-            $('#voltpy-loading').css('font-size','large');
-            $('#voltpy-loading').css('height','100%');
-            $('#voltpy-loading').css('z-index','999');
-            $('#voltpy-loading').css('background-color','white');
-            $('#voltpy-loading').css('color','black');
-            $('#voltpy-loading').css('display','block');
-            $('#voltpy-loading').css('text-align','center');
-            $('#voltpy-loading').css('vertical-align','middle');
-            $('#voltpy-loading').css('opacity','0.9');
-            $('#voltpy-loading').css('line-height',$('#voltpy-loading').css('height'));
-            $('#voltpy-loading').text('Loading ...');
-            $.post(url, object).done(
-                function(data) {
-                    processJSONReply(data, plot, lineData, cursors);
-                    $('#voltpy-loading').css('display','none');
-                    $('body').css('overflow','scroll');
-                }
-            );
-    };
-    </script>
-    """
-    ])
+
     def __init__(self):
         self.__random = str(random.random()).replace(".","")
         self.__line = []
@@ -123,8 +40,6 @@ class PlotManager:
             height=self.plot_height-10,
             width=self.plot_width-20
         )
-        self.required_scripts = self.required_scripts
-    
 
     def fileHelper(self, user, value_id):
         curvefile_id = value_id
@@ -612,9 +527,9 @@ class PlotManager:
             return
         if ( self.isJson ):
             ret = {
-                    'command': 'addLine',
-                    'yvec': data['yvec'],
-                    'xvec': data['xvec']
+                'command': 'addLine',
+                'yvec': data['yvec'],
+                'xvec': data['xvec']
             }
             return ret
         else:

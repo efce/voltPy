@@ -2,7 +2,9 @@
 
 {% block title %} Show {% endblock %}
 
-{% block scripts %} {{ head | safe }} {% endblock %}
+{% block inHtmlHead %} 
+  {{ head | safe }} 
+{% endblock %}
 
 {% block real_content %}
 <p>Analysis ID: {{ analysis.id }} </p>
