@@ -8,6 +8,12 @@
 - Rework of curves selection for curveset
 - Curve processing history browsable lists
 - Separation of JavaScripts from py files / code cleanups
+- Separation of HTML from py files / creation of HTML draw only funtions
+- Separation of CSS from all files (?)
+- Guidelines on how to add new Anlsysis/Processing methods
+- Own form superclass (?), with notifications after processing and automatic handling of bound/unboud forms
+- Multiple analytes for single curve support
+- Support for additional file formats and additional file/curve informations
 - Additional processing/analysis methods:
   - splines
   - wavelets
