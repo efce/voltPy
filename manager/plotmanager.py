@@ -1,5 +1,5 @@
 from django.db.models import Q
-from .models import *
+import manager.models as mmodels
 import io
 import numpy as np
 import json 
@@ -43,10 +43,10 @@ class PlotManager:
 
     def fileHelper(self, user, value_id):
         curvefile_id = value_id
-        cf = CurveFile.objects.get(id=curvefile_id)
+        cf = mmodels.CurveFile.objects.get(id=curvefile_id)
         if not cf.canBeReadBy(user):
             raise 3
-        cbs = Curve.objects.filter(curveFile=cf, deleted=False)
+        cbs = mmodels.Curve.objects.filter(curveFile=cf, deleted=False)
         return self._processCurveArray(user, cbs)
     
 
@@ -56,7 +56,7 @@ class PlotManager:
         for i in cids:
             i = int(i)
             curves_filter_qs = curves_filter_qs | Q(id=i)
-        cbs = Curve.objects.filter(curves_filter_qs)
+        cbs = mmodels.Curve.objects.filter(curves_filter_qs)
         for c in cbs:
             if not c.canBeReadBy(user):
                 raise 3
@@ -65,13 +65,13 @@ class PlotManager:
 
     def curveSetHelper(self, user, curveset_id):
         try:
-            onxs = OnXAxis.objects.get(user=user)
+            onxs = mmodels.OnXAxis.objects.get(user=user)
             onx = onxs.selected
         except ObjectDoesNotExist:
-            onxs = OnXAxis(selected='P',user=user)
+            onxs = mmodels.OnXAxis(selected='P',user=user)
             onxs.save()
             onx = onxs.selected
-        cs = CurveSet.objects.get(id=curveset_id)
+        cs = mmodels.CurveSet.objects.get(id=curveset_id)
         ret = []
 
         if onx == 'S':
@@ -114,10 +114,10 @@ class PlotManager:
 
     def _processCurveArray(self, user, curves):
         try:
-            onxs = OnXAxis.objects.get(user=user)
+            onxs = mmodels.OnXAxis.objects.get(user=user)
             onx = onxs.selected
         except ObjectDoesNotExist:
-            onxs = OnXAxis(selected='P',user=user)
+            onxs = mmodels.OnXAxis(selected='P',user=user)
             onxs.save()
             onx = onxs.selected
 
@@ -125,7 +125,7 @@ class PlotManager:
 
         if onx == 'S':
             for cb in curves:
-                cvs = CurveData.objects.filter(curve=cb, processing=None)
+                cvs = mmodels.CurveData.objects.filter(curve=cb, processing=None)
                 for cv in cvs:
                     ret.append(
                         dict(
@@ -138,7 +138,7 @@ class PlotManager:
                     )
         elif onx == 'T':
             for cb in curves:
-                cvs = CurveData.objects.filter(curve=cb, processing=None)
+                cvs = mmodels.CurveData.objects.filter(curve=cb, processing=None)
                 for cv in cvs:
                     ret.append(
                         dict(
@@ -151,7 +151,7 @@ class PlotManager:
                     )
         else:
             for cb in curves:
-                cvs = CurveData.objects.filter(curve=cb, processing=None)
+                cvs = mmodels.CurveData.objects.filter(curve=cb, processing=None)
                 for cv in cvs:
                     ret.append(
                         dict(
@@ -168,10 +168,10 @@ class PlotManager:
 
     def xLabelHelper(self, user):
         try:
-            onxs = OnXAxis.objects.get(user=user)
+            onxs = mmodels.OnXAxis.objects.get(user=user)
             onx = onxs.selected
         except ObjectDoesNotExist:
-            onxs = OnXAxis(selected='P',user=user)
+            onxs = mmodels.OnXAxis(selected='P',user=user)
             onxs.save()
             onx = onxs.selected
         if ( onx == 'S' ):
@@ -184,7 +184,7 @@ class PlotManager:
 
     def analysisHelper(self, user, value_id):
         # TODO: makeover :)
-        analysis = Analysis.objects.get(id=value_id)
+        analysis = mmodels.Analysis.objects.get(id=value_id)
         if not analysis.canBeReadBy(user):
             raise 3
         if not analysis.completed:
@@ -246,14 +246,14 @@ class PlotManager:
 
     def _prepareFigure(self, request, user, vtype, vid):
         labels = []
-        onx = OnXAxis.objects.get(user=user)
+        onx = mmodels.OnXAxis.objects.get(user=user)
         onx = onx.selected
         self.p.xaxis.axis_label = self.xlabel
         self.p.yaxis.axis_label = self.ylabel
-        for k,l in dict(OnXAxis.AVAILABLE).items():
+        for k,l in dict(mmodels.OnXAxis.AVAILABLE).items():
             labels.append(l)
         active = -1
-        for i,k in enumerate(dict(OnXAxis.AVAILABLE).keys()):
+        for i,k in enumerate(dict(mmodels.OnXAxis.AVAILABLE).keys()):
             if k==onx:
                 active = i
 
@@ -495,8 +495,8 @@ class PlotManager:
                     except ValueError:
                         print('value error')
                         return
-                    ONX = OnXAxis.objects.get(user=user)
-                    for k,v in enumerate(dict(OnXAxis.AVAILABLE).keys()):
+                    ONX = mmodels.OnXAxis.objects.get(user=user)
+                    for k,v in enumerate(dict(mmodels.OnXAxis.AVAILABLE).keys()):
                         if onx == k:
                             newkey = v
                             break
