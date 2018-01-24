@@ -3,14 +3,20 @@
 {% block title %} Show {% endblock %}
 
 {% block real_content %}
-<p>File ID: {{ curvefile_id }} </p>
+<p>
+File ID: {{ curvefile.id  }} <br />
+Filename: {{ curvefile.filename }}<br />
+System name: {{ curvefile.name }}<br />
+Uploaded: {{ curvefile.uploadDate|date:"c" }}<br />
+</p>
+<p>Curves:
+<ul>
+    {% for c in curves %}
+    <li>{{ c }}</li>
+    {% endfor %}
+</ul>
+</p>
 
-<form method="post" action="{{ url }}" enctype="multipart/form-data">
-	<table>
-	{% csrf_token %}
-	{{ form.as_table }}
-	<tr><td><input type="submit" value="Update" /></td></tr>
-	</table>
-</form>
+<button onclick="location.href='{% url "editCurveFile" user_id=user.id file_id=curvefile.id %}';"> Edit </button>
 
 {% endblock %}

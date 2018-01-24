@@ -57,7 +57,7 @@ def browseCurveFile(request, user):
         'user' : user,
         'list_header' : 'Displaying Uploaded files:',
         'list_to_disp' : files,
-        'action1': "editCurveFile",
+        'action1': "showCurveFile",
         'action2': "deleteCurveFile",
         'action2_text': ' (delete) ',
         'whenEmpty' : ''.join([
@@ -437,12 +437,15 @@ def showCurveFile(request, user, file_id):
         plot_type='file',
         value_id=cf.id
     )
+    curves = mmodels.Curve.objects.filter(curveFile=cf)
+
     context = { 
         'scripts': plotScr,
         'mainPlot' : plotDiv,
         'user' : user,
-        'curvefile_id': curvefile_id,
-        'form' : form
+        'curvefile': cf,
+        'curves': curves,
+        #'form' : form
     }
     return voltpy_render(
         request=request, 
