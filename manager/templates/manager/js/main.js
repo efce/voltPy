@@ -60,13 +60,33 @@
     }
   };
 
-  $(function(){ //function used in forms:
+  $( function() { 
+    //function used in forms:
+    // the object which controls status of other objects
+    // should have class "testForNegative" and obligatory
+    // one or more classes:
+    // ifNegativeDisable@<classNameToDisable>
+    // ifNegativeEnable@<classNameTOEnable>
     $( ".testForNegative" ).on('change', function() {
-      if (this.value < 0) {
-        $(".enableOnNegative").prop('disabled', false);
-      } else {
-        $(".enableOnNegative").prop('disabled', true);
-      }
+      var classes = this.className.split(" ");
+      var onOff = (this.value < 0);
+      classes.forEach( function(name){
+        if (name.startsWith('ifNegativeDisable@')) {
+          var cname = "." + name.substring(18);
+          if ( !onOff ) {
+            $(cname).prop('disabled', false);
+          } else {
+            $(cname).prop('disabled', true);
+          }
+        } else if (name.startsWith('ifNegativeEnable@')) {
+          var cname = "." + name.substring(17);
+          if ( onOff ) {
+            $(cname).prop('disabled', false);
+          } else {
+            $(cname).prop('disabled', true);
+          }
+        }
+      });
     });
   });
 

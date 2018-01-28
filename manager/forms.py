@@ -76,13 +76,13 @@ class AddAnalytesForm(forms.Form):
             label="Analyte",
             initial=eaDefault
         )
-        self.fields['existingAnalyte'].widget.attrs['class'] = 'testForNegative'
+        self.fields['existingAnalyte'].widget.attrs['class'] = 'testForNegative ifNegativeEnable@newAnalyte'
         self.fields['newAnalyte'] = forms.CharField(
             label="",
             max_length=128,
             required=False
         )
-        self.fields['newAnalyte'].widget.attrs['class'] = 'enableOnNegative'
+        self.fields['newAnalyte'].widget.attrs['class'] = 'newAnalyte'
 
         if aic:
             self.fields['newAnalyte'].initial = ""
