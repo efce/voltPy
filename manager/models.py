@@ -174,6 +174,7 @@ class CurveData(models.Model):
             self.probingData = val
 
 class Analyte(models.Model):
+    id = models.AutoField(primary_key=True)
     name=models.CharField(max_length=124, unique=True)
 
     def __str__(self):

@@ -36,7 +36,6 @@ class AddAnalytesForm(forms.Form):
 
     def __init__(self, user, view_type, object_id, *args, **kwargs):
         super(AddAnalytesForm, self).__init__(*args, **kwargs)
-        analytesFromDb = mmodels.Analyte.objects.all()
         if view_type == 'CurveSet' :
             self.isCal = False
             cs = mmodels.CurveSet.objects.get(id=object_id)
@@ -55,17 +54,40 @@ class AddAnalytesForm(forms.Form):
 
         self.generateFields()
 
-
     def generateFields(self):
         self.fields['units'] = forms.ChoiceField(choices=self.UNITS)
         curves_filter_qs = Q()
         for c in self.curves:
             curves_filter_qs = curves_filter_qs | Q(curve=c)
-        aic = mmodels.AnalyteInCurve.objects.filter(curves_filter_qs)
 
-        self.fields['analyte'] = forms.CharField(label="Analyte", max_length=128)
+        analytesFromDb = mmodels.Analyte.objects.all()
+        aic = mmodels.AnalyteInCurve.objects.filter(curves_filter_qs)
+        existingAnalytes = [ (-1, 'Add new') ]
+        if analytesFromDb:
+            for an in analytesFromDb:
+                existingAnalytes.append( (an.id, an.name) )
+
+        eaDefault = 0
         if aic:
-            self.fields['analyte'].initial = aic[0].analyte.name
+            eaDefault = aic[0].analyte.id
+
+        self.fields['existingAnalyte'] = forms.ChoiceField(
+            choices=existingAnalytes, 
+            label="Analyte",
+            initial=eaDefault
+        )
+        self.fields['existingAnalyte'].widget.attrs['class'] = 'testForNegative'
+        self.fields['newAnalyte'] = forms.CharField(
+            label="",
+            max_length=128,
+            required=False
+        )
+        self.fields['newAnalyte'].widget.attrs['class'] = 'enableOnNegative'
+
+        if aic:
+            self.fields['newAnalyte'].initial = ""
+            self.fields['newAnalyte'].widget.attrs['disabled'] = True
+
         for c in self.curves:
             ac = aic.filter(curve=c.id)
             if ac:
@@ -78,14 +100,32 @@ class AddAnalytesForm(forms.Form):
                         label = c.name + ":\n" + c.comment ,
                         required = True )
 
+    def clean(self):
+        super().clean()
+        if int(self.cleaned_data.get('existingAnalyte', -1)) == -1:
+            if not self.cleaned_data.get('newAnalyte', '').strip():
+                raise forms.ValidationError(
+                    'New analyte cannot be empty string.'
+                )
+
 
     def process(self, user):
-
-        try:
-            a = mmodels.Analyte.objects.get(name=self.cleaned_data.get('analyte'))
-        except mmodels.Analyte.DoesNotExist:
-            a = mmodels.Analyte(name=self.cleaned_data['analyte'])
-            a.save()
+        if int(self.cleaned_data.get('existingAnalyte', -1)) == -1:
+            analyteName = self.cleaned_data.get('newAnalyte', '').strip()
+            if not analyteName:
+                #TODO: meaningful exception -- analyte cannot be empty
+                raise 3 
+            try:
+                a = mmodels.Analyte.objects.get(name=analyteName)
+            except mmodels.Analyte.DoesNotExist:
+                a = mmodels.Analyte(name=analyteName)
+                a.save()
+        else:
+            #try:
+            a = mmodels.Analyte.objects.get(id=int(self.cleaned_data.get('existingAnalyte')))
+            #except:
+                #TODO: meaningfull exeption -- analyte id does not exists
+                #raise 3
 
         for name,val in self.cleaned_data.items():
             if "curve_" in name:
