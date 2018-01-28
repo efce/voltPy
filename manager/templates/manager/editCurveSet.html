@@ -2,6 +2,22 @@
 
 {% block title %} Show {% endblock %}
 
+{% block scripts %}
+
+  <script type='text/javascript'>
+    $(function(){
+      $( ".testForNegative" ).on('change', function() {
+        if (this.value < 0) {
+          $(".enableOnNegative").prop('disabled', false);
+        } else {
+          $(".enableOnNegative").prop('disabled', true);
+        }
+      });
+    });
+  </script>
+
+{% endblock %}
+
 {% block style %}
 #concform label { 
 	float: left; 
