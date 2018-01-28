@@ -59,4 +59,15 @@
       alert('Not implemented...');
     }
   };
+
+  $(function(){ //function used in forms:
+    $( ".testForNegative" ).on('change', function() {
+      if (this.value < 0) {
+        $(".enableOnNegative").prop('disabled', false);
+      } else {
+        $(".enableOnNegative").prop('disabled', true);
+      }
+    });
+  });
+
 </script>
