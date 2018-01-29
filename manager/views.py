@@ -323,7 +323,7 @@ def editCurveSet(request,user,curveset_id):
             if formAnalyte.is_valid():
                 if ( formAnalyte.process(user) == True ):
                     return HttpResponseRedirect(
-                        reverse('showCurveSet', args=[user.id, curveset_id])
+                        reverse('editCurveSet', args=[user.id, curveset_id])
                     )
         else:
             formAnalyte = mforms.AddAnalytesForm(user, "CurveSet", curveset_id)

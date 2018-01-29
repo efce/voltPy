@@ -162,6 +162,7 @@ class AddAnalytesForm(forms.Form):
                 aic.concentrationUnits = units
                 aic.analyte = a
                 aic.save()
+        return True
 
 
 class SelectXForm(forms.Form):
