@@ -88,6 +88,8 @@
         }
       });
     });
+    // Check conditions at the beggining:
+    $( ".testForNegative" ).trigger("change");
   });
 
 </script>
