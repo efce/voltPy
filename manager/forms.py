@@ -23,16 +23,6 @@ class UploadFileForm(forms.Form):
 class AddAnalytesForm(forms.Form):
     #TODO: draw plot of file, provide fields for settings analytes
     isCal = False
-    UNITS = (
-            ('ng/L','ng/L'),
-            ('µg/L','µg/L'),
-            ('mg/L','mg/L'),
-            ('g/L' ,'g/L'  ),
-            ('nM'  ,'nM'  ),
-            ('µM'  ,'µM'  ),
-            ('mM'  ,'mM'  ),
-            ( 'M'  , 'M'  )
-            )
 
     def __init__(self, user, view_type, object_id, *args, **kwargs):
         super(AddAnalytesForm, self).__init__(*args, **kwargs)
@@ -55,7 +45,6 @@ class AddAnalytesForm(forms.Form):
         self.generateFields()
 
     def generateFields(self):
-        self.fields['units'] = forms.ChoiceField(choices=self.UNITS)
         curves_filter_qs = Q()
         for c in self.curves:
             curves_filter_qs = curves_filter_qs | Q(curve=c)
@@ -68,8 +57,15 @@ class AddAnalytesForm(forms.Form):
                 existingAnalytes.append( (an.id, an.name) )
 
         eaDefault = 0
+        eaDefaultUnit = '0g'
         if aic:
             eaDefault = aic[0].analyte.id
+            eaDefaultUnit = aic[0].concentrationUnits
+
+        self.fields['units'] = forms.ChoiceField(
+            choices=mmodels.AnalyteInCurve.UNITSAVAILABLE,
+            initial=eaDefaultUnit
+        )
 
         self.fields['existingAnalyte'] = forms.ChoiceField(
             choices=existingAnalytes, 
@@ -127,6 +123,8 @@ class AddAnalytesForm(forms.Form):
                 #TODO: meaningfull exeption -- analyte id does not exists
                 #raise 3
 
+        units = self.cleaned_data['units']
+
         for name,val in self.cleaned_data.items():
             if "curve_" in name:
                 curve_id = int(name[6:])
@@ -141,7 +139,12 @@ class AddAnalytesForm(forms.Form):
                 if not f.canBeUpdatedBy(user):
                     raise 3
 
-                aic = mmodels.AnalyteInCurve(analyte=a, curve=c, concentration=float(val))
+                aic = mmodels.AnalyteInCurve(
+                    analyte=a, 
+                    curve=c, 
+                    concentration=float(val),
+                    concentrationUnits=untis
+                )
                 aic.save()
             elif "analyte_" in name:
                 analyte_in_id= int(name[8:])
@@ -155,7 +158,8 @@ class AddAnalytesForm(forms.Form):
                 if not aic.canBeUpdatedBy(user):
                     raise 3
 
-                aic.concentration=float(val)
+                aic.concentration = float(val)
+                aic.concentrationUnits = units
                 aic.analyte = a
                 aic.save()
 

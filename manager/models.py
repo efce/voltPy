@@ -182,10 +182,25 @@ class Analyte(models.Model):
     
 
 class AnalyteInCurve(models.Model):
+    UNITSAVAILABLE = (
+        ('9g','ng/L'),
+        ('6g','µg/L'),
+        ('3g','mg/L'),
+        ('0g','g/L'),
+        ('9M','nM'),
+        ('6M','µM'),
+        ('3M','mM'),
+        ('0M','M')
+    )
     id = models.AutoField(primary_key=True)
-    curve=models.ForeignKey(Curve, on_delete=models.DO_NOTHING)
-    analyte=models.ForeignKey(Analyte, on_delete=models.DO_NOTHING)
-    concentration=models.FloatField()
+    curve = models.ForeignKey(Curve, on_delete=models.DO_NOTHING)
+    analyte = models.ForeignKey(Analyte, on_delete=models.DO_NOTHING)
+    concentration = models.FloatField()
+    concentrationUnits = models.CharField(
+        max_length=3,
+        choices=UNITSAVAILABLE,
+        default='0g',
+    )
 
     def isOwnedBy(self, user):
         return (self.curve.curveFile.owner == user)
