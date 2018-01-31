@@ -60,13 +60,14 @@ class RegularStandardAddition(mm.AnalysisMethod):
         return {
             'head': scr,
             'body': ''.join([
-                        div,
-                        'Equation: y={2}*x+{3}<br />Result: {0}, STD: {1}'.format(
-                            self.model.customData['result'],
-                            self.model.customData['resultStdDev'],
-                            self.model.customData['fitEquation']['slope'],
-                            self.model.customData['fitEquation']['intercept'])
-                        ])
+                                div,
+                                'Equation: y={2}*x+{3}<br />Result: {0}, STD: {1}'.format(
+                                    self.model.customData['result'],
+                                    self.model.customData['resultStdDev'],
+                                    self.model.customData['fitEquation']['slope'],
+                                    self.model.customData['fitEquation']['intercept']
+                                )
+                            ])
         }
 
 main_class = RegularStandardAddition 

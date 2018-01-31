@@ -6,11 +6,11 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.urls import reverse
 from django.http import HttpResponseRedirect
 from django.http import HttpResponse
-from django.template import loader
 from django.utils import timezone
 import manager.models as mmodels
 import manager.plotmanager as pm
 from manager.helpers.functions import generate_plot
+from manager.helpers.functions import voltpy_render
 
 class MethodManager:
     """
@@ -123,11 +123,11 @@ class MethodManager:
                 add = self.__method.getAddToPlot()
             )
 
-            template = loader.get_template('manager/method.html')
             context = {
-                'scripts': '\n'.join([ plotScr, 
-                                       pm.PlotManager.required_scripts, 
-                                       operationText.get('head','') ]),
+                'scripts': '\n'.join([ 
+                                        plotScr, 
+                                        operationText.get('head','') 
+                                    ]),
                 'mainPlot': plotDiv,
                 'method_content': ''.join([
                                         operationText.get('desc',''),
@@ -136,10 +136,12 @@ class MethodManager:
                 'user': user,
                 'model': self.__model,
                 'curveset_id': self.__model.curveSet.id,
-                'plot_width' : pm.PlotManager.plot_width,
-                'plot_height' : pm.PlotManager.plot_height
             }
-            return HttpResponse(template.render(context))
+            return voltpy_render(
+                request=request,
+                template_name='manager/method.html',
+                context=context,
+            )
 
     def getAnalysisSelectionForm(self, *args, **kwargs):
         return MethodManager.SelectionForm(
