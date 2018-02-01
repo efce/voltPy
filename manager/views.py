@@ -135,12 +135,22 @@ def deleteCurveFile(request, user, file_id):
 
 @redirect_on_voltpyexceptions
 @with_user
-def deleteCurve(request, user, curve_id):
-    try:
-        c = mmodels.Curve.objects.get(id=curve_id)
-    except ObjectDoesNotExist:
-        c=None
-    return delete_generic(request, user, c)
+def deleteCurve(request, user, objType, objId, delId):
+    if objType == 'cf':
+        try:
+            c = mmodels.Curve.objects.get(id=delId)
+            deleteFrom = mmodels.CurveFile.objects.get(id=objId)
+        except ObjectDoesNotExist:
+            c=None
+        return delete_generic(request, user, c, deleteFrom=deleteFrom)
+    else: # curveset
+        try:
+            cd = mmodels.CurveData.objects.get(id=delId)
+            deleteFrom = mmodels.CurveSet.objects.get(id=objId)
+        except ObjectDoesNotExist:
+            cd=None
+        return delete_generic(request, user, cd, deleteFrom=deleteFrom)
+
 
 @redirect_on_voltpyexceptions
 @with_user
@@ -375,7 +385,7 @@ def upload(request, user):
             if (form.process(user, request) == True):
                 file_id = form.file_id
                 return HttpResponseRedirect(
-                    reverse('editCurveFile', args=[user.id, file_id])
+                    reverse('showCurveFile', args=[user.id, file_id])
                 )
     else:
         form = mforms.UploadFileForm()
@@ -442,7 +452,9 @@ def showCurveFile(request, user, file_id):
         plot_type='file',
         value_id=cf.id
     )
-    curves = mmodels.Curve.objects.filter(curveFile=cf)
+    curves = mmodels.Curve.objects.filter(curveFile=cf, deleted=False)
+    for c in curves:
+        print('{0}: {1}'.format(c.id, c.deleted))
 
     at_disp = at.analytesTable(user, cf)
 

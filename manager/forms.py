@@ -158,7 +158,7 @@ class AddAnalytesForm(forms.Form):
                     analyte=a, 
                     curve=c, 
                     concentration=float(val),
-                    concentrationUnits=untis
+                    concentrationUnits=units
                 )
                 aic.save()
             elif "analyte_" in name:
@@ -367,15 +367,21 @@ class DeleteForm(forms.Form):
                 widget=forms.HiddenInput(),
                 initial=item.id)
 
-    def process(self, user, item):
+    def process(self, user, item, deleteFrom=None):
         if ( self.cleaned_data['areyousure'] ):
             if ( self.cleaned_data['areyousure'] == True ):
                 form_item_id = int(self.cleaned_data['item_id'])
                 if ( form_item_id != int(item.id) ):
                     return False
                 if item.canBeUpdatedBy(user):
-                    item.deleted = True
-                    item.save()
-                    return True
+                    if deleteFrom is None \
+                    or deleteFrom.__class__.__name__ != 'CurveSet':
+                        item.deleted = True
+                        item.save()
+                        return True
+                    else:
+                        CurveSet.usedCurveData.remove(item)
+                        CurveSet.save()
+                        return True
                 else:
                     return False

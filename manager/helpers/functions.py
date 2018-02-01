@@ -35,7 +35,7 @@ def add_notification(request, text, severity=0):
     notifications.append( {'text': text, 'severity':severity} )
     request.session['VOLTPY_notification'] = notifications
 
-def delete_generic(request, user, item):
+def delete_generic(request, user, item, deleteFrom=None):
     """
     The generic function to which offers ability to delete
     model istance with user confirmation.
@@ -51,11 +51,18 @@ def delete_generic(request, user, item):
     if request.method == 'POST':
         form = mforms.DeleteForm(item, request.POST)
         if form.is_valid():
-            a = form.process(user, item)
+            a = form.process(user, item, deleteFrom)
             if a:
-                return HttpResponseRedirect(
-                    reverse('browse'+itemclass, args=[user.id])
-                )
+                if deleteFrom is not None:
+                    fromclass = str(deleteFrom.__class__.__name__)
+                    return HttpResponseRedirect(
+                        reverse('show'+fromclass, args=[user.id, deleteFrom.id])
+                    )
+                else:
+                    return HttpResponseRedirect(
+                        reverse('browse'+itemclass, args=[user.id])
+                    )
+
     else:
         form = mforms.DeleteForm(item)
 

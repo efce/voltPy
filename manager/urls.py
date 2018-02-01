@@ -21,7 +21,7 @@ urlpatterns = [
         views.editCurveFile, name='editCurveFile'),
     url(r'^(?P<user_id>[0-9]+)/show-file/(?P<file_id>[0-9]+)/$', 
         views.showCurveFile, name='showCurveFile'),
-    url(r'^(?P<user_id>[0-9]+)/delete-curve/(?P<curve_id>[0-9]+)/$', 
+    url(r'^(?P<user_id>[0-9]+)/delete-curve/(?P<objType>[cf|cs]+)/(?P<objId>[0-9]+)/(?P<delId>[0-9]+)/$',
         views.deleteCurve, name='deleteCurve'),
     url(r'^(?P<user_id>[0-9]+)/browse-curvesets/$', 
         views.browseCurveSet, name='browseCurveSet'),

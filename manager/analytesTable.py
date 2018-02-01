@@ -17,9 +17,10 @@ def analytesTable(user, source):
         curves = []
         for c in cds:
             curves.append(c.curve)
+            curves[-1].cdid = c.id
     else:
         objType = 'cf'
-        curves = mmodels.Curve.objects.filter(curveFile=source)
+        curves = mmodels.Curve.objects.filter(curveFile=source, deleted=False)
 
     curves_filter_qs = Q()
     for c in curves:
@@ -34,7 +35,9 @@ def analytesTable(user, source):
     analytes = list(analytes.values())
     lenana = len(analytes)
 
-    addAnalyteBtn = '<button class="urlChanger url@{0}">Add</button>'.format(
+    htmlButton = '<button class="urlChanger url@{1}">{0}</button>'
+    addAnalyteBtn = htmlButton.format(
+        'Add analyte',
         b64.b64encode(reverse('editAnalyte', kwargs={
                 'user_id': user.id,
                 'objType': objType,
@@ -46,7 +49,7 @@ def analytesTable(user, source):
 
     ret = ['<table>']
     if lenana == 0:
-        ret.append('<tr><th colspan=1>No analytes</th><th>{0}</th></tr><tr><th>Curve names</th>'.format(addAnalyteBtn))
+        ret.append('<tr><th colspan=1>No analytes</th></tr><tr><th>Curve names</th>')
     else:
         ret.append('<tr><td>&nbsp;</td><th colspan={:d}>Analytes</th><th>Action</th></tr><tr><th>Curve names</th>'.format(lenana))
     for a in analytes:
@@ -72,6 +75,23 @@ def analytesTable(user, source):
                 ret.append('<td> %f </td>' %  aac[0].concentration )
             else:
                 ret.append('<td> %f </td>' % 0)
+        ret.append('<td>')
+        if objType == 'cf':
+            delId = c.id
+        else:
+            delId = c.cdid
+        ret.append(htmlButton.format(
+                'delete',
+                b64.b64encode(reverse('deleteCurve', kwargs={
+                    'user_id': user.id,
+                    'objType': objType,
+                    'objId': source.id, 
+                    'delId': delId
+                    }).encode()
+                ).decode('UTF-8')
+            )
+        )
+        ret.append('</td>')
         ret.append('</tr>')
     ret.append('</table>')
     return ''.join(ret)
