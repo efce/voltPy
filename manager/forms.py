@@ -364,8 +364,9 @@ class DeleteForm(forms.Form):
     def __init__(self, item,  *args, **kwargs):
         super(DeleteForm, self).__init__(*args, **kwargs)
         self.fields['item_id'] = forms.CharField(
-                widget=forms.HiddenInput(),
-                initial=item.id)
+            widget=forms.HiddenInput(),
+            initial=item.id
+        )
 
     def process(self, user, item, deleteFrom=None):
         if ( self.cleaned_data['areyousure'] ):
@@ -380,8 +381,8 @@ class DeleteForm(forms.Form):
                         item.save()
                         return True
                     else:
-                        CurveSet.usedCurveData.remove(item)
-                        CurveSet.save()
+                        deleteFrom.usedCurveData.remove(item)
+                        deleteFrom.save()
                         return True
                 else:
                     return False

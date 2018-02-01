@@ -8,7 +8,7 @@ import manager.forms as mforms
 from manager import methodmanager as mmm
 from manager.exceptions import VoltPyNotAllowed, VoltPyDoesNotExists
 from manager.helpers.functions import add_notification
-from manager.helpers.functions import delete_generic
+from manager.helpers.functions import delete_helper
 from manager.helpers.functions import generate_plot
 from manager.helpers.functions import voltpy_render
 from manager.helpers.decorators import with_user
@@ -131,7 +131,7 @@ def deleteCurveFile(request, user, file_id):
         cfile = mmodels.CurveFile.objects.get(id=file_id)
     except ObjectDoesNotExist:
         cfile = None
-    return delete_generic(request, user, cfile)
+    return delete_helper(request, user, cfile)
 
 @redirect_on_voltpyexceptions
 @with_user
@@ -142,14 +142,14 @@ def deleteCurve(request, user, objType, objId, delId):
             deleteFrom = mmodels.CurveFile.objects.get(id=objId)
         except ObjectDoesNotExist:
             c=None
-        return delete_generic(request, user, c, deleteFrom=deleteFrom)
+        return delete_helper(request, user, c, deleteFrom=deleteFrom)
     else: # curveset
         try:
             cd = mmodels.CurveData.objects.get(id=delId)
             deleteFrom = mmodels.CurveSet.objects.get(id=objId)
         except ObjectDoesNotExist:
             cd=None
-        return delete_generic(request, user, cd, deleteFrom=deleteFrom)
+        return delete_helper(request, user, cd, deleteFrom=deleteFrom)
 
 
 @redirect_on_voltpyexceptions
@@ -159,7 +159,7 @@ def deleteAnalysis(request, user, analysis_id):
         a = mmodels.Analysis.objects.get(id=analysis_id)
     except ObjectDoesNotExist:
         a=None
-    return delete_generic(request, user, a)
+    return delete_helper(request, user, a)
 
 @redirect_on_voltpyexceptions
 @with_user
@@ -168,7 +168,7 @@ def deleteCurveSet(request, user, curveset_id):
         a = mmodels.CurveSet.objects.get(id=curveset_id)
     except ObjectDoesNotExist:
         a=None
-    return delete_generic(request, user, a)
+    return delete_helper(request, user, a)
 
 @redirect_on_voltpyexceptions
 @with_user

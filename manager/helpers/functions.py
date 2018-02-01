@@ -35,7 +35,7 @@ def add_notification(request, text, severity=0):
     notifications.append( {'text': text, 'severity':severity} )
     request.session['VOLTPY_notification'] = notifications
 
-def delete_generic(request, user, item, deleteFrom=None):
+def delete_helper(request, user, item, deleteFrom=None):
     """
     The generic function to which offers ability to delete
     model istance with user confirmation.
@@ -65,6 +65,9 @@ def delete_generic(request, user, item, deleteFrom=None):
 
     else:
         form = mforms.DeleteForm(item)
+
+    if deleteFrom.__class__.__name__ == 'CurveSet':
+        item = item.curve
 
     context = { 
         'form': form,
