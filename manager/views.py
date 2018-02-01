@@ -108,7 +108,7 @@ def browseCurveSet(request, user):
         'user' : user,
         'list_header' : 'Displaying CurveSets:',
         'list_to_disp' : csets,
-        'action1': 'editCurveSet',
+        'action1': 'showCurveSet',
         'action2': 'deleteCurveSet',
         'action2_text': ' (delete) ',
         'whenEmpty' : ''.join([
@@ -266,11 +266,14 @@ def showCurveSet(request, user, curveset_id):
         plot_type ='curveset',
         value_id = cs.id
     )
+    import manager.analytesTable as at
+    at_disp = at.analytesTable(user, cs)
     context = {
         'scripts': plotScr,
         'mainPlot' : plotDiv,
         'user' : user,
         'curveset_id': curveset_id,
+        'at': at_disp,
     }
     return voltpy_render(
         request=request, 
@@ -429,6 +432,8 @@ def showCurveFile(request, user, file_id):
     if not cf.canBeReadBy(user):
         raise VoltPyNotAllowed(user)
 
+    import manager.analytesTable as at
+
     if ( __debug__): 
         print(cf)
     plotScr, plotDiv = generate_plot(
@@ -439,19 +444,106 @@ def showCurveFile(request, user, file_id):
     )
     curves = mmodels.Curve.objects.filter(curveFile=cf)
 
+    at_disp = at.analytesTable(user, cf)
+
     context = { 
         'scripts': plotScr,
         'mainPlot' : plotDiv,
         'user' : user,
         'curvefile': cf,
-        'curves': curves,
         #'form' : form
+        'at': at_disp
     }
     return voltpy_render(
         request=request, 
         template_name='manager/showFile.html',
         context=context
     )
+
+
+@redirect_on_voltpyexceptions
+@with_user
+def editAnalyte(request, user, objType, objId, analyteId):
+    if objType == 'cf':
+        try:
+            cf = mmodels.CurveFile.objects.get(id=objId, deleted=False)
+        except ObjectDoesNotExist:
+            raise VoltPyNotAllowed
+        if not cf.canBeUpdatedBy(user):
+            raise VoltPyNotAllowed
+        curves = mmodels.Curve.objects.filter(curveFile=cf, deleted=False)
+
+    elif objType == 'cs':
+        try:
+            cs = mmodels.CurveSet.objects.get(id=objId, deleted=False)
+        except ObjectDoesNotExist:
+            raise VoltPyNotAllowed
+        if not cs.canBeUpdatedBy(user):
+            raise VoltPyNotAllowed
+        curves = []
+        for cd in cs.usedCurveData.all():
+            curves.append(cd.curve)
+
+    else:
+        raise VoltPyNotAllowed
+
+    if request.method == 'POST':
+        form = mforms.AddAnalytesForm(user, objType, objId, analyteId, request.POST)
+        if form.is_valid():
+            if ( form.process(user) == True ):
+                if objType == 'cf':
+                    return HttpResponseRedirect(
+                        reverse('showCurveFile', args=[user.id, objId])
+                    )
+                else:
+                    return HttpResponseRedirect(
+                        reverse('showCurveSet', args=[user.id, objId])
+                    )
+    else:
+        form = mforms.AddAnalytesForm(user, objType, objId, analyteId)
+
+    if objType == 'cf':
+        plotType = 'file'
+        dispType = 'File'
+    else:
+        plotType = 'curveset'
+        dispType = 'CurveSet'
+    plotScr, plotDiv = generate_plot(
+        request=request, 
+        user=user, 
+        plot_type=plotType,
+        value_id=objId
+    )
+
+    if analyteId == 'new':
+        infotext = 'Adding new analyte in '
+    else:
+        try: 
+            analyte = mmodels.Analyte.objects.get(id=analyteId)
+        except ObjectDoesNotExist:
+            infotext = 'Adding new analyte in '
+        infotext = 'Editing {0} in '.format(analyte.name)
+
+    context = { 
+        'scripts': plotScr,
+        'mainPlot' : plotDiv,
+        'user' : user, 
+        'obj_name': dispType,
+        'obj_id' : objId,
+        'form': form,
+        'infotext': ''.join([
+            infotext,
+            dispType,
+            ' #{0}'.format(objId)
+        ])
+    }
+    return voltpy_render(
+        request=request, 
+        template_name='manager/editAnalyte.html',
+        context=context
+    )
+
+    
 
 @redirect_on_voltpyexceptions
 @with_user

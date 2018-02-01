@@ -8,15 +8,7 @@ File ID: {{ curvefile.id  }} <br />
 Filename: {{ curvefile.filename }}<br />
 System name: {{ curvefile.name }}<br />
 Uploaded: {{ curvefile.uploadDate|date:"c" }}<br />
-</p>
-<p>Curves:
-<ul>
-    {% for c in curves %}
-    <li>{{ c }}</li>
-    {% endfor %}
-</ul>
-</p>
 
-<button onclick="location.href='{% url "editCurveFile" user_id=user.id file_id=curvefile.id %}';"> Edit </button>
+{{ at | safe }}
 
 {% endblock %}

@@ -24,9 +24,9 @@ class AddAnalytesForm(forms.Form):
     #TODO: draw plot of file, provide fields for settings analytes
     isCal = False
 
-    def __init__(self, user, view_type, object_id, *args, **kwargs):
+    def __init__(self, user, view_type, object_id, analyte_id, *args, **kwargs):
         super(AddAnalytesForm, self).__init__(*args, **kwargs)
-        if view_type == 'CurveSet' :
+        if view_type == 'cs' :
             self.isCal = False
             cs = mmodels.CurveSet.objects.get(id=object_id)
             if not cs.canBeReadBy(user):
@@ -34,33 +34,45 @@ class AddAnalytesForm(forms.Form):
             cdata = cs.usedCurveData.all()
             curves_filter_qs = Q()
             for c in cdata:
-                curves_filter_qs = curves_filter_qs | Q(id=c.curve.id)
+                curves_filter_qs = curves_filter_qs | Q(id=c.curve.id, deleted=False)
             self.curves = mmodels.Curve.objects.filter(curves_filter_qs)
-        elif view_type == "File":
+        elif view_type == "cf":
             cfile = mmodels.CurveFile.objects.get(id=object_id)
             if not cfile.canBeReadBy(user):
                 raise 3
             self.curves = mmodels.Curve.objects.filter(curveFile=cfile)
 
-        self.generateFields()
+        self.generateFields(analyte_id)
 
-    def generateFields(self):
-        curves_filter_qs = Q()
-        for c in self.curves:
-            curves_filter_qs = curves_filter_qs | Q(curve=c)
+    def generateFields(self, analyte_id):
+        analyte = None
+        if analyte_id != 'new':
+            try:
+                analyte = mmodels.Analyte.objects.get(id=analyte_id)
+                curves_filter_qs = Q()
+                for c in self.curves:
+                    curves_filter_qs = curves_filter_qs | Q(curve=c, analyte=analyte)
+                aic = mmodels.AnalyteInCurve.objects.filter(curves_filter_qs)
+            except:
+                analyte = None
+                aic = None
+        else:
+            analyte = None
+            aic = None
+
+
+        eaDefault = -1
+        eaDefaultUnit = '0g'
 
         analytesFromDb = mmodels.Analyte.objects.all()
-        aic = mmodels.AnalyteInCurve.objects.filter(curves_filter_qs)
         existingAnalytes = [ (-1, 'Add new') ]
         if analytesFromDb:
             for an in analytesFromDb:
                 existingAnalytes.append( (an.id, an.name) )
 
-        eaDefault = 0
-        eaDefaultUnit = '0g'
-        if aic:
-            eaDefault = aic[0].analyte.id
+        if analyte is not None and aic:
             eaDefaultUnit = aic[0].concentrationUnits
+            eaDefault = analyte.id
 
         self.fields['units'] = forms.ChoiceField(
             choices=mmodels.AnalyteInCurve.UNITSAVAILABLE,
@@ -85,7 +97,10 @@ class AddAnalytesForm(forms.Form):
             self.fields['newAnalyte'].widget.attrs['disabled'] = True
 
         for c in self.curves:
-            ac = aic.filter(curve=c.id)
+            if aic:
+                ac = aic.filter(curve=c.id)
+            else:
+                ac = None
             if ac:
                 self.fields["analyte_%d" % ac[0].id] = forms.FloatField(
                         label = c.name + ":\n" + c.comment ,

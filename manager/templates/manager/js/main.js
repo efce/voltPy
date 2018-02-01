@@ -92,4 +92,17 @@
     $( ".testForNegative" ).trigger("change");
   });
 
+  $( function() {
+  // js wrapper for url transitions for buttons etc.
+  $( ".urlChanger" ).on('click', function() {
+     var classes = this.className.split(" ");
+     classes.forEach( function(name) {
+        if (name.startsWith('url@')) {
+           var url = atob(name.substring(4));
+	   window.location=url;
+	}
+     })
+  });
+  });
+
 </script>
