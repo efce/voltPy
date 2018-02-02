@@ -46,6 +46,7 @@ class AutomaticBaselineCorrection(mm.ProcessingMethod):
             newcd.method = self.__repr__()
             newcd.date = timezone.now()
             newcd.processing = self.model
+            newcd.basedOn = cd
             newcd.save()
             self.model.curveSet.usedCurveData.remove(cd)
             self.model.curveSet.usedCurveData.add(newcd)

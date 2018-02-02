@@ -100,6 +100,7 @@ class CurveData(models.Model):
     curve = models.ForeignKey(Curve, on_delete=models.CASCADE)
     date = models.DateField(auto_now_add=True)
     processing = models.ForeignKey('Processing', null=True, default=None, on_delete=models.DO_NOTHING) #What it was processed with
+    basedOn = models.ForeignKey('CurveData', null=True, default=None, on_delete=models.DO_NOTHING)
     time = PickledObjectField()
     potential = PickledObjectField()# JSON List 
     current   = PickledObjectField()# JSON List 

@@ -101,6 +101,7 @@ class AverageCurves(mm.ProcessingMethod):
                 newcd.method = self.__repr__()
                 newcd.date = timezone.now()
                 newcd.processing = self.model
+                newcd.basedOn = orgcd
                 newcd.save()
                 self.model.curveSet.usedCurveData.add(newcd)
                 self.model.curveSet.save()
