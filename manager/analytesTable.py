@@ -15,12 +15,15 @@ def analytesTable(user, source):
         objType = 'cs'
         cds = source.usedCurveData.all()
         curves = []
-        for c in cds:
-            curves.append(c.curve)
-            curves[-1].cdid = c.id
+        for cd in cds:
+            curves.append(cd.curve)
+            curves[-1].cdid = cd.id
     else:
         objType = 'cf'
         curves = mmodels.Curve.objects.filter(curveFile=source, deleted=False)
+        for c in curves:
+            cd = mmodels.CurveData.objects.filter(curve=c, processing=None)
+            c.cdid = cd[0].id
 
     curves_filter_qs = Q()
     for c in curves:
@@ -68,7 +71,11 @@ def analytesTable(user, source):
     ret.append('</tr>')
 
     for c in curves:
-        ret.append('<tr><td> %s </td>' % c.name)
+        if objType == 'cf':
+            delId = c.id
+        else:
+            delId = c.cdid
+        ret.append('<tr class="plotHighlight highlightCurve@{0}"><td> {1} </td>'.format(c.cdid, c.name))
         for a in analytes:
             aac = aic.filter(curve=c, analyte=a)
             if len(aac) > 0:
@@ -76,10 +83,6 @@ def analytesTable(user, source):
             else:
                 ret.append('<td> %f </td>' % 0)
         ret.append('<td>')
-        if objType == 'cf':
-            delId = c.id
-        else:
-            delId = c.cdid
         ret.append(htmlButton.format(
                 'delete',
                 b64.b64encode(reverse('deleteCurve', kwargs={

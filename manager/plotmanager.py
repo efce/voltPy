@@ -35,6 +35,7 @@ class PlotManager:
         self.plot_height = 700
         self.p = figure(
             title=self.title, 
+            name='voltpy_plot',
             x_axis_label=self.xlabel,
             y_axis_label=self.ylabel,
             height=self.plot_height-10,
@@ -81,7 +82,7 @@ class PlotManager:
                         x=range(1, len(cv.probingData)+1),
                         y=cv.probingData,
                         plottype='line',
-                        name = '',
+                        name = 'curve_' + str(cv.id),
                         color='blue',
                     )
                 )
@@ -93,7 +94,7 @@ class PlotManager:
                         x=cv.time,
                         y=cv.current,
                         plottype='line',
-                        name = '',
+                        name = 'curve_' + str(cv.id),
                         color='blue',
                     )
                 )
@@ -104,7 +105,7 @@ class PlotManager:
                         x=cv.potential,
                         y=cv.current,
                         plottype='line',
-                        name = '',
+                        name = 'curve_' + str(cv.id),
                         color='blue',
                     )
                 )
@@ -132,7 +133,7 @@ class PlotManager:
                             x=range(1, len(cv.probingData)+1),
                             y=cv.probingData,
                             plottype='line',
-                            name = '',
+                            name = 'curve_' + str(cv.id),
                             color='blue',
                         )
                     )
@@ -145,7 +146,7 @@ class PlotManager:
                             x=cv.time,
                             y=cv.current,
                             plottype='line',
-                            name = '',
+                            name = 'curve_' + str(cv.id),
                             color='blue',
                         )
                     )
@@ -158,7 +159,7 @@ class PlotManager:
                             x=cv.potential,
                             y=cv.current,
                             plottype='line',
-                            name = '',
+                            name = 'curve_' + str(cv.id),
                             color='blue',
                         )
                     )
@@ -256,6 +257,26 @@ class PlotManager:
         for i,k in enumerate(dict(mmodels.OnXAxis.AVAILABLE).keys()):
             if k==onx:
                 active = i
+
+        js_plotHighlight = """
+        function AAASSS() {
+            var toHighlight = window.voltPy1.highlight;
+            var nowHighlight = window.voltPy1.currentlyHightlighted;
+            if (toHighlight != nowHighlight) {
+               var data = source.get('data');
+               if (nowHighlight != -1) {
+               //TODO: remove highlight
+                    data.color[nowHighlight] = 'blue';
+                    window.voltPy1.currentlyHighlighted = -1;
+               }
+               if ( toHighlight == -1 ) {
+                   return;
+               }
+               //TODO: highlight the good one
+               data.color[toHighlight] = 'red';
+            }
+        }
+        """
 
         funmaster = """
         switch (window.voltPy1.command) {
@@ -468,13 +489,14 @@ class PlotManager:
             width=250, 
             callback=CustomJS(args=args, code=js_back)
         )
-        p = Paragraph(text="""X axis:""", width=50)
+        px = Paragraph(text="""X axis:""", width=50)
         if not self.interaction or self.interaction == 'none':
             w=widgetbox(radio_button_group)
-            actionbar = row([p, w], width=self.plot_width)
+            actionbar = row([px, w], width=self.plot_width)
         else:
             w=widgetbox(radio_button_group)
-            actionbar = row([p, w, bback, bforward], width=self.plot_width)
+            actionbar = row([px, w, bback, bforward], width=self.plot_width)
+
         if self.include_x_switch:
             layout = column([self.p, actionbar])
         else:

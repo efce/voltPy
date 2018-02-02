@@ -276,10 +276,30 @@ def showCurveSet(request, user, curveset_id):
         plot_type ='curveset',
         value_id = cs.id
     )
+    jsfun = """
+    <script type="text/javascript">
+    function addCC() {
+        var plot = '';
+        var x = Bokeh.LinAlg.linspace(-0.5, 20.5, 10);
+        var y = x.map(function (v) { return v * 0.5 + 3.0; });
+        var source = new Bokeh.ColumnDataSource({ data: { x: x, y: y } });
+        // add a Line glyph
+        var line = new Bokeh.Line({
+            x: { field: "x" },
+            y: { field: "y" },
+            line_color: "#666699",
+            line_width: 2
+        });
+        plot.add_glyph(line, source);
+    }
+    </script>
+    """
+
+
     import manager.analytesTable as at
     at_disp = at.analytesTable(user, cs)
     context = {
-        'scripts': plotScr,
+        'scripts': '\n'.join([plotScr, jsfun]),
         'mainPlot' : plotDiv,
         'user' : user,
         'curveset_id': curveset_id,

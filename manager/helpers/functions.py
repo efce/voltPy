@@ -123,4 +123,4 @@ def generate_plot(request, user, plot_type, value_id, **kwargs):
         for a in addTo:
             pm.add(**a)
 
-    return pm.getEmbeded(request, user, vtype, vid) 
+    return pm.getEmbeded(request, user, vtype, vid)

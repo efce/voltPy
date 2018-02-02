@@ -93,16 +93,39 @@
   });
 
   $( function() {
-  // js wrapper for url transitions for buttons etc.
-  $( ".urlChanger" ).on('click', function() {
-     var classes = this.className.split(" ");
-     classes.forEach( function(name) {
-        if (name.startsWith('url@')) {
-           var url = atob(name.substring(4));
-	   window.location=url;
-	}
-     })
-  });
+      // js wrapper for url transitions for buttons etc.
+      $( ".urlChanger" ).on('click', function() {
+         var classes = this.className.split(" ");
+         classes.forEach( function(name) {
+            if (name.startsWith('url@')) {
+               var url = atob(name.substring(4));
+           window.location=url;
+        }
+         })
+      });
   });
 
+    $( function() {
+        $( ".plotHighlight" ).hover( function() {
+         var classes = this.className.split(" ");
+         classes.forEach( function(name) {
+            if (name.startsWith('highlightCurve@')) {
+               var number = name.substring(15);
+               var cname = 'curve_' + number;
+               Bokeh.documents[0]._all_models_by_name._dict[cname].glyph.line_width = 8;
+               Bokeh.documents[0]._all_models_by_name._dict[cname].glyph.line_color = 'red';
+            }
+         }); 
+        }, function() {
+         var classes = this.className.split(" ");
+         classes.forEach( function(name) {
+            if (name.startsWith('highlightCurve@')) {
+               var number = name.substring(15);
+               var cname = 'curve_' + number;
+               Bokeh.documents[0]._all_models_by_name._dict[cname].glyph.line_width = 2;
+               Bokeh.documents[0]._all_models_by_name._dict[cname].glyph.line_color = 'blue';
+            }
+         }); 
+        });
+    });
 </script>
