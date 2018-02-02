@@ -258,26 +258,6 @@ class PlotManager:
             if k==onx:
                 active = i
 
-        js_plotHighlight = """
-        function AAASSS() {
-            var toHighlight = window.voltPy1.highlight;
-            var nowHighlight = window.voltPy1.currentlyHightlighted;
-            if (toHighlight != nowHighlight) {
-               var data = source.get('data');
-               if (nowHighlight != -1) {
-               //TODO: remove highlight
-                    data.color[nowHighlight] = 'blue';
-                    window.voltPy1.currentlyHighlighted = -1;
-               }
-               if ( toHighlight == -1 ) {
-                   return;
-               }
-               //TODO: highlight the good one
-               data.color[toHighlight] = 'red';
-            }
-        }
-        """
-
         funmaster = """
         switch (window.voltPy1.command) {
         case 'set1cursor':
