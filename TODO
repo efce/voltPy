@@ -1,4 +1,4 @@
-- User login system
+- User login system - WIP in branch userauth
 - Rework of UI/UX with themes (?)
 - User settings panel/priviledges
 - Sharing of curves/curvesets/analyses via link (readonly/editable)
@@ -6,13 +6,13 @@
 - Debugging of Bokeh plot switching
 - Better plots with legends (or color markings of curve name/comments in html table)
 - Rework of curves selection for curveset
-- Curve processing history browsable lists
+- Curve processing history browsable lists - SOME PRELIMINARY WORK with 1c04e6179eb286c9413104d5d0410f726d5f00d5
 - Separation of JavaScripts from py files / code cleanups
 - Separation of HTML from py files / creation of HTML draw only funtions
 - Separation of CSS from all files (?)
 - Guidelines on how to add new Anlsysis/Processing methods
 - Own form superclass (?), with notifications after processing and automatic handling of bound/unboud forms
-- Multiple analytes for single curve support
+x Multiple analytes for single curve support - DONE
 - Support for additional file formats and additional file/curve informations
 - Additional processing/analysis methods:
   - splines
@@ -20,3 +20,5 @@
   - ATLD
   - ICA
   - Calibration method
+  - OSC
+  - Whitening
