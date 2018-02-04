@@ -47,3 +47,56 @@
   vertical-align: middle;
   opacity: 0.9;
 }
+
+form label { 
+	float: left; 
+	max-width: 400px; 
+	word-wrap: break-word; 
+	display: inline;
+	white-space: pre-line; 
+	margin-bottom: 5px;
+}
+
+.formSubmit {
+    height: 30px;
+    width: 150px;
+    margin: auto;
+    margin-left: 50px;
+}
+
+form table th {
+    width: 140px;
+}
+
+.analytesTable {
+    min-width: 445px;
+    border: 1px solid black;
+}
+
+.atHeader {
+    width: 93%
+}
+
+.atHeader th {
+    color:white;
+    background-color:grey;
+    border: 1px black solid;
+}
+
+.analytesTable td,th {
+    width: 220px;
+}
+
+.atContentsContainer {
+    width: 100%; 
+    height: 450px; 
+    overflow: auto;
+}
+
+.atContents {
+    width: 95%;
+}
+
+.atContents td {
+    border: 1px black solid;
+}

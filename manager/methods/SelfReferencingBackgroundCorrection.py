@@ -51,9 +51,11 @@ class SelfReferencingBackgroundCorrection(mm.AnalysisMethod):
         {
             'class': OperationSelectSensitivities,
             'title': 'Describe sensitivities.',
-            'desc': """Mark with the same alphanumeric string, which curves are
-            registered with the same sensitivity (the method requires at least
-            three different).""",
+            'desc': \
+"""
+Mark with the same alphanumeric string, which curves are
+registered with the same sensitivity (the method requires at least
+three different).""",
         },
         { 
             'class': mm.OperationSelectRange,
@@ -61,12 +63,12 @@ class SelfReferencingBackgroundCorrection(mm.AnalysisMethod):
             'desc': 'Select range containing peak. WARMING, the data processing can take up to 10 min, please be patient.',
         },
     ]
-    description = """
-    [1] Ciepiela, F., Lisak, G., & Jakubowska, M. (2013). Self-referencing
-    background correction method for voltammetric investigation of reversible
-    redox reaction. Electroanalysis, 25(9), 2054–2059.
-    https://doi.org/10.1002/elan.201300181
-    """
+    description = \
+"""
+[1] Ciepiela, F., Lisak, G., & Jakubowska, M. (2013). Self-referencing
+background correction method for voltammetric investigation of reversible
+redox reaction. Electroanalysis, 25(9), 2054–2059.
+https://doi.org/10.1002/elan.201300181"""
 
     @classmethod
     def __str__(cls):

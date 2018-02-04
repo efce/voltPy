@@ -3,7 +3,29 @@
 {% block title %} Show {% endblock %}
 
 {% block real_content %}
-<p>Calibration ID: {{ calibration_id }} </p>
+<p>CurveSet name: {{ curveset.name }}<br />
+Date created: {{ curveset.date | date:"c" }}</p>
 {{ at | safe }}
-
+<br />
+<form method="post" action="" enctype="multipart/form-data" id="concform">
+	<table>
+	{% csrf_token %}
+	{{ formAnalyze.as_table }}
+	<tr><td colspan=2><input type="submit" name="startAnalyze" value="Start Analysis" class="formSubmit"/></td></tr>
+	</table>
+</form>
+<hr />
+{% if curveset.locked %}
+<p>Processing of this curveset is not allowed, because it was already used in
+analysis.<br /> To process the data further please create a copy of it.<br />
+<button class="urlChanger url@{{ cloneCSUrl }}"> Copy </button>
+{% else %}
+<form method="post" action="" enctype="multipart/form-data" id="concform">
+	<table>
+	{% csrf_token %}
+	{{ formProcess.as_table }}
+	<tr><td colspan=2><input type="submit" name="startProcessing" value="Start Processing" class="formSubmit" ></td></tr>
+	</table>
+</form>
+{% endif %}
 {% endblock %}

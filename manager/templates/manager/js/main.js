@@ -107,6 +107,8 @@
 
     $( function() {
         $( ".plotHighlight" ).hover( function() {
+         $(this).css('background-color', 'red');
+         $(this).css('color', 'white');
          var classes = this.className.split(" ");
          classes.forEach( function(name) {
             if (name.startsWith('highlightCurve@')) {
@@ -118,6 +120,8 @@
          }); 
         }, function() {
          var classes = this.className.split(" ");
+         $(this).css('background-color', 'white');
+         $(this).css('color', 'black');
          classes.forEach( function(name) {
             if (name.startsWith('highlightCurve@')) {
                var number = name.substring(15);

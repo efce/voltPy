@@ -13,9 +13,8 @@ class RegularStandardAddition(mm.AnalysisMethod):
         },
     ]
     description = """
-    This is standard addition method, where the height of the signal is
-    calculated as a difference between max and min signal in the given range.
-    """
+This is standard addition method, where the height of the signal is calculated as a difference between max and min signal in the given range.
+"""
 
     @classmethod
     def __str__(cls):

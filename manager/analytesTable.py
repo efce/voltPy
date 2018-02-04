@@ -50,7 +50,7 @@ def analytesTable(user, source):
         ).decode('UTF-8')
     )
 
-    ret = ['<table>']
+    ret = ['<table  cellspacing="0" cellpadding="0" border="0" class="analytesTable"><tr><td><table class="atHeader">']
     if lenana == 0:
         ret.append('<tr><th colspan=1>No analytes</th></tr><tr><th>Curve names</th>')
     else:
@@ -68,7 +68,7 @@ def analytesTable(user, source):
             )
         )
     ret.append('<th>{0}</th>'.format(addAnalyteBtn))
-    ret.append('</tr>')
+    ret.append('</tr></table></td></tr><tr><td><div class="atContentsContainer"><table class="atContents">')
 
     for c in curves:
         if objType == 'cf':
@@ -96,6 +96,6 @@ def analytesTable(user, source):
         )
         ret.append('</td>')
         ret.append('</tr>')
-    ret.append('</table>')
+    ret.append('</table></div></td></tr></table>')
     return ''.join(ret)
         

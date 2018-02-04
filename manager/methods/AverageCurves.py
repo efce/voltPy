@@ -71,8 +71,8 @@ class AverageCurves(mm.ProcessingMethod):
         },
     ]
     description = """
-    This is simple averaging method which allow to calculate the average from
-    given number of plots.
+This is simple averaging method which allow to calculate the average from
+given number of plots.
     """
 
     @classmethod

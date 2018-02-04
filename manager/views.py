@@ -5,6 +5,7 @@ from django.http import JsonResponse
 import json
 import manager.models as mmodels
 import manager.forms as mforms
+import base64 as b64
 from manager import methodmanager as mmm
 from manager.exceptions import VoltPyNotAllowed, VoltPyDoesNotExists
 from manager.helpers.functions import add_notification
@@ -279,18 +280,55 @@ def showCurveSet(request, user, curveset_id):
 
     import manager.analytesTable as at
     at_disp = at.analytesTable(user, cs)
+
+    mm = mmm.MethodManager(user=user, curveset_id=curveset_id)
+    if request.method == 'POST':
+        if ( 'startAnalyze' in request.POST ):
+            formAnalyze = mm.getAnalysisSelectionForm(request.POST)
+            if ( formAnalyze.is_valid() ):
+                analyzeid = formAnalyze.process(user,cs)
+                return HttpResponseRedirect(reverse('analyze', args=[user.id, analyzeid]))
+        else:
+            formAnalyze = mm.getAnalysisSelectionForm()
+
+        if ( not cs.locked and 'startProcessing' in request.POST ):
+            formProcess = mm.getProcessingSelectionForm(request.POST)
+            if ( formProcess.is_valid() ):
+                procid = formProcess.process(user,cs)
+                return HttpResponseRedirect(reverse('process', args=[user.id, procid]))
+        else:
+            formProcess = mm.getProcessingSelectionForm(disabled=cs.locked)
+
+    else:
+        formAnalyze = mm.getAnalysisSelectionForm()
+        formProcess = mm.getProcessingSelectionForm(disabled=cs.locked)
+
     context = {
         'scripts': plotScr,
         'mainPlot' : plotDiv,
         'user' : user,
-        'curveset_id': curveset_id,
+        'curveset': cs,
         'at': at_disp,
+        'formProcess': formProcess,
+        'formAnalyze': formAnalyze,
+        'cloneCSUrl': 
+                b64.b64encode(reverse('cloneCurveSet', kwargs={
+                    'user_id': user.id,
+                    'toClone_id': cs.id, 
+                    }).encode()
+                ).decode('UTF-8')
     }
     return voltpy_render(
         request=request, 
         template_name='manager/showCurveSet.html',
         context=context
     )
+
+
+@redirect_on_voltpyexceptions
+@with_user
+def cloneCurveSet(request, user, toClone_id):
+    return voltpy_render();
 
 @redirect_on_voltpyexceptions
 @with_user

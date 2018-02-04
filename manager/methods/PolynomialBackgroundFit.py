@@ -18,10 +18,10 @@ class PolynomialBackgroundFit(mm.ProcessingMethod):
     ]
     degree = 3
     description = """
-    The polynomial fit is the most wiedly used background correction method,
-    where the polynomial of given order (in this case 3rd) is fitted into two
-    intevals -- one should be directly in front of the peak of interest and
-    other right after it.
+The polynomial fit is the most wiedly used background correction method,
+where the polynomial of given order (in this case 3rd) is fitted into two
+intevals -- one should be directly in front of the peak of interest and
+other right after it.
     """
 
     @classmethod
