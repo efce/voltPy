@@ -187,7 +187,7 @@ def createCurveSet(request, user):
                 cs_id = form.curvesetid
                 if cs_id and cs_id > -1:
                     return HttpResponseRedirect(
-                            reverse('editCurveSet', args=[user.id, cs_id])
+                            reverse('showCurveSet', args=[user.id, cs_id])
                     )
     else:
         form = mforms.SelectCurvesForCurveSetForm(user)

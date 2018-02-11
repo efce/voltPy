@@ -11,10 +11,13 @@ def analytesTable(user, source):
         or isinstance(source, mmodels.CurveSet)
 
     objType = ''
+    allowDelete = True
     if isinstance(source, mmodels.CurveSet):
         objType = 'cs'
         cds = source.usedCurveData.all()
         curves = []
+        if source.locked:
+            allowDelete = False
         for cd in cds:
             curves.append(cd.curve)
             curves[-1].cdid = cd.id
@@ -83,17 +86,20 @@ def analytesTable(user, source):
             else:
                 ret.append('<td> %f </td>' % 0)
         ret.append('<td>')
-        ret.append(htmlButton.format(
-                'delete',
-                b64.b64encode(reverse('deleteCurve', kwargs={
-                    'user_id': user.id,
-                    'objType': objType,
-                    'objId': source.id, 
-                    'delId': delId
-                    }).encode()
-                ).decode('UTF-8')
+        if allowDelete:
+            ret.append(htmlButton.format(
+                    'delete',
+                    b64.b64encode(reverse('deleteCurve', kwargs={
+                        'user_id': user.id,
+                        'objType': objType,
+                        'objId': source.id, 
+                        'delId': delId
+                        }).encode()
+                    ).decode('UTF-8')
+                )
             )
-        )
+        else:
+            ret.append('<button disabled>Delete</button>')
         ret.append('</td>')
         ret.append('</tr>')
     ret.append('</table></div></td></tr></table>')
