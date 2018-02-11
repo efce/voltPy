@@ -138,6 +138,7 @@ class MethodManager:
                 'model': self.__model,
                 'curveset_id': self.__model.curveSet.id,
             }
+
             return voltpy_render(
                 request=request,
                 template_name='manager/method.html',
@@ -297,6 +298,10 @@ class Method(ABC):
             self.model.step = self.model.step + 1
             self.model.save()
             self.operation = self._operations[self.model.step]
+            if self.operation['class'] is not None:
+                self.operation['object'] = self.operation['class']()
+            else:
+                self.operation['object'] = None
             return True
         else:
             return False
@@ -309,6 +314,7 @@ class Method(ABC):
             self.has_next = False
         elif self.operation['object'].process(user=user, request=request, model=self.model):
             self.has_next = self.__nextOperation()
+
         if not self.has_next:
             self.finalize(user)
             self.model.step = None
