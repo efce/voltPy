@@ -83,25 +83,31 @@ https://doi.org/10.1039/C7AN00185A
         p.plot_height = 400
         xvec = self.model.customData['matrix'][0]
         yvec = self.model.customData['matrix'][1]
+        colors = [ 'blue', 'red', 'green', 'gray', 'cyan', 'yellow', 'magenta', 'orange' ]
+        getColor = lambda x: colors[x] if len(colors) > x else 'black'
+        col_cnt = 0
         for sens,yrow in yvec:
             p.add(
                 x=xvec,
                 y=yrow,
                 plottype='scatter',
-                color='red',
+                color=getColor(col_cnt),
                 size=7
             )
+            col_cnt += 1
         xvec2 = list(xvec)
         xvec2.append(-self.model.customData['result'])
+        col_cnt = 0
         for k,fe in self.model.customData['fitEquation'].items():
             Y = [ fe['slope']*x+fe['intercept'] for x in xvec2 ]
             p.add(
                 x=xvec2,
                 y=Y,
                 plottype='line',
-                color='blue',
+                color=getColor(col_cnt),
                 line_width=2
             )
+            col_cnt += 1
 
         scripts,div = p.getEmbeded(request, user, 'analysis', self.model.id)
         ret = { 
