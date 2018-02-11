@@ -304,7 +304,7 @@ def showCurveSet(request, user, curveset_id):
         formProcess = mm.getProcessingSelectionForm(disabled=cs.locked)
 
     context = {
-        'scripts': plotScr,
+        'scripts': plotScr + formAnalyze.getJS(request),
         'mainPlot' : plotDiv,
         'user' : user,
         'curveset': cs,
