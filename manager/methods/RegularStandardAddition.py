@@ -7,9 +7,14 @@ import numpy as np
 class RegularStandardAddition(mm.AnalysisMethod):
     _operations = [
         { 
+            'class': mm.OperationSelectAnalyte,
+            'title': 'Select analyte',
+            'desc': """Select analyte.""",
+        },
+        { 
             'class': mm.OperationSelectRange,
             'title': 'Select range',
-            'desc': 'Select range containing peak.',
+            'desc': 'Select range containing peak and press Forward, or press Back to change the selection.',
         },
     ]
     description = """

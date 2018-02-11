@@ -105,6 +105,25 @@
       });
   });
 
+  $( function() {
+      window.voltPy1.atChangerCurrent = -1;
+      $( ".atChanger" ).on('change', function() {
+         var value = this.value;
+          if (value == window.voltPy1.atChangerCurrent)
+              return;
+         
+          if ( window.voltPy1.atChangerCurrent != -1 ) {
+             var classToHide = "atAnalyte" + window.voltPy1.atChangerCurrent;
+             $( "." + classToHide ).css('display', 'none');
+          }
+          if (value != -1 ) {
+             var classToShow = "atAnalyte" + value;
+             $( "." + classToShow ).css('display', 'table-cell');
+          }
+         window.voltPy1.atChangerCurrent = value;
+     });
+  });
+
     $( function() {
         $( ".plotHighlight" ).hover( function() {
          $(this).css('background-color', 'red');

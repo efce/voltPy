@@ -7,6 +7,7 @@ from django.urls import reverse
 from django.http import HttpResponseRedirect
 from django.http import HttpResponse
 from django.utils import timezone
+from django import forms
 import manager.models as mmodels
 import manager.plotmanager as pm
 from manager.helpers.functions import generate_plot
@@ -443,6 +444,73 @@ class OperationConfirmation(Operation):
             model.save()
             return False
 
+class OperationSelectAnalyte(Operation):
+    plot_interaction = 'none'
+
+    class AnalyteSelectionForm(forms.Form):
+        def __init__(self, *args, **kwargs):
+            analytes = kwargs.pop('analytes',[])
+            super(OperationSelectAnalyte.AnalyteSelectionForm, self).__init__(*args, **kwargs)
+            choices = zip(
+                [-1] + [ x.id for x in analytes ],
+                ['Select'] + [ x.name for x in analytes ]
+            )
+            self.fields['analyteId'] = forms.ChoiceField(
+                choices=choices,
+                initial=-1,
+                label='Analyte'
+            )
+            self.fields['analyteId'].widget.attrs['class'] = 'atChanger'
+
+    def getHTML(self, user, request, model):
+        cs = model.curveSet
+        analytes = set()
+        for cd in cs.usedCurveData.all():
+            aics = mmodels.AnalyteInCurve.objects.filter(curve=cd.curve)
+            for aic in aics:
+                analytes.add(aic.analyte)
+
+        style = "<style>.atOther { display: none; };</style>"
+        import manager.analytesTable as at
+        at_disp = at.analytesTable(user, cs)
+
+        analyte_sel = self.AnalyteSelectionForm(analytes=analytes)
+        from django.template import loader
+        template = loader.get_template('manager/form.html')
+        context = { 'form': analyte_sel, 'submit': 'selectAnalyte' }
+        analyte_sel_disp = template.render(
+            context=context,
+            request=request
+        )
+        txt = """
+        {0}
+        <br />
+        Data preview:<br />
+        {1}
+        """.format(analyte_sel_disp, at_disp)
+        return { 'head': style, 'desc': '', 'body': txt }
+
+    def process(self, user, request, model):
+        cs = model.curveSet
+        analytes = set()
+        for cd in cs.usedCurveData.all():
+            aics = mmodels.AnalyteInCurve.objects.filter(curve=cd.curve)
+            for aic in aics:
+                analytes.add(aic.analyte)
+
+        analyte_sel = self.AnalyteSelectionForm(request.POST, analytes=analytes)
+        if analyte_sel.is_valid():
+            data = model.customData.get('analytes', [])
+            try:
+                analyte = mmodels.Analyte.objects.get(id=analyte_sel.cleaned_data['analyteId'])
+            except ObjectDoesNotExist:
+                return False
+            data.append(analyte.id)
+            model.customData['analytes'] = data
+            model.save()
+            return True
+        else:
+            return False
 
 if ( __name__ == '__main__' ):
     mm = MethodManager()

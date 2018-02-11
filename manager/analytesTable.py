@@ -57,9 +57,9 @@ def analytesTable(user, source):
     if lenana == 0:
         ret.append('<tr><th colspan=1>No analytes</th></tr><tr><th>Curve names</th>')
     else:
-        ret.append('<tr><td>&nbsp;</td><th colspan={:d}>Analytes</th><th>Action</th></tr><tr><th>Curve names</th>'.format(lenana))
+        ret.append('<tr><td>&nbsp;</td><th colspan={:d} class="atOther">Analytes</th><th class="atOther">Action</th></tr><tr><th>Curve names</th>'.format(lenana))
     for a in analytes:
-        ret.append('<th> {0} <br /><button class="urlChanger url@{1}">Edit</button></th>'.format(
+        ret.append('<th class="atOther atAnalyte{2}"> {0} <br /><button class="urlChanger url@{1} atOther">Edit</button></th>'.format(
                 a.name, 
                 b64.b64encode(reverse('editAnalyte', kwargs={
                     'user_id': user.id,
@@ -67,10 +67,11 @@ def analytesTable(user, source):
                     'objId': source.id, 
                     'analyteId':a.id
                     }).encode()
-                ).decode('UTF-8')
+                ).decode('UTF-8'),
+                a.id
             )
         )
-    ret.append('<th>{0}</th>'.format(addAnalyteBtn))
+    ret.append('<th class="atOther">{0}</th>'.format(addAnalyteBtn))
     ret.append('</tr></table></td></tr><tr><td><div class="atContentsContainer"><table class="atContents">')
 
     for c in curves:
@@ -82,10 +83,10 @@ def analytesTable(user, source):
         for a in analytes:
             aac = aic.filter(curve=c, analyte=a)
             if len(aac) > 0:
-                ret.append('<td> %f </td>' %  aac[0].concentration )
+                ret.append('<td class="atOther atAnalyte%s"> %f </td>' % (a.id, aac[0].concentration) )
             else:
-                ret.append('<td> %f </td>' % 0)
-        ret.append('<td>')
+                ret.append('<td class="atOther atAnalyte%s> %f </td>' % (a.id, 0) )
+        ret.append('<td class="atOther">')
         if allowDelete:
             ret.append(htmlButton.format(
                     'delete',

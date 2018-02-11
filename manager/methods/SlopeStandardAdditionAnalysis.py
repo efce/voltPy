@@ -6,9 +6,14 @@ import manager.plotmanager as pm
 class SlopeStandardAdditionAnalysis(mm.AnalysisMethod):
     _operations = ( 
         { 
+            'class': mm.OperationSelectAnalyte,
+            'title': 'Select analyte',
+            'desc': """Select analyte.""",
+        },
+        { 
             'class': mm.OperationSelectPoint,
             'title': 'Select peak',
-            'desc': 'Enter approx. X value of peak of interest.',
+            'desc': 'Enter approx. X value of peak of interest and press Forward, or press back to change the selection.',
         },
     )
     description = """

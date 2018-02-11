@@ -67,7 +67,7 @@ class AverageCurves(mm.ProcessingMethod):
         {
             'class': OperationAverage,
             'title': 'Averaging',
-            'desc': 'Set the same alphanumeric value to the curves you want to average.',
+            'desc': 'Tag the curves you want to average with the same alphanumeric value.',
         },
     ]
     description = """

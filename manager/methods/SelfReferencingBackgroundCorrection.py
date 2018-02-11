@@ -48,19 +48,28 @@ class OperationSelectSensitivities(mm.Operation):
 
 class SelfReferencingBackgroundCorrection(mm.AnalysisMethod):
     _operations = [ 
+        { 
+            'class': mm.OperationSelectAnalyte,
+            'title': 'Select analyte',
+            'desc': """Select analyte.""",
+        },
         {
             'class': OperationSelectSensitivities,
             'title': 'Describe sensitivities.',
             'desc': \
 """
-Mark with the same alphanumeric string, which curves are
-registered with the same sensitivity (the method requires at least
-three different).""",
+Tag curves registered with the same sensitivity
+with the same alphanumeric string (the method 
+requires at least three different).
+""",
         },
         { 
             'class': mm.OperationSelectRange,
             'title': 'Select range',
-            'desc': 'Select range containing peak. WARMING, the data processing can take up to 10 min, please be patient.',
+            'desc': """
+Select range containing peak and press Forward, or press Back to change the selection.
+<br />WARNING, the data processing can take up to 5 min, please be patient.
+""",
         },
     ]
     description = \

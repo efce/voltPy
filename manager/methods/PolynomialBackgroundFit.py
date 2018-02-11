@@ -8,12 +8,12 @@ class PolynomialBackgroundFit(mm.ProcessingMethod):
         {
             'class': mm.OperationSelectTwoRanges,
             'title': 'Choose two fit intervals.',
-            'desc': 'Select two fit intervals.',
+            'desc': 'Select two fit intervals and press Forward, or press Back to change the selection.',
         },
         {
             'class': mm.OperationConfirmation,
             'title': 'Confirm background shape.',
-            'desc': 'Confirm background shape.',
+            'desc': 'Press Forward to confirm background shape or press Back to return to interval selection.',
         },
     ]
     degree = 3

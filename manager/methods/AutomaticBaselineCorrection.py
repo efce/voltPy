@@ -9,7 +9,7 @@ class AutomaticBaselineCorrection(mm.ProcessingMethod):
         {
             'class': mm.OperationConfirmation,
             'title': 'Config before proceding.',
-            'desc': 'Confirm before proceding.',
+            'desc': 'To confirm press Forward.',
         },
     ]
     model = None
