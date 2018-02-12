@@ -16,7 +16,7 @@ class OperationSelectFrequency(mm.Operation):
 
     def getHTML(self, user, request, model):
         p = pm.PlotManager()
-        for cd in model.curveSet.usedCurveData.all():
+        for cd in model.curveSet.curvesData.all():
             ylen = len(cd.yVector)
             newy = np.absolute(np.fft.fft(cd.yVector))
             newy = newy[1:round(ylen/2.0)].tolist()
@@ -56,7 +56,7 @@ signal back to the original domain.
         return "Low Pass FFT filter"
 
     def finalize(self, user):
-        for cd in self.model.curveSet.usedCurveData.all():
+        for cd in self.model.curveSet.curvesData.all():
             ylen = len(cd.yVector)
             st = round(self.model.customData['threshold'])
             en = ylen - st - 1;
@@ -73,8 +73,11 @@ signal back to the original domain.
             newcd.processing = self.model
             newcd.basedOn = cd
             newcd.save()
-            self.model.curveSet.usedCurveData.remove(cd)
-            self.model.curveSet.usedCurveData.add(newcd)
+            for a in self.model.curveSet.analytes.all():
+                self.model.curveSet.analytesConc[a.id][newcd.id] = \
+                    self.model.curveSet.analytesConc[a.id].pop(cd.id, 0)
+            self.model.curveSet.curvesData.remove(cd)
+            self.model.curveSet.curvesData.add(newcd)
         self.model.curveSet.save()
         self.model.step = None
         self.model.completed = True

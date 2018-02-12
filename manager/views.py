@@ -139,18 +139,30 @@ def deleteCurveFile(request, user, file_id):
 def deleteCurve(request, user, objType, objId, delId):
     if objType == 'cf':
         try:
-            c = mmodels.Curve.objects.get(id=delId)
-            deleteFrom = mmodels.CurveFile.objects.get(id=objId)
+            cd = mmodels.CurveData.objects.get(id=delId)
+            deleteFrom = mmodels.CurveFile.objects.get(id=objId).curveSet
         except ObjectDoesNotExist:
             c=None
-        return delete_helper(request, user, c, deleteFrom=deleteFrom)
+        return delete_helper(
+            request, 
+            user, 
+            cd, 
+            deleteFrom=deleteFrom,
+            onSuccessRedirect=reverse('showFile', args=[user.id, deleteFrom.id])
+        )
     else: # curveset
         try:
             cd = mmodels.CurveData.objects.get(id=delId)
             deleteFrom = mmodels.CurveSet.objects.get(id=objId)
         except ObjectDoesNotExist:
             cd=None
-        return delete_helper(request, user, cd, deleteFrom=deleteFrom)
+        return delete_helper(
+            request, 
+            user, 
+            cd, 
+            deleteFrom=deleteFrom,
+            onSuccessRedirect=reverse('showCurveSet', args=[user.id, deleteFrom.id])
+        )
 
 
 @redirect_on_voltpyexceptions
@@ -279,7 +291,7 @@ def showCurveSet(request, user, curveset_id):
     )
 
     import manager.analytesTable as at
-    at_disp = at.analytesTable(user, cs)
+    at_disp = at.analytesTable(user, cs, objType='cs')
 
     mm = mmm.MethodManager(user=user, curveset_id=curveset_id)
     if request.method == 'POST':
@@ -371,17 +383,17 @@ def editCurveSet(request,user,curveset_id):
             formProc = mm.getProcessingSelectionForm(disabled=cs.locked)
 
         if ( 'submitFormAnalyte' in request.POST ):
-            formAnalyte = mforms.AddAnalytesForm(user, "CurveSet", curveset_id, request.POST)
+            formAnalyte = mforms.EditAnalytesForm(user, "CurveSet", curveset_id, request.POST)
             if formAnalyte.is_valid():
                 if ( formAnalyte.process(user) == True ):
                     return HttpResponseRedirect(
                         reverse('editCurveSet', args=[user.id, curveset_id])
                     )
         else:
-            formAnalyte = mforms.AddAnalytesForm(user, "CurveSet", curveset_id)
+            formAnalyte = mforms.EditAnalytesForm(user, "CurveSet", curveset_id)
 
     else:
-        formAnalyte = mforms.AddAnalytesForm(user, "CurveSet", curveset_id)
+        formAnalyte = mforms.EditAnalytesForm(user, "CurveSet", curveset_id)
         formGenerate = mm.getAnalysisSelectionForm()
         formProc = mm.getProcessingSelectionForm(disabled=cs.locked)
 
@@ -443,14 +455,14 @@ def upload(request, user):
 @with_user
 def editCurveFile(request, user, file_id,):
     if request.method == 'POST':
-        form = mforms.AddAnalytesForm(user, "File", file_id, request.POST)
+        form = mforms.EditAnalytesForm(user, "File", file_id, request.POST)
         if form.is_valid():
             if ( form.process(user) == True ):
                 return HttpResponseRedirect(
                     reverse('browseCurveFile', args=[user.id])
                 )
     else:
-        form = mforms.AddAnalytesForm(user, "File", file_id)
+        form = mforms.EditAnalytesForm(user, "File", file_id)
     plotScr, plotDiv = generate_plot(
         request=request, 
         user=user, 
@@ -491,11 +503,8 @@ def showCurveFile(request, user, file_id):
         plot_type='file',
         value_id=cf.id
     )
-    curves = mmodels.Curve.objects.filter(curveFile=cf, deleted=False)
-    for c in curves:
-        print('{0}: {1}'.format(c.id, c.deleted))
 
-    at_disp = at.analytesTable(user, cf)
+    at_disp = at.analytesTable(user, cf, objType='cf')
 
     context = { 
         'scripts': plotScr,
@@ -522,7 +531,7 @@ def editAnalyte(request, user, objType, objId, analyteId):
             raise VoltPyNotAllowed
         if not cf.canBeUpdatedBy(user):
             raise VoltPyNotAllowed
-        curves = mmodels.Curve.objects.filter(curveFile=cf, deleted=False)
+        cs = cf.curveSet 
 
     elif objType == 'cs':
         try:
@@ -531,15 +540,12 @@ def editAnalyte(request, user, objType, objId, analyteId):
             raise VoltPyNotAllowed
         if not cs.canBeUpdatedBy(user):
             raise VoltPyNotAllowed
-        curves = []
-        for cd in cs.usedCurveData.all():
-            curves.append(cd.curve)
 
     else:
         raise VoltPyNotAllowed
 
     if request.method == 'POST':
-        form = mforms.AddAnalytesForm(user, objType, objId, analyteId, request.POST)
+        form = mforms.EditAnalytesForm(user, objType, objId, analyteId, request.POST)
         if form.is_valid():
             if ( form.process(user) == True ):
                 if objType == 'cf':
@@ -551,7 +557,7 @@ def editAnalyte(request, user, objType, objId, analyteId):
                         reverse('showCurveSet', args=[user.id, objId])
                     )
     else:
-        form = mforms.AddAnalytesForm(user, objType, objId, analyteId)
+        form = mforms.EditAnalytesForm(user, objType, objId, analyteId)
 
     if objType == 'cf':
         plotType = 'file'

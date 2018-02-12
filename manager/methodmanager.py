@@ -464,8 +464,8 @@ class OperationSelectAnalyte(Operation):
             analytes = kwargs.pop('analytes',[])
             super(OperationSelectAnalyte.AnalyteSelectionForm, self).__init__(*args, **kwargs)
             choices = zip(
-                [-1] + [ x.id for x in analytes ],
-                ['Select'] + [ x.name for x in analytes ]
+                [-1] + [ x.id for x in analytes.all() ],
+                ['Select'] + [ x.name for x in analytes.all() ]
             )
             self.fields['analyteId'] = forms.ChoiceField(
                 choices=choices,
@@ -476,17 +476,12 @@ class OperationSelectAnalyte(Operation):
 
     def getHTML(self, user, request, model):
         cs = model.curveSet
-        analytes = set()
-        for cd in cs.usedCurveData.all():
-            aics = mmodels.AnalyteInCurve.objects.filter(curve=cd.curve)
-            for aic in aics:
-                analytes.add(aic.analyte)
 
         style = "<style>.atOther { display: none; };</style>"
         import manager.analytesTable as at
-        at_disp = at.analytesTable(user, cs)
+        at_disp = at.analytesTable(user, cs, objType='cs')
 
-        analyte_sel = self.AnalyteSelectionForm(analytes=analytes)
+        analyte_sel = self.AnalyteSelectionForm(analytes=cs.analytes)
         from django.template import loader
         template = loader.get_template('manager/form.html')
         context = { 'form': analyte_sel, 'submit': 'selectAnalyte' }
@@ -504,13 +499,8 @@ class OperationSelectAnalyte(Operation):
 
     def process(self, user, request, model):
         cs = model.curveSet
-        analytes = set()
-        for cd in cs.usedCurveData.all():
-            aics = mmodels.AnalyteInCurve.objects.filter(curve=cd.curve)
-            for aic in aics:
-                analytes.add(aic.analyte)
 
-        analyte_sel = self.AnalyteSelectionForm(request.POST, analytes=analytes)
+        analyte_sel = self.AnalyteSelectionForm(request.POST, analytes=cs.analytes)
         if analyte_sel.is_valid():
             data = model.customData.get('analytes', [])
             try:

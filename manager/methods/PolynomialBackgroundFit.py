@@ -32,7 +32,7 @@ other right after it.
         ret = super(mm.ProcessingMethod, self).process(user, request)
         if ( self.model.step == 1 ):
             self.model.customData['fitCoeff'] = []
-            for cd in self.model.curveSet.usedCurveData.all():
+            for cd in self.model.curveSet.curvesData.all():
                 st1 = cd.xvalueToIndex(user, self.model.customData['range1'][0])
                 en1 = cd.xvalueToIndex(user, self.model.customData['range1'][1])
                 st2 = cd.xvalueToIndex(user, self.model.customData['range2'][0])
@@ -50,7 +50,7 @@ other right after it.
         currentStepNumber = self.model.step
         if ( currentStepNumber == 1 ):
             fitlines = []
-            for cd,fit in zip(self.model.curveSet.usedCurveData.all(), self.model.customData['fitCoeff']):
+            for cd,fit in zip(self.model.curveSet.curvesData.all(), self.model.customData['fitCoeff']):
                 xvec = cd.xVector
                 polyval = lambda x: (
                     fit['x3']*x**3
@@ -71,7 +71,7 @@ other right after it.
         import numpy as np
         if self.model.curveSet.locked:
             raise ValueError("CurveSet used by Analysis method cannot be changed.")
-        for cd,fit in zip(self.model.curveSet.usedCurveData.all(), self.model.customData['fitCoeff']):
+        for cd,fit in zip(self.model.curveSet.curvesData.all(), self.model.customData['fitCoeff']):
             newcd = deepcopy(cd)
             newcd.id = None
             newcd.pk = None
@@ -91,8 +91,11 @@ other right after it.
             newcd.processing=self.model
             newcd.basedOn = cd
             newcd.save()
-            self.model.curveSet.usedCurveData.remove(cd)
-            self.model.curveSet.usedCurveData.add(newcd)
+            for a in self.model.curveSet.analytes.all():
+                self.model.curveSet.analytesConc[a.id][newcd.id] = \
+                    self.model.curveSet.analytesConc[a.id].pop(cd.id, 0)
+            self.model.curveSet.curvesData.remove(cd)
+            self.model.curveSet.curvesData.add(newcd)
             self.model.curveSet.save()
             self.model.save()
         return True

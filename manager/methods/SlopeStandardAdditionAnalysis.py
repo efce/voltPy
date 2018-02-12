@@ -39,22 +39,23 @@ https://doi.org/10.1039/C7AN00185A
         from manager.helpers.prepareStructForSSAA import prepareStructForSSAA
         from manager.curveea import Param
         self.model.customData['selectedIndex'] = \
-            self.model.curveSet.usedCurveData.all()[0].xvalueToIndex(user, self.model.customData['pointX'])
+            self.model.curveSet.curvesData.all()[0].xvalueToIndex(user, self.model.customData['pointX'])
         peak = self.model.customData.get('selectedIndex', 0)
         X = []
         Conc = []
         tptw = 0
-        for cd in self.model.curveSet.usedCurveData.all():
-            X.append(cd.probingData)
-            a = models.AnalyteInCurve.objects.get(curve=cd.curve)
-            Conc.append(a.concentration)
+        analyte = self.model.curveSet.analytes.all()[0]
+        self.model.customData['analyte'] = analyte.name
+        for cd in self.model.curveSet.curvesData.all():
+            X.append(cd.currentSamples)
+            Conc.append(self.model.curveSet.analytesConc.get(analyte.id,{}).get(cd.id,0))
             tptw = cd.curve.params[Param.tp] + cd.curve.params[Param.tw]
 
         tp = 3
         twvec = self.__chooseTw(tptw)
         if not twvec:
             raise 3
-        numM = self.model.curveSet.usedCurveData.all()[0].curve.params[Param.method]
+        numM = self.model.curveSet.curvesData.all()[0].curve.params[Param.method]
         ctype = 'dp'
         if numM == Param.method_dpv:
             ctype='dp'

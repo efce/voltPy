@@ -156,13 +156,19 @@ class ProcessUpload:
             owner=self._user, 
             name=self._fname,
             comment=self._fcomment,
-            filename=self._ufile.name,
+            fileName=self._ufile.name,
             fileDate=self._curves[0].getDate(),
         )
+        cs = CurveSet(
+            owner=self._user,
+            name=self._fname,
+            locked=True,
+        )
+        cs.save()
+        cf.curveSet = cs
         cf.save()
 
-        self._file_id = cf.id;
-
+        self._file_id = cf.id
         order=0
         for c in self._curves:
             cb = Curve(        
@@ -175,22 +181,17 @@ class ProcessUpload:
             )
             cb.save()
 
-#            if ( c.vec_param[Param.nonaveragedsampling] == 0 ):
-#                pr = []
-#            else:
-#                pr = c.vec_probing
-#
-            pr = c.vec_probing
-            cv = CurveData(
+            cd = CurveData(
                 curve = cb, 
                 date = c.getDate(), 
                 processing = None,
                 time = c.vec_time, 
                 potential = c.vec_potential,
                 current = c.vec_current, 
-                probingData = pr 
+                currentSamples = c.vec_probing 
             )
-            cv.save()
+            cd.save()
+            cs.curvesData.add(cd)
 
             ci = CurveIndex( 
                 curve = cb, 
@@ -203,10 +204,12 @@ class ProcessUpload:
                 current_min = min(c.vec_current), 
                 current_max = max(c.vec_current), 
                 current_range = max(c.vec_current) - min(c.vec_current), 
-                probingRate = c.vec_param.get(Param.nonaveragedsampling,0)
+                samplingRate = c.vec_param.get(Param.nonaveragedsampling,0)
             )
             ci.save()
             order+=1
+
+        cs.save()
 
     def _processAnalyte(self):
         if not self._analyte:

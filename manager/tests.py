@@ -97,7 +97,7 @@ main_class = TestMethod
         cs.save()
         self.curveset = cs
         for cd in mmodels.CurveData.objects.all():
-            cs.usedCurveData.add(cd)
+            cs.curveData.add(cd)
 
         BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         self.methods_path = os.path.join(BASE_DIR, 'manager', 'methods')
