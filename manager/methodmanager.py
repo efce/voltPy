@@ -113,6 +113,11 @@ class MethodManager:
                 request=request
             )
 
+            stepInfo = '<p>Step: {0} out of {1}</p>'.format(
+                self.__model.step+1,
+                len(self.__method._operations)
+            )
+
             plotScr, plotDiv = generate_plot(
                 request=request, 
                 user=user, 
@@ -131,6 +136,7 @@ class MethodManager:
                                     ]),
                 'mainPlot': plotDiv,
                 'method_content': ''.join([
+                                        stepInfo,
                                         operationText.get('desc',''),
                                         operationText.get('body',''),
                                     ]),
