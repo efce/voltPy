@@ -23,8 +23,8 @@ class PlotManager:
     title = ''
     xlabel = "x"
     ylabel = "y"
-    plot_width = 850
-    plot_height = 700
+    plot_width = 700
+    plot_height = 600
 
     def __init__(self):
         self.__random = str(random.random()).replace(".","")
@@ -32,8 +32,8 @@ class PlotManager:
         self.__scatter = []
         self.xlabel = "x"
         self.ylabel = "y"
-        self.plot_width = 850
-        self.plot_height = 700
+        #self.plot_width = 850
+        #self.plot_height = 700
         self.p = figure(
             title=self.title, 
             name='voltpy_plot',

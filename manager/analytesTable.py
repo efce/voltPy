@@ -58,7 +58,7 @@ def analytesTable(user, obj, objType):
             conc = cs.analytesConc.get(a.id, {}).get(cd.id, 0)
             ret.append('<td class="atOther atAnalyte%s"> %f </td>' % (a.id, conc) )
         ret.append('<td class="atOther">')
-        if cs.locked:
+        if not cs.locked:
             ret.append(htmlButton.format(
                     'delete',
                     b64.b64encode(reverse('deleteCurve', kwargs={

@@ -285,7 +285,8 @@ class SelectCurvesForCurveSetForm(forms.Form):
         ])
 
     def process(self, user):
-        analytesUnits = {}
+        analytesConcUnits = {}
+        analytesConc = {}
         for name,val in self.cleaned_data.items():
             if ( val == True ):
                 if ( '_' in name ):
