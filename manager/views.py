@@ -185,7 +185,7 @@ def deleteCurveSet(request, user, curveset_id):
 
 @redirect_on_voltpyexceptions
 @with_user
-def createCurveSet(request, user):
+def createCurveSet(request, user, toClone=-1):
     """
     from pyinstrument import Profiler
     profiler = Profiler(use_signal=False)
@@ -202,7 +202,7 @@ def createCurveSet(request, user):
                             reverse('showCurveSet', args=[user.id, cs_id])
                     )
     else:
-        form = mforms.SelectCurvesForCurveSetForm(user)
+        form = mforms.SelectCurvesForCurveSetForm(user, toClone=toClone)
 
     context = {
         'formHTML': form.drawByHand(request), 
@@ -340,7 +340,7 @@ def showCurveSet(request, user, curveset_id):
 @redirect_on_voltpyexceptions
 @with_user
 def cloneCurveSet(request, user, toClone_id):
-    return voltpy_render();
+    return createCurveSet(request, user_id=user.id, toClone=toClone_id)
 
 @redirect_on_voltpyexceptions
 @with_user

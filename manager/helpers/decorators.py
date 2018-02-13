@@ -28,11 +28,8 @@ def with_user(fun):
         user_id = kwargs.pop('user_id', None)
         try:
             user_id = int(user_id)
-        except (TypeError, ValueError):
-            raise VoltPyNotAllowed(None)
-        try:
             user = mmodels.User.objects.get(id=user_id)
-        except ObjectDoesNotExist:
+        except (TypeError, ValueError, ObjectDoesNotExist):
             raise VoltPyNotAllowed(None)
         kwargs['user'] = user
         return fun(*args, **kwargs)

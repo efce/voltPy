@@ -183,11 +183,23 @@ class SelectXForm(forms.Form):
 
 
 class SelectCurvesForCurveSetForm(forms.Form):
-    name = forms.CharField(max_length=124, required=True)
     curvesetid = -1
     def __init__(self, user,  *args, **kwargs):
+        self.toClone = int(kwargs.pop('toClone', -1))
+        newName = ''
+        try:
+            csToClone = mmodels.CurveSet.objects.get(id=self.toClone)
+            newName = csToClone.name + '_copy'
+        except:
+            newName = ''
+            self.toClone = -1
         super(SelectCurvesForCurveSetForm, self).__init__(*args, **kwargs)
         from django.db.models import Prefetch
+        self.fields['name'] = forms.CharField(
+            max_length=124, 
+            required=True,
+            initial=newName
+        )
         self.fields['name'].maintype = 'name'
         self.fields['name'].mainid = 0
 
@@ -195,7 +207,14 @@ class SelectCurvesForCurveSetForm(forms.Form):
         csInFiles = []
         for f in files:
             fname = 'curveFile_{0}'.format(f.id)
-            self.fields[fname] = forms.BooleanField(label=f,required=False)
+            initial = False
+            if f.curveSet.id == self.toClone:
+                initial = True
+            self.fields[fname] = forms.BooleanField(
+                label=f,
+                required=False,
+                initial=initial
+            )
             self.fields[fname].widget.attrs['class'] = 'parent'
             self.fields[fname].maintype = 'curvefile'
             self.fields[fname].cptype = 'parent'
@@ -214,9 +233,13 @@ class SelectCurvesForCurveSetForm(forms.Form):
             if cs.id in csInFiles:
                 continue
             csname = 'curveSet_{0}'.format(cs.id)
+            initial = False
+            if cs.id == self.toClone:
+                initial = True
             self.fields[csname] = forms.BooleanField(
                 label=cs,
-                required=False
+                required=False,
+                initial=initial
             )
             self.fields[csname].maintype = 'curveset'
             self.fields[csname].widget.attrs['class'] = 'parent'
@@ -240,13 +263,16 @@ class SelectCurvesForCurveSetForm(forms.Form):
         ret['curveset'] = []
         ret['curvefile'] = []
         namefield = self.fields.pop('name')
-        ret['start'] += """<li><input type="text" value="" name="name" /></li>"""
+        ret['start'] += """<li>Name: <input type="text" value="{0}" name="name" /></li><hr />""".format(namefield.initial)
         prev_parent = ''
         for key,field in self.fields.items():
             if ( hasattr(self, 'cleaned_data' ) ):
                 checked = self.cleaned_data.get(key, False)
             else:
-                checked = False
+                if self.fields.get(key).initial == True:
+                    checked = True
+                else:
+                    checked = False
             checkedtext = ''
             label = field.label
             if checked:
@@ -300,7 +326,7 @@ class SelectCurvesForCurveSetForm(forms.Form):
 
                     elif "curveSet" == nameSplit[0]:
                         vid = int(nameSplit[1])
-                        cs = mmodels.CurveSet.objects.get(id=vid).only('analytes')
+                        cs = mmodels.CurveSet.objects.get(id=vid)
                         for a in cs.analytes.all():
                             analytesConcUnits[a.id] = cs.analytesConcUnits[a.id]
                             analytesConc[a.id] = {}
@@ -370,8 +396,9 @@ class SelectCurvesForCurveSetForm(forms.Form):
         )
         cs.analytesConc = analytesConc
         cs.analytesConcUnits = analytesConcUnits
+        cs.save()
         for aid,v in analytesConcUnits.items():
-            cs.analyets.add(mmodels.Analytes.objects.get(id=aid))
+            cs.analytes.add(mmodels.Analyte.objects.get(id=aid))
         cs.save()
         self.curvesetid = cs.id
         for cd in final_curvedatas:
