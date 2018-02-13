@@ -62,7 +62,7 @@ This is standard addition method, where the height of the signal is calculated a
         for d in data:
             p.add(**d)
         p.plot_width = 500
-        p.plot_height = 500
+        p.plot_height = 400
         p.xlabel = 'c_({analyte}) / {units}'.format(
             analyte=self.model.customData['analyte'],
             units=self.model.customData['units']

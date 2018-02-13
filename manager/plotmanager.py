@@ -29,10 +29,6 @@ class PlotManager:
         self.__random = str(random.random()).replace(".","")
         self.__line = []
         self.__scatter = []
-        self.xlabel = "x"
-        self.ylabel = "y"
-        #self.plot_width = 850
-        #self.plot_height = 700
         self.p = figure(
             title=self.title, 
             name='voltpy_plot',
@@ -174,11 +170,16 @@ class PlotManager:
             self.p.add_layout(C)
 
     def _prepareFigure(self, request, user, vtype, vid):
+        self.p.height = self.plot_height
+        self.p.width = self.plot_width
         labels = []
         onx = mmodels.OnXAxis.objects.get(user=user)
         onx = onx.selected
         self.p.xaxis.axis_label = self.xlabel
         self.p.yaxis.axis_label = self.ylabel
+        vline = Span(location=0, dimension='height', line_color='black', line_width=1, level='underlay')
+        hline = Span(location=0, dimension='width', line_color='black', line_width=1, level='underlay')
+        self.p.renderers.extend([vline, hline])
         for k,l in dict(mmodels.OnXAxis.AVAILABLE).items():
             labels.append(l)
         active = -1
