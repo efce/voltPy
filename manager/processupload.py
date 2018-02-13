@@ -162,7 +162,7 @@ class ProcessUpload:
         cs = CurveSet(
             owner=self._user,
             name=self._fname,
-            locked=True,
+            locked=False,
         )
         cs.save()
         cf.curveSet = cs

@@ -14,18 +14,20 @@ def analytesTable(user, obj, objType):
         assert isinstance(obj, mmodels.CurveSet)
         cs = obj
 
-
     htmlButton = '<button class="urlChanger url@{1}">{0}</button>'
-    addAnalyteBtn = htmlButton.format(
-        'Add analyte',
-        b64.b64encode(reverse('editAnalyte', kwargs={
-                'user_id': user.id,
-                'objType': objType,
-                'objId': obj.id,
-                'analyteId': 'new'
-            }).encode()
-        ).decode('UTF-8')
-    )
+    if not cs.locked:
+        addAnalyteBtn = htmlButton.format(
+            'Add analyte',
+            b64.b64encode(reverse('editAnalyte', kwargs={
+                    'user_id': user.id,
+                    'objType': objType,
+                    'objId': obj.id,
+                    'analyteId': 'new'
+                }).encode()
+            ).decode('UTF-8')
+        )
+    else:
+        addAnalyteBtn = '<button disabled> Add analyte </button>'
 
     lenana = len(cs.analytes.only('id'))
 
