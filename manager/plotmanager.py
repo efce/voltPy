@@ -1,4 +1,3 @@
-from django.db.models import Q
 import manager.models as mmodels
 from manager.exceptions import VoltPyNotAllowed
 import io

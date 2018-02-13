@@ -101,7 +101,9 @@ def browseAnalysis(request, user):
 @redirect_on_voltpyexceptions
 @with_user
 def browseCurveSet(request, user):
-    csets = mmodels.CurveSet.objects.filter(owner=user, deleted=False)
+    files = mmodels.CurveFile.objects.filter(owner=user).only('curveSet')
+    csetsFiles = [ x['curveSet'] for x in files.all().values('curveSet') ]
+    csets = mmodels.CurveSet.objects.filter(owner=user, deleted=False).exclude(id__in=csetsFiles)
 
     if ( __debug__ ):
         print(csets)
@@ -148,7 +150,7 @@ def deleteCurve(request, user, objType, objId, delId):
             user, 
             cd, 
             deleteFrom=deleteFrom,
-            onSuccessRedirect=reverse('showFile', args=[user.id, deleteFrom.id])
+            onSuccessRedirect=reverse('showCurveFile', args=[user.id, deleteFrom.id])
         )
     else: # curveset
         try:
@@ -512,7 +514,13 @@ def showCurveFile(request, user, file_id):
         'user' : user,
         'curvefile': cf,
         #'form' : form
-        'at': at_disp
+        'at': at_disp,
+        'cloneCSUrl': 
+                b64.b64encode(reverse('cloneCurveSet', kwargs={
+                    'user_id': user.id,
+                    'toClone_id': cf.curveSet.id, 
+                    }).encode()
+                ).decode('UTF-8')
     }
     return voltpy_render(
         request=request, 
