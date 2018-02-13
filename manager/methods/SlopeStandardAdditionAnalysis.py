@@ -1,6 +1,6 @@
 from numpy import polyfit, corrcoef
 import manager.methodmanager as mm
-import manager.models as models
+import manager.models as mmodels
 import manager.plotmanager as pm
 
 class SlopeStandardAdditionAnalysis(mm.AnalysisMethod):
@@ -46,6 +46,8 @@ https://doi.org/10.1039/C7AN00185A
         tptw = 0
         analyte = self.model.curveSet.analytes.all()[0]
         self.model.customData['analyte'] = analyte.name
+        unitsTrans = dict(mmodels.CurveSet.CONC_UNITS)
+        self.model.customData['units'] = unitsTrans[self.model.curveSet.analytesConcUnits[analyte.id]]
         for cd in self.model.curveSet.curvesData.all():
             X.append(cd.currentSamples)
             Conc.append(self.model.curveSet.analytesConc.get(analyte.id,{}).get(cd.id,0))
@@ -87,6 +89,11 @@ https://doi.org/10.1039/C7AN00185A
         p=pm.PlotManager()
         p.plot_width = 500
         p.plot_height = 400
+        p.xlabel = 'c_({analyte}) / {units}'.format(
+            analyte=self.model.customData['analyte'],
+            units=self.model.customData['units']
+        )
+        p.ylabel = 'i / µA'
         xvec = self.model.customData['matrix'][0]
         yvec = self.model.customData['matrix'][1]
         colors = [ 'blue', 'red', 'green', 'gray', 'cyan', 'yellow', 'magenta', 'orange' ]
@@ -116,13 +123,17 @@ https://doi.org/10.1039/C7AN00185A
             col_cnt += 1
 
         scripts,div = p.getEmbeded(request, user, 'analysis', self.model.id)
+        cs = self.model.curveSet
+        unitsTrans = dict(mmodels.CurveSet.CONC_UNITS)
         ret = { 
             'head': scripts,
             'body': ''.join([
                                 div, 
-                                '<p>Result: {0}<br />STD: {1}</p>'.format(
+                                '<p>Analyte: {0}<br />Result: {1} {3}<br />STD: {2} {3}</p>'.format(
+                                    self.model.customData['analyte'],
                                     self.model.customData['result'],
-                                    self.model.customData['resultStdDev']
+                                    self.model.customData['resultStdDev'],
+                                    self.model.customData['units'] 
                                 ) 
                             ])
         }

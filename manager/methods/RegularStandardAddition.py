@@ -1,5 +1,6 @@
 import manager.methodmanager as mm
 import manager.plotmanager as pm
+import manager.models as mmodels
 from numpy import corrcoef
 from manager.helpers.fithelpers import calc_normal_equation_fit, calc_sx0
 import numpy as np
@@ -31,6 +32,8 @@ This is standard addition method, where the height of the signal is calculated a
         selRange = self.model.customData['range1']
         analyte = self.model.curveSet.analytes.all()[0]
         self.model.customData['analyte'] = analyte.name
+        unitsTrans = dict(mmodels.CurveSet.CONC_UNITS)
+        self.model.customData['units'] = unitsTrans[self.model.curveSet.analytesConcUnits[analyte.id]]
         for cd in self.model.curveSet.curvesData.all():
             startIndex = cd.xvalueToIndex(user, selRange[0])
             endIndex = cd.xvalueToIndex(user, selRange[1])
@@ -60,16 +63,24 @@ This is standard addition method, where the height of the signal is calculated a
             p.add(**d)
         p.plot_width = 500
         p.plot_height = 500
+        p.xlabel = 'c_({analyte}) / {units}'.format(
+            analyte=self.model.customData['analyte'],
+            units=self.model.customData['units']
+        )
+        p.ylabel = 'i / µA'
         scr,div = p.getEmbeded(request, user, 'analysis', self.model.id)
+        cs = self.model.curveSet
         return {
             'head': scr,
             'body': ''.join([
                                 div,
-                                'Equation: y={2}*x+{3}<br />Result: {0}, STD: {1}'.format(
+                                'Equation: y={2}*x+{3}<br />Analyte: {4}<br />Result: {0} {5}<br /> STD: {1} {5}'.format(
                                     self.model.customData['result'],
                                     self.model.customData['resultStdDev'],
                                     self.model.customData['fitEquation']['slope'],
-                                    self.model.customData['fitEquation']['intercept']
+                                    self.model.customData['fitEquation']['intercept'],
+                                    self.model.customData['analyte'],
+                                    self.model.customData['units'] 
                                 )
                             ])
         }

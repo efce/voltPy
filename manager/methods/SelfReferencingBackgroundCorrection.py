@@ -90,6 +90,8 @@ https://doi.org/10.1002/elan.201300181"""
         RANGES = []
         analyte = self.model.curveSet.analytes.all()[0]
         self.model.customData['analyte'] = analyte.name
+        unitsTrans = dict(mmodels.CurveSet.CONC_UNITS)
+        self.model.customData['units'] = unitsTrans[self.model.curveSet.analytesConcUnits[analyte.id]]
         for name,cds in self.model.customData['Sens'].items():
             for cid in cds:
                 SENS.append(name)
@@ -116,13 +118,17 @@ https://doi.org/10.1002/elan.201300181"""
         return True
 
     def getInfo(self, request, user):
+        cs = self.model.curveSet
+        unitsTrans = dict(mmodels.CurveSet.CONC_UNITS)
         info = """
-        <p>Final result: {res}</br>Std dev: {stddev}</p>
+        <p>Analyte: {analyte}<br />Final result: {res} {unit}<br />Std dev: {stddev} {unit}</p>
         <p>Equations:<br>{eqs}</p>
         """.format(
             res=self.model.customData['result'],
             stddev=self.model.customData['resultStdDev'],
-            eqs=self.model.customData['fitEquations']
+            eqs=self.model.customData['fitEquations'],
+            analyte=self.model.customData['analyte'],
+            unit=self.model.customData['units']
         )
         return {
             'head': '',

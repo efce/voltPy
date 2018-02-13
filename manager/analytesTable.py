@@ -37,8 +37,10 @@ def analytesTable(user, obj, objType):
     else:
         ret.append('<tr><td>&nbsp;</td><th colspan={:d} class="atOther">Analytes</th><th class="atOther">Action</th></tr><tr><th>Curve names</th>'.format(lenana))
 
+    unitsTrans = dict(mmodels.CurveSet.CONC_UNITS)
+
     for a in cs.analytes.all():
-        ret.append('<th class="atOther atAnalyte{2}"> {0} <br /><button class="urlChanger url@{1} atOther">Edit</button></th>'.format(
+        ret.append('<th class="atOther atAnalyte{2}"> {0} [{3}]<br /><button class="urlChanger url@{1} atOther">Edit</button></th>'.format(
                 a.name, 
                 b64.b64encode(reverse('editAnalyte', kwargs={
                     'user_id': user.id,
@@ -47,7 +49,9 @@ def analytesTable(user, obj, objType):
                     'analyteId':a.id
                     }).encode()
                 ).decode('UTF-8'),
-                a.id
+                a.id,
+                unitsTrans[cs.analytesConcUnits[a.id]]
+
             )
         )
 

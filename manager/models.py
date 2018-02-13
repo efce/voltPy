@@ -185,11 +185,13 @@ class Analyte(models.Model):
 
 
 class CurveSet(models.Model):
+    minusOneSS = b'\xE2\x81\xBB\xC2\xB9'.decode("utf-8", "replace")
+    cdot = b'\xC2\xB7'.decode("utf-8", "replace")
     CONC_UNITS = (
-        ('9g','ng/L'),
-        ('6g','µg/L'),
-        ('3g','mg/L'),
-        ('0g','g/L'),
+        ('9g','ng{cdot}L{ssm1}'.format(cdot=cdot,ssm1=minusOneSS)),
+        ('6g','µg{cdot}L{ssm1}'.format(cdot=cdot,ssm1=minusOneSS)),
+        ('3g','mg{cdot}L{ssm1}'.format(cdot=cdot,ssm1=minusOneSS)),
+        ('0g','g{cdot}L{ssm1}'.format(cdot=cdot,ssm1=minusOneSS)),
         ('9M','nM'),
         ('6M','µM'),
         ('3M','mM'),
