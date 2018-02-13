@@ -3,98 +3,71 @@ import base64 as b64
 from django.db.models import Q
 from django.urls import reverse
 
-def analytesTable(user, source):
+def analytesTable(user, obj, objType):
     """
-    source - is CurveFile or CurveSet for which the table will be prepared.
+    cs - is CurveFile or CurveSet for which the table will be prepared.
     """
-    assert isinstance(source, mmodels.CurveFile) \
-        or isinstance(source, mmodels.CurveSet)
-
-    objType = ''
-    allowDelete = True
-    if isinstance(source, mmodels.CurveSet):
-        objType = 'cs'
-        cds = source.usedCurveData.all()
-        curves = []
-        if source.locked:
-            allowDelete = False
-        for cd in cds:
-            curves.append(cd.curve)
-            curves[-1].cdid = cd.id
+    if objType == 'cf':
+        assert isinstance(obj, mmodels.CurveFile)
+        cs = obj.curveSet
     else:
-        objType = 'cf'
-        curves = mmodels.Curve.objects.filter(curveFile=source, deleted=False)
-        for c in curves:
-            cd = mmodels.CurveData.objects.filter(curve=c, processing=None)
-            c.cdid = cd[0].id
-
-    curves_filter_qs = Q()
-    for c in curves:
-        curves_filter_qs = curves_filter_qs | Q(curve=c)
-
-    aic = mmodels.AnalyteInCurve.objects.filter(curves_filter_qs)
-
-    analytes = {}
-    
-    for aa in aic:
-        analytes[aa.analyte] = aa.analyte
-    analytes = list(analytes.values())
-    lenana = len(analytes)
+        assert isinstance(obj, mmodels.CurveSet)
+        cs = obj
 
     htmlButton = '<button class="urlChanger url@{1}">{0}</button>'
-    addAnalyteBtn = htmlButton.format(
-        'Add analyte',
-        b64.b64encode(reverse('editAnalyte', kwargs={
-                'user_id': user.id,
-                'objType': objType,
-                'objId': source.id,
-                'analyteId': 'new'
-            }).encode()
-        ).decode('UTF-8')
-    )
+    if not cs.locked:
+        addAnalyteBtn = htmlButton.format(
+            'Add analyte',
+            b64.b64encode(reverse('editAnalyte', kwargs={
+                    'user_id': user.id,
+                    'objType': objType,
+                    'objId': obj.id,
+                    'analyteId': 'new'
+                }).encode()
+            ).decode('UTF-8')
+        )
+    else:
+        addAnalyteBtn = '<button disabled> Add analyte </button>'
+
+    lenana = len(cs.analytes.only('id'))
 
     ret = ['<table  cellspacing="0" cellpadding="0" border="0" class="analytesTable"><tr><td><table class="atHeader">']
     if lenana == 0:
         ret.append('<tr><th colspan=1>No analytes</th></tr><tr><th>Curve names</th>')
     else:
         ret.append('<tr><td>&nbsp;</td><th colspan={:d} class="atOther">Analytes</th><th class="atOther">Action</th></tr><tr><th>Curve names</th>'.format(lenana))
-    for a in analytes:
+
+    for a in cs.analytes.all():
         ret.append('<th class="atOther atAnalyte{2}"> {0} <br /><button class="urlChanger url@{1} atOther">Edit</button></th>'.format(
                 a.name, 
                 b64.b64encode(reverse('editAnalyte', kwargs={
                     'user_id': user.id,
                     'objType': objType,
-                    'objId': source.id, 
+                    'objId': obj.id, 
                     'analyteId':a.id
                     }).encode()
                 ).decode('UTF-8'),
                 a.id
             )
         )
+
     ret.append('<th class="atOther">{0}</th>'.format(addAnalyteBtn))
     ret.append('</tr></table></td></tr><tr><td><div class="atContentsContainer"><table class="atContents">')
 
-    for c in curves:
-        if objType == 'cf':
-            delId = c.id
-        else:
-            delId = c.cdid
-        ret.append('<tr class="plotHighlight highlightCurve@{0}"><td> {1} </td>'.format(c.cdid, c.name))
-        for a in analytes:
-            aac = aic.filter(curve=c, analyte=a)
-            if len(aac) > 0:
-                ret.append('<td class="atOther atAnalyte%s"> %f </td>' % (a.id, aac[0].concentration) )
-            else:
-                ret.append('<td class="atOther atAnalyte%s> %f </td>' % (a.id, 0) )
+    for cd in cs.curvesData.only('id', 'curve'):
+        ret.append('<tr class="plotHighlight highlightCurve@{0}"><td> {1} </td>'.format(cd.id, cd.curve.name))
+        for a in cs.analytes.all():
+            conc = cs.analytesConc.get(a.id, {}).get(cd.id, 0)
+            ret.append('<td class="atOther atAnalyte%s"> %f </td>' % (a.id, conc) )
         ret.append('<td class="atOther">')
-        if allowDelete:
+        if not cs.locked:
             ret.append(htmlButton.format(
                     'delete',
                     b64.b64encode(reverse('deleteCurve', kwargs={
                         'user_id': user.id,
                         'objType': objType,
-                        'objId': source.id, 
-                        'delId': delId
+                        'objId': obj.id, 
+                        'delId': cd.id
                         }).encode()
                     ).decode('UTF-8')
                 )

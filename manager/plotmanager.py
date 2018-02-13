@@ -1,5 +1,6 @@
 from django.db.models import Q
 import manager.models as mmodels
+from manager.exceptions import VoltPyNotAllowed
 import io
 import numpy as np
 import json 
@@ -22,8 +23,8 @@ class PlotManager:
     title = ''
     xlabel = "x"
     ylabel = "y"
-    plot_width = 850
-    plot_height = 700
+    plot_width = 700
+    plot_height = 600
 
     def __init__(self):
         self.__random = str(random.random()).replace(".","")
@@ -31,8 +32,8 @@ class PlotManager:
         self.__scatter = []
         self.xlabel = "x"
         self.ylabel = "y"
-        self.plot_width = 850
-        self.plot_height = 700
+        #self.plot_width = 850
+        #self.plot_height = 700
         self.p = figure(
             title=self.title, 
             name='voltpy_plot',
@@ -42,78 +43,11 @@ class PlotManager:
             width=self.plot_width-20
         )
 
-    def fileHelper(self, user, value_id):
-        curvefile_id = value_id
-        cf = mmodels.CurveFile.objects.get(id=curvefile_id)
-        if not cf.canBeReadBy(user):
-            raise 3
-        cbs = mmodels.Curve.objects.filter(curveFile=cf, deleted=False)
-        return self._processCurveArray(user, cbs)
-    
 
-    def curvesHelper(self, user, curve_ids_comma_separated):
-        cids = curve_ids_comma_separated.split(",")
-        curves_filter_qs = Q()
-        for i in cids:
-            i = int(i)
-            curves_filter_qs = curves_filter_qs | Q(id=i)
-        cbs = mmodels.Curve.objects.filter(curves_filter_qs)
-        for c in cbs:
-            if not c.canBeReadBy(user):
-                raise 3
-        return self._processCurveArray(user, cbs)
+    def curveSetHelper(self, user, cs):
+        if not cs.canBeReadBy(user):
+            raise VoltPyNotAllowed
 
-
-    def curveSetHelper(self, user, curveset_id):
-        try:
-            onxs = mmodels.OnXAxis.objects.get(user=user)
-            onx = onxs.selected
-        except ObjectDoesNotExist:
-            onxs = mmodels.OnXAxis(selected='P',user=user)
-            onxs.save()
-            onx = onxs.selected
-        cs = mmodels.CurveSet.objects.get(id=curveset_id)
-        ret = []
-
-        if onx == 'S':
-            for cv in cs.usedCurveData.all():
-                ret.append(
-                    dict(
-                        x=range(1, len(cv.probingData)+1),
-                        y=cv.probingData,
-                        plottype='line',
-                        name = 'curve_' + str(cv.id),
-                        color='blue',
-                    )
-                )
-
-        elif onx == 'T':
-            for cv in cs.usedCurveData.all():
-                ret.append(
-                    dict(
-                        x=cv.time,
-                        y=cv.current,
-                        plottype='line',
-                        name = 'curve_' + str(cv.id),
-                        color='blue',
-                    )
-                )
-        else:
-            for cv in cs.usedCurveData.all():
-                ret.append(
-                    dict(
-                        x=cv.potential,
-                        y=cv.current,
-                        plottype='line',
-                        name = 'curve_' + str(cv.id),
-                        color='blue',
-                    )
-                )
-
-        return ret
-
-
-    def _processCurveArray(self, user, curves):
         try:
             onxs = mmodels.OnXAxis.objects.get(user=user)
             onx = onxs.selected
@@ -125,44 +59,39 @@ class PlotManager:
         ret = []
 
         if onx == 'S':
-            for cb in curves:
-                cvs = mmodels.CurveData.objects.filter(curve=cb, processing=None)
-                for cv in cvs:
-                    ret.append(
-                        dict(
-                            x=range(1, len(cv.probingData)+1),
-                            y=cv.probingData,
-                            plottype='line',
-                            name = 'curve_' + str(cv.id),
-                            color='blue',
-                        )
+            for cd in cs.curvesData.all():
+                ret.append(
+                    dict(
+                        x=range(1, len(cd.currentSamples)+1),
+                        y=cd.currentSamples,
+                        plottype='line',
+                        name = 'curve_' + str(cd.id),
+                        color='blue',
                     )
+                )
+
         elif onx == 'T':
-            for cb in curves:
-                cvs = mmodels.CurveData.objects.filter(curve=cb, processing=None)
-                for cv in cvs:
-                    ret.append(
-                        dict(
-                            x=cv.time,
-                            y=cv.current,
-                            plottype='line',
-                            name = 'curve_' + str(cv.id),
-                            color='blue',
-                        )
+            for cd in cs.curvesData.all():
+                ret.append(
+                    dict(
+                        x=cd.time,
+                        y=cd.current,
+                        plottype='line',
+                        name = 'curve_' + str(cd.id),
+                        color='blue',
                     )
+                )
         else:
-            for cb in curves:
-                cvs = mmodels.CurveData.objects.filter(curve=cb, processing=None)
-                for cv in cvs:
-                    ret.append(
-                        dict(
-                            x=cv.potential,
-                            y=cv.current,
-                            plottype='line',
-                            name = 'curve_' + str(cv.id),
-                            color='blue',
-                        )
+            for cd in cs.curvesData.all():
+                ret.append(
+                    dict(
+                        x=cd.potential,
+                        y=cd.current,
+                        plottype='line',
+                        name = 'curve_' + str(cd.id),
+                        color='blue',
                     )
+                )
 
         return ret
 
@@ -192,10 +121,10 @@ class PlotManager:
             return
         # prepare data points
         ret = []
-        ret.append( {
+        ret.append({
             'x': analysis.customData['matrix'][0], 
             'y': analysis.customData['matrix'][1],
-            'plottype':'scatter',
+            'plottype': 'scatter',
             'color': 'red',
             'size': 8
         })

@@ -3,7 +3,7 @@
 {% block title %} Show {% endblock %}
 
 {% block real_content %}
-<p>CurveSet name: {{ curveset.name }}<br />
+<p>CurveSet name: {{ curveset.name }} | <button class="urlChanger url@{{ cloneCSUrl }}"> Copy </button><br />
 Date created: {{ curveset.date | date:"c" }}</p>
 {{ at | safe }}
 <br />

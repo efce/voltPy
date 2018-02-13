@@ -12,7 +12,7 @@ class OperationSelectSensitivities(mm.Operation):
         def __init__(self, *args, **kwargs):
             self.model = kwargs.pop('model')
             super(OperationSelectSensitivities.SelectSens, self).__init__(*args, **kwargs)
-            for cd in self.model.curveSet.usedCurveData.all():
+            for cd in self.model.curveSet.curvesData.all():
                 self.fields['curve' + str(cd.id)] = forms.CharField(
                     max_length = 16,
                     initial = "",
@@ -88,14 +88,15 @@ https://doi.org/10.1002/elan.201300181"""
         CONC = []
         SENS = []
         RANGES = []
+        analyte = self.model.curveSet.analytes.all()[0]
+        self.model.customData['analyte'] = analyte.name
         for name,cds in self.model.customData['Sens'].items():
             for cid in cds:
                 SENS.append(name)
-                cd = self.model.curveSet.usedCurveData.get(id=cid)
+                cd = self.model.curveSet.curvesData.get(id=cid)
                 Y.append([])
                 Y[-1] = cd.yVector
-                cdconc = mmodels.AnalyteInCurve.objects.get(curve=cd.curve)
-                CONC.append(cdconc.concentration)
+                CONC.append(self.model.curveSet.analytesConc.get(analyte.id,{}).get(cd.id,0))
                 rng = [
                     cd.xvalueToIndex(user,self.model.customData['range1'][0]),
                     cd.xvalueToIndex(user,self.model.customData['range1'][1])

@@ -27,7 +27,7 @@ urlpatterns = [
         views.browseCurveSet, name='browseCurveSet'),
     url(r'^(?P<user_id>[0-9]+)/create-curve-set/$', 
         views.createCurveSet, name='createCurveSet'),
-    url(r'^(?P<user_id>[0-9]+)/clone-curve-set/(?P<toClone_id>[0-9]+)/$$', 
+    url(r'^(?P<user_id>[0-9]+)/clone-curve-set/(?P<toClone_id>[0-9]+)/$', 
         views.cloneCurveSet, name='cloneCurveSet'),
     url(r'^(?P<user_id>[0-9]+)/show-curveset/(?P<curveset_id>[0-9]+)/$', 
         views.showCurveSet, name='showCurveSet'),

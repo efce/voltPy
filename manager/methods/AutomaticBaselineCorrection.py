@@ -31,7 +31,7 @@ https://doi.org/10.1016/j.electacta.2014.05.076
         return "Automatic Baseline Correction"
 
     def finalize(self, user):
-        for cd in self.model.curveSet.usedCurveData.all():
+        for cd in self.model.curveSet.curvesData.all():
             newcd = deepcopy(cd)
             newcd.id = None
             newcd.pk = None
@@ -49,8 +49,11 @@ https://doi.org/10.1016/j.electacta.2014.05.076
             newcd.processing = self.model
             newcd.basedOn = cd
             newcd.save()
-            self.model.curveSet.usedCurveData.remove(cd)
-            self.model.curveSet.usedCurveData.add(newcd)
+            self.model.curveSet.curvesData.remove(cd)
+            self.model.curveSet.curvesData.add(newcd)
+            for a in self.model.curveSet.analytes.all():
+                self.model.curveSet.analytesConc[a.id][newcd.id] = \
+                    self.model.curveSet.analytesConc[a.id].pop(cd.id, 0)
         self.model.curveSet.save()
         self.model.step = None
         self.model.completed = True

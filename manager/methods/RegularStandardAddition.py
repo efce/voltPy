@@ -29,15 +29,15 @@ This is standard addition method, where the height of the signal is calculated a
         xvalues = []
         yvalues = []
         selRange = self.model.customData['range1']
-        for c in self.model.curveSet.usedCurveData.all():
-            startIndex = c.xvalueToIndex(user, selRange[0])
-            endIndex = c.xvalueToIndex(user, selRange[1])
+        analyte = self.model.curveSet.analytes.all()[0]
+        self.model.customData['analyte'] = analyte.name
+        for cd in self.model.curveSet.curvesData.all():
+            startIndex = cd.xvalueToIndex(user, selRange[0])
+            endIndex = cd.xvalueToIndex(user, selRange[1])
             if endIndex < startIndex:
                 endIndex,startIndex = startIndex,endIndex
-            yvalues.append(max(c.yVector[startIndex:endIndex])-min(c.yVector[startIndex:endIndex]))
-            from manager.models import AnalyteInCurve
-            conc = AnalyteInCurve.objects.filter(curve=c.curve)[0]
-            xvalues.append(conc.concentration)
+            yvalues.append(max(cd.yVector[startIndex:endIndex])-min(cd.yVector[startIndex:endIndex]))
+            xvalues.append(self.model.curveSet.analytesConc.get(analyte.id,{}).get(cd.id,0))
 
         data = [
             [ float(b) for b in xvalues ],

@@ -2,8 +2,10 @@ import django
 from django import forms
 from django.db.models import Q
 from django.utils import timezone
-from .processupload import ProcessUpload
+from django.core.exceptions import ObjectDoesNotExist
 import manager.models as mmodels
+from manager.processupload import ProcessUpload
+import manager
 
 class UploadFileForm(forms.Form):
     name = forms.CharField(label="Name", max_length=128)
@@ -20,45 +22,32 @@ class UploadFileForm(forms.Form):
         return p.status
 
 
-class AddAnalytesForm(forms.Form):
+class EditAnalytesForm(forms.Form):
     #TODO: draw plot of file, provide fields for settings analytes
     isCal = False
 
     def __init__(self, user, view_type, object_id, analyte_id, *args, **kwargs):
-        super(AddAnalytesForm, self).__init__(*args, **kwargs)
-        if view_type == 'cs' :
-            self.isCal = False
-            cs = mmodels.CurveSet.objects.get(id=object_id)
-            if not cs.canBeReadBy(user):
-                raise 3
-            cdata = cs.usedCurveData.all()
-            curves_filter_qs = Q()
-            for c in cdata:
-                curves_filter_qs = curves_filter_qs | Q(id=c.curve.id, deleted=False)
-            self.curves = mmodels.Curve.objects.filter(curves_filter_qs)
-        elif view_type == "cf":
-            cfile = mmodels.CurveFile.objects.get(id=object_id)
-            if not cfile.canBeReadBy(user):
-                raise 3
-            self.curves = mmodels.Curve.objects.filter(curveFile=cfile)
+        super(EditAnalytesForm, self).__init__(*args, **kwargs)
+        self.isCal = False
+        self.cs = mmodels.CurveSet.objects.get(id=object_id)
+        if not self.cs.canBeReadBy(user):
+            raise VoltPyNotAllowed
 
         self.generateFields(analyte_id)
+        self.original_id = analyte_id
 
     def generateFields(self, analyte_id):
         analyte = None
-        if analyte_id != 'new':
+        if analyte_id != '-1':
             try:
                 analyte = mmodels.Analyte.objects.get(id=analyte_id)
-                curves_filter_qs = Q()
-                for c in self.curves:
-                    curves_filter_qs = curves_filter_qs | Q(curve=c, analyte=analyte)
-                aic = mmodels.AnalyteInCurve.objects.filter(curves_filter_qs)
+                conc = self.cs.analytesConc.get(analyte.id, {})
             except:
                 analyte = None
-                aic = None
+                conc = {}
         else:
             analyte = None
-            aic = None
+            conc = {}
 
 
         eaDefault = -1
@@ -70,12 +59,12 @@ class AddAnalytesForm(forms.Form):
             for an in analytesFromDb:
                 existingAnalytes.append( (an.id, an.name) )
 
-        if analyte is not None and aic:
-            eaDefaultUnit = aic[0].concentrationUnits
+        if analyte is not None and conc:
+            eaDefaultUnit = self.cs.analytesConcUnits.get(analyte.id, eaDefaultUnit)
             eaDefault = analyte.id
 
         self.fields['units'] = forms.ChoiceField(
-            choices=mmodels.AnalyteInCurve.UNITSAVAILABLE,
+            choices=mmodels.CurveSet.CONC_UNITS,
             initial=eaDefaultUnit
         )
 
@@ -92,24 +81,20 @@ class AddAnalytesForm(forms.Form):
         )
         self.fields['newAnalyte'].widget.attrs['class'] = 'newAnalyte'
 
-        if aic:
+        if conc is not None:
             self.fields['newAnalyte'].initial = ""
             self.fields['newAnalyte'].widget.attrs['disabled'] = True
 
-        for c in self.curves:
-            if aic:
-                ac = aic.filter(curve=c.id)
+        for cd in self.cs.curvesData.all():
+            if analyte is not None:
+                val = self.cs.analytesConc.get(analyte.id,{}).get(cd.id,'')
             else:
-                ac = None
-            if ac:
-                self.fields["analyte_%d" % ac[0].id] = forms.FloatField(
-                        label = c.name + ":\n" + c.comment ,
-                        required = True,
-                        initial = ac[0].concentration )
-            else:
-                self.fields["curve_%d" % c.id] = forms.FloatField(
-                        label = c.name + ":\n" + c.comment ,
-                        required = True )
+                val = ''
+            self.fields["curve_%d" % cd.id] = forms.FloatField(
+                label = cd.curve.name + ":\n" + cd.curve.comment ,
+                required = True,
+                initial=val
+            )
 
     def clean(self):
         super().clean()
@@ -121,6 +106,7 @@ class AddAnalytesForm(forms.Form):
 
 
     def process(self, user):
+        a = None
         if int(self.cleaned_data.get('existingAnalyte', -1)) == -1:
             analyteName = self.cleaned_data.get('newAnalyte', '').strip()
             if not analyteName:
@@ -132,13 +118,15 @@ class AddAnalytesForm(forms.Form):
                 a = mmodels.Analyte(name=analyteName)
                 a.save()
         else:
-            #try:
-            a = mmodels.Analyte.objects.get(id=int(self.cleaned_data.get('existingAnalyte')))
-            #except:
+            try:
+                a = mmodels.Analyte.objects.get(id=int(self.cleaned_data.get('existingAnalyte')))
+            except:
                 #TODO: meaningfull exeption -- analyte id does not exists
-                #raise 3
+                raise 3
 
         units = self.cleaned_data['units']
+
+        conc = self.cs.analytesConc.get(a.id, {})
 
         for name,val in self.cleaned_data.items():
             if "curve_" in name:
@@ -146,37 +134,31 @@ class AddAnalytesForm(forms.Form):
                 if ( __debug__ ):
                     print("Updateing curve nr: %i with analyte %s, concentration: %s" % (curve_id, a.name, val))
                 try:
-                    c = mmodels.Curve.objects.get(id=curve_id)
-                    f = mmodels.CurveFile.objects.get(id=c.curveFile.id)
-                except (mmodels.Curve.DoesNotExist, mmodels.CurveFile.DoesNotExist):
-                    continue
-
-                if not f.canBeUpdatedBy(user):
+                    self.cs.curvesData.get(id=curve_id)
+                except ObjectDoesNotExist:
+                    #TODO: something went really south ...
                     raise 3
 
-                aic = mmodels.AnalyteInCurve(
-                    analyte=a, 
-                    curve=c, 
-                    concentration=float(val),
-                    concentrationUnits=units
-                )
-                aic.save()
-            elif "analyte_" in name:
-                analyte_in_id= int(name[8:])
-                if ( __debug__ ):
-                    print("Updateing analyte nr: %i, concentration: %s" % (analyte_in_id, val))
-                try:
-                    aic = mmodels.AnalyteInCurve.objects.get(id=analyte_in_id)
-                except mmodels.AnalyteInCurve.DoesNotExist:
-                    continue
-
-                if not aic.canBeUpdatedBy(user):
+                if not self.cs.canBeUpdatedBy(user):
                     raise 3
+                
+                conc[curve_id] = float(val)
 
-                aic.concentration = float(val)
-                aic.concentrationUnits = units
-                aic.analyte = a
-                aic.save()
+        if not self.cs.analytes.filter(id=a.id).exists():
+            self.cs.analytes.add(a)
+
+        if manager.helpers.functions.isNumber(self.original_id) and a.id != self.original_id:
+            self.cs.analytesConc.pop(self.original_id, None)
+            self.cs.analytesConcUnits.pop(self.original_id, None)
+            try:
+                a_org = mmodels.Analyte.objects.get(id=self.original_id)
+                self.cs.analytes.remove(a_org)
+            except ObjectDoesNotExist:
+                pass
+        self.cs.analytesConc[a.id] = conc
+        self.cs.analytesConcUnits[a.id] = units
+        self.cs.analytes.add(a)
+        self.cs.save()
         return True
 
 
@@ -201,44 +183,72 @@ class SelectXForm(forms.Form):
 
 
 class SelectCurvesForCurveSetForm(forms.Form):
-    name = forms.CharField(max_length=124, required=True)
     curvesetid = -1
     def __init__(self, user,  *args, **kwargs):
+        self.toClone = int(kwargs.pop('toClone', -1))
+        newName = ''
+        try:
+            csToClone = mmodels.CurveSet.objects.get(id=self.toClone)
+            newName = csToClone.name + '_copy'
+        except:
+            newName = ''
+            self.toClone = -1
         super(SelectCurvesForCurveSetForm, self).__init__(*args, **kwargs)
         from django.db.models import Prefetch
+        self.fields['name'] = forms.CharField(
+            max_length=124, 
+            required=True,
+            initial=newName
+        )
         self.fields['name'].maintype = 'name'
         self.fields['name'].mainid = 0
 
-        files = mmodels.CurveFile.objects.filter(owner=user, deleted=False).only("id", "name", "filename")
+        files = mmodels.CurveFile.objects.filter(owner=user, deleted=False).only("id", "name", "fileName")
+        csInFiles = []
         for f in files:
             fname = 'curveFile_{0}'.format(f.id)
-            self.fields[fname] = forms.BooleanField(label=f,required=False)
+            initial = False
+            if f.curveSet.id == self.toClone:
+                initial = True
+            self.fields[fname] = forms.BooleanField(
+                label=f,
+                required=False,
+                initial=initial
+            )
             self.fields[fname].widget.attrs['class'] = 'parent'
             self.fields[fname].maintype = 'curvefile'
             self.fields[fname].cptype = 'parent'
-            cf = mmodels.Curve.objects.filter(curveFile=f).values("id", "name")
-            for c in cf:
-                cname = "curveFile_{1}_curve_{0}".format(c['id'], f.id)
-                self.fields[cname] = forms.BooleanField(label=c['name'], required=False)
+            csInFiles.append(f.curveSet.id)
+            for cd in f.curveSet.curvesData.all().only("id", "curve").prefetch_related(
+                    Prefetch('curve', queryset=mmodels.Curve.objects.only('id','name'))
+                ):
+                cname = "curveFile_{1}_curveData_{0}".format(cd.id, f.id)
+                self.fields[cname] = forms.BooleanField(label=cd.curve, required=False)
                 self.fields[cname].widget.attrs['class'] = 'child'
                 self.fields[cname].maintype = 'curvefile'
                 self.fields[cname].cptype = 'child'
 
         css = mmodels.CurveSet.objects.filter(owner=user, deleted=False).only("id", "name") 
         for cs in css:
+            if cs.id in csInFiles:
+                continue
             csname = 'curveSet_{0}'.format(cs.id)
+            initial = False
+            if cs.id == self.toClone:
+                initial = True
             self.fields[csname] = forms.BooleanField(
                 label=cs,
-                required=False
+                required=False,
+                initial=initial
             )
             self.fields[csname].maintype = 'curveset'
             self.fields[csname].widget.attrs['class'] = 'parent'
             self.fields[csname].cptype = 'parent'
-            for c in cs.usedCurveData.only("id", "curve").prefetch_related(
+            for cd in cs.curvesData.only("id", "curve").prefetch_related(
                     Prefetch('curve', queryset=mmodels.Curve.objects.only('id','name'))
                 ):
-                cname = "curveSet_{1}_curveData_{0}".format(c.id, cs.id)
-                self.fields[cname] = forms.BooleanField(label=c.curve, required=False)
+                cname = "curveSet_{1}_curveData_{0}".format(cd.id, cs.id)
+                self.fields[cname] = forms.BooleanField(label=cd.curve, required=False)
                 self.fields[cname].widget.attrs['class'] = 'child'
                 self.fields[cname].maintype = 'curveset'
                 self.fields[cname].cptype = 'child'
@@ -253,13 +263,16 @@ class SelectCurvesForCurveSetForm(forms.Form):
         ret['curveset'] = []
         ret['curvefile'] = []
         namefield = self.fields.pop('name')
-        ret['start'] += """<li><input type="text" value="" name="name" /></li>"""
+        ret['start'] += """<li>Name: <input type="text" value="{0}" name="name" /></li><hr />""".format(namefield.initial)
         prev_parent = ''
         for key,field in self.fields.items():
             if ( hasattr(self, 'cleaned_data' ) ):
                 checked = self.cleaned_data.get(key, False)
             else:
-                checked = False
+                if self.fields.get(key).initial == True:
+                    checked = True
+                else:
+                    checked = False
             checkedtext = ''
             label = field.label
             if checked:
@@ -298,62 +311,98 @@ class SelectCurvesForCurveSetForm(forms.Form):
         ])
 
     def process(self, user):
-        final_curvedatas = []
+        analytesConcUnits = {}
+        analytesConc = {}
         for name,val in self.cleaned_data.items():
-            if ( '_' in name ):
-                nameSplit = name.split('_')
-                if ( len(nameSplit) > 2 ):
-                    if "curve" == nameSplit[2]:
-                        if ( val == True ) :
-                            vid = int(nameSplit[3])
-                            c = mmodels.Curve.objects.get(id=vid)
-                            if not c.canBeReadBy(user):
-                                raise 3
-                            cd = mmodels.CurveData.objects.get(curve=c, processing=None)
-                            final_curvedatas.append(cd)
-                            
-                    elif "curveData" == nameSplit[2]:
-                        if ( val == True ):
-                            vid = int(nameSplit[3])
-                            cd = mmodels.CurveData.objects.get(id=vid)
-                            if not cd.canBeReadBy(user):
-                                raise 3
-                            final_curvedatas.append(cd)
-                else:
+            if ( val == True ):
+                if ( '_' in name ):
+                    nameSplit = name.split('_')
                     if "curveFile" == nameSplit[0]:
-                        if ( val == True ) :
-                            vid = int(nameSplit[1])
-                            cf = mmodels.CurveFile.objects.get(id=vid)
-                            if not cf.canBeReadBy(user):
-                                raise 3
-                            cc = mmodels.Curve.objects.filter(curveFile=cf, deleted=False)
-                            for c in cc.all():
-                                cd = mmodels.CurveData.objects.get(curve=c, processing=None)
-                                final_curvedatas.append(cd)
+                        vid = int(nameSplit[1])
+                        cf = mmodels.CurveFile.objects.get(id=vid)
+                        for a in cf.curveSet.analytes.all():
+                            analytesConcUnits[a.id] = cf.curveSet.analytesConcUnits[a.id]
+                            analytesConc[a.id] = {}
 
                     elif "curveSet" == nameSplit[0]:
-                        if ( val == True ) :
+                        vid = int(nameSplit[1])
+                        cs = mmodels.CurveSet.objects.get(id=vid)
+                        for a in cs.analytes.all():
+                            analytesConcUnits[a.id] = cs.analytesConcUnits[a.id]
+                            analytesConc[a.id] = {}
+
+        final_curvedatas = []
+        analytesConc = {}
+        for name,val in self.cleaned_data.items():
+            if ( val == True ):
+                if ( '_' in name ):
+                    nameSplit = name.split('_')
+                    if len(nameSplit) > 2:
+                        if "curveFile" == nameSplit[0]:
                             vid = int(nameSplit[1])
-                            cs = mmodels.CurveSet.objects.get(id=vid)
-                            if not cs.canBeReadBy(user):
-                                raise 3
-                            for cd in cs.usedCurveData.all():
-                                final_curvedatas.append(cd)
+                            cf = mmodels.CurveFile.objects.get(id=vid)
+                            if "curveData" == nameSplit[2]:
+                                if ( val == True ) :
+                                    vid = int(nameSplit[3])
+                                    cd = mmodels.CurveData.objects.get(id=vid).only('id','owner')
+                                    if not cd.canBeReadBy(user):
+                                        raise 3
+                                    final_curvedatas.append(cd)
+                                    for aid,v in analytesAndUnits.items():
+                                        analytesConc[aid][cd.id] = cf.curveSet.analytesConc.get(aid,{}).get(cd.id,0)
+                        elif "curveSet" == nameSplit[0]:
+                            if "curveData" == nameSplit[2]:
+                                    vid = int(nameSplit[3])
+                                    cd = mmodels.CurveData.objects.get(id=vid).only('id','owner')
+                                    if not cd.canBeReadBy(user):
+                                        raise 3
+                                    final_curvedatas.append(cd)
+                                    for aid,v in analytesAndUnits.items():
+                                        analytesConc[aid][cd.id] = cs.analytesConc.get(aid,{}).get(cd.id,0)
+                    else:
+                        if "curveFile" == nameSplit[0]:
+                            if ( val == True ) :
+                                vid = int(nameSplit[1])
+                                cf = mmodels.CurveFile.objects.get(id=vid)
+                                if not cf.canBeReadBy(user):
+                                    raise 3
+                                cs = cf.curveSet;
+                                for cd in cs.curvesData.all():
+                                    final_curvedatas.append(cd)
+                                    for aid,v in analytesConc.items():
+                                        analytesConc[aid][cd.id] = cs.analytesConc.get(aid,{}).get(cd.id,0)
+
+                        elif "curveSet" == nameSplit[0]:
+                            if ( val == True ) :
+                                vid = int(nameSplit[1])
+                                cs = mmodels.CurveSet.objects.get(id=vid)
+                                if not cs.canBeReadBy(user):
+                                    raise 3
+                                for cd in cs.curvesData.all():
+                                    final_curvedatas.append(cd)
+                                    for aid,v in analytesConc.items():
+                                        analytesConc[aid][cd.id] = cs.analytesConc.get(aid,{}).get(cd.id,0)
 
         if len(final_curvedatas) == 0:
             return False
         final_curvedatas = list(set(final_curvedatas)) #only unique
 
         cs = mmodels.CurveSet(
-                owner = user,
-                name = self.cleaned_data['name'],
-                date = timezone.now(),
-                locked = False,
-                deleted = False)
+            owner = user,
+            name = self.cleaned_data['name'],
+            date = timezone.now(),
+            locked = False,
+            deleted = False
+        )
+        cs.analytesConc = analytesConc
+        cs.analytesConcUnits = analytesConcUnits
+        cs.save()
+        for aid,v in analytesConcUnits.items():
+            cs.analytes.add(mmodels.Analyte.objects.get(id=aid))
         cs.save()
         self.curvesetid = cs.id
         for cd in final_curvedatas:
-            cs.usedCurveData.add(cd)
+            cs.curvesData.add(cd)
         cs.save()
         return True
 
@@ -381,7 +430,7 @@ class DeleteForm(forms.Form):
                         item.save()
                         return True
                     else:
-                        deleteFrom.usedCurveData.remove(item)
+                        deleteFrom.curvesData.remove(item)
                         deleteFrom.save()
                         return True
                 else:

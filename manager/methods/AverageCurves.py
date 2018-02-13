@@ -12,7 +12,7 @@ class OperationAverage(mm.Operation):
         def __init__(self, *args, **kwargs):
             self.model = kwargs.pop('model')
             super(OperationAverage.AveragingForm, self).__init__(*args, **kwargs)
-            for cd in self.model.curveSet.usedCurveData.all():
+            for cd in self.model.curveSet.curveData.all():
                 self.fields['cd'+str(cd.id)] = forms.CharField(
                     max_length=4, 
                     initial='',
@@ -83,27 +83,34 @@ given number of plots.
         for k,f in self.model.customData['AveragingData'].items():
             if ( len(f) > 1 ):
                 cid = f[0]
-                orgcd = self.model.curveSet.usedCurveData.get(id=cid)
+                orgcd = self.model.curveSet.curvesData.get(id=cid)
                 newcd = deepcopy(orgcd)
-                self.model.curveSet.usedCurveData.remove(orgcd)
+                self.model.curveSet.curvesData.remove(orgcd)
                 newcd.pk = None
                 newcd.id = None
                 newcd.date = None
                 cnt = 1
                 for cid in f[1:]:
-                    #running average to prevent overflows
-                    cd = self.model.curveSet.usedCurveData.get(id=cid)
+                    cd = self.model.curveSet.curvesData.get(id=cid)
                     old = np.dot(newcd.yVector, cnt)
                     newBig = np.add(cd.yVector, old) 
                     newcd.yVector = np.divide(newBig, cnt+1).tolist()
                     cnt += 1
-                    self.model.curveSet.usedCurveData.remove(cd)
+                    self.model.curveSet.curvesData.remove(cd)
                 newcd.method = self.__repr__()
                 newcd.date = timezone.now()
                 newcd.processing = self.model
                 newcd.basedOn = orgcd
                 newcd.save()
-                self.model.curveSet.usedCurveData.add(newcd)
+                #TODO: move removal to model ?:
+                for a in self.model.curveSet.analytes.all():
+                    self.model.curveSet.analytesConc[a.id][newcd.id] = \
+                        self.model.curveSet.analytesConc[a.id].get(orgcd.id, 0)
+                for cid in f[1:]:
+                    for a in self.model.curveSet.analytes.all():
+                        self.model.curveSet.analytesConc[a.id].pop(cid, 0)
+
+                self.model.curveSet.curvesData.add(newcd)
                 self.model.curveSet.save()
         self.model.step = None
         self.model.completed = True
