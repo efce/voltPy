@@ -4,7 +4,8 @@
 - Sharing of curves/curvesets/analyses via link (readonly/editable)
 - Classes instead of functions for views
 - Debugging of Bokeh plot switching
-- Better plots with legends (or color markings of curve name/comments in html table)
+x Better plots with legends (or color markings of curve name/comments in html table)
+- Dynamic adjustment of plot size based on client resolution/window size (?)
 - Rework of curves selection for curveset
 - Curve processing history browsable lists - SOME PRELIMINARY WORK with 1c04e6179eb286c9413104d5d0410f726d5f00d5
 - Separation of JavaScripts from py files / code cleanups
@@ -22,3 +23,7 @@ x Multiple analytes for single curve support - DONE
   - Calibration method
   - OSC
   - Whitening
+- Support for UNDO
+- Seperate Operations out of methodmanager, make it a module/folder
+- Add operation for changing set of variables in method (like advanced settigns)
+- Change the way operations write information into model to more intuitive
