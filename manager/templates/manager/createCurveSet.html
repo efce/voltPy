@@ -4,59 +4,60 @@
 
 {% block head %}
 <script type="text/javascript">
-$(function() {
-  $('.EXPAND').on('click', function (e) {
-    $(e.target).next('ul').children('li').toggleClass("visible invisible");
-    $(e.target).toggleClass("upsidedown upsideup")
-  });
-  $('.parent').on('change', function(e) {
-    $(e.target).parent().find('ul').find('.child').prop('checked', this.checked);
-    $(e.target).parent().find('ul').find('.child').prop('disabled', this.checked);
-  });
-});
 </script>
 {% endblock %}
 
 {% block style %}
 
-li {
-  list-style-type: none;
+form li {
+    list-style-type: none;
 }
-.parentLI {
+
+.main_list {
   color: #fff;
   background-color: #333;
   font-size: 15px;
-  font-weight: 500;
-  padding: 7px 12px;
-  list-style-type: none;
+  padding: 7px 10px;
 }
-.parentLI:hover {
+
+.main_list ul {
+    background-color: #888;
+}
+
+.cs_list {
+  color: #fff;
+  background-color: #333;
+  font-size: 15px;
+  padding: 7px 10px;
+}
+.cs_list:hover {
   background-color: #000;
 }
-.topClass {
+.cs_list  ul {
   background-color: #222;
   color: #EEE;
-  border: 1px solid blue;
+  border: 1px solid #888;
 }
-.childClass {
+
+.curve_list {
   background-color: #333;
   font-size: 13px;
-  line-height: 30px;
-  padding: 0px;
+  padding: 0px !important;
 }
-.childClass:hover {
+
+.curve_list:hover {
   background-color: #111;
 }
+
 .invisible {
   height: 0px !important;
   overflow: hidden !important;
   padding: 0px !important;
 }
+
 .visible {
   height: auto;
-}
-.EXPAND {
-  height: 25px;
+  min-height: 1.7em;
 }
 
 .upsidedown {

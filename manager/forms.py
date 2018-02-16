@@ -257,13 +257,13 @@ class SelectCurvesForCurveSetForm(forms.Form):
         #TODO: Django template is order of magnitude too slow for this, so do it by hand ...
         token = django.middleware.csrf.get_token(request)
         ret = {}
-        ret['start'] = """<form action="" method="post" id="SelectCurvesForCurveSetForm">
+        ret['start'] = """<form action="#" method="post" id="SelectCurvesForCurveSetForm">
         <input type='hidden' name='csrfmiddlewaretoken' value='{token}' />
         <ul>""".format(token=token)
         ret['curveset'] = []
         ret['curvefile'] = []
         namefield = self.fields.pop('name')
-        ret['start'] += """<li>Name: <input type="text" value="{0}" name="name" /></li><hr />""".format(namefield.initial)
+        ret['start'] += """<li class="main_list">Name: <input type="text" value="{0}" name="name" /></li>""".format(namefield.initial)
         prev_parent = ''
         for key,field in self.fields.items():
             if ( hasattr(self, 'cleaned_data' ) ):
@@ -275,25 +275,38 @@ class SelectCurvesForCurveSetForm(forms.Form):
                     checked = False
             checkedtext = ''
             label = field.label
+            startingClass = "invisible"
             if checked:
                 checkedtext = ' checked'
+                startingClass = ""
             if field.cptype == 'parent':
                 if prev_parent:
                     ret[prev_parent].append('</ul></li>')
                 ret[field.maintype].append(
-                    '<li class="menuItem parentLI invisible"><input class="parent" type="checkbox" name="{name}"{checkedText} /><label for="id_{name}">{label} </label><img src="https://upload.wikimedia.org/wikipedia/commons/f/f0/1DownRedArrow.png" class="EXPAND upsideup" /><ul>'.format(
-                        name=key,
-                        label=label,
-                        checkedText=checkedtext
+"""
+<li class="_voltJS_toExpand cs_list {startingClass}">
+    <input class="_voltJS_Disable" id="id_{name}" type="checkbox" name="{name}"{checkedText} />
+    <label for="id_{name}">{label} </label>
+    <button class="_voltJS_Expand"> Expand </button>
+    <ul class="_voltJS_expandContainer">""".format(
+                    name=key,
+                    label=label,
+                    checkedText=checkedtext,
+                    startingClass=startingClass
                     )
                 )
                 prev_parent = field.maintype
             else:
                 ret[field.maintype].append(
-                    '<li class="menuItem childClass invisible"><input class="child" type="checkbox" name="{name}"{checkedText} /><label for="id_{name}">{label}</label></li>'.format(
+"""
+<li class="_voltJS_toExpand curve_list {startingClass}">
+    <input id="id_{name}" class="_voltJS_toDisable" type="checkbox" name="{name}"{checkedText} />
+    <label for="id_{name}">{label}</label>
+</li>""".format(
                         name=key,
                         label=label,
-                        checkedText=checkedtext
+                        checkedText=checkedtext,
+                        startingClass=startingClass
                     )
                 )
         if prev_parent:
@@ -302,9 +315,10 @@ class SelectCurvesForCurveSetForm(forms.Form):
         self.fields['name'] = namefield
         return ''.join([
             ret['start'], 
-            '<li class="topClass">Files <img src="https://upload.wikimedia.org/wikipedia/commons/f/f0/1DownRedArrow.png" class="EXPAND upsideup" /><ul>',
+            '<li class="main_list"> Files <button class="_voltJS_Expand"> Expand </button><ul class="_voltJS_expandContainer">',
             '\n'.join(ret['curvefile']),
-            '</ul></li><li class="topClass">Curve sets <img src="https://upload.wikimedia.org/wikipedia/commons/f/f0/1DownRedArrow.png" class="EXPAND upsideup" /><ul>',
+            '</ul></li>',
+            '<li class="main_list"> CurveSets <button class="_voltJS_Expand"> Expand </button><ul class="_voltJS_expandContainer">',
             '\n'.join(ret['curveset']), 
             '</ul></li>',
             ret['end']

@@ -2,6 +2,10 @@
 {% include "./bokeh.js" %}
 <script type="text/javascript">
 
+$( function() {
+ window.voltPy1 = {};
+});
+
 // Implementation of sleep. Used during reload, to allow the server some time for processing.
 function sleep (time) {
     return new Promise((resolve) => setTimeout(resolve, time));
@@ -156,6 +160,17 @@ $( function() {
                 Bokeh.documents[0]._all_models_by_name._dict[cname].glyph.line_color = 'blue';
             }
         }); 
+    });
+});
+
+$( function() {
+    $( '._voltJS_Disable' ).on( 'change', function(e) {
+        $(e.target).parent().find('ul').find('._voltJS_toDisable').prop('checked', this.checked);
+        $(e.target).parent().find('ul').find('._voltJS_toDisable').prop('disabled', this.checked);
+    });
+    $('._voltJS_Expand').on('click', function (e) {
+        $(e.target).next('._voltJS_expandContainer').children('._voltJS_toExpand').toggleClass('visible invisible');
+        e.preventDefault();
     });
 });
 </script>
