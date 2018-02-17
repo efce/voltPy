@@ -472,7 +472,7 @@ class OperationSelectAnalyte(Operation):
                 initial=-1,
                 label='Analyte'
             )
-            self.fields['analyteId'].widget.attrs['class'] = 'atChanger'
+            self.fields['analyteId'].widget.attrs['class'] = '_voltJS_ChangeDispValue'
 
     def getHTML(self, user, request, model):
         cs = model.curveSet

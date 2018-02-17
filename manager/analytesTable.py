@@ -14,7 +14,7 @@ def analytesTable(user, obj, objType):
         assert isinstance(obj, mmodels.CurveSet)
         cs = obj
 
-    htmlButton = '<button class="urlChanger url@{1}">{0}</button>'
+    htmlButton = '<button class="_voltJS_urlChanger _voltJS_url@{1}">{0}</button>'
     if not cs.locked:
         addAnalyteBtn = htmlButton.format(
             'Add analyte',
@@ -40,7 +40,7 @@ def analytesTable(user, obj, objType):
     unitsTrans = dict(mmodels.CurveSet.CONC_UNITS)
 
     for a in cs.analytes.all():
-        ret.append('<th class="atOther atAnalyte{2}"> {0} [{3}]<br /><button class="urlChanger url@{1} atOther">Edit</button></th>'.format(
+        ret.append('<th class="atOther _voltJS_changeValue_{2}"> {0} [{3}]<br /><button class="_voltJS_urlChanger _voltJS_url@{1} atOther">Edit</button></th>'.format(
                 a.name, 
                 b64.b64encode(reverse('editAnalyte', kwargs={
                     'user_id': user.id,
@@ -59,10 +59,10 @@ def analytesTable(user, obj, objType):
     ret.append('</tr></table></td></tr><tr><td><div class="atContentsContainer"><table class="atContents">')
 
     for cd in cs.curvesData.only('id', 'curve'):
-        ret.append('<tr class="plotHighlight highlightCurve@{0}"><td> {1} </td>'.format(cd.id, cd.curve.name))
+        ret.append('<tr class="_voltJS_plotHighlight _voltJS_highlightCurve@{0}"><td> {1} </td>'.format(cd.id, cd.curve.name))
         for a in cs.analytes.all():
             conc = cs.analytesConc.get(a.id, {}).get(cd.id, 0)
-            ret.append('<td class="atOther atAnalyte%s"> %f </td>' % (a.id, conc) )
+            ret.append('<td class="atOther _voltJS_changeValue_%s"> %f </td>' % (a.id, conc) )
         ret.append('<td class="atOther">')
         if not cs.locked:
             ret.append(htmlButton.format(

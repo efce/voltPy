@@ -73,7 +73,7 @@ class EditAnalytesForm(forms.Form):
             label="Analyte",
             initial=eaDefault
         )
-        self.fields['existingAnalyte'].widget.attrs['class'] = 'testForNegative ifNegativeEnable@newAnalyte'
+        self.fields['existingAnalyte'].widget.attrs['class'] = '_voltJS_testForNegative _voltJS_ifNegativeEnable@newAnalyte'
         self.fields['newAnalyte'] = forms.CharField(
             label="",
             max_length=128,

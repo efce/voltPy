@@ -72,23 +72,25 @@ function processJSONReply(data, plot='',lineData='',cursors='') {
 $( function() { 
     //function used in forms:
     // the object which controls status of other objects
-    // should have class "testForNegative" and obligatory
+    // should have class "_voltJS_testForNegative@" and obligatory
     // one or more classes:
-    // ifNegativeDisable@<classNameToDisable>
-    // ifNegativeEnable@<classNameTOEnable>
-    $( ".testForNegative" ).on('change', function() {
+    // _voltJS_ifNegativeDisable@<classNameToDisable>
+    // _voltJS_ifNegativeEnable@<classNameTOEnable>
+    iclassDisable = '_voltJS_ifNegativeDisable@'
+    iclassEnable = '_voltJS_ifNegativeEnable@'
+    $( "._voltJS_testForNegative" ).on('change', function() {
         var classes = this.className.split(" ");
         var onOff = (this.value < 0);
         classes.forEach( function(name){
-            if (name.startsWith('ifNegativeDisable@')) {
-                var cname = "." + name.substring(18);
+            if (name.startsWith(iclassDisable)) {
+                var cname = "." + name.substring(iclassDisable.length);
                 if ( !onOff ) {
                     $(cname).prop('disabled', false);
                 } else {
                     $(cname).prop('disabled', true);
                 }
-            } else if (name.startsWith('ifNegativeEnable@')) {
-                var cname = "." + name.substring(17);
+            } else if (name.startsWith(iclassEnable)) {
+                var cname = "." + name.substring(iclassEnable.length);
                 if ( onOff ) {
                     $(cname).prop('disabled', false);
                 } else {
@@ -98,16 +100,17 @@ $( function() {
         });
     });
     // Check conditions at the beggining:
-    $( ".testForNegative" ).trigger("change");
+    $( "._voltJS_testForNegative" ).trigger("change");
 });
 
 $( function() {
     // js wrapper for url transitions for buttons etc. Magic class names.
-    $( ".urlChanger" ).on('click', function() {
+    var iclassUrl = '_voltJS_url@'
+    $( "._voltJS_urlChanger" ).on('click', function() {
         var classes = this.className.split(" ");
         classes.forEach( function(name) {
-            if (name.startsWith('url@')) {
-                var url = atob(name.substring(4));
+            if (name.startsWith(iclassUrl)) {
+                var url = atob(name.substring(iclassUrl.length));
                 window.location=url;
             }
         })
@@ -116,33 +119,34 @@ $( function() {
 
 // This is used in analytesTable, when selecting analyte. Magic classes names.
 $( function() {
-    window.voltPy1.atChangerCurrent = -1;
-    $( ".atChanger" ).on('change', function() {
+    window.voltPy1.ChangeDispCurrent = -1;
+    $( "._voltJS_ChangeDispValue" ).on('change', function() {
         var value = this.value;
-        if (value == window.voltPy1.atChangerCurrent)
+        if (value == window.voltPy1.ChangeDispCurrent)
             return;
         
-        if ( window.voltPy1.atChangerCurrent != -1 ) {
-            var classToHide = "atAnalyte" + window.voltPy1.atChangerCurrent;
+        if ( window.voltPy1.ChangeDispCurrent != -1 ) {
+            var classToHide = "_voltJS_changeValue_" + window.voltPy1.ChangeDispCurrent;
             $( "." + classToHide ).css('display', 'none');
         }
         if (value != -1 ) {
-            var classToShow = "atAnalyte" + value;
+            var classToShow = "_voltJS_changeValue_" + value;
             $( "." + classToShow ).css('display', 'table-cell');
         }
-        window.voltPy1.atChangerCurrent = value;
+        window.voltPy1.ChangeDispCurrent = value;
     });
 });
 
 $( function() {
     // TODO: find some nicer way to change Bokeh plots colors
-    $( ".plotHighlight" ).hover( function() { // on hover in
+    var iclass = '_voltJS_highlightCurve@'
+    $( '._voltJS_plotHighlight' ).hover( function() { // on hover in
         $(this).css('background-color', 'red');
         $(this).css('color', 'white');
         var classes = this.className.split(" ");
         classes.forEach( function(name) {
-            if (name.startsWith('highlightCurve@')) {
-                var number = name.substring(15);
+            if (name.startsWith(iclass)) {
+                var number = name.substring(iclass.length);
                 var cname = 'curve_' + number;
                 Bokeh.documents[0]._all_models_by_name._dict[cname].glyph.line_width = 8;
                 Bokeh.documents[0]._all_models_by_name._dict[cname].glyph.line_color = 'red';
@@ -153,8 +157,8 @@ $( function() {
         $(this).css('background-color', 'white');
         $(this).css('color', 'black');
         classes.forEach( function(name) {
-            if (name.startsWith('highlightCurve@')) {
-                var number = name.substring(15);
+            if (name.startsWith(iclass)) {
+                var number = name.substring(iclass.length);
                 var cname = 'curve_' + number;
                 Bokeh.documents[0]._all_models_by_name._dict[cname].glyph.line_width = 2;
                 Bokeh.documents[0]._all_models_by_name._dict[cname].glyph.line_color = 'blue';

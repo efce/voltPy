@@ -476,7 +476,7 @@ class PlotManager:
         src,div = components(layout) 
         src = '\n'.join([
             src,
-            "<script type='text/javascript'>(function(){window.voltPy1 = { 'command': '" + \
-                    self.interaction + "' };})();</script>"
+            "<script type='text/javascript'>$(function(){window.voltPy1 = { 'command': '" + \
+                    self.interaction + "' };});</script>"
         ])
         return src,div

@@ -3,7 +3,7 @@
 {% block title %} Show {% endblock %}
 
 {% block real_content %}
-<p>CurveSet name: {{ curveset.name }} | <button class="urlChanger url@{{ cloneCSUrl }}"> Copy </button><br />
+<p>CurveSet name: {{ curveset.name }} | <button class="_voltJS_urlChanger _voltJS_url@{{ cloneCSUrl }}"> Copy </button><br />
 Date created: {{ curveset.date | date:"c" }}</p>
 {{ at | safe }}
 <br />
@@ -18,7 +18,7 @@ Date created: {{ curveset.date | date:"c" }}</p>
 {% if curveset.locked %}
 <p>Processing of this curveset is not allowed, because it was already used in
 analysis.<br /> To process the data further please create a copy of it.<br />
-<button class="urlChanger url@{{ cloneCSUrl }}"> Copy </button>
+<button class="_voltJS_urlChanger _voltJS_url@{{ cloneCSUrl }}"> Copy </button>
 {% else %}
 <form method="post" action="" enctype="multipart/form-data" id="concform">
 	<table>
