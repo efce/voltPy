@@ -288,7 +288,7 @@ class SelectCurvesForCurveSetForm(forms.Form):
     <input class="_voltJS_Disable" id="id_{name}" type="checkbox" name="{name}"{checkedText} />
     <label for="id_{name}">{label} </label>
     <button class="_voltJS_Expand"> Expand </button>
-    <ul class="_voltJS_expandContainer">""".format(
+    <ul class="_voltJS_expandContainer _voltJS_disableContainer">""".format(
                     name=key,
                     label=label,
                     checkedText=checkedtext,

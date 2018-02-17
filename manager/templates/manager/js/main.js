@@ -165,8 +165,8 @@ $( function() {
 
 $( function() {
     $( '._voltJS_Disable' ).on( 'change', function(e) {
-        $(e.target).parent().find('ul').find('._voltJS_toDisable').prop('checked', this.checked);
-        $(e.target).parent().find('ul').find('._voltJS_toDisable').prop('disabled', this.checked);
+        $(e.target).parent().find('._voltJS_disableContainer').find('._voltJS_toDisable').prop('checked', this.checked);
+        $(e.target).parent().find('._voltJS_disableContainer').find('._voltJS_toDisable').prop('disabled', this.checked);
     });
     $('._voltJS_Expand').on('click', function (e) {
         $(e.target).next('._voltJS_expandContainer').children('._voltJS_toExpand').toggleClass('visible invisible');
