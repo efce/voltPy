@@ -54,7 +54,7 @@ https://doi.org/10.1002/elan.201300181"""
         self.model.customData['analyte'] = analyte.name
         unitsTrans = dict(mmodels.CurveSet.CONC_UNITS)
         self.model.customData['units'] = unitsTrans[self.model.curveSet.analytesConcUnits[analyte.id]]
-        for name,cds in self.model.customData['TagCurves'].items():
+        for name,cds in self.model.stepsData['TagCurves'].items():
             for cid in cds:
                 SENS.append(name)
                 cd = self.model.curveSet.curvesData.get(id=cid)
@@ -62,8 +62,8 @@ https://doi.org/10.1002/elan.201300181"""
                 Y[-1] = cd.yVector
                 CONC.append(self.model.curveSet.analytesConc.get(analyte.id,{}).get(cd.id,0))
                 rng = [
-                    cd.xvalueToIndex(user,self.model.customData['range1'][0]),
-                    cd.xvalueToIndex(user,self.model.customData['range1'][1])
+                    cd.xvalueToIndex(user,self.model.stepsData['SelectRange'][0]),
+                    cd.xvalueToIndex(user,self.model.stepsData['SelectRange'][1])
                 ]
                 RANGES.append([])
                 RANGES[-1] = rng

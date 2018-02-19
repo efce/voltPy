@@ -31,7 +31,7 @@ This is standard addition method, where the height of the signal is calculated a
     def finalize(self, user):
         xvalues = []
         yvalues = []
-        selRange = self.model.customData['range1']
+        selRange = self.model.stepsData['SelectRange']
         analyte = self.model.curveSet.analytes.all()[0]
         self.model.customData['analyte'] = analyte.name
         unitsTrans = dict(mmodels.CurveSet.CONC_UNITS)

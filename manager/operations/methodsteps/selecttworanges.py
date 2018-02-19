@@ -13,8 +13,7 @@ class SelectTwoRanges(MethodStep):
                 except ValueError:
                     continue
         if (len(data) == 4):
-            model.customData['range1'] = [data[0], data[1]]
-            model.customData['range2'] = [data[2], data[3]]
+            model.stepsData['SelectTwoRanges'] = data 
             model.save()
             return True
         return False

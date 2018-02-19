@@ -35,10 +35,10 @@ other right after it.
         self.model.customData['fitCoeff'] = []
         if ( self.model.active_step_num == 1 ):
             for cd in self.model.curveSet.curvesData.all():
-                st1 = cd.xvalueToIndex(user, self.model.customData['range1'][0])
-                en1 = cd.xvalueToIndex(user, self.model.customData['range1'][1])
-                st2 = cd.xvalueToIndex(user, self.model.customData['range2'][0])
-                en2 = cd.xvalueToIndex(user, self.model.customData['range2'][1])
+                st1 = cd.xvalueToIndex(user, self.model.stepsData['SelectTwoRanges'][0])
+                en1 = cd.xvalueToIndex(user, self.model.stepsData['SelectTwoRanges'][1])
+                st2 = cd.xvalueToIndex(user, self.model.stepsData['SelectTwoRanges'][2])
+                en2 = cd.xvalueToIndex(user, self.model.stepsData['SelectTwoRanges'][3])
                 xvec = cd.xVector[st1:en1]
                 xvec.extend(cd.xVector[st2:en2])
                 yvec = cd.yVector[st1:en1]

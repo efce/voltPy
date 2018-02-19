@@ -33,9 +33,9 @@ def analytesTable(user, obj, objType):
 
     ret = ['<table  cellspacing="0" cellpadding="0" border="0" class="analytesTable"><tr><td><table class="atHeader">']
     if lenana == 0:
-        ret.append('<tr><th colspan=1>No analytes</th></tr><tr><th>Curve names</th>')
+        ret.append('<tr><th colspan=1>No analytes</th></tr><tr><th>Curve name</th>')
     else:
-        ret.append('<tr><td>&nbsp;</td><th colspan={:d} class="atOther">Analytes</th><th class="atOther">Action</th></tr><tr><th>Curve names</th>'.format(lenana))
+        ret.append('<tr><td>&nbsp;</td><th colspan={:d} class="atOther">Analyte</th><th class="atOther">Action</th></tr><tr><th>Curve name</th>'.format(lenana))
 
     unitsTrans = dict(mmodels.CurveSet.CONC_UNITS)
 
@@ -43,15 +43,14 @@ def analytesTable(user, obj, objType):
         ret.append('<th class="atOther _voltJS_changeValue_{2}"> {0} [{3}]<br /><button class="_voltJS_urlChanger _voltJS_url@{1} atOther">Edit</button></th>'.format(
                 a.name, 
                 b64.b64encode(reverse('editAnalyte', kwargs={
-                    'user_id': user.id,
-                    'objType': objType,
-                    'objId': obj.id, 
-                    'analyteId':a.id
+                        'user_id': user.id,
+                        'objType': objType,
+                        'objId': obj.id, 
+                        'analyteId':a.id
                     }).encode()
                 ).decode('UTF-8'),
                 a.id,
                 unitsTrans[cs.analytesConcUnits[a.id]]
-
             )
         )
 
@@ -68,10 +67,10 @@ def analytesTable(user, obj, objType):
             ret.append(htmlButton.format(
                     'delete',
                     b64.b64encode(reverse('deleteCurve', kwargs={
-                        'user_id': user.id,
-                        'objType': objType,
-                        'objId': obj.id, 
-                        'delId': cd.id
+                            'user_id': user.id,
+                            'objType': objType,
+                            'objId': obj.id, 
+                            'delId': cd.id
                         }).encode()
                     ).decode('UTF-8')
                 )

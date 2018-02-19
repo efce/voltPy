@@ -13,7 +13,7 @@ class SelectPoint(MethodStep):
                 except ValueError:
                     continue
         if ( len(data) > 0 ):
-            model.customData['pointX'] = data[0]
+            model.stepsData['SelectPoint'] = data[0]
             model.save()
             return True
         return False

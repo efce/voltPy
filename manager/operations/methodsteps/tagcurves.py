@@ -26,17 +26,14 @@ class TagCurves(mm.MethodStep):
                     kentry = ret.get(f,[])
                     kentry.append(cid)
                     ret[f] = kentry
-            self.model.customData['TagCurves'] = ret
+            self.model.stepsData['TagCurves'] = ret
             self.model.save()
 
     def process(self, user, request, model):
-        print('form process')
         if ( request.method == 'POST'
         and request.POST.get('tagcurvesform', False) != False ):
             form = self.TagCurvesForm(request.POST, model=model)
-            print('checking if is valid')
             if form.is_valid():
-                print('isa valid')
                 form.process()
                 return True
 

@@ -13,7 +13,7 @@ class SelectRange(MethodStep):
                 except ValueError:
                     continue
         if (len(data) == 2):
-            model.customData['range1'] = data
+            model.stepsData['SelectRange'] = data
             model.save()
             return True
         return False

@@ -23,7 +23,7 @@ given number of plots.
         return "Average Curves"
 
     def finalize(self, user):
-        for k,f in self.model.customData['TagCurves'].items():
+        for k,f in self.model.stepsData['TagCurves'].items():
             if ( len(f) > 1 ):
                 cid = f[0]
                 orgcd = self.model.curveSet.curvesData.get(id=cid)

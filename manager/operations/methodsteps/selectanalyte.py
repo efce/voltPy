@@ -49,13 +49,12 @@ class SelectAnalyte(MethodStep):
 
         analyte_sel = self.AnalyteSelectionForm(request.POST, analytes=cs.analytes)
         if analyte_sel.is_valid():
-            data = model.customData.get('analytes', [])
             try:
                 analyte = mmodels.Analyte.objects.get(id=analyte_sel.cleaned_data['analyteId'])
             except ObjectDoesNotExist:
                 return False
-            data.append(analyte.id)
-            model.customData['analytes'] = data
+            model.stepsData['SelectAnalyte'] = analyte.id
+            model.analytes.add(analyte)
             model.save()
             return True
         else:

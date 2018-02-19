@@ -41,7 +41,7 @@ https://doi.org/10.1039/C7AN00185A
         from manager.helpers.prepareStructForSSAA import prepareStructForSSAA
         from manager.curveea import Param
         self.model.customData['selectedIndex'] = \
-            self.model.curveSet.curvesData.all()[0].xvalueToIndex(user, self.model.customData['pointX'])
+            self.model.curveSet.curvesData.all()[0].xvalueToIndex(user, self.model.stepsData['SelectPoint'])
         peak = self.model.customData.get('selectedIndex', 0)
         X = []
         Conc = []
