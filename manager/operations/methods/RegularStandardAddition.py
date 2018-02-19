@@ -1,19 +1,21 @@
-import manager.methodmanager as mm
+from numpy import corrcoef
+import numpy as np
+import manager.operations.methodmanager as mm
+from manager.operations.methodsteps.selectanalyte import SelectAnalyte
+from manager.operations.methodsteps.selectrange import SelectRange
 import manager.plotmanager as pm
 import manager.models as mmodels
-from numpy import corrcoef
 from manager.helpers.fithelpers import calc_normal_equation_fit, calc_sx0
-import numpy as np
 
 class RegularStandardAddition(mm.AnalysisMethod):
-    _operations = [
+    _steps = [
         { 
-            'class': mm.OperationSelectAnalyte,
+            'class': SelectAnalyte,
             'title': 'Select analyte',
             'desc': """Select analyte.""",
         },
         { 
-            'class': mm.OperationSelectRange,
+            'class': SelectRange,
             'title': 'Select range',
             'desc': 'Select range containing peak and press Forward, or press Back to change the selection.',
         },

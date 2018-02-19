@@ -24,6 +24,13 @@ class PlotManager:
     ylabel = "y"
     plot_width = 700
     plot_height = 600
+    interactions = [
+        'set1cursor',
+        'set2cursors',
+        'set4cursors',
+        'confirm',
+        'none'
+    ]
 
     def __init__(self):
         self.__random = str(random.random()).replace(".","")
@@ -469,6 +476,7 @@ class PlotManager:
             return
 
     def setInteraction(self, name):
+        assert name in self.interactions
         self.interaction = name
 
     def getEmbeded(self, request, user, vtype, vid):

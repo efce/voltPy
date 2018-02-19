@@ -1,13 +1,14 @@
 from copy import deepcopy
-from django.utils import timezone
 import numpy as np
-import manager.methodmanager as mm
+from django.utils import timezone
+import manager.operations.methodmanager as mm
+from manager.operations.methodsteps.confirmation import Confirmation
 from manager.helpers.bkghelpers import calc_abc
 
 class AutomaticBaselineCorrection(mm.ProcessingMethod):
-    _operations = [ 
+    _steps = [ 
         {
-            'class': mm.OperationConfirmation,
+            'class': Confirmation,
             'title': 'Config before proceding.',
             'desc': 'To confirm press Forward.',
         },

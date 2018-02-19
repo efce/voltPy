@@ -6,7 +6,7 @@ import json
 import manager.models as mmodels
 import manager.forms as mforms
 import base64 as b64
-from manager import methodmanager as mmm
+from manager.operations import methodmanager as mmm
 from manager.exceptions import VoltPyNotAllowed, VoltPyDoesNotExists
 from manager.helpers.functions import add_notification
 from manager.helpers.functions import delete_helper

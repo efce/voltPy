@@ -6,7 +6,7 @@
 - Debugging of Bokeh plot switching
 x Better plots with legends (or color markings of curve name/comments in html table)
 - Dynamic adjustment of plot size based on client resolution/window size (?)
-- Rework of curves selection for curveset
+x Rework of curves selection for curveset - v0.1 done
 - Curve processing history browsable lists - SOME PRELIMINARY WORK with 1c04e6179eb286c9413104d5d0410f726d5f00d5
 - Separation of JavaScripts from py files / code cleanups
 - Separation of HTML from py files / creation of HTML draw only funtions

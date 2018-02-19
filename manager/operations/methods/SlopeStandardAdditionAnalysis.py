@@ -1,17 +1,19 @@
 from numpy import polyfit, corrcoef
-import manager.methodmanager as mm
+from manager.operations.methodsteps.selectanalyte import SelectAnalyte
+from manager.operations.methodsteps.selectpoint import SelectPoint
+import manager.operations.methodmanager as mm
 import manager.models as mmodels
 import manager.plotmanager as pm
 
 class SlopeStandardAdditionAnalysis(mm.AnalysisMethod):
-    _operations = ( 
+    _steps = ( 
         { 
-            'class': mm.OperationSelectAnalyte,
+            'class': SelectAnalyte,
             'title': 'Select analyte',
             'desc': """Select analyte.""",
         },
         { 
-            'class': mm.OperationSelectPoint,
+            'class': SelectPoint,
             'title': 'Select peak',
             'desc': 'Enter approx. X value of peak of interest and press Forward, or press back to change the selection.',
         },

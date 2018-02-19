@@ -1,17 +1,19 @@
 from copy import deepcopy
-from django.utils import timezone
-import manager.methodmanager as mm
 import numpy as np
+from django.utils import timezone
+import manager.operations.methodmanager as mm
+from manager.operations.methodsteps.selecttworanges import SelectTwoRanges
+from manager.operations.methodsteps.confirmation import Confirmation
 
 class PolynomialBackgroundFit(mm.ProcessingMethod):
-    _operations = [ 
+    _steps = [ 
         {
-            'class': mm.OperationSelectTwoRanges,
+            'class': SelectTwoRanges,
             'title': 'Choose two fit intervals.',
             'desc': 'Select two fit intervals and press Forward, or press Back to change the selection.',
         },
         {
-            'class': mm.OperationConfirmation,
+            'class': Confirmation,
             'title': 'Confirm background shape.',
             'desc': 'Press Forward to confirm background shape or press Back to return to interval selection.',
         },
@@ -30,8 +32,8 @@ other right after it.
 
     def process(self, user, request):
         ret = super(mm.ProcessingMethod, self).process(user, request)
-        if ( self.model.step == 1 ):
-            self.model.customData['fitCoeff'] = []
+        self.model.customData['fitCoeff'] = []
+        if ( self.model.active_step_num == 1 ):
             for cd in self.model.curveSet.curvesData.all():
                 st1 = cd.xvalueToIndex(user, self.model.customData['range1'][0])
                 en1 = cd.xvalueToIndex(user, self.model.customData['range1'][1])
@@ -47,8 +49,7 @@ other right after it.
         return ret
 
     def getAddToPlot(self):
-        currentStepNumber = self.model.step
-        if ( currentStepNumber == 1 ):
+        if ( self.model.active_step_num == 1 ):
             fitlines = []
             for cd,fit in zip(self.model.curveSet.curvesData.all(), self.model.customData['fitCoeff']):
                 xvec = cd.xVector

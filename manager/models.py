@@ -230,7 +230,7 @@ class Analysis(models.Model):
     analytes = models.ManyToManyField(Analyte)
     name = models.TextField()
     method = models.TextField()
-    step = models.IntegerField(default=0, null=True)
+    active_step_num = models.IntegerField(default=0, null=True)
     deleted = models.BooleanField(default=False)
     completed = models.BooleanField(default=False)
 
@@ -261,7 +261,7 @@ class Processing(models.Model):
     analytes = models.ManyToManyField(Analyte)
     name = models.TextField()
     method = models.TextField()
-    step  = models.IntegerField(default=0, null=True)
+    active_step_num  = models.IntegerField(default=0, null=True)
     deleted = models.BooleanField(default=0)
     completed = models.BooleanField(default=0)
 

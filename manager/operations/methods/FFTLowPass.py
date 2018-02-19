@@ -1,10 +1,10 @@
 from copy import deepcopy
-from django.utils import timezone
-import manager.methodmanager as mm
-import manager.plotmanager as pm
 import numpy as np
+from django.utils import timezone
+import manager.operations.methodmanager as mm
+import manager.plotmanager as pm
 
-class OperationSelectFrequency(mm.Operation):
+class StepSelectFrequency(mm.MethodStep):
     plot_interaction='none'
 
     def process(self, user, request, model):
@@ -33,9 +33,9 @@ class OperationSelectFrequency(mm.Operation):
         return { 'head': src, 'body' : div }
 
 class FFTLowPass(mm.ProcessingMethod):
-    _operations = [ 
+    _steps = [ 
         {
-            'class': OperationSelectFrequency,
+            'class': StepSelectFrequency,
             'title': 'Select frequency threshhold.',
             'desc': 'Select frequency treshhold and press Forward, or press Back to change the selection.',
         },

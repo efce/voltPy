@@ -1,60 +1,22 @@
-import manager.methodmanager as mm
+import manager.operations.methodmanager as mm
+from manager.operations.methodsteps.selectanalyte import SelectAnalyte
+from manager.operations.methodsteps.selectrange import SelectRange
+from manager.operations.methodsteps.tagcurves import TagCurves
 import manager.plotmanager as pm
 import manager.models as mmodels
 import manager.helpers.selfReferencingBackgroundCorrection as sbcm
 import numpy as np
 from django import forms
 
-class OperationSelectSensitivities(mm.Operation):
-    plot_interaction='none'
-
-    class SelectSens(forms.Form):
-        def __init__(self, *args, **kwargs):
-            self.model = kwargs.pop('model')
-            super(OperationSelectSensitivities.SelectSens, self).__init__(*args, **kwargs)
-            for cd in self.model.curveSet.curvesData.all():
-                self.fields['curve' + str(cd.id)] = forms.CharField(
-                    max_length = 16,
-                    initial = "",
-                    required = True,
-                    label = cd.curve.name
-                )
-
-    def process(self, user, request, model):
-        if ( request.method == 'POST' ):
-            form = self.SelectSens(request.POST, model=model)
-            if ( form.is_valid() ):
-                sens = {}
-                for k,v in form.cleaned_data.items():
-                    if k[:5] != 'curve':
-                        continue
-                    s = sens.get(v, [])
-                    cdid = int(k[5:])
-                    s.append(cdid)
-                    sens[v] = s
-                if len(sens) < 2:
-                    return False
-                model.customData['Sens'] = sens
-                model.save()
-                return True
-        return False
-
-    def getHTML(self, user, request, model):
-        from django.template.loader import get_template
-        form = self.SelectSens(model=model)
-        template = get_template('manager/form.html')
-        body = template.render({'form': form}, request)
-        return { 'head': '', 'body' : body }
-
 class SelfReferencingBackgroundCorrection(mm.AnalysisMethod):
-    _operations = [ 
+    _steps = [ 
         { 
-            'class': mm.OperationSelectAnalyte,
+            'class': SelectAnalyte,
             'title': 'Select analyte',
             'desc': """Select analyte.""",
         },
         {
-            'class': OperationSelectSensitivities,
+            'class': TagCurves,
             'title': 'Describe sensitivities.',
             'desc': \
 """
@@ -64,7 +26,7 @@ requires at least three different).
 """,
         },
         { 
-            'class': mm.OperationSelectRange,
+            'class': SelectRange,
             'title': 'Select range',
             'desc': """
 Select range containing peak and press Forward, or press Back to change the selection.
@@ -92,7 +54,7 @@ https://doi.org/10.1002/elan.201300181"""
         self.model.customData['analyte'] = analyte.name
         unitsTrans = dict(mmodels.CurveSet.CONC_UNITS)
         self.model.customData['units'] = unitsTrans[self.model.curveSet.analytesConcUnits[analyte.id]]
-        for name,cds in self.model.customData['Sens'].items():
+        for name,cds in self.model.customData['TagCurves'].items():
             for cid in cds:
                 SENS.append(name)
                 cd = self.model.curveSet.curvesData.get(id=cid)

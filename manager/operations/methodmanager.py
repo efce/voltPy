@@ -97,25 +97,25 @@ class MethodManager:
             return { 'command': 'reload' }
 
     def getContent(self, request, user):
-        if self.__method.has_next == False or self.__method.operation is None:
+        if self.__method.has_next == False or self.__method.step is None:
             return HttpResponseRedirect(self.__model.getRedirectURL(user))
         elif not self.isMethodSelected():
             return HttpResponseRedirect(reverse("browseCurveSet"))
 
-        operationText = dict( 
+        stepText = dict( 
             head= '', 
-            body= "No text"
+            body= 'No text'
         )
 
-        if self.__method.operation:
-            operationText = self.__method.getOperationHTML(
+        if self.__method.step:
+            stepText = self.__method.getStepHTML(
                 user=user,
                 request=request
             )
 
-            stepInfo = '<p>Step: {0} out of {1}</p>'.format(
-                self.__model.step+1,
-                len(self.__method._operations)
+            step_numInfo = '<p>Step: {0} out of {1}</p>'.format(
+                self.__model.active_step_num+1,
+                len(self.__method._steps)
             )
 
             plotScr, plotDiv = generate_plot(
@@ -125,20 +125,20 @@ class MethodManager:
                 value_id=self.__model.curveSet.id,
                 vtype=self.__method.type(),
                 vid=self.__model.id,
-                interactionName = self.__method.operation['class'].plot_interaction,
+                interactionName = self.__method.step['class'].plot_interaction,
                 add = self.__method.getAddToPlot()
             )
 
             context = {
                 'scripts': '\n'.join([ 
                                         plotScr, 
-                                        operationText.get('head','') 
+                                        stepText.get('head','') 
                                     ]),
                 'mainPlot': plotDiv,
                 'method_content': ''.join([
-                                        stepInfo,
-                                        operationText.get('desc',''),
-                                        operationText.get('body',''),
+                                        step_numInfo,
+                                        stepText.get('desc',''),
+                                        stepText.get('body',''),
                                     ]),
                 'user': user,
                 'model': self.__model,
@@ -247,7 +247,7 @@ $(function(){{
                         curveSet = curveset,
                         method = self.cleaned_data.get('method'), 
                         name = "",
-                        step = 0,
+                        active_step_num = 0,
                         deleted = False,
                         completed = False
                     )
@@ -262,7 +262,7 @@ $(function(){{
                         curveSet = curveset,
                         method = self.cleaned_data.get('method'),
                         name = "",
-                        step = 0,
+                        active_step_num = 0,
                         deleted = False,
                         completed = False
                     )
@@ -278,7 +278,7 @@ class Method(ABC):
     These should be implemented by classes providing
     either processing or analysis procedures.
     """
-    operation = None
+    step = None
     model = None
     has_next = True
     description = None
@@ -287,58 +287,59 @@ class Method(ABC):
         if not model:
             raise ValueError('Model has to be set')
         self.model = model
-        if model.step is not None:
-            if ( model.step < len(self._operations) ):
-                self.operation = self._operations[model.step]
-                if self.operation['class'] is not None:
-                    self.operation['object'] = self.operation['class']()
+        if model.active_step_num is not None:
+            if ( model.active_step_num < len(self._steps) ):
+                self.step = self._steps[model.active_step_num]
+                if self.step['class'] is not None:
+                    self.step['object'] = self.step['class']()
                 else:
-                    self.operation['object'] = None
+                    self.step['object'] = None
             else:
                 self.has_next = False
         else:
             self.has_next = False
 
-    def __nextOperation(self):
-        if (self.model.step+1) < len(self._operations):
-            self.model.step = self.model.step + 1
+    def __nextStep(self):
+        if (self.model.active_step_num+1) < len(self._steps):
+            self.model.active_step_num = self.model.active_step_num + 1
             self.model.save()
-            self.operation = self._operations[self.model.step]
-            if self.operation['class'] is not None:
-                self.operation['object'] = self.operation['class']()
+            self.step = self._steps[self.model.active_step_num]
+            if self.step['class'] is not None:
+                self.step['object'] = self.step['class']()
             else:
-                self.operation['object'] = None
+                self.step['object'] = None
             return True
         else:
             return False
 
     def process(self, user, request):
         """
-        This processes current step.
+        This processes current.active_step_num.
         """
-        if self.operation is None or self.operation['object'] is None:
+        if self.step is None or self.step['object'] is None:
             self.has_next = False
-        elif self.operation['object'].process(user=user, request=request, model=self.model):
-            self.has_next = self.__nextOperation()
+        elif self.step['object'].process(user=user, request=request, model=self.model):
+            self.has_next = self.__nextStep()
 
         if not self.has_next:
             self.finalize(user)
-            self.model.step = None
+            self.model.active_step_num = None
             self.model.completed = True
             self.model.save()
-            self.operation = None
+            self.step = None
 
-    def getOperationHTML(self, user, request):
-        if self.operation and self.operation.get('object', None):
-            opHTML = self.operation['object'].getHTML(
+    def getStepHTML(self, user, request):
+        if self.step and self.step.get('object', None):
+            stepHTML = self.step['object'].getHTML(
                 user=user,
                 request=request, 
                 model=self.model
             )
             return { 
-                'head': opHTML.get('head',''), 
-                'body': opHTML.get('body',''), 
-                'desc': self.operation.get('desc','')
+            #Step data come form step class, but description comes from method
+                'head': stepHTML.get('head',''), 
+                'body': stepHTML.get('body',''), 
+                'desc': self.step.get('desc','')
             }
         else:
             return { 'head': '', 'body': '' , 'desc': ''}
@@ -382,137 +383,13 @@ class ProcessingMethod(Method):
     def type(self):
         return 'processing'
 
-class Operation(ABC):
+class MethodStep(ABC):
     @abstractmethod
     def process(self, user, request, model):
         pass
 
     def getHTML(self, user, request, model):
         return { 'head': '', 'body' : '' }
-
-class OperationSelectTwoRanges(Operation):
-    plot_interaction = 'set4cursors'
-
-    def process(self, user, request, model):
-        data = []
-        for cnum in range(1,5):
-            name = 'cursor' + str(cnum)
-            if request.POST.get(name,''):
-                try:
-                    data.append(float(request.POST.get(name)))
-                except ValueError:
-                    continue
-        if (len(data) == 4):
-            model.customData['range1'] = [data[0], data[1]]
-            model.customData['range2'] = [data[2], data[3]]
-            model.save()
-            return True
-        return False
-
-class OperationSelectRange(Operation):
-    plot_interaction = 'set2cursors'
-
-    def process(self, user, request, model):
-        data = []
-        for cnum in range(1,5):
-            name = 'cursor' + str(cnum)
-            if request.POST.get(name,''):
-                try:
-                    data.append(float(request.POST.get(name)))
-                except ValueError:
-                    continue
-        if (len(data) == 2):
-            model.customData['range1'] = data
-            model.save()
-            return True
-        return False
-
-class OperationSelectPoint(Operation):
-    plot_interaction = 'set1cursor'
-
-    def process(self, user, request, model):
-        data = []
-        for cnum in range(1,5):
-            name = 'cursor' + str(cnum)
-            if request.POST.get(name,''):
-                try:
-                    data.append(float(request.POST.get(name)))
-                except ValueError:
-                    continue
-        if ( len(data) > 0 ):
-            model.customData['pointX'] = data[0]
-            model.save()
-            return True
-        return False
-
-class OperationConfirmation(Operation):
-    plot_interaction = 'confirm'
-
-    def process(self, user, request, model):
-        if request.POST.get('command', False) == 'confirm':
-            return True
-        else:
-            model.step = model.step-1
-            model.save()
-            return False
-
-class OperationSelectAnalyte(Operation):
-    plot_interaction = 'none'
-
-    class AnalyteSelectionForm(forms.Form):
-        def __init__(self, *args, **kwargs):
-            analytes = kwargs.pop('analytes',[])
-            super(OperationSelectAnalyte.AnalyteSelectionForm, self).__init__(*args, **kwargs)
-            choices = zip(
-                [-1] + [ x.id for x in analytes.all() ],
-                ['Select'] + [ x.name for x in analytes.all() ]
-            )
-            self.fields['analyteId'] = forms.ChoiceField(
-                choices=choices,
-                initial=-1,
-                label='Analyte'
-            )
-            self.fields['analyteId'].widget.attrs['class'] = '_voltJS_ChangeDispValue'
-
-    def getHTML(self, user, request, model):
-        cs = model.curveSet
-
-        style = "<style>.atOther { display: none; };</style>"
-        import manager.analytesTable as at
-        at_disp = at.analytesTable(user, cs, objType='cs')
-
-        analyte_sel = self.AnalyteSelectionForm(analytes=cs.analytes)
-        from django.template import loader
-        template = loader.get_template('manager/form.html')
-        context = { 'form': analyte_sel, 'submit': 'selectAnalyte' }
-        analyte_sel_disp = template.render(
-            context=context,
-            request=request
-        )
-        txt = """
-        {0}
-        <br />
-        Data preview:<br />
-        {1}
-        """.format(analyte_sel_disp, at_disp)
-        return { 'head': style, 'desc': '', 'body': txt }
-
-    def process(self, user, request, model):
-        cs = model.curveSet
-
-        analyte_sel = self.AnalyteSelectionForm(request.POST, analytes=cs.analytes)
-        if analyte_sel.is_valid():
-            data = model.customData.get('analytes', [])
-            try:
-                analyte = mmodels.Analyte.objects.get(id=analyte_sel.cleaned_data['analyteId'])
-            except ObjectDoesNotExist:
-                return False
-            data.append(analyte.id)
-            model.customData['analytes'] = data
-            model.save()
-            return True
-        else:
-            return False
 
 if ( __name__ == '__main__' ):
     mm = MethodManager()
