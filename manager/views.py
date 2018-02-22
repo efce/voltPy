@@ -5,10 +5,11 @@ from django.http import JsonResponse
 import json
 import manager.models as mmodels
 import manager.forms as mforms
-from manager import methodmanager as mmm
+import base64 as b64
+from manager.operations import methodmanager as mmm
 from manager.exceptions import VoltPyNotAllowed, VoltPyDoesNotExists
 from manager.helpers.functions import add_notification
-from manager.helpers.functions import delete_generic
+from manager.helpers.functions import delete_helper
 from manager.helpers.functions import generate_plot
 from manager.helpers.functions import voltpy_render
 from manager.helpers.decorators import with_user
@@ -57,7 +58,7 @@ def browseCurveFile(request, user):
         'user' : user,
         'list_header' : 'Displaying Uploaded files:',
         'list_to_disp' : files,
-        'action1': "editCurveFile",
+        'action1': "showCurveFile",
         'action2': "deleteCurveFile",
         'action2_text': ' (delete) ',
         'whenEmpty' : ''.join([
@@ -100,7 +101,9 @@ def browseAnalysis(request, user):
 @redirect_on_voltpyexceptions
 @with_user
 def browseCurveSet(request, user):
-    csets = mmodels.CurveSet.objects.filter(owner=user, deleted=False)
+    files = mmodels.CurveFile.objects.filter(owner=user).only('curveSet')
+    csetsFiles = [ x['curveSet'] for x in files.all().values('curveSet') ]
+    csets = mmodels.CurveSet.objects.filter(owner=user, deleted=False).exclude(id__in=csetsFiles)
 
     if ( __debug__ ):
         print(csets)
@@ -108,7 +111,7 @@ def browseCurveSet(request, user):
         'user' : user,
         'list_header' : 'Displaying CurveSets:',
         'list_to_disp' : csets,
-        'action1': 'editCurveSet',
+        'action1': 'showCurveSet',
         'action2': 'deleteCurveSet',
         'action2_text': ' (delete) ',
         'whenEmpty' : ''.join([
@@ -131,16 +134,38 @@ def deleteCurveFile(request, user, file_id):
         cfile = mmodels.CurveFile.objects.get(id=file_id)
     except ObjectDoesNotExist:
         cfile = None
-    return delete_generic(request, user, cfile)
+    return delete_helper(request, user, cfile)
 
 @redirect_on_voltpyexceptions
 @with_user
-def deleteCurve(request, user, curve_id):
-    try:
-        c = mmodels.Curve.objects.get(id=curve_id)
-    except ObjectDoesNotExist:
-        c=None
-    return delete_generic(request, user, c)
+def deleteCurve(request, user, objType, objId, delId):
+    if objType == 'cf':
+        try:
+            cd = mmodels.CurveData.objects.get(id=delId)
+            deleteFrom = mmodels.CurveFile.objects.get(id=objId).curveSet
+        except ObjectDoesNotExist:
+            c=None
+        return delete_helper(
+            request, 
+            user, 
+            cd, 
+            deleteFrom=deleteFrom,
+            onSuccessRedirect=reverse('showCurveFile', args=[user.id, deleteFrom.id])
+        )
+    else: # curveset
+        try:
+            cd = mmodels.CurveData.objects.get(id=delId)
+            deleteFrom = mmodels.CurveSet.objects.get(id=objId)
+        except ObjectDoesNotExist:
+            cd=None
+        return delete_helper(
+            request, 
+            user, 
+            cd, 
+            deleteFrom=deleteFrom,
+            onSuccessRedirect=reverse('showCurveSet', args=[user.id, deleteFrom.id])
+        )
+
 
 @redirect_on_voltpyexceptions
 @with_user
@@ -149,7 +174,7 @@ def deleteAnalysis(request, user, analysis_id):
         a = mmodels.Analysis.objects.get(id=analysis_id)
     except ObjectDoesNotExist:
         a=None
-    return delete_generic(request, user, a)
+    return delete_helper(request, user, a)
 
 @redirect_on_voltpyexceptions
 @with_user
@@ -158,11 +183,11 @@ def deleteCurveSet(request, user, curveset_id):
         a = mmodels.CurveSet.objects.get(id=curveset_id)
     except ObjectDoesNotExist:
         a=None
-    return delete_generic(request, user, a)
+    return delete_helper(request, user, a)
 
 @redirect_on_voltpyexceptions
 @with_user
-def createCurveSet(request, user):
+def createCurveSet(request, user, toClone=-1):
     """
     from pyinstrument import Profiler
     profiler = Profiler(use_signal=False)
@@ -176,10 +201,10 @@ def createCurveSet(request, user):
                 cs_id = form.curvesetid
                 if cs_id and cs_id > -1:
                     return HttpResponseRedirect(
-                            reverse('editCurveSet', args=[user.id, cs_id])
+                            reverse('showCurveSet', args=[user.id, cs_id])
                     )
     else:
-        form = mforms.SelectCurvesForCurveSetForm(user)
+        form = mforms.SelectCurvesForCurveSetForm(user, toClone=toClone)
 
     context = {
         'formHTML': form.drawByHand(request), 
@@ -266,17 +291,58 @@ def showCurveSet(request, user, curveset_id):
         plot_type ='curveset',
         value_id = cs.id
     )
+
+    import manager.analytesTable as at
+    at_disp = at.analytesTable(user, cs, objType='cs')
+
+    mm = mmm.MethodManager(user=user, curveset_id=curveset_id)
+    if request.method == 'POST':
+        if ( 'startAnalyze' in request.POST ):
+            formAnalyze = mm.getAnalysisSelectionForm(request.POST)
+            if ( formAnalyze.is_valid() ):
+                analyzeid = formAnalyze.process(user,cs)
+                return HttpResponseRedirect(reverse('analyze', args=[user.id, analyzeid]))
+        else:
+            formAnalyze = mm.getAnalysisSelectionForm()
+
+        if ( not cs.locked and 'startProcessing' in request.POST ):
+            formProcess = mm.getProcessingSelectionForm(request.POST)
+            if ( formProcess.is_valid() ):
+                procid = formProcess.process(user,cs)
+                return HttpResponseRedirect(reverse('process', args=[user.id, procid]))
+        else:
+            formProcess = mm.getProcessingSelectionForm(disabled=cs.locked)
+
+    else:
+        formAnalyze = mm.getAnalysisSelectionForm()
+        formProcess = mm.getProcessingSelectionForm(disabled=cs.locked)
+
     context = {
-        'scripts': plotScr,
+        'scripts': plotScr + formAnalyze.getJS(request) + formProcess.getJS(request),
         'mainPlot' : plotDiv,
         'user' : user,
-        'curveset_id': curveset_id,
+        'curveset': cs,
+        'at': at_disp,
+        'formProcess': formProcess,
+        'formAnalyze': formAnalyze,
+        'cloneCSUrl': 
+                b64.b64encode(reverse('cloneCurveSet', kwargs={
+                    'user_id': user.id,
+                    'toClone_id': cs.id, 
+                    }).encode()
+                ).decode('UTF-8')
     }
     return voltpy_render(
         request=request, 
         template_name='manager/showCurveSet.html',
         context=context
     )
+
+
+@redirect_on_voltpyexceptions
+@with_user
+def cloneCurveSet(request, user, toClone_id):
+    return createCurveSet(request, user_id=user.id, toClone=toClone_id)
 
 @redirect_on_voltpyexceptions
 @with_user
@@ -319,17 +385,17 @@ def editCurveSet(request,user,curveset_id):
             formProc = mm.getProcessingSelectionForm(disabled=cs.locked)
 
         if ( 'submitFormAnalyte' in request.POST ):
-            formAnalyte = mforms.AddAnalytesForm(user, "CurveSet", curveset_id, request.POST)
+            formAnalyte = mforms.EditAnalytesForm(user, "CurveSet", curveset_id, request.POST)
             if formAnalyte.is_valid():
                 if ( formAnalyte.process(user) == True ):
                     return HttpResponseRedirect(
-                        reverse('showCurveSet', args=[user.id, curveset_id])
+                        reverse('editCurveSet', args=[user.id, curveset_id])
                     )
         else:
-            formAnalyte = mforms.AddAnalytesForm(user, "CurveSet", curveset_id)
+            formAnalyte = mforms.EditAnalytesForm(user, "CurveSet", curveset_id)
 
     else:
-        formAnalyte = mforms.AddAnalytesForm(user, "CurveSet", curveset_id)
+        formAnalyte = mforms.EditAnalytesForm(user, "CurveSet", curveset_id)
         formGenerate = mm.getAnalysisSelectionForm()
         formProc = mm.getProcessingSelectionForm(disabled=cs.locked)
 
@@ -372,7 +438,7 @@ def upload(request, user):
             if (form.process(user, request) == True):
                 file_id = form.file_id
                 return HttpResponseRedirect(
-                    reverse('editCurveFile', args=[user.id, file_id])
+                    reverse('showCurveFile', args=[user.id, file_id])
                 )
     else:
         form = mforms.UploadFileForm()
@@ -391,14 +457,14 @@ def upload(request, user):
 @with_user
 def editCurveFile(request, user, file_id,):
     if request.method == 'POST':
-        form = mforms.AddAnalytesForm(user, "File", file_id, request.POST)
+        form = mforms.EditAnalytesForm(user, "File", file_id, request.POST)
         if form.is_valid():
             if ( form.process(user) == True ):
                 return HttpResponseRedirect(
                     reverse('browseCurveFile', args=[user.id])
                 )
     else:
-        form = mforms.AddAnalytesForm(user, "File", file_id)
+        form = mforms.EditAnalytesForm(user, "File", file_id)
     plotScr, plotDiv = generate_plot(
         request=request, 
         user=user, 
@@ -429,6 +495,8 @@ def showCurveFile(request, user, file_id):
     if not cf.canBeReadBy(user):
         raise VoltPyNotAllowed(user)
 
+    import manager.analytesTable as at
+
     if ( __debug__): 
         print(cf)
     plotScr, plotDiv = generate_plot(
@@ -437,18 +505,110 @@ def showCurveFile(request, user, file_id):
         plot_type='file',
         value_id=cf.id
     )
+
+    at_disp = at.analytesTable(user, cf, objType='cf')
+
     context = { 
         'scripts': plotScr,
         'mainPlot' : plotDiv,
         'user' : user,
-        'curvefile_id': curvefile_id,
-        'form' : form
+        'curvefile': cf,
+        #'form' : form
+        'at': at_disp,
+        'cloneCSUrl': 
+                b64.b64encode(reverse('cloneCurveSet', kwargs={
+                    'user_id': user.id,
+                    'toClone_id': cf.curveSet.id, 
+                    }).encode()
+                ).decode('UTF-8')
     }
     return voltpy_render(
         request=request, 
         template_name='manager/showFile.html',
         context=context
     )
+
+
+@redirect_on_voltpyexceptions
+@with_user
+def editAnalyte(request, user, objType, objId, analyteId):
+    if objType == 'cf':
+        try:
+            cf = mmodels.CurveFile.objects.get(id=objId, deleted=False)
+        except ObjectDoesNotExist:
+            raise VoltPyNotAllowed
+        if not cf.canBeUpdatedBy(user):
+            raise VoltPyNotAllowed
+        cs = cf.curveSet 
+
+    elif objType == 'cs':
+        try:
+            cs = mmodels.CurveSet.objects.get(id=objId, deleted=False)
+        except ObjectDoesNotExist:
+            raise VoltPyNotAllowed
+        if not cs.canBeUpdatedBy(user):
+            raise VoltPyNotAllowed
+
+    else:
+        raise VoltPyNotAllowed
+
+    if request.method == 'POST':
+        form = mforms.EditAnalytesForm(user, objType, objId, analyteId, request.POST)
+        if form.is_valid():
+            if ( form.process(user) == True ):
+                if objType == 'cf':
+                    return HttpResponseRedirect(
+                        reverse('showCurveFile', args=[user.id, objId])
+                    )
+                else:
+                    return HttpResponseRedirect(
+                        reverse('showCurveSet', args=[user.id, objId])
+                    )
+    else:
+        form = mforms.EditAnalytesForm(user, objType, objId, analyteId)
+
+    if objType == 'cf':
+        plotType = 'file'
+        dispType = 'File'
+    else:
+        plotType = 'curveset'
+        dispType = 'CurveSet'
+    plotScr, plotDiv = generate_plot(
+        request=request, 
+        user=user, 
+        plot_type=plotType,
+        value_id=objId
+    )
+
+    if analyteId == 'new':
+        infotext = 'Adding new analyte in '
+    else:
+        try: 
+            analyte = mmodels.Analyte.objects.get(id=analyteId)
+        except ObjectDoesNotExist:
+            infotext = 'Adding new analyte in '
+        infotext = 'Editing {0} in '.format(analyte.name)
+
+    context = { 
+        'scripts': plotScr,
+        'mainPlot' : plotDiv,
+        'user' : user, 
+        'obj_name': dispType,
+        'obj_id' : objId,
+        'form': form,
+        'infotext': ''.join([
+            infotext,
+            dispType,
+            ' #{0}'.format(objId)
+        ])
+    }
+    return voltpy_render(
+        request=request, 
+        template_name='manager/editAnalyte.html',
+        context=context
+    )
+
+    
 
 @redirect_on_voltpyexceptions
 @with_user

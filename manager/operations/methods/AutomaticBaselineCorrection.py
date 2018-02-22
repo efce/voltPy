@@ -1,28 +1,30 @@
 from copy import deepcopy
-from django.utils import timezone
 import numpy as np
-import manager.methodmanager as mm
+from django.utils import timezone
+import manager.operations.methodmanager as mm
+from manager.operations.methodsteps.confirmation import Confirmation
 from manager.helpers.bkghelpers import calc_abc
 
 class AutomaticBaselineCorrection(mm.ProcessingMethod):
-    _operations = [ 
+    _steps = [ 
         {
-            'class': mm.OperationConfirmation,
+            'class': Confirmation,
             'title': 'Config before proceding.',
-            'desc': 'Confirm before proceding.',
+            'desc': 'To confirm press Forward.',
         },
     ]
     model = None
-    description = """
-    Automatic Baseline Correction (ABC) removes the background by the means
-    of automatic polynomial fitting. This implementation is taken from [1].
-    ABC usually two parameters to work, however, there are some values
-    which offer better performance, therefore, here the number of iterations
-    and polynomial degree are set to 40 and 4 respectivly.
+    description = \
+"""
+Automatic Baseline Correction (ABC) removes the background by the means
+of automatic polynomial fitting. This implementation is taken from [1].
+ABC usually two parameters to work, however, there are some values
+which offer better performance, therefore, here the number of iterations
+and polynomial degree are set to 40 and 4 respectivly.
 
-    [1] Górski, Ł., Ciepiela, F., & Jakubowska, M. (2014). Automatic
-    baseline correction in voltammetry. Electrochimica Acta, 136, 195–203.
-    https://doi.org/10.1016/j.electacta.2014.05.076
+[1] Górski, Ł., Ciepiela, F., & Jakubowska, M. (2014). Automatic
+baseline correction in voltammetry. Electrochimica Acta, 136, 195–203.
+https://doi.org/10.1016/j.electacta.2014.05.076
     """
 
     @classmethod
@@ -30,7 +32,7 @@ class AutomaticBaselineCorrection(mm.ProcessingMethod):
         return "Automatic Baseline Correction"
 
     def finalize(self, user):
-        for cd in self.model.curveSet.usedCurveData.all():
+        for cd in self.model.curveSet.curvesData.all():
             newcd = deepcopy(cd)
             newcd.id = None
             newcd.pk = None
@@ -46,9 +48,13 @@ class AutomaticBaselineCorrection(mm.ProcessingMethod):
             newcd.method = self.__repr__()
             newcd.date = timezone.now()
             newcd.processing = self.model
+            newcd.basedOn = cd
             newcd.save()
-            self.model.curveSet.usedCurveData.remove(cd)
-            self.model.curveSet.usedCurveData.add(newcd)
+            self.model.curveSet.curvesData.remove(cd)
+            self.model.curveSet.curvesData.add(newcd)
+            for a in self.model.curveSet.analytes.all():
+                self.model.curveSet.analytesConc[a.id][newcd.id] = \
+                    self.model.curveSet.analytesConc[a.id].pop(cd.id, 0)
         self.model.curveSet.save()
         self.model.step = None
         self.model.completed = True

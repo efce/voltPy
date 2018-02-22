@@ -3,14 +3,18 @@
 {% block title %} Show {% endblock %}
 
 {% block real_content %}
-<p>File ID: {{ curvefile_id }} </p>
+<table>
+    <tr><td>File ID: {{ curvefile.id  }} </td>
+        <td rowspan=4 style="border-left: 1px solid black; padding-left: 3px;">
+            To process and analyze the file,<br />please make a new CurveSet:<br />
+            <button class="_voltJS_urlChanger _voltJS_url@{{ cloneCSUrl }}" style="margin-left: 20px;"> Create </button>
+        </td>
+    </tr>
+    <tr><td>Filename: {{ curvefile.fileName }}</td></tr>
+    <tr><td>System name: {{ curvefile.name }}</td></tr>
+    <tr><td>Uploaded: {{ curvefile.uploadDate|date:"c" }}</td></tr>
+</table>
 
-<form method="post" action="{{ url }}" enctype="multipart/form-data">
-	<table>
-	{% csrf_token %}
-	{{ form.as_table }}
-	<tr><td><input type="submit" value="Update" /></td></tr>
-	</table>
-</form>
+{{ at | safe }}
 
 {% endblock %}

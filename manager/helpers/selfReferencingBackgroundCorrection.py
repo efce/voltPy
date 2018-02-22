@@ -254,7 +254,7 @@ def fullDataAnalysis(dy, concs):
                     if sens is None:
                         continue
                     results[wi][spi][ei][sei] = {}
-                    yvconc = concs[wi,spi,wi,sei,:]
+                    yvconc = concs[wi,spi,ei,sei,:]
                     p = np.polyfit(yvconc, sens, 1)
                     results[wi][spi][ei][sei]['fit'] = {'slope': p[0], 'intercept': p[1]}
                     results[wi][spi][ei][sei]['sx0'] = fithelpers.calc_sx0(p[0], p[1], yvconc, sens)

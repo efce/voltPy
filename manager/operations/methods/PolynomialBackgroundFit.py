@@ -1,27 +1,29 @@
 from copy import deepcopy
-from django.utils import timezone
-import manager.methodmanager as mm
 import numpy as np
+from django.utils import timezone
+import manager.operations.methodmanager as mm
+from manager.operations.methodsteps.selecttworanges import SelectTwoRanges
+from manager.operations.methodsteps.confirmation import Confirmation
 
 class PolynomialBackgroundFit(mm.ProcessingMethod):
-    _operations = [ 
+    _steps = [ 
         {
-            'class': mm.OperationSelectTwoRanges,
+            'class': SelectTwoRanges,
             'title': 'Choose two fit intervals.',
-            'desc': 'Select two fit intervals.',
+            'desc': 'Select two fit intervals and press Forward, or press Back to change the selection.',
         },
         {
-            'class': mm.OperationConfirmation,
+            'class': Confirmation,
             'title': 'Confirm background shape.',
-            'desc': 'Confirm background shape.',
+            'desc': 'Press Forward to confirm background shape or press Back to return to interval selection.',
         },
     ]
     degree = 3
     description = """
-    The polynomial fit is the most wiedly used background correction method,
-    where the polynomial of given order (in this case 3rd) is fitted into two
-    intevals -- one should be directly in front of the peak of interest and
-    other right after it.
+The polynomial fit is the most wiedly used background correction method,
+where the polynomial of given order (in this case 3rd) is fitted into two
+intevals -- one should be directly in front of the peak of interest and
+other right after it.
     """
 
     @classmethod
@@ -30,13 +32,13 @@ class PolynomialBackgroundFit(mm.ProcessingMethod):
 
     def process(self, user, request):
         ret = super(mm.ProcessingMethod, self).process(user, request)
-        if ( self.model.step == 1 ):
-            self.model.customData['fitCoeff'] = []
-            for cd in self.model.curveSet.usedCurveData.all():
-                st1 = cd.xvalueToIndex(user, self.model.customData['range1'][0])
-                en1 = cd.xvalueToIndex(user, self.model.customData['range1'][1])
-                st2 = cd.xvalueToIndex(user, self.model.customData['range2'][0])
-                en2 = cd.xvalueToIndex(user, self.model.customData['range2'][1])
+        self.model.customData['fitCoeff'] = []
+        if ( self.model.active_step_num == 1 ):
+            for cd in self.model.curveSet.curvesData.all():
+                st1 = cd.xvalueToIndex(user, self.model.stepsData['SelectTwoRanges'][0])
+                en1 = cd.xvalueToIndex(user, self.model.stepsData['SelectTwoRanges'][1])
+                st2 = cd.xvalueToIndex(user, self.model.stepsData['SelectTwoRanges'][2])
+                en2 = cd.xvalueToIndex(user, self.model.stepsData['SelectTwoRanges'][3])
                 xvec = cd.xVector[st1:en1]
                 xvec.extend(cd.xVector[st2:en2])
                 yvec = cd.yVector[st1:en1]
@@ -47,10 +49,9 @@ class PolynomialBackgroundFit(mm.ProcessingMethod):
         return ret
 
     def getAddToPlot(self):
-        currentStepNumber = self.model.step
-        if ( currentStepNumber == 1 ):
+        if ( self.model.active_step_num == 1 ):
             fitlines = []
-            for cd,fit in zip(self.model.curveSet.usedCurveData.all(), self.model.customData['fitCoeff']):
+            for cd,fit in zip(self.model.curveSet.curvesData.all(), self.model.customData['fitCoeff']):
                 xvec = cd.xVector
                 polyval = lambda x: (
                     fit['x3']*x**3
@@ -71,7 +72,7 @@ class PolynomialBackgroundFit(mm.ProcessingMethod):
         import numpy as np
         if self.model.curveSet.locked:
             raise ValueError("CurveSet used by Analysis method cannot be changed.")
-        for cd,fit in zip(self.model.curveSet.usedCurveData.all(), self.model.customData['fitCoeff']):
+        for cd,fit in zip(self.model.curveSet.curvesData.all(), self.model.customData['fitCoeff']):
             newcd = deepcopy(cd)
             newcd.id = None
             newcd.pk = None
@@ -89,9 +90,13 @@ class PolynomialBackgroundFit(mm.ProcessingMethod):
             newcd.method=self.__repr__()
             newcd.date=timezone.now()
             newcd.processing=self.model
+            newcd.basedOn = cd
             newcd.save()
-            self.model.curveSet.usedCurveData.remove(cd)
-            self.model.curveSet.usedCurveData.add(newcd)
+            for a in self.model.curveSet.analytes.all():
+                self.model.curveSet.analytesConc[a.id][newcd.id] = \
+                    self.model.curveSet.analytesConc[a.id].pop(cd.id, 0)
+            self.model.curveSet.curvesData.remove(cd)
+            self.model.curveSet.curvesData.add(newcd)
             self.model.curveSet.save()
             self.model.save()
         return True
