@@ -26,5 +26,5 @@ x Multiple analytes for single curve support - DONE
 - Support for UNDO
 x Seperate Operations out of methodmanager, make it a module/folder
 - Add operation for changing set of variables in method (like advanced settigns)
-- Change the way operations write information into model to more intuitive
+x Change the way operations write information into model to more intuitive
 - Protect JSON form NANs inf INFs -- handle all values gracefully in python
