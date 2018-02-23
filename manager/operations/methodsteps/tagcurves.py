@@ -1,5 +1,5 @@
-import manager.operations.methodmanager as mm
 from django import forms
+import manager.operations.methodmanager as mm
 
 class TagCurves(mm.MethodStep):
     plot_interaction = 'none'
@@ -13,7 +13,7 @@ class TagCurves(mm.MethodStep):
                     max_length=4, 
                     initial='',
                     label=''.join([cd.curve.name, ' ', cd.curve.comment]),
-                    required=False
+                    required=True
                 )
 
         def process(self):

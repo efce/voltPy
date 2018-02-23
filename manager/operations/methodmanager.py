@@ -12,6 +12,7 @@ import manager.models as mmodels
 import manager.plotmanager as pm
 from manager.helpers.functions import generate_plot
 from manager.helpers.functions import voltpy_render
+from manager.helpers.functions import add_notification
 
 class MethodManager:
     """
@@ -90,6 +91,7 @@ class MethodManager:
         if self.__method:
             self.__method.process(user=user,request=request)
 
+
     def getJSON(self, user):
         if not self.__method.has_next:
             return { 'command': 'redirect', 'location': self.__model.getRedirectURL(user)  }
@@ -101,6 +103,10 @@ class MethodManager:
             return HttpResponseRedirect(self.__model.getRedirectURL(user))
         elif not self.isMethodSelected():
             return HttpResponseRedirect(reverse("browseCurveSet"))
+
+        if self.__model.deleted:
+            add_notification(request, 'Procedure delted.', 0)
+            return  HttpResponseRedirect(reverse("showCurveSet", args=[user.id, self.__model.curveSet.id]))
 
         stepText = dict( 
             head= '', 
@@ -312,10 +318,29 @@ class Method(ABC):
         else:
             return False
 
+    def __prevStep(self):
+        self.model.active_step_num = self.model.active_step_num - 1
+        self.model.save()
+        if self.model.active_step_num < 0:
+            self.step = None
+            self.model.deleted = True
+            self.model.save()
+        else:
+            self.step = self._steps[self.model.active_step_num]
+            if self.step['class'] is not None:
+                self.step['object'] = self.step['class']()
+            else:
+                self.step['object'] = None
+
     def process(self, user, request):
         """
         This processes current.active_step_num.
         """
+        isBack = request.POST.get('_voltJS_backButton', 0) 
+        if isBack != 0:
+            self.__prevStep()
+            return
+
         if self.step is None or self.step['object'] is None:
             self.has_next = False
         elif self.step['object'].process(user=user, request=request, model=self.model):

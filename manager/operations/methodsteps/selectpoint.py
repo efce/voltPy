@@ -1,19 +1,37 @@
+from manager.forms import CursorsForm
 from manager.operations.methodmanager import MethodStep
 
 class SelectPoint(MethodStep):
     plot_interaction = 'set1cursor'
 
     def process(self, user, request, model):
-        data = []
-        for cnum in range(1,5):
-            name = 'cursor' + str(cnum)
-            if request.POST.get(name,''):
-                try:
-                    data.append(float(request.POST.get(name)))
-                except ValueError:
-                    continue
-        if ( len(data) > 0 ):
-            model.stepsData['SelectPoint'] = data[0]
-            model.save()
-            return True
+        cf = CursorsForm(request.POST, cursors_num=1)
+        if cf.is_valid():
+            cfcd = cf.cleaned_data
+            if (len(cfcd) == 1):
+                data = None
+                for k,v in cfcd.items():
+                    try:
+                        data = float(v)
+                    except:
+                        return False
+                if data is None:
+                    return False
+                model.stepsData['SelectPoint'] = data 
+                model.save()
+                return True
         return False
+
+    def getHTML(self, user, request, model):
+        from django.template import loader
+        cf = CursorsForm(cursors_num=1)
+        template = loader.get_template('manager/form.html')
+        context = { 
+            'form': cf, 
+            'submit': 'forward' 
+        }
+        cf_txt = template.render(
+            context=context,
+            request=request
+        )
+        return { 'head': '', 'desc': '', 'body': cf_txt }

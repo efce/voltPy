@@ -1,7 +1,7 @@
-from manager.operations.methodmanager import MethodStep
-import manager.models as mmodels
 from django.core.exceptions import ObjectDoesNotExist
 from django import forms
+from manager.operations.methodmanager import MethodStep
+import manager.models as mmodels
 
 class SelectAnalyte(MethodStep):
     plot_interaction = 'none'

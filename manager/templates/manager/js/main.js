@@ -78,7 +78,7 @@ $( function() {
     // _voltJS_ifNegativeEnable@<classNameTOEnable>
     iclassDisable = '_voltJS_ifNegativeDisable@'
     iclassEnable = '_voltJS_ifNegativeEnable@'
-    $( "._voltJS_testForNegative" ).on('change', function() {
+    $( '._voltJS_testForNegative' ).on('change', function() {
         var classes = this.className.split(" ");
         var onOff = (this.value < 0);
         classes.forEach( function(name){
@@ -90,7 +90,7 @@ $( function() {
                     $(cname).prop('disabled', true);
                 }
             } else if (name.startsWith(iclassEnable)) {
-                var cname = "." + name.substring(iclassEnable.length);
+                var cname = '.' + name.substring(iclassEnable.length);
                 if ( onOff ) {
                     $(cname).prop('disabled', false);
                 } else {
@@ -100,13 +100,13 @@ $( function() {
         });
     });
     // Check conditions at the beggining:
-    $( "._voltJS_testForNegative" ).trigger("change");
+    $( '._voltJS_testForNegative' ).trigger('change');
 });
 
 $( function() {
     // js wrapper for url transitions for buttons etc. Magic class names.
     var iclassUrl = '_voltJS_url@'
-    $( "._voltJS_urlChanger" ).on('click', function() {
+    $( '._voltJS_urlChanger' ).on('click', function() {
         var classes = this.className.split(" ");
         classes.forEach( function(name) {
             if (name.startsWith(iclassUrl)) {
@@ -117,20 +117,30 @@ $( function() {
     });
 });
 
+$( function() {
+    $( '._voltJS_backButton' ).on('click', function(e) {
+        e.preventDefault();
+        var theform = $(e.target).closest('form');
+        var addVal = $('<input>').attr('type', 'hidden').attr('name', '_voltJS_backButton').val(1);
+        theform.append(addVal);
+        theform.submit();
+    });
+});
+
 // This is used in analytesTable, when selecting analyte. Magic classes names.
 $( function() {
     window.voltPy1.ChangeDispCurrent = -1;
-    $( "._voltJS_ChangeDispValue" ).on('change', function() {
+    $( '._voltJS_ChangeDispValue' ).on('change', function() {
         var value = this.value;
         if (value == window.voltPy1.ChangeDispCurrent)
             return;
         
         if ( window.voltPy1.ChangeDispCurrent != -1 ) {
-            var classToHide = "_voltJS_changeValue_" + window.voltPy1.ChangeDispCurrent;
-            $( "." + classToHide ).css('display', 'none');
+            var classToHide = '_voltJS_changeValue_' + window.voltPy1.ChangeDispCurrent;
+            $( '.' + classToHide ).css('display', 'none');
         }
         if (value != -1 ) {
-            var classToShow = "_voltJS_changeValue_" + value;
+            var classToShow = '_voltJS_changeValue_' + value;
             $( "." + classToShow ).css('display', 'table-cell');
         }
         window.voltPy1.ChangeDispCurrent = value;

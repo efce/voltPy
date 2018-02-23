@@ -21,6 +21,14 @@ class UploadFileForm(forms.Form):
         self.file_id = p.getFileId()
         return p.status
 
+class CursorsForm(forms.Form):
+    def __init__(self, *args, **kwargs):
+        cursors_num = kwargs.pop('cursors_num', 1)
+        super(CursorsForm, self).__init__(*args, **kwargs)
+        for i in range(cursors_num):
+            cname = ''.join(['val_cursor_', str(i)])
+            self.fields[cname] = forms.CharField(max_length=24, label=str(i+1))
+            self.fields[cname].widget.attrs['readonly'] = True
 
 class EditAnalytesForm(forms.Form):
     #TODO: draw plot of file, provide fields for settings analytes

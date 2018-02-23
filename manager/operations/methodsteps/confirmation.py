@@ -1,7 +1,11 @@
+from django import forms
 from manager.operations.methodmanager import MethodStep
 
 class Confirmation(MethodStep):
-    plot_interaction = 'confirm'
+    plot_interaction = 'none'
+
+    class ConfirmForm(forms.Form):
+        pass
 
     def process(self, user, request, model):
         if request.POST.get('command', False) == 'confirm':
@@ -11,3 +15,16 @@ class Confirmation(MethodStep):
             model.save()
             return False
 
+    def getHTML(self, user, request, model):
+        from django.template import loader
+        conf_form = self.ConfirmForm()
+        template = loader.get_template('manager/form.html')
+        context = { 
+            'form': conf_form, 
+            'submit': 'confirm' 
+        }
+        conf_txt = template.render(
+            context=context,
+            request=request
+        )
+        return { 'head': '', 'desc': '', 'body': conf_txt }

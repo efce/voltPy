@@ -200,6 +200,7 @@ class PlotManager:
             if (cursors[0].location == null) {
                 cursors[0].location = cb_obj.x;
                 cursors[0].line_alpha = 1;
+                $('#id_val_cursor_0').val(cb_obj.x);
             } else {
                 //cursor is set, do nothing.
                 return;
@@ -209,9 +210,11 @@ class PlotManager:
             if (cursors[0].location == null) {
                 cursors[0].location = cb_obj.x;
                 cursors[0].line_alpha = 1;
+                $('#id_val_cursor_0').val(cb_obj.x);
             } else if (cursors[1].location == null) {
                 cursors[1].location = cb_obj.x;
                 cursors[1].line_alpha = 1;
+                $('#id_val_cursor_1').val(cb_obj.x);
             } else {
                 //cursors are set, do nothing.
                 return;
@@ -221,15 +224,19 @@ class PlotManager:
             if (cursors[0].location == null) {
                 cursors[0].location = cb_obj.x;
                 cursors[0].line_alpha = 1;
+                $('#id_val_cursor_0').val(cb_obj.x);
             } else if (cursors[1].location == null) {
                 cursors[1].location = cb_obj.x;
                 cursors[1].line_alpha = 1;
+                $('#id_val_cursor_1').val(cb_obj.x);
             } else if (cursors[2].location == null) {
                 cursors[2].location = cb_obj.x;
                 cursors[2].line_alpha = 1;
+                $('#id_val_cursor_2').val(cb_obj.x);
             } else if (cursors[3].location == null) {
                 cursors[3].location = cb_obj.x;
                 cursors[3].line_alpha = 1;
+                $('#id_val_cursor_3').val(cb_obj.x);
             } else {
                 //cursors are set, do nothing.
                 return;
@@ -327,6 +334,7 @@ class PlotManager:
                 if ( cursors[i].location != null ) {
                     cursors[i].location = null;
                     cursors[i].line_alpha = 0;
+                    $('#id_val_cursor_' + i).val('');
                     break;
                 }
             }
@@ -395,13 +403,18 @@ class PlotManager:
         ])
 
 
-        bforward = Button(
-            label="Forward", 
-            width=250,
-            callback=CustomJS(args=args, code=js_forward)
-        )
-        bback = Button(
-            label="Back", 
+        #bforward = Button(
+        #    label="Forward", 
+        #    width=250,
+        #    callback=CustomJS(args=args, code=js_forward)
+        #)
+        #bback = Button(
+        #    label="Back", 
+        #    width=250, 
+        #    callback=CustomJS(args=args, code=js_back)
+        #)
+        bunselect = Button(
+            label="Unselect", 
             width=250, 
             callback=CustomJS(args=args, code=js_back)
         )
@@ -411,7 +424,8 @@ class PlotManager:
             actionbar = row([px, w], width=self.plot_width)
         else:
             w=widgetbox(radio_button_group)
-            actionbar = row([px, w, bback, bforward], width=self.plot_width)
+            #actionbar = row([px, w, bback, bforward], width=self.plot_width)
+            actionbar = row([px, w, bunselect], width=self.plot_width-50)
 
         if self.include_x_switch:
             layout = column([self.p, actionbar])
