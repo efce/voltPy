@@ -31,34 +31,35 @@ class CursorsForm(forms.Form):
             self.fields[cname] = forms.CharField(max_length=24, label=str(i+1))
             self.fields[cname].widget.attrs['readonly'] = True
 
-class EditAnalysisName(forms.Form):
+class EditName(forms.Form):
     def __init__(self, *args, **kwargs):
-        self.analysis = kwargs.pop('analysis', None)
-        super(EditAnalysisName, self).__init__(*args, **kwargs)
-        assert self.analysis is not None
-        self.fields['an_name'] = forms.CharField(
+        self.model = kwargs.pop('model', None)
+        label_name = kwargs.pop('label_name', '')
+        super(EditName, self).__init__(*args, **kwargs)
+        assert self.model is not None
+        self.fields['e_name'] = forms.CharField(
             max_length=64, 
-            initial=self.analysis.name,
+            initial=self.model.name,
             required=False,
-            label="Analysis name"
+            label=label_name
         )
-        self.fields['an_id'] = forms.CharField(
+        self.fields['e_id'] = forms.CharField(
             max_length=10,
-            initial=self.analysis.id,
+            initial=self.model.id,
             required=True
         )
-        self.fields['an_id'].widget = forms.HiddenInput()
+        self.fields['e_id'].widget = forms.HiddenInput()
 
     def process(self, user):
-        if not self.analysis.canBeUpdatedBy(user):
+        if not self.model.canBeUpdatedBy(user):
             raise VoltPyNotAllowed
         try: 
-            if self.analysis.id != int(self.cleaned_data['an_id']):
+            if self.model.id != int(self.cleaned_data['e_id']):
                 raise VoltPyNotAllowed
         except:
             raise VoltPyNotAllowed
-        self.analysis.name = self.cleaned_data['an_name']
-        self.analysis.save()
+        self.model.name = self.cleaned_data['e_name']
+        self.model.save()
 
 
 class EditAnalytesForm(forms.Form):

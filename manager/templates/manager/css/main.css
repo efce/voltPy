@@ -48,6 +48,26 @@
   opacity: 0.9;
 }
 
+.form_inline {
+    display: inline;
+}
+
+.table_no_breaks {
+    padding: 0;
+    margin: 0;
+    border: 0px;
+    border-spacing: 0px;
+    border-collapse: collapse !important;
+}
+
+.table_no_breaks tr,td {
+    padding: 0;
+    margin: 0;
+    border: 0px;
+    border-collapse: collapse !important;
+    border-spacing: 0px;
+}
+
 form label { 
 	float: left; 
 	max-width: 400px; 

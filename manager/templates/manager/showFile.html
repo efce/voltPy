@@ -3,17 +3,14 @@
 {% block title %} Show {% endblock %}
 
 {% block real_content %}
-<table>
-    <tr><td>File ID: {{ curvefile.id  }} </td>
-        <td rowspan=4 style="border-left: 1px solid black; padding-left: 3px;">
-            To process and analyze the file,<br />please make a new CurveSet:<br />
-            <button class="_voltJS_urlChanger _voltJS_url@{{ cloneCSUrl }}" style="margin-left: 20px;"> Create </button>
-        </td>
-    </tr>
-    <tr><td>Filename: {{ curvefile.fileName }}</td></tr>
-    <tr><td>System name: {{ curvefile.name }}</td></tr>
-    <tr><td>Uploaded: {{ curvefile.uploadDate|date:"c" }}</td></tr>
+<table class="table_no_breaks">
+<tr><td>File ID: {{ curvefile.id }}</td><td style="border-left: 1px black solid;" rowspan=5>&nbsp;<button class="_voltJS_urlChanger _voltJS_url@{{ cloneCSUrl }}"> Create CurveSet </button> </td></tr>
+<tr><td>{{ disp_name_edit | safe }} &nbsp;</td></tr>
+<tr><td>Filename: {{ curvefile.fileName }}</td></tr>
+<tr><td>System name: {{ curvefile.name }}</td></tr>
+<tr><td>Uploaded: {{ curvefile.uploadDate|date:"c" }}</td></tr>
 </table>
+<br />
 
 {{ at | safe }}
 

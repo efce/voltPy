@@ -3,9 +3,15 @@
 {% block title %} Show {% endblock %}
 
 {% block real_content %}
-<p>CurveSet name: {{ curveset.name }} | <button class="_voltJS_urlChanger _voltJS_url@{{ cloneCSUrl }}"> Copy </button><br />
-Date created: {{ curveset.date | date:"c" }}</p>
+<table class="table_no_breaks">
+<tr><td>CurveSet ID: {{ curveset.id }}</td><td style="border-left: 1px black solid;" rowspan=3>&nbsp;<button class="_voltJS_urlChanger _voltJS_url@{{ cloneCSUrl }}"> Copy </button> </td></tr>
+<tr><td>{{ disp_name_edit | safe }} &nbsp;</td></tr>
+<tr><td>Date created: {{ curveset.date | date:"c" }} </td></tr>
+</table>
+<br />
+
 {{ at | safe }}
+
 <br />
 <form method="post" action="" enctype="multipart/form-data" id="concform">
 	<table>

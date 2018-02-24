@@ -2,6 +2,7 @@ from django.urls import reverse
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpResponseRedirect
 from django.http import JsonResponse
+from django.template import loader
 import json
 import manager.models as mmodels
 import manager.forms as mforms
@@ -238,13 +239,24 @@ def showAnalysis(request, user, analysis_id):
     edNameFormSubmit = 'anEditName'
     if request.method == 'POST':
         if ( edNameFormSubmit in request.POST ):
-            edName = mforms.EditAnalysisName(request.POST, analysis=an)
+            edName = mforms.EditName(request.POST, model=an, label_name="Analysis name")
             if edName.is_valid():
                 edName.process(user)
         else:
-            edName = mforms.EditAnalysisName(analysis=an)
+            edName = mforms.EditName(model=an, label_name="Analysis name")
     else:
-        edName = mforms.EditAnalysisName(analysis=an)
+        edName = mforms.EditName(model=an, label_name="Analysis name")
+
+    form_inline = loader.get_template('manager/form_inline.html')
+    form_context = { 
+        'form': edName, 
+        'submit': edNameFormSubmit,
+        'submit_text': 'Save',
+    }
+    form_txt = form_inline.render(
+        context=form_context,
+        request=request
+    )
 
     mm = mmm.MethodManager(user=user, analysis_id=analysis_id)
     info = mm.getInfo(request=request, user=user)
@@ -260,8 +272,7 @@ def showAnalysis(request, user, analysis_id):
         'head': info.get('head',''),
         'user' : user,
         'analysis': an,
-        'edNameForm': edName,
-        'edNameFormSubmit': edNameFormSubmit,
+        'disp_name_edit': form_txt,
         'text': info.get('body','')
     }
     return voltpy_render(
@@ -297,6 +308,28 @@ def showCurveSet(request, user, curveset_id):
         
     if not cs.canBeReadBy(user):
         raise VoltPyNotAllowed(user)
+
+    edNameFormSubmit = 'anEditName'
+    if request.method == 'POST':
+        if ( edNameFormSubmit in request.POST ):
+            edName = mforms.EditName(request.POST, model=cs, label_name="CurveSet name")
+            if edName.is_valid():
+                edName.process(user)
+        else:
+            edName = mforms.EditName(model=cs, label_name="CurveSet name")
+    else:
+        edName = mforms.EditName(model=cs, label_name="CurveSet name")
+
+    form_inline = loader.get_template('manager/form_inline.html')
+    form_context = { 
+        'form': edName, 
+        'submit': edNameFormSubmit,
+        'submit_text': 'Save',
+    }
+    name_edit_form = form_inline.render(
+        context=form_context,
+        request=request
+    )
 
     plotScr, plotDiv = generate_plot(
         request=request, 
@@ -334,6 +367,7 @@ def showCurveSet(request, user, curveset_id):
         'scripts': plotScr + formAnalyze.getJS(request) + formProcess.getJS(request),
         'mainPlot' : plotDiv,
         'user' : user,
+        'disp_name_edit': name_edit_form,
         'curveset': cs,
         'at': at_disp,
         'formProcess': formProcess,
@@ -508,6 +542,28 @@ def showCurveFile(request, user, file_id):
     if not cf.canBeReadBy(user):
         raise VoltPyNotAllowed(user)
 
+    edNameFormSubmit = 'anEditName'
+    if request.method == 'POST':
+        if ( edNameFormSubmit in request.POST ):
+            edName = mforms.EditName(request.POST, model=cf, label_name="System name")
+            if edName.is_valid():
+                edName.process(user)
+        else:
+            edName = mforms.EditName(model=cf, label_name="System name")
+    else:
+        edName = mforms.EditName(model=cf, label_name="System name")
+
+    form_inline = loader.get_template('manager/form_inline.html')
+    form_context = { 
+        'form': edName, 
+        'submit': edNameFormSubmit,
+        'submit_text': 'Save',
+    }
+    name_edit_form = form_inline.render(
+        context=form_context,
+        request=request
+    )
+
     import manager.analytesTable as at
 
     if ( __debug__): 
@@ -526,7 +582,7 @@ def showCurveFile(request, user, file_id):
         'mainPlot' : plotDiv,
         'user' : user,
         'curvefile': cf,
-        #'form' : form
+        'disp_name_edit' : name_edit_form,
         'at': at_disp,
         'cloneCSUrl': 
                 b64.b64encode(reverse('cloneCurveSet', kwargs={

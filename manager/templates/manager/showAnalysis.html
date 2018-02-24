@@ -7,15 +7,13 @@
 {% endblock %}
 
 {% block real_content %}
-Analysis method: {{ analysis.method }} <br />
-Analysis ID: {{ analysis.id }} <br />
-<form method="post" action="#">
-	{% csrf_token %}
-    {{ edNameForm }}&nbsp;
-    <input type="submit" name="{{ edNameFormSubmit }}" value=" Save " />
-</form><br />
-Date created: {{ analysis.date | date:"c" }} <br />
-CurveSet used: <a href="{% url 'showCurveSet' user.id analysis.curveSet.id %}">{{ analysis.curveSet.name }}</a>
+<table class="table_no_breaks">
+<tr><td>Analysis method: {{ analysis.method }} </td></tr>
+<tr><td>Analysis ID: {{ analysis.id }} </td></tr>
+<tr><td>{{ disp_name_edit | safe }} </td></tr>
+<tr><td>Date created: {{ analysis.date | date:"c" }} </td></tr>
+<tr><td>CurveSet used: <a href="{% url 'showCurveSet' user.id analysis.curveSet.id %}">{{ analysis.curveSet.name }}</a> </td></tr>
+</table>
 {{ text | safe }}
 
 {% endblock %}
