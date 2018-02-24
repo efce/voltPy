@@ -50,7 +50,7 @@ class EditName(forms.Form):
         )
         self.fields['e_id'].widget = forms.HiddenInput()
 
-    def process(self, user):
+    def process(self, user, request):
         if not self.model.canBeUpdatedBy(user):
             raise VoltPyNotAllowed
         try: 
@@ -60,7 +60,7 @@ class EditName(forms.Form):
             raise VoltPyNotAllowed
         self.model.name = self.cleaned_data['e_name']
         self.model.save()
-
+        manager.helpers.functions.add_notification(request, 'Saved.', 0)
 
 class EditAnalytesForm(forms.Form):
     #TODO: draw plot of file, provide fields for settings analytes

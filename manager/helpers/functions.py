@@ -1,3 +1,4 @@
+import datetime
 from django.urls import reverse
 from django.http import HttpResponseRedirect
 from django.shortcuts import render
@@ -33,8 +34,9 @@ def voltpy_render(*args, **kwargs):
         return render(*args, **kwargs, context=context)
 
 def add_notification(request, text, severity=0):
+    now = datetime.datetime.now().strftime('%H:%M:%S')
     notifications = request.session.get('VOLTPY_notification', [])
-    notifications.append( {'text': text, 'severity':severity} )
+    notifications.append( {'text': ''.join([now,': ', text]), 'severity':severity} )
     request.session['VOLTPY_notification'] = notifications
 
 def delete_helper(request, user, item, deleteFrom=None, onSuccessRedirect=None):
@@ -155,7 +157,7 @@ def form_helper(
         if submitName in request.POST:
             formInstance = formClass(request.POST, **formExtraData)
             if formInstance.is_valid():
-                formInstance.process(user)
+                formInstance.process(user, request)
         else:
             formInstance = formClass(**formExtraData)
     else:
