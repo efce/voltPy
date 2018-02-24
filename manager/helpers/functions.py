@@ -1,6 +1,7 @@
 from django.urls import reverse
 from django.http import HttpResponseRedirect
 from django.shortcuts import render
+from django.template import loader
 from manager.exceptions import VoltPyNotAllowed, VoltPyDoesNotExists
 import manager.plotmanager as mpm
 import manager.forms as mforms
@@ -140,3 +141,35 @@ def isNumber(s):
     except (TypeError, ValueError):
         pass
     return False
+
+def form_helper(
+        user,
+        request,
+        formClass, 
+        submitName='formSubmit', 
+        submitText='Submit', 
+        formExtraData={}, 
+        formTemplate='manager/form_inline.html'
+    ):
+    if request.method == 'POST':
+        if submitName in request.POST:
+            formInstance = formClass(request.POST, **formExtraData)
+            if formInstance.is_valid():
+                formInstance.process(user)
+        else:
+            formInstance = formClass(**formExtraData)
+    else:
+        formInstance = formClass(**formExtraData)
+
+    loadedTemplate = loader.get_template(formTemplate)
+    form_context = { 
+        'form': formInstance, 
+        'submit': submitName,
+        'submit_text': submitText,
+    }
+    form_txt = loadedTemplate.render(
+        context=form_context,
+        request=request
+    )
+    return {'html': form_txt, 'instance': formInstance}
+    

@@ -11,6 +11,7 @@ from manager.operations import methodmanager as mmm
 from manager.exceptions import VoltPyNotAllowed, VoltPyDoesNotExists
 from manager.helpers.functions import add_notification
 from manager.helpers.functions import delete_helper
+from manager.helpers.functions import form_helper
 from manager.helpers.functions import generate_plot
 from manager.helpers.functions import voltpy_render
 from manager.helpers.decorators import with_user
@@ -228,7 +229,7 @@ def showAnalysis(request, user, analysis_id):
     try:
         an = mmodels.Analysis.objects.get(id=analysis_id)
     except ObjectDoesNotExist:
-        an = None
+        raise VoltPyNotAllowed(user)
 
     if not an.canBeReadBy(user):
         raise VoltPyNotAllowed(user)
@@ -236,26 +237,14 @@ def showAnalysis(request, user, analysis_id):
     if an.completed == False:
         return HttpResponseRedirect(reverse('analyze', args=[user.id, an.id]))
 
-    edNameFormSubmit = 'anEditName'
-    if request.method == 'POST':
-        if ( edNameFormSubmit in request.POST ):
-            edName = mforms.EditName(request.POST, model=an, label_name="Analysis name")
-            if edName.is_valid():
-                edName.process(user)
-        else:
-            edName = mforms.EditName(model=an, label_name="Analysis name")
-    else:
-        edName = mforms.EditName(model=an, label_name="Analysis name")
-
-    form_inline = loader.get_template('manager/form_inline.html')
-    form_context = { 
-        'form': edName, 
-        'submit': edNameFormSubmit,
-        'submit_text': 'Save',
-    }
-    form_txt = form_inline.render(
-        context=form_context,
-        request=request
+    form_data = { 'model': an, 'label_name': 'Analysis name' }
+    form_ret = form_helper(
+        user=user, 
+        request=request,
+        formClass=mforms.EditName,
+        submitName='anEditName',
+        submitText='Save',
+        formExtraData=form_data
     )
 
     mm = mmm.MethodManager(user=user, analysis_id=analysis_id)
@@ -272,7 +261,7 @@ def showAnalysis(request, user, analysis_id):
         'head': info.get('head',''),
         'user' : user,
         'analysis': an,
-        'disp_name_edit': form_txt,
+        'disp_name_edit': form_ret['html'],
         'text': info.get('body','')
     }
     return voltpy_render(
@@ -309,26 +298,14 @@ def showCurveSet(request, user, curveset_id):
     if not cs.canBeReadBy(user):
         raise VoltPyNotAllowed(user)
 
-    edNameFormSubmit = 'anEditName'
-    if request.method == 'POST':
-        if ( edNameFormSubmit in request.POST ):
-            edName = mforms.EditName(request.POST, model=cs, label_name="CurveSet name")
-            if edName.is_valid():
-                edName.process(user)
-        else:
-            edName = mforms.EditName(model=cs, label_name="CurveSet name")
-    else:
-        edName = mforms.EditName(model=cs, label_name="CurveSet name")
-
-    form_inline = loader.get_template('manager/form_inline.html')
-    form_context = { 
-        'form': edName, 
-        'submit': edNameFormSubmit,
-        'submit_text': 'Save',
-    }
-    name_edit_form = form_inline.render(
-        context=form_context,
-        request=request
+    form_data = { 'model': cs, 'label_name': 'CurveSet name' }
+    edit_name_form = form_helper(
+        user=user, 
+        request=request,
+        formClass=mforms.EditName,
+        submitName='anEditName',
+        submitText='Save',
+        formExtraData=form_data
     )
 
     plotScr, plotDiv = generate_plot(
@@ -367,7 +344,7 @@ def showCurveSet(request, user, curveset_id):
         'scripts': plotScr + formAnalyze.getJS(request) + formProcess.getJS(request),
         'mainPlot' : plotDiv,
         'user' : user,
-        'disp_name_edit': name_edit_form,
+        'disp_name_edit': edit_name_form['html'],
         'curveset': cs,
         'at': at_disp,
         'formProcess': formProcess,
@@ -542,26 +519,14 @@ def showCurveFile(request, user, file_id):
     if not cf.canBeReadBy(user):
         raise VoltPyNotAllowed(user)
 
-    edNameFormSubmit = 'anEditName'
-    if request.method == 'POST':
-        if ( edNameFormSubmit in request.POST ):
-            edName = mforms.EditName(request.POST, model=cf, label_name="System name")
-            if edName.is_valid():
-                edName.process(user)
-        else:
-            edName = mforms.EditName(model=cf, label_name="System name")
-    else:
-        edName = mforms.EditName(model=cf, label_name="System name")
-
-    form_inline = loader.get_template('manager/form_inline.html')
-    form_context = { 
-        'form': edName, 
-        'submit': edNameFormSubmit,
-        'submit_text': 'Save',
-    }
-    name_edit_form = form_inline.render(
-        context=form_context,
-        request=request
+    form_data = { 'model': cf, 'label_name': 'System name' }
+    edit_name_form = form_helper(
+        user=user, 
+        request=request,
+        formClass=mforms.EditName,
+        submitName='anEditName',
+        submitText='Save',
+        formExtraData=form_data
     )
 
     import manager.analytesTable as at
@@ -582,7 +547,7 @@ def showCurveFile(request, user, file_id):
         'mainPlot' : plotDiv,
         'user' : user,
         'curvefile': cf,
-        'disp_name_edit' : name_edit_form,
+        'disp_name_edit' : edit_name_form['html'],
         'at': at_disp,
         'cloneCSUrl': 
                 b64.b64encode(reverse('cloneCurveSet', kwargs={
