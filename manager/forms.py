@@ -5,6 +5,7 @@ from django.utils import timezone
 from django.core.exceptions import ObjectDoesNotExist
 import manager.models as mmodels
 from manager.processupload import ProcessUpload
+from manager.exceptions import VoltPyNotAllowed
 import manager
 
 class UploadFileForm(forms.Form):
@@ -29,6 +30,36 @@ class CursorsForm(forms.Form):
             cname = ''.join(['val_cursor_', str(i)])
             self.fields[cname] = forms.CharField(max_length=24, label=str(i+1))
             self.fields[cname].widget.attrs['readonly'] = True
+
+class EditAnalysisName(forms.Form):
+    def __init__(self, *args, **kwargs):
+        self.analysis = kwargs.pop('analysis', None)
+        super(EditAnalysisName, self).__init__(*args, **kwargs)
+        assert self.analysis is not None
+        self.fields['an_name'] = forms.CharField(
+            max_length=64, 
+            initial=self.analysis.name,
+            required=False,
+            label="Analysis name"
+        )
+        self.fields['an_id'] = forms.CharField(
+            max_length=10,
+            initial=self.analysis.id,
+            required=True
+        )
+        self.fields['an_id'].widget = forms.HiddenInput()
+
+    def process(self, user):
+        if not self.analysis.canBeUpdatedBy(user):
+            raise VoltPyNotAllowed
+        try: 
+            if self.analysis.id != int(self.cleaned_data['an_id']):
+                raise VoltPyNotAllowed
+        except:
+            raise VoltPyNotAllowed
+        self.analysis.name = self.cleaned_data['an_name']
+        self.analysis.save()
+
 
 class EditAnalytesForm(forms.Form):
     #TODO: draw plot of file, provide fields for settings analytes

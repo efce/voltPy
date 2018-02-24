@@ -235,6 +235,17 @@ def showAnalysis(request, user, analysis_id):
     if an.completed == False:
         return HttpResponseRedirect(reverse('analyze', args=[user.id, an.id]))
 
+    edNameFormSubmit = 'anEditName'
+    if request.method == 'POST':
+        if ( edNameFormSubmit in request.POST ):
+            edName = mforms.EditAnalysisName(request.POST, analysis=an)
+            if edName.is_valid():
+                edName.process(user)
+        else:
+            edName = mforms.EditAnalysisName(analysis=an)
+    else:
+        edName = mforms.EditAnalysisName(analysis=an)
+
     mm = mmm.MethodManager(user=user, analysis_id=analysis_id)
     info = mm.getInfo(request=request, user=user)
     plotScr, plotDiv = generate_plot(
@@ -249,6 +260,8 @@ def showAnalysis(request, user, analysis_id):
         'head': info.get('head',''),
         'user' : user,
         'analysis': an,
+        'edNameForm': edName,
+        'edNameFormSubmit': edNameFormSubmit,
         'text': info.get('body','')
     }
     return voltpy_render(

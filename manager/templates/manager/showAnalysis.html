@@ -7,12 +7,15 @@
 {% endblock %}
 
 {% block real_content %}
-<p>
 Analysis method: {{ analysis.method }} <br />
 Analysis ID: {{ analysis.id }} <br />
+<form method="post" action="#">
+	{% csrf_token %}
+    {{ edNameForm }}&nbsp;
+    <input type="submit" name="{{ edNameFormSubmit }}" value=" Save " />
+</form><br />
 Date created: {{ analysis.date | date:"c" }} <br />
 CurveSet used: <a href="{% url 'showCurveSet' user.id analysis.curveSet.id %}">{{ analysis.curveSet.name }}</a>
-</p>
 {{ text | safe }}
 
 {% endblock %}
