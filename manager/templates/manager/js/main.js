@@ -68,6 +68,12 @@ function processJSONReply(data, plot='',lineData='',cursors='') {
     }
 };
 
+$( function() {
+    $(".closeX").on('click', function(e) {
+        $(e.target).closest('div').css('display', 'none');
+    });
+});
+
 // This is used in various forms. Magic classes names.
 $( function() { 
     //function used in forms:

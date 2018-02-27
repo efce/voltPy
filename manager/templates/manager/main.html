@@ -47,6 +47,7 @@
 
   {% if notifications %}
   <div id="notifications">
+    <a class="closeX"></a>
     {% for n in notifications %}
       <p class="{{ n.severity }}">{{ n.text }}</p>
     {% endfor %}
