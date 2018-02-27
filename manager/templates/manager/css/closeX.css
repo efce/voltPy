@@ -1,0 +1,25 @@
+.closeX {
+  position: absolute;
+  right: 40px;
+  top: 70px;
+  width: 32px;
+  height: 32px;
+  opacity: 0.5;
+}
+.closeX:hover {
+  opacity: 1;
+}
+.closeX:before, .closeX:after {
+  position: absolute;
+  left: 15px;
+  content: ' ';
+  height: 33px;
+  width: 2px;
+  background-color: #333;
+}
+.closeX:before {
+  transform: rotate(45deg);
+}
+.closeX:after {
+  transform: rotate(-45deg);
+}
