@@ -1,16 +1,45 @@
-import struct
 import datetime
-from .generic_eaqt import Generic_EAQt, Param, LSV
+import struct
 import zlib
+from manager.uploads.generic_eaqt import Generic_EAQt, Param, LSV
+from manager.uploads.parser import Parser
 
-class Volt(Generic_EAQt):
-    
-    def __init__(self):
+class Volt(Parser):
+
+    _curves = []
+
+    class CurveFromFile(Generic_EAQt):
+        name =''
+        comment = ''
+        vec_param = [0] * Param.PARAMNUM
+        vec_time = []
+        vec_potential = []
+        vec_current = []
+        vec_sampling = []
+
+    def __init__(self, cfile, details):
+        # Details not needed - ignore
         self.name = ""
-
+        self.cfile = cfile
+        if cfile.name.endswith('voltc'):
+            self.isCompressed = True
+        else:
+            self.isCompressed = False
+        fileContent = self.cfile.read();
+        index = 0
+        curvesNum = struct.unpack('<i', fileContent[index:index+4])[0]
+        index += 4
+        for i in range(0, curvesNum):
+            curveSize = struct.unpack('I', fileContent[index:index+4])[0]
+            index+=4
+            c = self.unserialize(fileContent[index:index+curveSize], self.isCompressed) 
+            self._curves.append(c)
+            index+=curveSize-4 # 4 was added earlier
     
+
     def unserialize(self, data, isCompressed):
         # Decode name
+        c = self.CurveFromFile()
         bytename = bytearray()
         index = 0
         while True:
@@ -19,9 +48,9 @@ class Volt(Generic_EAQt):
             if (cc[0] == 0):
                 break
             bytename.append(cc[0])
-        self.name = bytename.decode('utf8')
+        c.name = bytename.decode('utf8')
         if ( __debug__ ):
-            print("The name is: %s" % self.name)
+            print("The name is: %s" % c.name)
 
         if ( isCompressed ):
             dataUnc = zlib.decompress(data[index+4:]) #QT qCompress add 4 bytes 
@@ -39,9 +68,9 @@ class Volt(Generic_EAQt):
             if (cc[0] == 0):
                 break
             bytename.append(cc[0])
-        self.comment = bytename.decode('utf8')
+        c.comment = bytename.decode('utf8')
         if ( __debug__ ):
-            print("The comment is: %s" % self.comment)
+            print("The comment is: %s" % c.comment)
 
         # Decode param:
         paramNum = struct.unpack('<i', dataUnc[index:index+4])[0]
@@ -50,26 +79,28 @@ class Volt(Generic_EAQt):
         index += 4
         listparam = struct.unpack('<'+paramNum*'i', dataUnc[index:index+4*paramNum])
         for i,v in enumerate(listparam):
-            self.vec_param[i] = v
+            c.vec_param[i] = v
         index+= (4*paramNum)
 
         #Decode vectors
-        vectorSize = self.vec_param[16] #16 = ptnr
-        self.vec_time = [0.0] * vectorSize
-        self.vec_potential = [0.0] * vectorSize
-        self.vec_current = [0.0] * vectorSize
+        vectorSize = c.vec_param[16] #16 = ptnr
+        c.vec_time = [0.0] * vectorSize
+        c.vec_potential = [0.0] * vectorSize
+        c.vec_current = [0.0] * vectorSize
         for i in range(0,vectorSize):
-            self.vec_time[i] =struct.unpack('d', dataUnc[index:index+8])[0]
+            c.vec_time[i] =struct.unpack('d', dataUnc[index:index+8])[0]
             index+=8
-            self.vec_potential[i] =struct.unpack('d', dataUnc[index:index+8])[0]
+            c.vec_potential[i] =struct.unpack('d', dataUnc[index:index+8])[0]
             index+=8
-            self.vec_current[i] =struct.unpack('d', dataUnc[index:index+8])[0]
+            c.vec_current[i] =struct.unpack('d', dataUnc[index:index+8])[0]
             index+=8
 
         # Decode probing data
-        if (self.vec_param[60] != 0): ##60 = nonaveraged
+        if (c.vec_param[60] != 0): ##60 = nonaveraged
             probingNum = struct.unpack('<i', dataUnc[index:index+4])[0]
             index+=4
-            self.vec_probing = struct.unpack('f'*probingNum, dataUnc[index:index+probingNum*4])
+            c.vec_sampling = struct.unpack('f'*probingNum, dataUnc[index:index+probingNum*4])
+        return c
 
-        return index
+    def models(self):
+        pass

@@ -1,7 +1,6 @@
 from enum import IntEnum
 import datetime
 from abc import ABC, abstractproperty
-import manager.uploads.parsers.parser as parser
 
 class Param(IntEnum):
     PARAMNUM = 64
@@ -131,7 +130,7 @@ class LSV():
         120, 120, 60, 20, 20, 20, 5, 5, 5, 1, 1, 1, 1, 1 ];
 
 
-class Generic_EAQt(parser.Parser, ABC):
+class Generic_EAQt(ABC):
     vec_param = {}
     vec_potential = []
     vec_current = []

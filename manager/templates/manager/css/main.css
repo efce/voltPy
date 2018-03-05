@@ -73,6 +73,10 @@
     border-spacing: 0px;
 }
 
+.file_error {
+    color: red;
+}
+
 form label { 
 	float: left; 
 	max-width: 400px; 

@@ -1,6 +1,7 @@
 from django.conf.urls import url
 
 from . import views
+from manager.uploads import uploadmanager
 
 urlpatterns = [
     url(r'^$', 
@@ -15,6 +16,10 @@ urlpatterns = [
         views.browseCurveFile, name='browseCurveFile'),
     url(r'^(?P<user_id>[0-9]+)/upload-file/$', 
         views.upload, name='upload'),
+    url(r'^(?P<user_id>[0-9]+)/new-upload-file/$', 
+        views.uploadNew, name='uploadNew'),
+    url(r'^ajax/uploads/$', 
+        uploadmanager.ajax, name='ajaxUpload'),
     url(r'^(?P<user_id>[0-9]+)/delete-file/(?P<file_id>[0-9]+)/$', 
         views.deleteCurveFile, name='deleteCurveFile'),
     url(r'^(?P<user_id>[0-9]+)/edit-file/(?P<file_id>[0-9]+)/$', 

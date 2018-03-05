@@ -17,7 +17,7 @@ from django.http import JsonResponse
 from django.http import HttpResponse
 from django.http import HttpResponseRedirect
 
-allowedExt = (
+allowedExt = ( #build based on parsers ?
     'vol', #EAGraph
     'volt', #EAPro,EAQt
     'voltc', #EAQt (compressed volt)
@@ -66,17 +66,19 @@ def ajax(request):
             for i,needD in enumerate(needsDescribe):
                 details.append(None)
                 if needD:
-                    defails[-1] = {}
+                    details[-1] = {}
                     #TODO: process extra data ...
                     needed = ( 'ignoreRows', 'firstIsE', 'isSampling', 'voltMethod' )
                     for n in needed:
-                        fieldname = ''.join(['f_', i, '_', n]);
+                        fieldname = ''.join(['f_', str(i), '_', n]);
                         fieldata = request.POST.get(fieldname, None) 
                         if fieldata is None:
-                            if n == isSampling:
+                            if n == 'isSampling':
                                 fieldata = False
-                            elif n == firstIsE:
+                                continue
+                            elif n == 'firstIsE':
                                 fieldata = False
+                                continue
                             isOk = False
                             break
                         details[-1][n] = fieldata
@@ -88,12 +90,15 @@ def ajax(request):
                 parseAndCreateModels(files=files, details=details)
                 pass
             else:
+                raise 91
                 #TODO: return error
                 pass
         else:
+            raise 95
             #TODO: return error
             pass
     else:
+        raise 99
         pass
     return JsonResponse(jsonData)
 
@@ -154,10 +159,8 @@ def verifyFileExt(filelist):
 
 def parseAndCreateModels(files, details):
     for f,d in zip(files,details):
-        p = _parse(f, d)
-        c = _createModel(p)
-        if not c:
-            raise 4
+        models = _parse(f, d)
+        _saveModels(models)
 
 def _getParserClass(extension):
     ext = extension.lower()
@@ -165,17 +168,17 @@ def _getParserClass(extension):
     load_parser = importlib.import_module('manager.uploads.parsers.' + ext)
     extClass = ext[0:1].upper() + ext[1:]
     parser = getattr(load_parser, extClass)
-    return parserClass
+    return parser
 
 def _parse(cfile, details):
     ext = cfile.name.rsplit('.' ,1)[1]
     print('Attemping to parse %s -- extension is %s' % (cfile.__str__, ext))
     parserClass = _getParserClass(ext)
-    parserObj = parserClass(cfile, defailt)
-    return parserObj.parsedData
+    parserObj = parserClass(cfile, details)
+    models = parserObj.models()
+    return models
 
-
-def _createModel(parsedData):
+def _saveModels(models):
     pass
 
 

@@ -477,6 +477,21 @@ def upload(request, user):
         context=context
     )
 
+
+@redirect_on_voltpyexceptions
+@with_user
+def uploadNew(request, user):
+
+    context = { 
+        'user': user
+    }   
+    return voltpy_render(
+        request=request, 
+        template_name='manager/uploadFile_new.html',
+        context=context
+    ) 
+
+
 @redirect_on_voltpyexceptions
 @with_user
 def editCurveFile(request, user, file_id,):
