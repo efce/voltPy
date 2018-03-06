@@ -52,6 +52,29 @@ def logout(request):
     add_notification(request, "Logged out successfuly.", 0)
     return HttpResponseRedirect(reverse('indexNoUser'))
 
+
+def browseFileSet(request, user):
+    files = mmodels.FileSet.objects.filter(owner=user, deleted=False)
+    context = {
+        'user' : user,
+        'list_header' : 'Displaying Uploaded files sets:',
+        'list_to_disp' : files,
+        'action1': "showFileSet",
+        'action2': "deleteFileSet",
+        'action2_text': ' (delete) ',
+        'whenEmpty' : ''.join([
+                            "You have no files uploaded. ",
+                            "<a href='{url}'>Upload one</a>.".format( 
+                                url=reverse('upload', args=[user.id])
+                            ),
+                        ])
+    }
+    return voltpy_render(
+        request=request, 
+        template_name='manager/browse.html',
+        context=context
+    )
+
 @redirect_on_voltpyexceptions
 @with_user
 def browseCurveFile(request, user):
@@ -128,6 +151,15 @@ def browseCurveSet(request, user):
         template_name='manager/browse.html',
         context=context
     )
+
+@redirect_on_voltpyexceptions
+@with_user
+def deleteFileSet(request, user, fileset_id):
+    try:
+        fs = mmodels.FileSet.objects.get(id=fileset_id)
+    except ObjectDoesNotExist:
+        fs = None
+    return delete_helper(request, user, fs)
 
 @redirect_on_voltpyexceptions
 @with_user
@@ -284,6 +316,56 @@ def showProcessed(request, user, processing_id):
     return voltpy_render(
         request=request, 
         template_name='manager/showAnalysis.html',
+        context=context
+    )
+
+@redirect_on_voltpyexceptions
+@with_user
+def showFileSet(request, user, fileset_id):
+    try:
+        fs = mmodels.FileSet.objects.get(id=fileset_id)
+    except ObjectDoesNotExist:
+        raise VoltPyDoesNotExists()
+        
+    if not fs.canBeReadBy(user):
+        raise VoltPyNotAllowed(user)
+
+    form_data = { 'model': fs, 'label_name': 'CurveSet name' }
+    edit_name_form = form_helper(
+        user=user, 
+        request=request,
+        formClass=mforms.EditName,
+        submitName='anEditName',
+        submitText='Save',
+        formExtraData=form_data
+    )
+
+    plotScr, plotDiv = generate_plot(
+        request=request, 
+        user=user, 
+        plot_type ='fileset',
+        value_id = fs.id
+    )
+
+    context = {
+        'scripts': plotScr, # + formAnalyze.getJS(request) + formProcess.getJS(request),
+        'mainPlot' : plotDiv,
+        'user' : user,
+        'disp_name_edit': edit_name_form['html'],
+        'fileset': fs,
+        #'at': at_disp,
+        #'formProcess': formProcess,
+        #'formAnalyze': formAnalyze,
+        #'cloneCSUrl': 
+        #        b64.b64encode(reverse('cloneCurveSet', kwargs={
+        #            'user_id': user.id,
+        #            'toClone_id': cs.id, 
+        #            }).encode()
+        #        ).decode('UTF-8')
+    }
+    return voltpy_render(
+        request=request, 
+        template_name='manager/showFileSet.html',
         context=context
     )
 
