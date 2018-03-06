@@ -53,6 +53,8 @@ def logout(request):
     return HttpResponseRedirect(reverse('indexNoUser'))
 
 
+@redirect_on_voltpyexceptions
+@with_user
 def browseFileSet(request, user):
     files = mmodels.FileSet.objects.filter(owner=user, deleted=False)
     context = {

@@ -51,9 +51,10 @@ class FileSet(models.Model):
     owner = models.ForeignKey(User)
     name = models.TextField()
     files = models.ManyToManyField(CurveFile)
+    deleted = models.BooleanField(default=0)
 
     def __str__(self):
-        return self.name + ": " + self.fileName
+        return str(self.id) + ' ' + self.name
 
     class META:
         ordering = ('uploadDate')
