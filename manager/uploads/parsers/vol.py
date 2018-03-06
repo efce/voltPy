@@ -1,6 +1,7 @@
 import struct
 import datetime
 import struct
+import manager.models as mmodels
 from manager.uploads.generic_eaqt import Generic_EAQt, Param, LSV
 from manager.uploads.parser import Parser
 
@@ -60,7 +61,7 @@ class Vol(Parser):
     def unserialize(self, sysname, data):
         c = self.CurveFromFile()
         #self.vec_param = Param.PARAMNUM * [0]
-        for i, val in enumerate(c.params):
+        for i, val in enumerate(self.params):
             c.vec_param[i] = val
         # Decode name
         index = 0
@@ -114,8 +115,63 @@ class Vol(Parser):
             time += timeStep
             c.vec_potential[i] = potential
             potential += eStep
-    
         return c, index
 
-    def models(self):
-        pass
+    def saveModels(self, user):
+        cf = mmodels.CurveFile(
+            owner=user, 
+            name=self.cfile.name,
+            fileName=self.cfile.name,
+            fileDate=self._curves[0].getDate(),
+        )
+        cs = mmodels.CurveSet(
+            owner=user,
+            name="",
+            locked=False,
+        )
+        cs.save()
+        cf.curveSet = cs
+        cf.save()
+
+        self._file_id = cf.id
+        order=0
+        for c in self._curves:
+            cb = mmodels.Curve(        
+                curveFile=cf,    
+                orderInFile=order,  
+                name=c.name,  
+                comment=c.comment, 
+                params=c.vec_param, 
+                date=c.getDate() 
+            )
+            cb.save()
+
+            cd = mmodels.CurveData(
+                curve = cb, 
+                date = c.getDate(), 
+                processing = None,
+                time = c.vec_time, 
+                potential = c.vec_potential,
+                current = c.vec_current, 
+            )
+            cd.save()
+            cs.curvesData.add(cd)
+
+            ci = mmodels.CurveIndex( 
+                curve = cb, 
+                potential_min = min(c.vec_potential), 
+                potential_max = max(c.vec_potential), 
+                potential_step = c.vec_potential[1] - c.vec_potential[0], 
+                time_min = min(c.vec_time), 
+                time_max = max(c.vec_time), 
+                time_step = c.vec_time[1] - c.vec_time[0], 
+                current_min = min(c.vec_current), 
+                current_max = max(c.vec_current), 
+                current_range = max(c.vec_current) - min(c.vec_current), 
+                samplingRate = 0
+            )
+            ci.save()
+            order+=1
+
+        cs.save()
+        return cf.id

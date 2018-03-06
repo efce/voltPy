@@ -2,5 +2,5 @@ from abc import ABC, abstractmethod, abstractclassmethod
 
 class Parser(ABC):
     @abstractmethod
-    def models(self):
+    def saveModels(self, user):
         pass

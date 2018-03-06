@@ -18,7 +18,7 @@ urlpatterns = [
         views.upload, name='upload'),
     url(r'^(?P<user_id>[0-9]+)/new-upload-file/$', 
         views.uploadNew, name='uploadNew'),
-    url(r'^ajax/uploads/$', 
+    url(r'^(?P<user_id>[0-9]+)/ajax/uploads/$', 
         uploadmanager.ajax, name='ajaxUpload'),
     url(r'^(?P<user_id>[0-9]+)/delete-file/(?P<file_id>[0-9]+)/$', 
         views.deleteCurveFile, name='deleteCurveFile'),

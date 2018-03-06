@@ -46,6 +46,28 @@ class CurveFile(models.Model):
         return self.isOwnedBy(user)
 
 
+class FileSet(models.Model):
+    id = models.AutoField(primary_key=True)
+    owner = models.ForeignKey(User)
+    name = models.TextField()
+    files = models.ManyToManyField(CurveFile)
+
+    def __str__(self):
+        return self.name + ": " + self.fileName
+
+    class META:
+        ordering = ('uploadDate')
+
+    def isOwnedBy(self, user):
+        return (self.owner == user)
+
+    def canBeUpdatedBy(self, user):
+        return self.isOwnedBy(user)
+
+    def canBeReadBy(self, user):
+        return self.isOwnedBy(user)
+
+
 class Curve(models.Model):
     id = models.AutoField(primary_key=True)
     curveFile = models.ForeignKey(CurveFile, on_delete=models.CASCADE)

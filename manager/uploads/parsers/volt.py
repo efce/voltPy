@@ -1,6 +1,7 @@
 import datetime
 import struct
 import zlib
+import manager.models as mmodels
 from manager.uploads.generic_eaqt import Generic_EAQt, Param, LSV
 from manager.uploads.parser import Parser
 
@@ -102,5 +103,61 @@ class Volt(Parser):
             c.vec_sampling = struct.unpack('f'*probingNum, dataUnc[index:index+probingNum*4])
         return c
 
-    def models(self):
-        pass
+    def saveModels(self, user):
+        cf = mmodels.CurveFile(
+            owner=user, 
+            name=self.cfile.name,
+            fileName=self.cfile.name,
+            fileDate=self._curves[0].getDate(),
+        )
+        cs = mmodels.CurveSet(
+            owner=user,
+            locked=False,
+        )
+        cs.save()
+        cf.curveSet = cs
+        cf.save()
+
+        self._file_id = cf.id
+        order=0
+        for c in self._curves:
+            cb = mmodels.Curve(        
+                curveFile=cf,    
+                orderInFile=order,  
+                name=c.name,  
+                comment=c.comment, 
+                params=c.vec_param, 
+                date=c.getDate() 
+            )
+            cb.save()
+
+            cd = mmodels.CurveData(
+                curve = cb, 
+                date = c.getDate(), 
+                processing = None,
+                time = c.vec_time, 
+                potential = c.vec_potential,
+                current = c.vec_current, 
+                currentSamples = c.vec_probing 
+            )
+            cd.save()
+            cs.curvesData.add(cd)
+
+            ci = mmodels.CurveIndex( 
+                curve = cb, 
+                potential_min = min(c.vec_potential), 
+                potential_max = max(c.vec_potential), 
+                potential_step = c.vec_potential[1] - c.vec_potential[0], 
+                time_min = min(c.vec_time), 
+                time_max = max(c.vec_time), 
+                time_step = c.vec_time[1] - c.vec_time[0], 
+                current_min = min(c.vec_current), 
+                current_max = max(c.vec_current), 
+                current_range = max(c.vec_current) - min(c.vec_current), 
+                samplingRate = c.vec_param[Param.nonaveragedsampling] if len(c.vec_param) > Param.nonaveragedsampling else 0
+            )
+            ci.save()
+            order+=1
+
+        cs.save()
+        return cf.id

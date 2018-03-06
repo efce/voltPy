@@ -10,12 +10,14 @@ from django.utils import timezone
 from django.db import transaction
 import manager.models as mmodels
 import manager.forms as f
+from manager.helpers.decorators import with_user
 from django import forms
 from django.urls import reverse
 from django.template import loader
 from django.http import JsonResponse
 from django.http import HttpResponse
 from django.http import HttpResponseRedirect
+from django.db import DatabaseError
 
 allowedExt = ( #build based on parsers ?
     'vol', #EAGraph
@@ -40,7 +42,8 @@ allowedExt = ( #build based on parsers ?
 maxfile_size = 100000 # size in kB
 
 
-def ajax(request):
+@with_user
+def ajax(request, user):
     if not request.method == 'POST':
         return JsonResponse({})
     command = request.POST.get('command', '')
@@ -87,7 +90,7 @@ def ajax(request):
                         pass
             if isOk:
                 #TODO: start parsing
-                parseAndCreateModels(files=files, details=details)
+                parseAndCreateModels(files=files, details=details, user=user)
                 pass
             else:
                 raise 91
@@ -157,10 +160,33 @@ def verifyFileExt(filelist):
     return isOk, errors, needsDescribe
 
 
-def parseAndCreateModels(files, details):
-    for f,d in zip(files,details):
-        models = _parse(f, d)
-        _saveModels(models)
+@transaction.atomic 
+def parseAndCreateModels(files, details, user):
+    sid=transaction.savepoint()
+    try:
+        cf_ids = []
+        for f,d in zip(files,details):
+            print('saving: ', f.name)
+            cf_ids.append(_parseGetCFID(f, d, user))
+        fsid = _saveFileSet(cf_ids, user)
+    except DatabaseError:
+        transaction.savepoint_rollback(sid)
+        return -1
+        transaction.savepoint_commit(sid)
+        return fsid
+
+def _saveFileSet(cf_ids, user):
+    fs = mmodels.FileSet(
+        owner=user,
+        name="",
+    )
+    fs.save()
+    for i in cf_ids:
+        cf = mmodels.CurveFile.objects.get(id=i)
+        fs.files.add(cf)
+    fs.save()
+    return fs.id
+
 
 def _getParserClass(extension):
     ext = extension.lower()
@@ -170,17 +196,14 @@ def _getParserClass(extension):
     parser = getattr(load_parser, extClass)
     return parser
 
-def _parse(cfile, details):
+def _parseGetCFID(cfile, details, user):
     ext = cfile.name.rsplit('.' ,1)[1]
     print('Attemping to parse %s -- extension is %s' % (cfile.__str__, ext))
     parserClass = _getParserClass(ext)
     parserObj = parserClass(cfile, details)
-    models = parserObj.models()
-    return models
-
-def _saveModels(models):
-    pass
-
+    print('parsed')
+    cf_id = parserObj.saveModels(user)
+    return cf_id
 
 class UploadManager:
     _file_id = -1
