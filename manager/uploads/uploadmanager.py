@@ -74,6 +74,7 @@ def ajax(request, user):
                     #TODO: process extra data ...
                     needed = ( 'ignoreRows', 'firstIsE', 'isSampling', 'voltMethod' )
                     for n in needed:
+                        #TODO: doesnt work as intented
                         fieldname = ''.join(['f_', str(i), '_', n]);
                         fieldata = request.POST.get(fieldname, None) 
                         if fieldata is None:
@@ -164,7 +165,8 @@ def parseAndCreateModels(files, details, user):
     sid=transaction.savepoint()
     try:
         cf_ids = []
-        for f,d in zip(files,details):
+        for i,f in enumerate(files):
+            d = details[i]
             cf_ids.append(_parseGetCFID(f, d, user))
         fsid = _saveFileSet(cf_ids, user, details)
     except DatabaseError:
