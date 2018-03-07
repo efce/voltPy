@@ -6,10 +6,6 @@ from manager.uploads.generic_eaqt import Generic_EAQt, Param, LSV
 from manager.uploads.parser import Parser
 
 class Vol(Parser):
-    
-    params = []
-    names = []
-    _curves = []
 
     class CurveFromFile(Generic_EAQt):
         name =''
@@ -21,6 +17,9 @@ class Vol(Parser):
 
     def __init__(self, cfile, details):
         # Details not needed - ignore
+        self.params = []
+        self.names = []
+        self._curves = []
         self.cfile = cfile
         fileContent = self.cfile.read();
         index = 0

@@ -51,6 +51,7 @@ class FileSet(models.Model):
     owner = models.ForeignKey(User)
     name = models.TextField()
     files = models.ManyToManyField(CurveFile)
+    date = models.DateField(auto_now_add=True)
     deleted = models.BooleanField(default=0)
 
     def __str__(self):

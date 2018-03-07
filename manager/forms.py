@@ -225,14 +225,16 @@ class SelectXForm(forms.Form):
 class SelectCurvesForCurveSetForm(forms.Form):
     curvesetid = -1
     def __init__(self, user,  *args, **kwargs):
-        self.toClone = int(kwargs.pop('toClone', -1))
+        self.toClone = kwargs.pop('toClone', [])
         newName = ''
         try:
-            csToClone = mmodels.CurveSet.objects.get(id=self.toClone)
-            newName = csToClone.name + '_copy'
+            if len(self.toClone) == 1:
+                csToClone = mmodels.CurveSet.objects.get(id=self.toClone[0])
+                if csToClone.canBeReadBy(user):
+                    newName = csToClone.name + '_copy'
         except:
             newName = ''
-            self.toClone = -1
+            #self.toClone = -1
         super(SelectCurvesForCurveSetForm, self).__init__(*args, **kwargs)
         from django.db.models import Prefetch
         self.fields['name'] = forms.CharField(
@@ -248,7 +250,7 @@ class SelectCurvesForCurveSetForm(forms.Form):
         for f in files:
             fname = 'curveFile_{0}'.format(f.id)
             initial = False
-            if f.curveSet.id == self.toClone:
+            if f.curveSet.id in self.toClone:
                 initial = True
             self.fields[fname] = forms.BooleanField(
                 label=f,
@@ -274,7 +276,7 @@ class SelectCurvesForCurveSetForm(forms.Form):
                 continue
             csname = 'curveSet_{0}'.format(cs.id)
             initial = False
-            if cs.id == self.toClone:
+            if cs.id in self.toClone:
                 initial = True
             self.fields[csname] = forms.BooleanField(
                 label=cs,

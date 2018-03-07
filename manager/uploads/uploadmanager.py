@@ -7,6 +7,7 @@ from manager.curvevolt import CurveVolt
 from manager.curvevol import CurveVol
 import manager.curveea as cea
 from django.utils import timezone
+from django.utils.html import escape
 from django.db import transaction
 import manager.models as mmodels
 import manager.forms as f
@@ -65,11 +66,11 @@ def ajax(request, user):
             flist.append({'name': f.name, 'size': f.size})
         isOk, errors, needsDescribe = verifyFileExt(flist)
         if isOk:
-            details = []
+            details = {}
+            details['fileset_name'] = escape(request.POST.get('fileset_name', ''))
             for i,needD in enumerate(needsDescribe):
-                details.append(None)
+                details[i] = {}
                 if needD:
-                    details[-1] = {}
                     #TODO: process extra data ...
                     needed = ( 'ignoreRows', 'firstIsE', 'isSampling', 'voltMethod' )
                     for n in needed:
@@ -84,7 +85,7 @@ def ajax(request, user):
                                 continue
                             isOk = False
                             break
-                        details[-1][n] = fieldata
+                        details[i][n] = fieldata
                     else:
                         #is OK
                         pass
@@ -152,13 +153,11 @@ def verifyFileExt(filelist):
                     ext2 = 'o' + fsplit[1][1:]
                 else:
                     ext2 = 'i' + fsplit[1][1:]
-
                 errors[-1] = 'Please upload both file types: *.{t1} and *.{t2}'.format(
                     t1=fsplit[1], 
                     t2=ext2
                 )
     return isOk, errors, needsDescribe
-
 
 @transaction.atomic 
 def parseAndCreateModels(files, details, user):
@@ -166,19 +165,18 @@ def parseAndCreateModels(files, details, user):
     try:
         cf_ids = []
         for f,d in zip(files,details):
-            print('saving: ', f.name)
             cf_ids.append(_parseGetCFID(f, d, user))
-        fsid = _saveFileSet(cf_ids, user)
+        fsid = _saveFileSet(cf_ids, user, details)
     except DatabaseError:
         transaction.savepoint_rollback(sid)
         return -1
         transaction.savepoint_commit(sid)
         return fsid
 
-def _saveFileSet(cf_ids, user):
+def _saveFileSet(cf_ids, user, details):
     fs = mmodels.FileSet(
         owner=user,
-        name="",
+        name=details.get('fileset_name',''),
     )
     fs.save()
     for i in cf_ids:

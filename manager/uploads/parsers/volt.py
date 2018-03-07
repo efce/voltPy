@@ -7,8 +7,6 @@ from manager.uploads.parser import Parser
 
 class Volt(Parser):
 
-    _curves = []
-
     class CurveFromFile(Generic_EAQt):
         name =''
         comment = ''
@@ -20,6 +18,7 @@ class Volt(Parser):
 
     def __init__(self, cfile, details):
         # Details not needed - ignore
+        self._curves = []
         self.name = ""
         self.cfile = cfile
         if cfile.name.endswith('voltc'):

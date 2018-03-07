@@ -59,7 +59,7 @@ def browseFileSet(request, user):
     files = mmodels.FileSet.objects.filter(owner=user, deleted=False)
     context = {
         'user' : user,
-        'list_header' : 'Displaying Uploaded files sets:',
+        'list_header' : 'Displaying uploaded files sets:',
         'list_to_disp' : files,
         'action1': "showFileSet",
         'action2': "deleteFileSet",
@@ -223,7 +223,7 @@ def deleteCurveSet(request, user, curveset_id):
 
 @redirect_on_voltpyexceptions
 @with_user
-def createCurveSet(request, user, toClone=-1):
+def createCurveSet(request, user, toClone=[]):
     """
     from pyinstrument import Profiler
     profiler = Profiler(use_signal=False)
@@ -332,7 +332,7 @@ def showFileSet(request, user, fileset_id):
     if not fs.canBeReadBy(user):
         raise VoltPyNotAllowed(user)
 
-    form_data = { 'model': fs, 'label_name': 'CurveSet name' }
+    form_data = { 'model': fs, 'label_name': 'FileSet name' }
     edit_name_form = form_helper(
         user=user, 
         request=request,
@@ -358,12 +358,12 @@ def showFileSet(request, user, fileset_id):
         #'at': at_disp,
         #'formProcess': formProcess,
         #'formAnalyze': formAnalyze,
-        #'cloneCSUrl': 
-        #        b64.b64encode(reverse('cloneCurveSet', kwargs={
-        #            'user_id': user.id,
-        #            'toClone_id': cs.id, 
-        #            }).encode()
-        #        ).decode('UTF-8')
+        'cloneCSUrl': 
+                b64.b64encode(reverse('cloneCurveSet', kwargs={
+                    'user_id': user.id,
+                    'toClone_txt': ','.join([ str(f.curveSet.id) for f in fs.files.all() ])
+                    }).encode()
+                ).decode('UTF-8')
     }
     return voltpy_render(
         request=request, 
@@ -436,7 +436,7 @@ def showCurveSet(request, user, curveset_id):
         'cloneCSUrl': 
                 b64.b64encode(reverse('cloneCurveSet', kwargs={
                     'user_id': user.id,
-                    'toClone_id': cs.id, 
+                    'toClone_txt': cs.id, 
                     }).encode()
                 ).decode('UTF-8')
     }
@@ -449,8 +449,9 @@ def showCurveSet(request, user, curveset_id):
 
 @redirect_on_voltpyexceptions
 @with_user
-def cloneCurveSet(request, user, toClone_id):
-    return createCurveSet(request, user_id=user.id, toClone=toClone_id)
+def cloneCurveSet(request, user, toClone_txt):
+    toClone_ids = [ int(x) for x in toClone_txt.split(',') ]
+    return createCurveSet(request, user_id=user.id, toClone=toClone_ids)
 
 @redirect_on_voltpyexceptions
 @with_user
@@ -651,7 +652,7 @@ def showCurveFile(request, user, file_id):
         'cloneCSUrl': 
                 b64.b64encode(reverse('cloneCurveSet', kwargs={
                     'user_id': user.id,
-                    'toClone_id': cf.curveSet.id, 
+                    'toClone_txt': cf.curveSet.id, 
                     }).encode()
                 ).decode('UTF-8')
     }
