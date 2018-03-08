@@ -31,7 +31,8 @@ class Txt(Parser):
         #if details.get('isSampling', False) == False:
         potential = []
         index = 0
-        if details.get('firstIsE', False) == False:
+        fie = details.get('firstIsE', False) 
+        if fie != False:
             potential = pdfile[0]
             index = 1
         else:

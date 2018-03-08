@@ -18,8 +18,6 @@ urlpatterns = [
         views.browseCurveFile, name='browseCurveFile'),
     url(r'^(?P<user_id>[0-9]+)/upload-file/$', 
         views.upload, name='upload'),
-    url(r'^(?P<user_id>[0-9]+)/new-upload-file/$', 
-        views.uploadNew, name='uploadNew'),
     url(r'^(?P<user_id>[0-9]+)/ajax/uploads/$', 
         uploadmanager.ajax, name='ajaxUpload'),
     url(r'^(?P<user_id>[0-9]+)/delete-file-set/(?P<file_id>[0-9]+)/$', 

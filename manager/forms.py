@@ -4,23 +4,8 @@ from django.db.models import Q
 from django.utils import timezone
 from django.core.exceptions import ObjectDoesNotExist
 import manager.models as mmodels
-from manager.processupload import ProcessUpload
 from manager.exceptions import VoltPyNotAllowed
 import manager
-
-class UploadFileForm(forms.Form):
-    name = forms.CharField(label="Name", max_length=128)
-    comment = forms.CharField(label="Comment", max_length=512)
-    file = forms.FileField()
-
-    def process(self, user, request):
-        p=ProcessUpload(
-                user,
-                request.FILES['file'],
-                self.cleaned_data.get('name'),
-                self.cleaned_data.get('comment'))
-        self.file_id = p.getFileId()
-        return p.status
 
 class CursorsForm(forms.Form):
     def __init__(self, *args, **kwargs):

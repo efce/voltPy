@@ -36,11 +36,30 @@ function addDescribeFile(id) {
 
     fieldname = 'f_' + id + '_' + 'firstIsE';
     field += '<br /><label for="' + fieldname + '">First column is E: </label>';
-    field += '<input id="' + fieldname + '" type="checkbox" name="' + fieldname + '" checked />';
+    field += '<input onClick="toggleShow(event);" id="' + fieldname + '" type="checkbox" name="' + fieldname + '" checked />';
+    field += '<div class="invisible _voltJS_toShow">' 
+    field += '<label for="' + fieldname + '_Ep">Estart [mV]: </label>';
+    field += '<input type="text" id="' + fieldname + '_Ep" name="' + fieldname + '_Ep" value="0" /><br />';
+    field += '<label for="' + fieldname + '_Ek">Eend [mV]: </label>';
+    field += '<input type="text" id="' + fieldname + '_Ek" name="' + fieldname + '_Ek" value="100" /><br />';
+    field += '<label for="' + fieldname + '_dE">Pulse height (only for SWV/DPV) [mV]: </label>';
+    field += '<input type="text" id="' + fieldname + '_dE" name="' + fieldname + '_dE" value="0" /><br />';
+    field += '<label for="' + fieldname + '_E0">E0 (only for NPV) [mV]: </label>';
+    field += '<input type="text" id="' + fieldname + '_E0" name="' + fieldname + '_E0" value="0" /><br />';
+    field += '<label for="' + fieldname + '_t">Time per Estep [ms]: </label>';
+    field += '<input type="text" id="' + fieldname + '_t" name="' + fieldname + '_t" value="10" /><br />';
+    field += '</div>';
+
 
     fieldname = 'f_' + id + '_' + 'isSampling';
     field += '<br /><label for="' + fieldname + '">Is sampling data: </label>';
-    field += '<input id="' + fieldname + '" type="checkbox" name="' + fieldname + '" />';
+    field += '<input  onClick="toggleShow(event);" id="' + fieldname + '" type="checkbox" name="' + fieldname + '" />';
+    field += '<div class="invisible _voltJS_toShow">' 
+    field += '<label for="' + fieldname + '_SPP">Samples per point: </label>';
+    field += '<input type="text" id="' + fieldname + '_SPP" name="' + fieldname + '_SPP" value="1" /><br />';
+    field += '<label for="' + fieldname + '_SFreq">Sampling frequency [kHz]: </label>';
+    field += '<input type="text" id="' + fieldname + '_SFreq" name="' + fieldname + '_SFreq" value="1" /><br />';
+    field += '</div>';
 
     fieldname = 'f_' + id + '_' + 'voltMethod';
     field += '<br /><label for="' + fieldname + '">Select method: </label>';

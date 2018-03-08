@@ -73,10 +73,12 @@ def ajax(request, user):
                 if needD:
                     #TODO: process extra data ...
                     needed = ( 'ignoreRows', 'firstIsE', 'isSampling', 'voltMethod' )
+                    print(request.POST)
                     for n in needed:
                         #TODO: doesnt work as intented
                         fieldname = ''.join(['f_', str(i), '_', n]);
                         fieldata = request.POST.get(fieldname, None) 
+                        print(fieldname, ": ", fieldata)
                         if fieldata is None:
                             if n == 'isSampling':
                                 fieldata = False
@@ -198,7 +200,7 @@ def _getParserClass(extension):
 
 def _parseGetCFID(cfile, details, user):
     ext = cfile.name.rsplit('.' ,1)[1]
-    print('Attemping to parse %s -- extension is %s' % (cfile.__str__, ext))
+    print('Parsing %s: extension is %s' % (cfile.__str__, ext))
     parserClass = _getParserClass(ext)
     parserObj = parserClass(cfile, details)
     print('parsed')

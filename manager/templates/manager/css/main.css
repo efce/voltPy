@@ -29,6 +29,13 @@
   padding: 12px 14px; 
   text-decoration: none; 
 }
+
+.invisible {
+    display: none;
+}
+.visible {
+    display: block;
+}
 #notifications { 
   border: 1px #ACF solid;
   margin: 10px;

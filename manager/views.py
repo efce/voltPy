@@ -538,34 +538,10 @@ def editCurveSet(request,user,curveset_id):
         context=context
     )
 
+
 @redirect_on_voltpyexceptions
 @with_user
 def upload(request, user):
-    if request.method == 'POST':
-        form = mforms.UploadFileForm(request.POST, request.FILES)
-        if form.is_valid():
-            if (form.process(user, request) == True):
-                file_id = form.file_id
-                return HttpResponseRedirect(
-                    reverse('showCurveFile', args=[user.id, file_id])
-                )
-    else:
-        form = mforms.UploadFileForm()
-
-    context = {
-        'form': form, 
-        'user': user
-    }
-    return voltpy_render(
-        request=request, 
-        template_name='manager/uploadFile.html',
-        context=context
-    )
-
-
-@redirect_on_voltpyexceptions
-@with_user
-def uploadNew(request, user):
 
     context = { 
         'user': user

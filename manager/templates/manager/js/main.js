@@ -199,6 +199,15 @@ $( function() {
 });
 
 $( function() {
+    $( '._voltJS_toggleShow' ).on('change', function(e) {
+        toggleShow(e.target);
+    });
+});
+function toggleShow(e) {
+    $(e.target).next('._voltJS_toShow' ).toggleClass('invisible visible');
+}
+
+$( function() {
     $( '._voltJS_Disable' ).on( 'change', function(e) {
         $(e.target).parent().find('._voltJS_disableContainer').find('._voltJS_toDisable').prop('checked', this.checked);
         $(e.target).parent().find('._voltJS_disableContainer').find('._voltJS_toDisable').prop('disabled', this.checked);
