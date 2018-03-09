@@ -2,15 +2,12 @@ import os, sys
 import struct
 import random
 import json
-from stat import *
-from manager.curvevolt import CurveVolt
-from manager.curvevol import CurveVol
-import manager.curveea as cea
+#from stat import *
 from django.utils import timezone
 from django.utils.html import escape
 from django.db import transaction
 import manager.models as mmodels
-import manager.forms as f
+#import manager.forms as f
 from manager.helpers.decorators import with_user
 from django import forms
 from django.urls import reverse
@@ -42,6 +39,38 @@ allowedExt = ( #build based on parsers ?
 
 maxfile_size = 100000 # size in kB
 
+listOfFields = {
+    'ignoreRows': None, # int 
+
+    'firstIsE': {
+        'on': [],
+        None: [
+            'firstIsE_Ep', # float
+            'firstIsE_Ek',# float
+            'firstIsE_E0',# float
+            'firstIsE_dE',# float
+            'firstIsE_t',# float
+        ]
+    },
+
+    'isSampling': {
+        'on': [
+            'isSampling_SPP', # int Samples Per Point
+            'isSampling_SFreq', # float 
+        ],
+        None: []
+    },
+
+    'voltMethod': {
+        'lsv': [],
+        'scv': [],
+        'npv': [],
+        'dpv': [],
+        'swv': [],
+        'chonoamp': []
+    }
+}
+
 
 @with_user
 def ajax(request, user):
@@ -72,26 +101,29 @@ def ajax(request, user):
                 details[i] = {}
                 if needD:
                     #TODO: process extra data ...
-                    needed = ( 'ignoreRows', 'firstIsE', 'isSampling', 'voltMethod' )
-                    print(request.POST)
-                    for n in needed:
+                    for f in listOfFields.keys():
                         #TODO: doesnt work as intented
-                        fieldname = ''.join(['f_', str(i), '_', n]);
+                        fieldname = ''.join(['f_', str(i), '_', f]);
                         fieldata = request.POST.get(fieldname, None) 
-                        print(fieldname, ": ", fieldata)
-                        if fieldata is None:
-                            if n == 'isSampling':
-                                fieldata = False
-                                continue
-                            elif n == 'firstIsE':
-                                fieldata = False
-                                continue
-                            isOk = False
-                            break
-                        details[i][n] = fieldata
-                    else:
-                        #is OK
-                        pass
+                        details[i][f] = fieldata
+                        if listOfFields[f] != None:
+                            try:
+                                neededFields = listOfFields[f][fieldata]
+                            except:
+                                isOk = False
+                                break
+
+                            for nf in neededFields:
+                                nfname = ''.join(['f_', str(i), '_', nf]);
+                                nfdata = request.POST.get(nfname, None) 
+                                if nfdata == None:
+                                    isOk = False
+                                    break
+                                details[i][nf] = nfdata
+                else:
+                    #is OK
+                    pass
+            print(details)
             if isOk:
                 #TODO: start parsing
                 parseAndCreateModels(files=files, details=details, user=user)

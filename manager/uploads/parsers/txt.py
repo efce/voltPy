@@ -30,14 +30,24 @@ class Txt(Parser):
         pdfile = pd.read_csv(self.cfile, sep='\s+', header=None, skiprows=skipRows)
         #if details.get('isSampling', False) == False:
         potential = []
+        time = []
         index = 0
-        fie = details.get('firstIsE', False) 
-        if fie != False:
+        fie = details.get('firstIsE', None) 
+        if fie != None:
             potential = pdfile[0]
+            time = [ i for i in range(len(pdfile[0])) ]
             index = 1
         else:
-            potential = [ i for i in range(len(pdfile[0])) ]
-        time = [ i for i in range(len(pdfile[0])) ]
+            Ep = float(details.get('firstIsE_Ep', 0))
+            Ek = float(details.get('firstIsE_Ek', 1))
+            E0 = float(details.get('firstIsE_E0', 0)) 
+            dE = float(details.get('firstIsE_dE', 0))
+            t_E = float(details.get('firstIsE_t', 0))
+            numpoints = len(pdfile[0])
+            Estep = (Ek - Ep) / numpoints
+            potential = list(np.arange(Ep, Ek, Estep))
+            time = list(np.arange(0, t_E*numpoints, t_E))
+
         for i in range(len(pdfile.columns)-index):
             ci = index + i
             c = self.CurveFromFile()
