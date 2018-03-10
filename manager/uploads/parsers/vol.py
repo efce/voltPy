@@ -1,23 +1,18 @@
 import struct
 import datetime
 import struct
-import manager.models as mmodels
-from manager.uploads.generic_eaqt import Generic_EAQt, Param, LSV
+from manager.uploads.generic_eaqt import Generic_EAQt
 from manager.uploads.parser import Parser
+from manager.models import Curve as mcurve
+Param = mcruve.Param
+LSV = mcruve.LSV
 
 class Vol(Parser):
-
     class CurveFromFile(Generic_EAQt):
-        name =''
-        comment = ''
-        vec_param = [0] * Param.PARAMNUM
-        vec_time = []
-        vec_potential = []
-        vec_current = []
+        pass
 
     def __init__(self, cfile, details):
         # Details not needed - ignore
-        self.params = []
         self.names = []
         self._curves = []
         self.cfile = cfile
@@ -115,62 +110,3 @@ class Vol(Parser):
             c.vec_potential[i] = potential
             potential += eStep
         return c, index
-
-    def saveModels(self, user):
-        cf = mmodels.CurveFile(
-            owner=user, 
-            name=self.cfile.name,
-            fileName=self.cfile.name,
-            fileDate=self._curves[0].getDate(),
-        )
-        cs = mmodels.CurveSet(
-            owner=user,
-            name="",
-            locked=False,
-        )
-        cs.save()
-        cf.curveSet = cs
-        cf.save()
-
-        self._file_id = cf.id
-        order=0
-        for c in self._curves:
-            cb = mmodels.Curve(        
-                curveFile=cf,    
-                orderInFile=order,  
-                name=c.name,  
-                comment=c.comment, 
-                params=c.vec_param, 
-                date=c.getDate() 
-            )
-            cb.save()
-
-            cd = mmodels.CurveData(
-                curve = cb, 
-                date = c.getDate(), 
-                processing = None,
-                time = c.vec_time, 
-                potential = c.vec_potential,
-                current = c.vec_current, 
-            )
-            cd.save()
-            cs.curvesData.add(cd)
-
-            ci = mmodels.CurveIndex( 
-                curve = cb, 
-                potential_min = min(c.vec_potential), 
-                potential_max = max(c.vec_potential), 
-                potential_step = c.vec_potential[1] - c.vec_potential[0], 
-                time_min = min(c.vec_time), 
-                time_max = max(c.vec_time), 
-                time_step = c.vec_time[1] - c.vec_time[0], 
-                current_min = min(c.vec_current), 
-                current_max = max(c.vec_current), 
-                current_range = max(c.vec_current) - min(c.vec_current), 
-                samplingRate = 0
-            )
-            ci.save()
-            order+=1
-
-        cs.save()
-        return cf.id

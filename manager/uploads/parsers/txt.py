@@ -4,116 +4,80 @@ import struct
 import pandas as pd
 import numpy as np
 import datetime
-import manager.models as mmodels
 from manager.uploads.parser import Parser
-from manager.uploads.generic_eaqt import Param
+from manager.models import Curve as mcurve
+Param = mcurve.Param
 
 class Txt(Parser):
 
-    class CurveFromFile():
-        name =''
-        comment = ''
-        vec_param = [0] * Param.PARAMNUM
-        vec_time = []
-        vec_potential = []
-        vec_current = []
-        vec_samples = []
-        date = ''
-
     def __init__(self, cfile, details):
         # Details not needed - ignore
-        self.params = []
+        self.vec_param = []
         self.names = []
         self._curves = []
         self.cfile = cfile
         skipRows = int(details.get('skipRows', 0))
         pdfile = pd.read_csv(self.cfile, sep='\s+', header=None, skiprows=skipRows)
-        #if details.get('isSampling', False) == False:
         potential = []
         time = []
         index = 0
+        isSampling = details.get('isSampling', None) 
+        spp = int(details.get('isSampling_SPP', 1)) # samples per point
+        samplingFreq = float(details.get('isSampling_SFreq', 0)) # in kHz
         fie = details.get('firstIsE', None) 
-        if fie != None:
-            potential = pdfile[0]
-            time = [ i for i in range(len(pdfile[0])) ]
-            index = 1
-        else:
-            Ep = float(details.get('firstIsE_Ep', 0))
-            Ek = float(details.get('firstIsE_Ek', 1))
-            E0 = float(details.get('firstIsE_E0', 0)) 
-            dE = float(details.get('firstIsE_dE', 0))
-            t_E = float(details.get('firstIsE_t', 0))
-            numpoints = len(pdfile[0])
-            Estep = (Ek - Ep) / numpoints
-            potential = list(np.arange(Ep, Ek, Estep))
-            time = list(np.arange(0, t_E*numpoints, t_E))
+        Ep = float(details.get('firstIsE_Ep', 0))
+        Ek = float(details.get('firstIsE_Ek', 1))
+        dE = float(details.get('firstIsE_dE', 0))
+        t_E = float(details.get('firstIsE_t', 1))
+        ptnr = len(pdfile[0])
+
+        if isSampling == None:
+            fie = details.get('firstIsE', None) 
+            if fie != None:
+                potential = pdfile[0]
+                Ep = potential[0]
+                Ek = potential[len(potential)-1]
+                Estep = potential[1] - potential[0]
+                ptnr = len(potential)
+                time = [ i for i in range(len(pdfile[0])) ]
+                index = 1
+            else:
+                Estep = (Ek - Ep) / ptnr
+                potential = list(np.arange(Ep, Ek, Estep))
+                time = list(np.arange(0, t_E*ptnr, t_E))
+        else: #it is sampling data
+            if fie != None:
+                potential = pdfile[0]
+                Ep = potential[0]
+                Ek = potential[len(potential)-1]
+                Estep = potential[1] - potential[1+(2*spp)]
+                time = [ (i/samplingFreq) for i in range(len(pdfile[0])) ]
+                index = 1
+            else:
+                Estep = (Ek - Ep) / ptnr
+                potential = list(np.arange(Ep, Ek, Estep))
+                time = list(np.arange(0, t_E*ptnr, t_E))
+
+        self.vec_param = [0]*Param.PARAMNUM
+        self.vec_param[Param.Ek] = Ek
+        self.vec_param[Param.Ep] = Ep
+        self.vec_param[Param.Estep] = Estep
+        self.vec_param[Param.dE] = dE
+        self.vec_param[Param.method] = self.methodDict[details.get('voltMethod', 'lsv')]
+        self.vec_param[Param.nonaveragedsampling] = samplingFreq
 
         for i in range(len(pdfile.columns)-index):
             ci = index + i
             c = self.CurveFromFile()
             c.name = str(i)
+            c.vec_param = self.vec_param
             c.vec_potential = potential
-            c.vec_current = pdfile[ci]
+            if isSampling == None:
+                c.vec_sampling = []
+                c.vec_current = pdfile[ci]
+            else:
+                c.vec_sampling = pdfile[ci]
+                c.vec_current = self.calculateMethod(c.vec_sampling, spp, self.vec_param[Param.method])
             c.vec_time = time
             c.date = datetime.datetime.now()
             self._curves.append(c)
-
-
-    def saveModels(self, user):
-        cf = mmodels.CurveFile(
-            owner=user, 
-            name=self.cfile.name,
-            fileName=self.cfile.name,
-            fileDate=self._curves[0].date
-        )
-        cs = mmodels.CurveSet(
-            owner=user,
-            name="",
-            locked=False,
-        )
-        cs.save()
-        cf.curveSet = cs
-        cf.save()
-
-        self._file_id = cf.id
-        order=0
-        for c in self._curves:
-            cb = mmodels.Curve(        
-                curveFile=cf,    
-                orderInFile=order,  
-                name=c.name,  
-                comment=c.comment, 
-                params=c.vec_param, 
-                date=c.date 
-            )
-            cb.save()
-
-            cd = mmodels.CurveData(
-                curve = cb, 
-                date = c.date,
-                processing = None,
-                time = c.vec_time, 
-                potential = c.vec_potential,
-                current = c.vec_current, 
-            )
-            cd.save()
-            cs.curvesData.add(cd)
-
-            ci = mmodels.CurveIndex( 
-                curve = cb, 
-                potential_min = np.min(c.vec_potential), 
-                potential_max = np.max(c.vec_potential), 
-                potential_step = c.vec_potential[1] - c.vec_potential[0], 
-                time_min = np.min(c.vec_time), 
-                time_max = np.max(c.vec_time), 
-                time_step = c.vec_time[1] - c.vec_time[0], 
-                current_min = np.min(c.vec_current), 
-                current_max = np.max(c.vec_current), 
-                current_range = np.max(c.vec_current) - np.min(c.vec_current), 
-                samplingRate = 0
-            )
-            ci.save()
-            order+=1
-
-        cs.save()
-        return cf.id
