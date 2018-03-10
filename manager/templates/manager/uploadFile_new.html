@@ -105,6 +105,15 @@ function uploadmanagerProcessReply(data) {
     }
 }
 
+function uploadmanagerUploadInfo(data) {
+    if ( data['command'] == 'success' ) {
+        alert('Upload sucessfull, redirectirng');
+        window.location.href = data['location'];
+    } else if ( data['command'] == 'failed' ) {
+        alert('Upload failed, please try again.');
+    }
+}
+
 $("#file_selector").change(function() {
     $(".selected_file").remove();
     var filelist = $("#file_selector").get(0).files;
@@ -131,6 +140,7 @@ $("form#file_form").submit(function(e) {
         data: formData,
         success: function (data) {
             voltpy_loading_done();
+            uploadmanagerUploadInfo(data);
         },
         cache: false,
         contentType: false,

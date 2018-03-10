@@ -4,8 +4,8 @@ import zlib
 from manager.uploads.generic_eaqt import Generic_EAQt
 from manager.uploads.parser import Parser
 from manager.models import Curve as mcurve
-Param = mcruve.Param
-LSV = mcruve.LSV
+Param = mcurve.Param
+LSV = mcurve.LSV
 
 class Volt(Parser):
     class CurveFromFile(Generic_EAQt):

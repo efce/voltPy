@@ -1,8 +1,8 @@
 import datetime
 from abc import ABC, abstractproperty
 from manager.models import Curve as mcurve
-Param = mcruve.Param
-LSV = mcruve.LSV
+Param = mcurve.Param
+LSV = mcurve.LSV
 
 class Generic_EAQt(ABC):
     vec_param = {}

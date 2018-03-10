@@ -126,19 +126,18 @@ def ajax(request, user):
             print(details)
             if isOk:
                 #TODO: start parsing
-                parseAndCreateModels(files=files, details=details, user=user)
-                pass
+                fileset_id = parseAndCreateModels(files=files, details=details, user=user)
+                jsonData['command'] = 'success'
+                jsonData['location'] = reverse('showFileSet', args=[ user.id, fileset_id])
             else:
+                jsonData['command'] = 'failed'
                 raise 91
                 #TODO: return error
                 pass
         else:
-            raise 95
-            #TODO: return error
-            pass
+            jsonData['command'] = 'failed'
     else:
-        raise 99
-        pass
+        jsonData['command'] = 'failed'
     return JsonResponse(jsonData)
 
 
@@ -206,8 +205,8 @@ def parseAndCreateModels(files, details, user):
     except DatabaseError:
         transaction.savepoint_rollback(sid)
         return -1
-        transaction.savepoint_commit(sid)
-        return fsid
+    transaction.savepoint_commit(sid)
+    return fsid
 
 def _saveFileSet(cf_ids, user, details):
     fs = mmodels.FileSet(
