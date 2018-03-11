@@ -47,7 +47,6 @@ listOfFields = {
         None: [
             'firstIsE_Ep', # float
             'firstIsE_Ek',# float
-            'firstIsE_E0',# float
             'firstIsE_dE',# float
             'firstIsE_t',# float
         ]

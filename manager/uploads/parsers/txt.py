@@ -10,6 +10,9 @@ Param = mcurve.Param
 
 class Txt(Parser):
 
+    def readPandas(fileForPandas):
+        return pd.read_csv(fileForPandas, sep='\s+', header=None, skiprows=skipRows)
+
     def __init__(self, cfile, details):
         # Details not needed - ignore
         self.vec_param = []
@@ -17,7 +20,7 @@ class Txt(Parser):
         self._curves = []
         self.cfile = cfile
         skipRows = int(details.get('skipRows', 0))
-        pdfile = pd.read_csv(self.cfile, sep='\s+', header=None, skiprows=skipRows)
+        pdfile = readPandas(self.cfile)
         potential = []
         time = []
         index = 0
