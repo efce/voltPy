@@ -548,7 +548,7 @@ def upload(request, user):
     }   
     return voltpy_render(
         request=request, 
-        template_name='manager/uploadFile_new.html',
+        template_name='manager/uploadFile.html',
         context=context
     ) 
 

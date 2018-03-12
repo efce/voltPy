@@ -30,6 +30,10 @@
   text-decoration: none; 
 }
 
+.hiddenElement {
+    margin: 2px;
+}
+
 .invisible {
     display: none;
 }
@@ -135,4 +139,8 @@ form table th {
 
 .atContents td {
     border: 1px black solid;
+}
+
+fieldset li {
+    margin-top: 5px;
 }
