@@ -4,23 +4,8 @@ from django.db.models import Q
 from django.utils import timezone
 from django.core.exceptions import ObjectDoesNotExist
 import manager.models as mmodels
-from manager.processupload import ProcessUpload
 from manager.exceptions import VoltPyNotAllowed
 import manager
-
-class UploadFileForm(forms.Form):
-    name = forms.CharField(label="Name", max_length=128)
-    comment = forms.CharField(label="Comment", max_length=512)
-    file = forms.FileField()
-
-    def process(self, user, request):
-        p=ProcessUpload(
-                user,
-                request.FILES['file'],
-                self.cleaned_data.get('name'),
-                self.cleaned_data.get('comment'))
-        self.file_id = p.getFileId()
-        return p.status
 
 class CursorsForm(forms.Form):
     def __init__(self, *args, **kwargs):
@@ -225,14 +210,16 @@ class SelectXForm(forms.Form):
 class SelectCurvesForCurveSetForm(forms.Form):
     curvesetid = -1
     def __init__(self, user,  *args, **kwargs):
-        self.toClone = int(kwargs.pop('toClone', -1))
+        self.toClone = kwargs.pop('toClone', [])
         newName = ''
         try:
-            csToClone = mmodels.CurveSet.objects.get(id=self.toClone)
-            newName = csToClone.name + '_copy'
+            if len(self.toClone) == 1:
+                csToClone = mmodels.CurveSet.objects.get(id=self.toClone[0])
+                if csToClone.canBeReadBy(user):
+                    newName = csToClone.name + '_copy'
         except:
             newName = ''
-            self.toClone = -1
+            #self.toClone = -1
         super(SelectCurvesForCurveSetForm, self).__init__(*args, **kwargs)
         from django.db.models import Prefetch
         self.fields['name'] = forms.CharField(
@@ -248,7 +235,7 @@ class SelectCurvesForCurveSetForm(forms.Form):
         for f in files:
             fname = 'curveFile_{0}'.format(f.id)
             initial = False
-            if f.curveSet.id == self.toClone:
+            if f.curveSet.id in self.toClone:
                 initial = True
             self.fields[fname] = forms.BooleanField(
                 label=f,
@@ -274,7 +261,7 @@ class SelectCurvesForCurveSetForm(forms.Form):
                 continue
             csname = 'curveSet_{0}'.format(cs.id)
             initial = False
-            if cs.id == self.toClone:
+            if cs.id in self.toClone:
                 initial = True
             self.fields[csname] = forms.BooleanField(
                 label=cs,

@@ -30,8 +30,9 @@
     <ul>
     {% if user %}
       <li><a href="{% url 'index' user.id %}">Index</a></li>
+      <li><a href="{% url 'upload' user.id %}">Upload Files</a></li>
+      <li><a href="{% url 'browseFileSets' user.id %}">Browse FileSets</a></li>
       <li><a href="{% url 'browseCurveFile' user.id %}">Browse Files</a></li>
-      <li><a href="{% url 'upload' user.id %}">Upload File</a></li>
       <li><a href="{% url 'browseCurveSet' user.id %}">Browse Curve Sets</a></li>
       <li><a href="{% url 'createCurveSet' user.id %}">Create Curve Set</a></li>
       <li><a href="{% url 'browseAnalysis' user.id %}">Browse Analysis</a></li>

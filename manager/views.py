@@ -52,6 +52,31 @@ def logout(request):
     add_notification(request, "Logged out successfuly.", 0)
     return HttpResponseRedirect(reverse('indexNoUser'))
 
+
+@redirect_on_voltpyexceptions
+@with_user
+def browseFileSet(request, user):
+    files = mmodels.FileSet.objects.filter(owner=user, deleted=False)
+    context = {
+        'user' : user,
+        'list_header' : 'Displaying uploaded files sets:',
+        'list_to_disp' : files,
+        'action1': "showFileSet",
+        'action2': "deleteFileSet",
+        'action2_text': ' (delete) ',
+        'whenEmpty' : ''.join([
+                            "You have no files uploaded. ",
+                            "<a href='{url}'>Upload one</a>.".format( 
+                                url=reverse('upload', args=[user.id])
+                            ),
+                        ])
+    }
+    return voltpy_render(
+        request=request, 
+        template_name='manager/browse.html',
+        context=context
+    )
+
 @redirect_on_voltpyexceptions
 @with_user
 def browseCurveFile(request, user):
@@ -131,6 +156,15 @@ def browseCurveSet(request, user):
 
 @redirect_on_voltpyexceptions
 @with_user
+def deleteFileSet(request, user, fileset_id):
+    try:
+        fs = mmodels.FileSet.objects.get(id=fileset_id)
+    except ObjectDoesNotExist:
+        fs = None
+    return delete_helper(request, user, fs)
+
+@redirect_on_voltpyexceptions
+@with_user
 def deleteCurveFile(request, user, file_id):
     try:
         cfile = mmodels.CurveFile.objects.get(id=file_id)
@@ -189,7 +223,7 @@ def deleteCurveSet(request, user, curveset_id):
 
 @redirect_on_voltpyexceptions
 @with_user
-def createCurveSet(request, user, toClone=-1):
+def createCurveSet(request, user, toClone=[]):
     """
     from pyinstrument import Profiler
     profiler = Profiler(use_signal=False)
@@ -289,6 +323,56 @@ def showProcessed(request, user, processing_id):
 
 @redirect_on_voltpyexceptions
 @with_user
+def showFileSet(request, user, fileset_id):
+    try:
+        fs = mmodels.FileSet.objects.get(id=fileset_id)
+    except ObjectDoesNotExist:
+        raise VoltPyDoesNotExists()
+        
+    if not fs.canBeReadBy(user):
+        raise VoltPyNotAllowed(user)
+
+    form_data = { 'model': fs, 'label_name': 'FileSet name' }
+    edit_name_form = form_helper(
+        user=user, 
+        request=request,
+        formClass=mforms.EditName,
+        submitName='anEditName',
+        submitText='Save',
+        formExtraData=form_data
+    )
+
+    plotScr, plotDiv = generate_plot(
+        request=request, 
+        user=user, 
+        plot_type ='fileset',
+        value_id = fs.id
+    )
+
+    context = {
+        'scripts': plotScr, # + formAnalyze.getJS(request) + formProcess.getJS(request),
+        'mainPlot' : plotDiv,
+        'user' : user,
+        'disp_name_edit': edit_name_form['html'],
+        'fileset': fs,
+        #'at': at_disp,
+        #'formProcess': formProcess,
+        #'formAnalyze': formAnalyze,
+        'cloneCSUrl': 
+                b64.b64encode(reverse('cloneCurveSet', kwargs={
+                    'user_id': user.id,
+                    'toClone_txt': ','.join([ str(f.curveSet.id) for f in fs.files.all() ])
+                    }).encode()
+                ).decode('UTF-8')
+    }
+    return voltpy_render(
+        request=request, 
+        template_name='manager/showFileSet.html',
+        context=context
+    )
+
+@redirect_on_voltpyexceptions
+@with_user
 def showCurveSet(request, user, curveset_id):
     try:
         cs = mmodels.CurveSet.objects.get(id=curveset_id)
@@ -352,7 +436,7 @@ def showCurveSet(request, user, curveset_id):
         'cloneCSUrl': 
                 b64.b64encode(reverse('cloneCurveSet', kwargs={
                     'user_id': user.id,
-                    'toClone_id': cs.id, 
+                    'toClone_txt': cs.id, 
                     }).encode()
                 ).decode('UTF-8')
     }
@@ -365,8 +449,9 @@ def showCurveSet(request, user, curveset_id):
 
 @redirect_on_voltpyexceptions
 @with_user
-def cloneCurveSet(request, user, toClone_id):
-    return createCurveSet(request, user_id=user.id, toClone=toClone_id)
+def cloneCurveSet(request, user, toClone_txt):
+    toClone_ids = [ int(x) for x in toClone_txt.split(',') ]
+    return createCurveSet(request, user_id=user.id, toClone=toClone_ids)
 
 @redirect_on_voltpyexceptions
 @with_user
@@ -453,29 +538,20 @@ def editCurveSet(request,user,curveset_id):
         context=context
     )
 
+
 @redirect_on_voltpyexceptions
 @with_user
 def upload(request, user):
-    if request.method == 'POST':
-        form = mforms.UploadFileForm(request.POST, request.FILES)
-        if form.is_valid():
-            if (form.process(user, request) == True):
-                file_id = form.file_id
-                return HttpResponseRedirect(
-                    reverse('showCurveFile', args=[user.id, file_id])
-                )
-    else:
-        form = mforms.UploadFileForm()
 
-    context = {
-        'form': form, 
+    context = { 
         'user': user
-    }
+    }   
     return voltpy_render(
         request=request, 
         template_name='manager/uploadFile.html',
         context=context
-    )
+    ) 
+
 
 @redirect_on_voltpyexceptions
 @with_user
@@ -552,7 +628,7 @@ def showCurveFile(request, user, file_id):
         'cloneCSUrl': 
                 b64.b64encode(reverse('cloneCurveSet', kwargs={
                     'user_id': user.id,
-                    'toClone_id': cf.curveSet.id, 
+                    'toClone_txt': cf.curveSet.id, 
                     }).encode()
                 ).decode('UTF-8')
     }

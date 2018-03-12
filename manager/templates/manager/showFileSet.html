@@ -1,0 +1,19 @@
+{% extends "manager/main.html" %}
+
+{% block title %} Show {% endblock %}
+
+{% block real_content %}
+<table class="table_no_breaks">
+<tr><td>FileSet ID: {{ fileset.id }}</td><td style="border-left: 1px black solid;" rowspan=3>&nbsp;<button class="_voltJS_urlChanger _voltJS_url@{{ cloneCSUrl }}"> Prepare CurveSet </button> </td></tr>
+<tr><td>{{ disp_name_edit | safe }} &nbsp;</td></tr>
+<tr><td>Date created: {{ fileset.date | date:"c" }} </td></tr>
+</table>
+<br />
+FileSet consists of:
+<ul>
+    {% for f in fileset.files.all %}
+    <li><a href="{% url 'showCurveFile' user.id f.id %}">{{ f }}</a></li>
+    {% endfor %}
+</ul>
+
+{% endblock %}

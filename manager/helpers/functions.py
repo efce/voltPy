@@ -93,6 +93,7 @@ def generate_plot(request, user, plot_type, value_id, **kwargs):
         'file',
         'analysis',
         'curveset',
+        'fileset',
     ]
     if not ( plot_type in allowedTypes ):
         return
@@ -116,7 +117,13 @@ def generate_plot(request, user, plot_type, value_id, **kwargs):
         data=pm.analysisHelper(user, value_id)
         xlabel = pm.xLabelHelper(user)
         pm.include_x_switch = False
-
+    elif (plot_type == 'fileset'):
+        fs = mmodels.FileSet.objects.get(id=value_id)
+        data = []
+        for f in fs.files.all():
+            data.extend(pm.curveSetHelper(user, f.curveSet))
+        pm.xlabel = pm.xLabelHelper(user)
+        pm.include_x_switch = True
 
     pm.ylabel = 'i / µA'
     pm.setInteraction(kwargs.get('interactionName', 'none'))

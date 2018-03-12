@@ -11,21 +11,36 @@ function sleep (time) {
     return new Promise((resolve) => setTimeout(resolve, time));
 };
 
-// Function used for communication between the page and server, with loading text.
-function queryServer(url, object, plot=null, lineData=null, cursors=null) {
-    alert('querying server');
+function voltpy_loading_start(text) {
     window.scrollTo(0, 0);
     $('body').css('overflow','hidden');
     $('#voltpy-loading').addClass('loading-cover');
     $('#voltpy-loading').css('line-height', $('#voltpy-loading').css('height'));
-    $('#voltpy-loading').text(' Loading ... ');
-    $.post(url, object).done(
-        function(data) {
-            processJSONReply(data, plot, lineData, cursors);
-            $('#voltpy-loading').css('display','none');
-            $('body').css('overflow','scroll');
-        }
-    );
+    $('#voltpy-loading').text(text);
+}
+function voltpy_loading_done()
+{
+    $('#voltpy-loading').css('display','none');
+    $('body').css('overflow','scroll');
+}
+
+// Function used for communication between the page and server, with loading text.
+function voltpy_query(url, object, funcOnReturn) {
+    object['csrfmiddlewaretoken'] = document.getElementsByName('csrfmiddlewaretoken')[0].value;
+    voltpy_loading_start('Loading ...');
+    function retFun(data) {
+        funcOnReturn(data);
+        voltpy_loading_done();
+    }
+    $.post(url, object).done(retFun);
+};
+
+function queryServer(url, object, plot=null, lineData=null, cursors=null) {
+    //TODO: partial 
+    function processReplyPartial (data) {
+        processJSONReply(data, plot, lineData, cursors);
+    }
+    voltpy_query(url, object, processReplyPartial);
 };
 
 // This is main JS function for sending and processing JSON.
@@ -159,7 +174,7 @@ $( function() {
     $( '._voltJS_plotHighlight' ).hover( function() { // on hover in
         $(this).css('background-color', 'red');
         $(this).css('color', 'white');
-        var classes = this.className.split(" ");
+        var classes = this.className.split(' ');
         classes.forEach( function(name) {
             if (name.startsWith(iclass)) {
                 var number = name.substring(iclass.length);
@@ -182,6 +197,15 @@ $( function() {
         }); 
     });
 });
+
+$( function() {
+    $( '._voltJS_toggleShow' ).on('change', function(e) {
+        toggleShow(e.target);
+    });
+});
+function toggleShow(e) {
+    $(e.target).next('._voltJS_toShow' ).toggleClass('invisible visible');
+}
 
 $( function() {
     $( '._voltJS_Disable' ).on( 'change', function(e) {

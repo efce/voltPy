@@ -29,6 +29,17 @@
   padding: 12px 14px; 
   text-decoration: none; 
 }
+
+.hiddenElement {
+    margin: 2px;
+}
+
+.invisible {
+    display: none;
+}
+.visible {
+    display: block;
+}
 #notifications { 
   border: 1px #ACF solid;
   margin: 10px;
@@ -71,6 +82,10 @@
     border: 0px;
     border-collapse: collapse !important;
     border-spacing: 0px;
+}
+
+.file_error {
+    color: red;
 }
 
 form label { 
@@ -124,4 +139,8 @@ form table th {
 
 .atContents td {
     border: 1px black solid;
+}
+
+fieldset li {
+    margin-top: 4px !important;
 }

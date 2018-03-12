@@ -1,6 +1,7 @@
 from django.conf.urls import url
 
 from . import views
+from manager.uploads import uploadmanager
 
 urlpatterns = [
     url(r'^$', 
@@ -11,23 +12,31 @@ urlpatterns = [
         views.login, name='login'),
     url(r'^logout/$', 
         views.logout, name='logout'),
+    url(r'^(?P<user_id>[0-9]+)/browse-file-sets/$', 
+        views.browseFileSet, name='browseFileSets'),
     url(r'^(?P<user_id>[0-9]+)/browse-files/$', 
         views.browseCurveFile, name='browseCurveFile'),
     url(r'^(?P<user_id>[0-9]+)/upload-file/$', 
         views.upload, name='upload'),
+    url(r'^(?P<user_id>[0-9]+)/ajax/uploads/$', 
+        uploadmanager.ajax, name='ajaxUpload'),
+    url(r'^(?P<user_id>[0-9]+)/delete-file-set/(?P<file_id>[0-9]+)/$', 
+        views.deleteFileSet, name='deleteFileSet'),
     url(r'^(?P<user_id>[0-9]+)/delete-file/(?P<file_id>[0-9]+)/$', 
         views.deleteCurveFile, name='deleteCurveFile'),
     url(r'^(?P<user_id>[0-9]+)/edit-file/(?P<file_id>[0-9]+)/$', 
         views.editCurveFile, name='editCurveFile'),
     url(r'^(?P<user_id>[0-9]+)/show-file/(?P<file_id>[0-9]+)/$', 
         views.showCurveFile, name='showCurveFile'),
+    url(r'^(?P<user_id>[0-9]+)/show-file-set/(?P<fileset_id>[0-9]+)/$', 
+        views.showFileSet, name='showFileSet'),
     url(r'^(?P<user_id>[0-9]+)/delete-curve/(?P<objType>[cf|cs]+)/(?P<objId>[0-9]+)/(?P<delId>[0-9]+)/$',
         views.deleteCurve, name='deleteCurve'),
     url(r'^(?P<user_id>[0-9]+)/browse-curvesets/$', 
         views.browseCurveSet, name='browseCurveSet'),
     url(r'^(?P<user_id>[0-9]+)/create-curve-set/$', 
         views.createCurveSet, name='createCurveSet'),
-    url(r'^(?P<user_id>[0-9]+)/clone-curve-set/(?P<toClone_id>[0-9]+)/$', 
+    url(r'^(?P<user_id>[0-9]+)/clone-curve-set/(?P<toClone_txt>[0-9,]+)/$', 
         views.cloneCurveSet, name='cloneCurveSet'),
     url(r'^(?P<user_id>[0-9]+)/show-curveset/(?P<curveset_id>[0-9]+)/$', 
         views.showCurveSet, name='showCurveSet'),

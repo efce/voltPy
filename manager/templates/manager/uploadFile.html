@@ -3,11 +3,149 @@
 {% block title %} Browse {% endblock %}
 
 {% block real_content %}
-<form method="post" action="" enctype="multipart/form-data">
+<form method="post" action="./" enctype="multipart/form-data" id="file_form">
 	<table>
 	{% csrf_token %}
-	{{ form.as_table }}
-	<tr><td><input type="submit" value="Upload" /></td></tr>
+        <tr>
+            <td>
+                <label for="fileset_name">Fileset name: </label><input id="fileset_name" type="text" name="fileset_name" /><br />
+            </td>
+        </tr>
+        <tr>
+            <td>
+            <input id="file_selector" type="file" name="files[]" multiple />
+            </td>
+        </tr>
+        <tr>
+            <td>
+            <input id="file_sender" type="submit" value="Upload" disabled/>
+            </td>
+        </tr>
 	</table>
+    <p>Files selected:
+        <div id="file_list" style="width: 700px;"></div>
+    </p>
 </form>
+<script>
+
+function addDescribeFile(id) {
+    var field = ''
+    var fieldname = 'f_' + id + '_' + 'ignoreRows';
+    field += '<ul><li><label for="' + fieldname + '">Rows to ignore: </label>';
+    field += '<input id="' + fieldname + '" type="text" name="' + fieldname + '" value="0" /></li>';
+
+    fieldname = 'f_' + id + '_' + 'firstIsE';
+    field += '<li><label for="' + fieldname + '">First column is E: </label>';
+    field += '<input onClick="toggleShow(event);" id="' + fieldname + '" type="checkbox" name="' + fieldname + '" checked />';
+    field += '<ul class="invisible _voltJS_toShow uploadDetails">';
+    field += '<li class="hiddenElement"><label for="' + fieldname + '_Ep">Estart [mV]: </label>';
+    field += '<input type="text" id="' + fieldname + '_Ep" name="' + fieldname + '_Ep" value="0" /></li>';
+    field += '<li class="hiddenElement"><label for="' + fieldname + '_Ek">Eend [mV]: </label>';
+    field += '<input type="text" id="' + fieldname + '_Ek" name="' + fieldname + '_Ek" value="100" /></li>';
+    field += '<li class="hiddenElement"><label for="' + fieldname + '_dE">Pulse height (for SWV/DPV) or<br />Base potential (for NPV) [mV]: </label>';
+    field += '<input type="text" id="' + fieldname + '_dE" name="' + fieldname + '_dE" value="0" /></li>';
+    field += '<li class="hiddenElement"><label for="' + fieldname + '_t">Time per Estep [ms]: </label>';
+    field += '<input type="text" id="' + fieldname + '_t" name="' + fieldname + '_t" value="10" /></li>';
+    field += '</ul></li>';
+
+
+    fieldname = 'f_' + id + '_' + 'isSampling';
+    field += '<li><label for="' + fieldname + '">Is sampling data: </label>';
+    field += '<input  onClick="toggleShow(event);" id="' + fieldname + '" type="checkbox" name="' + fieldname + '" />';
+    field += '<ul class="invisible _voltJS_toShow uploadDetails">';
+    field += '<li><label for="' + fieldname + '_SPP">Samples per point: </label>';
+    field += '<input type="text" id="' + fieldname + '_SPP" name="' + fieldname + '_SPP" value="1" /></li>';
+    field += '<li><label for="' + fieldname + '_SFreq">Sampling frequency [kHz]: </label>';
+    field += '<input type="text" id="' + fieldname + '_SFreq" name="' + fieldname + '_SFreq" value="1" /></li>';
+    field += '</ul></li>';
+
+    fieldname = 'f_' + id + '_' + 'voltMethod';
+    field += '<li><label for="' + fieldname + '">Select method: </label>';
+    field += '<select id="' + fieldname + '" name="' + fieldname + '">';
+    field += '<option value="lsv">LSV</option>';
+    field += '<option value="scv">SCV</option>';
+    field += '<option value="npv">NPV</option>';
+    field += '<option value="dpv">DPV</option>';
+    field += '<option value="swv" selected>SWV</option>';
+    field += '<option value="chronoamp">Chronoamperometry</option></li></ul>';
+    return field;
+}
+
+function uploadmanagerProcessReply(data) {
+    var isOk = data['isOk'];
+    if ( !isOk ) {
+        $('#file_sender').attr('disabled', true);
+    } else {
+        $('#file_sender').attr('disabled', false);
+    }
+    var errors = data['errors'];
+    var needsDescribe = data['needsDescribe'];
+    var files = $("#file_selector").get(0).files
+    for (var i=0; i<files.length; i++) {
+        var fid = 'file_' + i;
+        var fname = $('<div/>').html(files[i].name).text(); // <- Strip html tags
+        var flen = files[i].size/1000
+        var classes = "selected_file";
+        if (!errors[i] == '') {
+            classes += "file_error"
+        }
+        var toAppend = ''
+        toAppend += '<fieldset id="div'+fid+'" class="' + classes + '">' + 
+            '<legend>'+fname + '</legend>File size: ' + Math.ceil(flen) + ' kB';
+        if (!errors[i] == '') {
+            toAppend += '<br><small>'+errors[i]+'</small>';
+        }
+        if ( needsDescribe[i] ) {
+            toAppend += addDescribeFile(i);
+        }
+        toAppend += '</fieldset>';
+        $("#file_list").append(toAppend);
+    }
+}
+
+function uploadmanagerUploadInfo(data) {
+    if ( data['command'] == 'success' ) {
+        alert('Upload sucessfull, redirectirng');
+        window.location.href = data['location'];
+    } else if ( data['command'] == 'failed' ) {
+        alert('Upload failed, please try again.');
+    }
+}
+
+$("#file_selector").change(function() {
+    $(".selected_file").remove();
+    var filelist = $("#file_selector").get(0).files;
+    var filearray = [];
+    for (var i = 0; i < filelist.length; i++) {
+        var f = { 'name': filelist[i].name, 'size': filelist[i].size };
+        filearray.push(f);
+    }
+    var obj = {
+        'command': 'filelist',
+        'filelist': JSON.stringify(filearray)
+    }
+    voltpy_query('{% url "ajaxUpload" 1 %}', obj, uploadmanagerProcessReply);
+});
+
+$("form#file_form").submit(function(e) {
+    e.preventDefault();
+    voltpy_loading_start('Uploading, please wait ...');
+    $(this).append('<input type="hidden" name="command" value="upload" />');
+    var formData = new FormData(this);
+    $.ajax({
+        url: "{% url "ajaxUpload" 1 %}",
+        type: 'POST',
+        data: formData,
+        success: function (data) {
+            voltpy_loading_done();
+            uploadmanagerUploadInfo(data);
+        },
+        cache: false,
+        contentType: false,
+        processData: false
+    });
+    voltpy_loading_done();
+});
+
+</script>
 {% endblock %}
