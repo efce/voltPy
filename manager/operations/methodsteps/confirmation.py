@@ -7,8 +7,9 @@ class Confirmation(MethodStep):
     class ConfirmForm(forms.Form):
         pass
 
+
     def process(self, user, request, model):
-        if request.POST.get('command', False) == 'confirm':
+        if request.POST.get('confirm', False) == 'Forward':
             return True
         else:
             model.active_step_num = model.active_step_num-1

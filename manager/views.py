@@ -371,6 +371,42 @@ def showFileSet(request, user, fileset_id):
         context=context
     )
 
+
+@redirect_on_voltpyexceptions
+@with_user
+def  undoCurveSet(request, user, curveset_id):
+    try:
+        cs = mmodels.CurveSet.objects.get(id=curveset_id)
+    except ObjectDoesNotExist:
+        raise VoltPyDoesNotExists()
+    if not cs.canBeReadBy(user):
+        raise VoltPyNotAllowed(user)
+
+    if request.method == "POST" and request.POST.get('confirm', False):
+        confForm = mforms.GenericConfirmForm(request.POST)
+        if confForm.confirmed():
+            cs.undo()
+            add_notification(request, 'Changes undone.')
+            return HttpResponseRedirect(reverse('showCurveSet', args=[user.id, cs.id]))
+        else:
+            add_notification(request, 'Check the checkbox to confirm.', 1)
+
+    else:
+        confForm = mforms.GenericConfirmForm()
+
+    context = { 
+        'text_to_confirm': 'This will undo changes to CurveSet {0}'.format(cs.id),
+        'form': confForm,
+        'user': user,
+    }
+
+    return voltpy_render(
+        request=request, 
+        template_name='manager/confirmGeneric.html',
+        context=context
+    )
+
+
 @redirect_on_voltpyexceptions
 @with_user
 def showCurveSet(request, user, curveset_id):
@@ -433,6 +469,12 @@ def showCurveSet(request, user, curveset_id):
         'at': at_disp,
         'formProcess': formProcess,
         'formAnalyze': formAnalyze,
+        'undoCSUrl':
+                b64.b64encode(reverse('undoCurveSet', kwargs={
+                    'user_id': user.id,
+                    'curveset_id': cs.id, 
+                    }).encode()
+                ).decode('UTF-8'),
         'cloneCSUrl': 
                 b64.b64encode(reverse('cloneCurveSet', kwargs={
                     'user_id': user.id,

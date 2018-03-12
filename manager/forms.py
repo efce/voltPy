@@ -16,6 +16,18 @@ class CursorsForm(forms.Form):
             self.fields[cname] = forms.CharField(max_length=24, label=str(i+1))
             self.fields[cname].widget.attrs['readonly'] = True
 
+
+class GenericConfirmForm(forms.Form):
+    confirm = forms.BooleanField(initial=False, label="Check to confirm")
+
+    def confirmed(self):
+        self.is_valid()
+        if self.cleaned_data.get('confirm', False):
+            return True
+        else:
+            return False
+
+
 class EditName(forms.Form):
     def __init__(self, *args, **kwargs):
         self.model = kwargs.pop('model', None)

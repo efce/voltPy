@@ -341,12 +341,15 @@ class Method(ABC):
             self.__prevStep()
             return
 
+        isBack = request.POST.get('_voltJS_backButton', 0) 
+        print(self.step)
         if self.step is None or self.step['object'] is None:
             self.has_next = False
         elif self.step['object'].process(user=user, request=request, model=self.model):
             self.has_next = self.__nextStep()
 
         if not self.has_next:
+            self.model.curveSet.prepareUndo()
             self.finalize(user)
             self.model.active_step_num = None
             self.model.completed = True
@@ -374,6 +377,10 @@ class Method(ABC):
 
     @abstractmethod
     def getInfo(self, request, user):
+        pass
+
+    @abstractmethod
+    def finalize(self, user):
         pass
 
     @abstractclassmethod

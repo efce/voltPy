@@ -42,6 +42,8 @@ urlpatterns = [
         views.showCurveSet, name='showCurveSet'),
     url(r'^(?P<user_id>[0-9]+)/edit-curveset/(?P<curveset_id>[0-9]+)/$', 
         views.editCurveSet, name='editCurveSet'),
+    url(r'^(?P<user_id>[0-9]+)/undo-curveset/(?P<curveset_id>[0-9]+)/$', 
+        views.undoCurveSet, name='undoCurveSet'),
     url(r'^(?P<user_id>[0-9]+)/edit-analyte/(?P<objType>[cf|cs]+)/(?P<objId>[0-9]+)/(?P<analyteId>[0-9|new]+)/$', 
         views.editAnalyte, name='editAnalyte'),
     url(r'^(?P<user_id>[0-9]+)/delete-curveset/(?P<curveset_id>[0-9]+)/$', 

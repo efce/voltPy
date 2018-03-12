@@ -353,10 +353,15 @@ class CurveSet(models.Model):
     name = models.CharField(max_length=128)
     date = models.DateField(auto_now_add=True)
     locked = models.BooleanField(default=False)
-    curvesData = models.ManyToManyField(CurveData)
-    analytes = models.ManyToManyField(Analyte)
+    curvesData = models.ManyToManyField(CurveData, related_name="curvesData")
+    undoCurvesData = models.ManyToManyField(CurveData, related_name="undoCurvesData")
+    redoCurvesData = models.ManyToManyField(CurveData, related_name="redoCurvesData")
+    analytes = models.ManyToManyField(Analyte, related_name="analytes")
+    undoAnalytes  = models.ManyToManyField(Analyte, related_name="undoAnalytes")
     analytesConc = PickledObjectField(default={}) # dictionary key is analyte id
+    undoAnalytesConc = PickledObjectField(default={}) # dictionary key is analyte id
     analytesConcUnits = PickledObjectField(default={}) # dictionary key is analyte id
+    undoAnalytesConcUnits = PickledObjectField(default={}) # dictionary key is analyte id
     deleted = models.BooleanField(default=False)
 
     def isOwnedBy(self, user):
@@ -370,6 +375,40 @@ class CurveSet(models.Model):
 
     def __str__(self):
         return "%s" % self.name
+
+    def prepareUndo(self):
+        self.undoCurvesData.clear()
+        for cd in self.curvesData.all():
+            self.undoCurvesData.add(cd)
+        self.undoAnalytes.clear()
+        for a in self.analytes.all():
+            self.undoAnalytes.add(a)
+        self.undoAnalytesConc = self.analytesConc
+        self.undoAnalytesConcUnits = self.analytesConcUnits
+        self.save()
+
+    def undo(self):
+        if not self.hasUndo():
+            return
+        self.curvesData.clear()
+        for cd in self.undoCurvesData.all():
+            self.curvesData.add(cd)
+        self.analytes.clear()
+        for a in self.undoAnalytes.all():
+            self.analytes.add(a)
+        self.analytesConc = self.undoAnalytesConc
+        self.analytesConcUnits = self.undoAnalytesConcUnits
+        self.undoCurvesData.clear()
+        self.undoAnalytes.clear()
+        self.undoAnalytesConc.clear()
+        self.undoAnalytesConcUnits.clear()
+        self.save()
+
+    def hasUndo(self):
+        if len(self.undoCurvesData.all()) == 0:
+            return False
+        else:
+            return True
 
 
 class Analysis(models.Model):
