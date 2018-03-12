@@ -79,12 +79,8 @@ other right after it.
             newcd.date = None
             yvec = cd.yVector
             xvec = cd.xVector
-            polyval = lambda x: (
-                fit['x3']*x**3
-                + fit['x2']*x**2
-                + fit['x1']*x
-                + fit['x0'] )
-            ybkg = [ polyval(a) for a in xvec ]
+            p = (fit['x3'], fit['x2'], fit['x1'], fit['x0'])
+            ybkg = np.polyval(p, xvec)
             newyvec = list(np.subtract(yvec, ybkg));
             newcd.yVector = newyvec
             newcd.method=self.__repr__()
