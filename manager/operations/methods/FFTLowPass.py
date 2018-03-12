@@ -1,41 +1,13 @@
-from copy import deepcopy
 import numpy as np
+from copy import deepcopy
 from django.utils import timezone
 import manager.operations.methodmanager as mm
-import manager.plotmanager as pm
-
-class StepSelectFrequency(mm.MethodStep):
-    plot_interaction='none'
-
-    def process(self, user, request, model):
-        if ( request.method == 'POST' ):
-            tr = float(request.POST['cursor1'])
-            model.customData['threshold'] = tr
-            model.save()
-            return True
-
-    def getHTML(self, user, request, model):
-        p = pm.PlotManager()
-        for cd in model.curveSet.curvesData.all():
-            ylen = len(cd.yVector)
-            newy = np.absolute(np.fft.fft(cd.yVector))
-            newy = newy[1:round(ylen/2.0)].tolist()
-            p.add(
-                y=newy,
-                x=range(round(ylen/2)),
-                plottype='line',
-                color='red'
-            )
-        
-        p.setInteraction('set1cursor')
-        p.include_x_switch = True
-        src,div = p.getEmbeded(request, user, 'processing', model.id)
-        return { 'head': src, 'body' : div }
+from manager.operations.methodsteps.selectfrequency import SelectFrequency
 
 class FFTLowPass(mm.ProcessingMethod):
     _steps = [ 
         {
-            'class': StepSelectFrequency,
+            'class': SelectFrequency,
             'title': 'Select frequency threshhold.',
             'desc': 'Select frequency treshhold and press Forward, or press Back to change the selection.',
         },
@@ -58,7 +30,7 @@ signal back to the original domain.
     def finalize(self, user):
         for cd in self.model.curveSet.curvesData.all():
             ylen = len(cd.yVector)
-            st = round(self.model.customData['threshold'])
+            st = round(self.model.stepsData['SelectFrequency'])
             en = ylen - st - 1;
             ffty = np.fft.fft(cd.yVector)
             ffty[st:en] = [0]*(en-st)
