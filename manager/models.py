@@ -405,7 +405,7 @@ class CurveSet(models.Model):
         self.save()
 
     def hasUndo(self):
-        if len(self.undoCurvesData.all()) == 0:
+        if len(self.undoCurvesData.all()) == 0 or self.locked == True:
             return False
         else:
             return True
