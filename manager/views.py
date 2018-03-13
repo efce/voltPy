@@ -379,7 +379,7 @@ def  undoCurveSet(request, user, curveset_id):
         cs = mmodels.CurveSet.objects.get(id=curveset_id)
     except ObjectDoesNotExist:
         raise VoltPyDoesNotExists()
-    if not cs.canBeReadBy(user):
+    if not cs.canBeUpdatedBy(user):
         raise VoltPyNotAllowed(user)
 
     if request.method == "POST" and request.POST.get('confirm', False):
