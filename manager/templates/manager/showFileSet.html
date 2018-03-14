@@ -4,7 +4,9 @@
 
 {% block real_content %}
 <table class="table_no_breaks">
-<tr><td>FileSet ID: {{ fileset.id }}</td><td style="border-left: 1px black solid;" rowspan=3>&nbsp;<button class="_voltJS_urlChanger _voltJS_url@{{ cloneCSUrl }}"> Prepare CurveSet </button> </td></tr>
+<tr><td>FileSet ID: {{ fileset.id }}</td><td style="border-left: 1px black solid;" rowspan=3>&nbsp;<button class="_voltJS_urlChanger _voltJS_url@{{ cloneCSUrl }}"> Prepare CurveSet </button>
+        <br /><br />
+        &nbsp;<button class="_voltJS_urlChanger _voltJS_url@{{ exportCSUrl }}"> Export </button> </td></tr>
 <tr><td>{{ disp_name_edit | safe }} &nbsp;</td></tr>
 <tr><td>Date created: {{ fileset.date | date:"c" }} </td></tr>
 </table>

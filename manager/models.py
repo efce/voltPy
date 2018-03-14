@@ -1,9 +1,27 @@
+import numpy as np
+import io
 from enum import IntEnum
 from django.db import models
 from django.urls import reverse
 from picklefield.fields import PickledObjectField
 
+''' Not a model, just helper '''
+def exportCDasFile(cds):
+    cdict = {}
+    explen = len(cds)
+    for i,cd in enumerate(cds):
+        for x,y in zip(cd.xVector, cd.yVector):
+            tmp = cdict.get(x, [None]*explen)
+            tmp[i] = y
+            cdict[x] = tmp
+    xcol = np.array(list(cdict.keys())).reshape((-1,1))
+    ycols = np.array(list(cdict.values()))
+    allCols = np.concatenate((xcol, ycols), axis=1)
+    memoryFile = io.StringIO()
+    np.savetxt(memoryFile, allCols, delimiter=",", newline="\r\n", fmt='%s')
+    return memoryFile
 
+''' Models: '''
 class Group(models.Model):
     name = models.TextField(unique=True)
     
@@ -46,6 +64,9 @@ class CurveFile(models.Model):
     def canBeReadBy(self, user):
         return self.isOwnedBy(user)
 
+    def export(self):
+        return self.curveSet.export()
+
 
 class FileSet(models.Model):
     id = models.AutoField(primary_key=True)
@@ -69,6 +90,12 @@ class FileSet(models.Model):
 
     def canBeReadBy(self, user):
         return self.isOwnedBy(user)
+
+    def export(self):
+        cds = []
+        for f in self.files.all():
+            cds.extend(f.curveSet.curvesData.all())
+        return exportCDasFile(cds)
 
 
 class Curve(models.Model):
@@ -409,6 +436,9 @@ class CurveSet(models.Model):
             return False
         else:
             return True
+
+    def export(self):
+        return exportCDasFile(self.curvesData.all())
 
 
 class Analysis(models.Model):

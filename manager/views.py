@@ -14,6 +14,7 @@ from manager.helpers.functions import delete_helper
 from manager.helpers.functions import form_helper
 from manager.helpers.functions import generate_plot
 from manager.helpers.functions import voltpy_render
+from manager.helpers.functions import voltpy_serve_csv
 from manager.helpers.decorators import with_user
 from manager.helpers.decorators import redirect_on_voltpyexceptions
 
@@ -52,6 +53,43 @@ def logout(request):
     add_notification(request, "Logged out successfuly.", 0)
     return HttpResponseRedirect(reverse('indexNoUser'))
 
+
+@redirect_on_voltpyexceptions
+@with_user
+def export(request, user, objType, objId):
+    allowedTypes = ('fs', 'cf', 'cs', 'an' )
+    assert objType in allowedTypes
+    try:
+        csvFile = ''
+        filename = 'export_%s.csv'
+        if objType == 'fs':
+            fs = mmodels.FileSet.objects.get(id=int(objId), deleted=False)
+            if not fs.canBeReadBy(user):
+                raise VoltPyNotAllowed()
+            csvFile = fs.export()
+            filename = filename % fs.name
+        elif objType == 'cf':
+            cf = mmodels.CurveFile.objects.get(id=int(objId), deleted=False)
+            if not cf.canBeReadBy(user):
+                raise VoltPyNotAllowed()
+            csvFile = cf.export()
+            filename = filename % cf.name
+        elif objType == 'cs':
+            cs = mmodels.CurveSet.objects.get(id=int(objId), deleted=False)
+            if not cs.canBeReadBy(user):
+                raise VoltPyNotAllowed()
+            csvFile = cs.export()
+            filename = filename % cs.name
+        elif objType == 'an':
+            raise 'Not implemented'
+    except ObjectDoesNotExist:
+        raise VoltPyDoesNotExists()
+
+    return voltpy_serve_csv(
+        request=request,
+        filedata=csvFile,
+        filename=filename
+    )
 
 @redirect_on_voltpyexceptions
 @with_user
@@ -131,9 +169,6 @@ def browseCurveSet(request, user):
     files = mmodels.CurveFile.objects.filter(owner=user).only('curveSet')
     csetsFiles = [ x['curveSet'] for x in files.all().values('curveSet') ]
     csets = mmodels.CurveSet.objects.filter(owner=user, deleted=False).exclude(id__in=csetsFiles)
-
-    if ( __debug__ ):
-        print(csets)
     context = {
         'user' : user,
         'list_header' : 'Displaying CurveSets:',
@@ -358,6 +393,13 @@ def showFileSet(request, user, fileset_id):
         #'at': at_disp,
         #'formProcess': formProcess,
         #'formAnalyze': formAnalyze,
+        'exportCSUrl':
+                b64.b64encode(reverse('export', kwargs={
+                    'user_id': user.id,
+                    'objType': 'fs', 
+                    'objId': fs.id, 
+                    }).encode()
+                ).decode('UTF-8'),
         'cloneCSUrl': 
                 b64.b64encode(reverse('cloneCurveSet', kwargs={
                     'user_id': user.id,
@@ -474,6 +516,13 @@ def showCurveSet(request, user, curveset_id):
         'at': at_disp,
         'formProcess': formProcess,
         'formAnalyze': formAnalyze,
+        'exportCSUrl':
+                b64.b64encode(reverse('export', kwargs={
+                    'user_id': user.id,
+                    'objType': 'cs', 
+                    'objId': cs.id, 
+                    }).encode()
+                ).decode('UTF-8'),
         'undoCSUrl':
                 b64.b64encode(reverse('undoCurveSet', kwargs={
                     'user_id': user.id,
@@ -672,6 +721,13 @@ def showCurveFile(request, user, file_id):
         'curvefile': cf,
         'disp_name_edit' : edit_name_form['html'],
         'at': at_disp,
+        'exportCSUrl':
+                b64.b64encode(reverse('export', kwargs={
+                    'user_id': user.id,
+                    'objType': 'cf', 
+                    'objId': cf.id, 
+                    }).encode()
+                ).decode('UTF-8'),
         'cloneCSUrl': 
                 b64.b64encode(reverse('cloneCurveSet', kwargs={
                     'user_id': user.id,

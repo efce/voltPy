@@ -1,6 +1,9 @@
+import numpy as np
+import io
 import datetime
 from django.urls import reverse
 from django.http import HttpResponseRedirect
+from django.http import HttpResponse
 from django.shortcuts import render
 from django.template import loader
 from manager.exceptions import VoltPyNotAllowed, VoltPyDoesNotExists
@@ -33,11 +36,23 @@ def voltpy_render(*args, **kwargs):
     else:
         return render(*args, **kwargs, context=context)
 
+
+def voltpy_serve_csv(request, filedata, filename):
+    from django.utils.encoding import smart_str
+    response = render(
+        request = request, 
+        template_name='manager/export.html',
+        context = { 'data': filedata.getvalue() }
+    )
+    response['Content-Disposition'] = 'attachment; filename=%s' % smart_str(filename)
+    return response
+
 def add_notification(request, text, severity=0):
     now = datetime.datetime.now().strftime('%H:%M:%S')
     notifications = request.session.get('VOLTPY_notification', [])
     notifications.append( {'text': ''.join([now,': ', text]), 'severity':severity} )
     request.session['VOLTPY_notification'] = notifications
+
 
 def delete_helper(request, user, item, deleteFrom=None, onSuccessRedirect=None):
     """
@@ -181,4 +196,3 @@ def form_helper(
         request=request
     )
     return {'html': form_txt, 'instance': formInstance}
-    

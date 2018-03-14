@@ -32,6 +32,8 @@ urlpatterns = [
         views.showFileSet, name='showFileSet'),
     url(r'^(?P<user_id>[0-9]+)/delete-curve/(?P<objType>[cf|cs]+)/(?P<objId>[0-9]+)/(?P<delId>[0-9]+)/$',
         views.deleteCurve, name='deleteCurve'),
+    url(r'^(?P<user_id>[0-9]+)/export/(?P<objType>[fs|cs|cf|an]+)/(?P<objId>[0-9]+)/$',
+        views.export, name='export'),
     url(r'^(?P<user_id>[0-9]+)/browse-curvesets/$', 
         views.browseCurveSet, name='browseCurveSet'),
     url(r'^(?P<user_id>[0-9]+)/create-curve-set/$', 

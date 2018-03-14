@@ -10,6 +10,8 @@
         &nbsp;<button class="_voltJS_urlChanger _voltJS_url@{{ cloneCSUrl }}"> Copy </button>
         <br /><br />
         &nbsp;<button class="_voltJS_urlChanger _voltJS_url@{{ undoCSUrl }}"{% if not curveset.hasUndo %} disabled{% endif %}> Undo </button>
+        <br /><br />
+        &nbsp;<button class="_voltJS_urlChanger _voltJS_url@{{ exportCSUrl }}"> Export </button>
     </td></tr>
 <tr><td>{{ disp_name_edit | safe }} &nbsp;</td></tr>
 <tr><td>Date created: {{ curveset.date | date:"c" }} </td></tr>
