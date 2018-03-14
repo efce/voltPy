@@ -397,20 +397,20 @@ class SelectCurvesForCurveSetForm(forms.Form):
                             if "curveData" == nameSplit[2]:
                                 if ( val == True ) :
                                     vid = int(nameSplit[3])
-                                    cd = mmodels.CurveData.objects.get(id=vid).only('id','owner')
+                                    cd = mmodels.CurveData.objects.only('id','curve').get(id=vid)
                                     if not cd.canBeReadBy(user):
                                         raise 3
                                     final_curvedatas.append(cd)
-                                    for aid,v in analytesAndUnits.items():
+                                    for aid,v in analytesConc.items():
                                         analytesConc[aid][cd.id] = cf.curveSet.analytesConc.get(aid,{}).get(cd.id,0)
                         elif "curveSet" == nameSplit[0]:
                             if "curveData" == nameSplit[2]:
                                     vid = int(nameSplit[3])
-                                    cd = mmodels.CurveData.objects.get(id=vid).only('id','owner')
+                                    cd = mmodels.CurveData.objects.only('id','curve').get(id=vid)
                                     if not cd.canBeReadBy(user):
                                         raise 3
                                     final_curvedatas.append(cd)
-                                    for aid,v in analytesAndUnits.items():
+                                    for aid,v in analytesConc.items():
                                         analytesConc[aid][cd.id] = cs.analytesConc.get(aid,{}).get(cd.id,0)
                     else:
                         if "curveFile" == nameSplit[0]:
