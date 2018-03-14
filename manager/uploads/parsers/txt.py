@@ -74,6 +74,8 @@ class Txt(Parser):
         self.vec_param[Param.dE] = dE
         self.vec_param[Param.method] = self.methodDict[details.get('voltMethod', 'lsv')]
         self.vec_param[Param.nonaveragedsampling] = samplingFreq
+        self.vec_param[Param.tw] = 0
+        self.vec_param[Param.tp] = t_E if samplingFreq == 0 else spp
 
         for i in range(len(pdfile.columns)-index):
             ci = index + i
