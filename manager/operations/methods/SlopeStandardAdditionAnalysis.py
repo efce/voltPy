@@ -39,7 +39,7 @@ https://doi.org/10.1039/C7AN00185A
     def finalize(self, user):
         from manager.helpers.slopeStandardAdditionAnalysis import slopeStandardAdditionAnalysis
         from manager.helpers.prepareStructForSSAA import prepareStructForSSAA
-        from manager.curveea import Param
+        Param = mmodels.Curve.Param
         self.model.customData['selectedIndex'] = \
             self.model.curveSet.curvesData.all()[0].xvalueToIndex(user, self.model.stepsData['SelectPoint'])
         peak = self.model.customData.get('selectedIndex', 0)

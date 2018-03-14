@@ -435,6 +435,10 @@ def showCurveSet(request, user, curveset_id):
         value_id = cs.id
     )
 
+    filesUsed = set()
+    for cd in cs.curvesData.all():
+        filesUsed.add(cd.curve.curveFile)
+
     import manager.analytesTable as at
     at_disp = at.analytesTable(user, cs, objType='cs')
 
@@ -466,6 +470,7 @@ def showCurveSet(request, user, curveset_id):
         'user' : user,
         'disp_name_edit': edit_name_form['html'],
         'curveset': cs,
+        'filesUsed': filesUsed,
         'at': at_disp,
         'formProcess': formProcess,
         'formAnalyze': formAnalyze,

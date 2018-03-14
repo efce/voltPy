@@ -54,12 +54,18 @@ class Txt(Parser):
                 Ep = potential[0]
                 Ek = potential[len(potential)-1]
                 Estep = potential[1] - potential[1+(2*spp)]
-                time = [ (i/samplingFreq) for i in range(len(pdfile[0])) ]
+                time = [ (i/samplingFreq) for i in range(len((pdfile[0])/spp)) ]
                 index = 1
             else:
-                Estep = (Ek - Ep) / ptnr
+                method = details.get('voltMethod', 'lsv')
+                lessPtnr = ( 'npv', 'dpv', 'swv' )
+                if method in lessPtnr:
+                    Estep = (Ek - Ep) / ptnr / (2*spp)
+                    time = list(np.arange(0, t_E*ptnr/(2*spp), t_E))
+                else:
+                    Estep = (Ek - Ep) / ptnr / spp
+                    time = list(np.arange(0, t_E*ptnr/spp, t_E))
                 potential = list(np.arange(Ep, Ek, Estep))
-                time = list(np.arange(0, t_E*ptnr, t_E))
 
         self.vec_param = [0]*Param.PARAMNUM
         self.vec_param[Param.Ek] = Ek

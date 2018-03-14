@@ -13,6 +13,13 @@
     </td></tr>
 <tr><td>{{ disp_name_edit | safe }} &nbsp;</td></tr>
 <tr><td>Date created: {{ curveset.date | date:"c" }} </td></tr>
+<tr><td>Uses curves from: 
+    {% for f in filesUsed %}
+    <a href="{% url 'showCurveFile' user.id f.id %}">{{ f }}</a>&nbsp;
+    {% endfor %}
+    
+    
+    </td></tr>
 </table>
 <br />
 
