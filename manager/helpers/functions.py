@@ -44,6 +44,9 @@ def voltpy_serve_csv(request, filedata, filename):
         template_name='manager/export.html',
         context = { 'data': filedata.getvalue() }
     )
+    filename = filename.strip()
+    filename = filename.replace(' ', '_')
+    filename = "".join(x for x in filename if (x.isalnum() or x in ('_','+','-','.',',')))
     response['Content-Disposition'] = 'attachment; filename=%s' % smart_str(filename)
     return response
 
