@@ -28,10 +28,11 @@ class Txt(Parser):
         spp = int(details.get('isSampling_SPP', 1)) # samples per point
         samplingFreq = float(details.get('isSampling_SFreq', 0)) # in kHz
         fie = details.get('firstIsE', None) 
-        Ep = float(details.get('firstIsE_Ep', 0))
-        Ek = float(details.get('firstIsE_Ek', 1))
-        dE = float(details.get('firstIsE_dE', 0))
-        t_E = float(details.get('firstIsE_t', 1))
+        Ep = float(details.get('firstColumn_Ep', 0))
+        Ek = float(details.get('firstColumn_Ek', 1))
+        dE = float(details.get('firstColumn_dE', 0))
+        t_E = float(details.get('firstColumn_t', 1))
+        method = details.get('voltMethod', 'lsv')
         ptnr = len(pdfile[0])
 
         if isSampling == None:
@@ -57,13 +58,12 @@ class Txt(Parser):
                 time = [ (i/samplingFreq) for i in range(len((pdfile[0])/spp)) ]
                 index = 1
             else:
-                method = details.get('voltMethod', 'lsv')
                 lessPtnr = ( 'npv', 'dpv', 'swv' )
                 if method in lessPtnr:
-                    Estep = (Ek - Ep) / ptnr / (2*spp)
+                    Estep = (Ek - Ep) / (ptnr / (2*spp))
                     time = list(np.arange(0, t_E*ptnr/(2*spp), t_E))
                 else:
-                    Estep = (Ek - Ep) / ptnr / spp
+                    Estep = (Ek - Ep) / (ptnr / spp)
                     time = list(np.arange(0, t_E*ptnr/spp, t_E))
                 potential = list(np.arange(Ep, Ek, Estep))
 

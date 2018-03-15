@@ -4,8 +4,8 @@
 
 {% block real_content %}
 <form method="post" action="./" enctype="multipart/form-data" id="file_form">
-	<table>
 	{% csrf_token %}
+	<table>
         <tr>
             <td>
                 <label for="fileset_name">Fileset name: </label><input id="fileset_name" type="text" name="fileset_name" /><br />
@@ -22,32 +22,89 @@
             </td>
         </tr>
 	</table>
-    <p>Files selected:
+    <hr />
+    <div>Selected files:
         <div id="file_list" style="width: 700px;"></div>
-    </p>
+    </div>
 </form>
 <script>
+function firstColumnChanged(fid) {
+    var fieldname = 'f_' + fid + '_' + 'firstColumn';
+    var fieldv = $("input[name='"+fieldname+"']:checked");
+    switch (fieldv.val()){
+    case 'firstIsE':
+        $('#'+fieldname+'_Ep').parent('li').addClass('invisible');
+        $('#'+fieldname+'_Ep').parent('li').removeClass('visible');
+        $('#'+fieldname+'_Ek').parent('li').addClass('invisible');
+        $('#'+fieldname+'_Ek').parent('li').removeClass('visible');
+        $('#'+fieldname+'_dE').parent('li').addClass('visible');
+        $('#'+fieldname+'_dE').parent('li').removeClass('invisible');
+        $('#'+fieldname+'_t').parent('li').addClass('visible');
+        $('#'+fieldname+'_t').parent('li').removeClass('invisible');
+        break;
+    case 'firstIsT':
+        $('#'+fieldname+'_Ep').parent('li').addClass('visible');
+        $('#'+fieldname+'_Ep').parent('li').removeClass('invisible');
+        $('#'+fieldname+'_Ek').parent('li').addClass('visible');
+        $('#'+fieldname+'_Ek').parent('li').removeClass('invisible');
+        $('#'+fieldname+'_dE').parent('li').addClass('visible');
+        $('#'+fieldname+'_dE').parent('li').removeClass('invisible');
+        $('#'+fieldname+'_t').parent('li').addClass('invisible');
+        $('#'+fieldname+'_t').parent('li').removeClass('visible');
+        break;
+    case 'firstIsI':
+        $('#'+fieldname+'_Ep').parent('li').addClass('visible');
+        $('#'+fieldname+'_Ep').parent('li').removeClass('invisible');
+        $('#'+fieldname+'_Ek').parent('li').addClass('visible');
+        $('#'+fieldname+'_Ek').parent('li').removeClass('invisible');
+        $('#'+fieldname+'_dE').parent('li').addClass('visible');
+        $('#'+fieldname+'_dE').parent('li').removeClass('invisible');
+        $('#'+fieldname+'_t').parent('li').addClass('visible');
+        $('#'+fieldname+'_t').parent('li').removeClass('invisible');
+        break;
+    default:
+        return;
+    }
+
+}
 
 function addDescribeFile(id) {
     var field = ''
+
     var fieldname = 'f_' + id + '_' + 'ignoreRows';
     field += '<ul><li><label for="' + fieldname + '">Rows to ignore: </label>';
     field += '<input id="' + fieldname + '" type="text" name="' + fieldname + '" value="0" /></li>';
 
-    fieldname = 'f_' + id + '_' + 'firstIsE';
-    field += '<li><label for="' + fieldname + '">First column is E: </label>';
-    field += '<input onClick="toggleShow(event);" id="' + fieldname + '" type="checkbox" name="' + fieldname + '" checked />';
-    field += '<ul class="invisible _voltJS_toShow uploadDetails">';
-    field += '<li class="hiddenElement"><label for="' + fieldname + '_Ep">Estart [mV]: </label>';
-    field += '<input type="text" id="' + fieldname + '_Ep" name="' + fieldname + '_Ep" value="0" /></li>';
-    field += '<li class="hiddenElement"><label for="' + fieldname + '_Ek">Eend [mV]: </label>';
-    field += '<input type="text" id="' + fieldname + '_Ek" name="' + fieldname + '_Ek" value="100" /></li>';
-    field += '<li class="hiddenElement"><label for="' + fieldname + '_dE">Pulse height (for SWV/DPV) or<br />Base potential (for NPV) [mV]: </label>';
-    field += '<input type="text" id="' + fieldname + '_dE" name="' + fieldname + '_dE" value="0" /></li>';
-    field += '<li class="hiddenElement"><label for="' + fieldname + '_t">Time per Estep [ms]: </label>';
-    field += '<input type="text" id="' + fieldname + '_t" name="' + fieldname + '_t" value="10" /></li>';
-    field += '</ul></li>';
+    fieldname = 'f_' + id + '_' + 'voltMethod';
+    field += '<li><label for="' + fieldname + '">Select method: </label>';
+    field += '<select id="' + fieldname + '" name="' + fieldname + '">';
+    field += '<option value="lsv">LSV</option>';
+    field += '<option value="scv">SCV</option>';
+    field += '<option value="npv">NPV</option>';
+    field += '<option value="dpv">DPV</option>';
+    field += '<option value="swv" selected>SWV</option>';
+    field += '<option value="chronoamp">Chronoamperometry</option>i</select></li>';
 
+    fieldname = 'f_' + id + '_' + 'firstColumn';
+    field += '<li><fieldset style="width:500px"><legend>First column:</legend>';
+    field += '<ul style="display: block; width: 200px; float: left">';
+    field += '<li style="padding-top:8px">';
+    field += '<label><input onClick="firstColumnChanged('+id+');" id="'+fieldname+'E" type="radio" name="'+fieldname+'" value="firstIsE" checked>Potential</label></li>';
+    field += '<li style="padding-top:8px">';
+    field += '<label><input onClick="firstColumnChanged('+id+');" id="'+fieldname+'T" type="radio" name="'+fieldname+'" value="firstIsT">Time</label></li>';
+    field += '<li style="padding-top:8px">';
+    field += '<label><input onClick="firstColumnChanged('+id+');" id="'+fieldname+'I" type="radio" name="'+fieldname+'" value="firstIsI">Current</label></li></ul>';
+    field += '<div style="display: block; width: 240px; float: right">';
+    field += '<ul class="_voltJS_toShow uploadDetails">';
+    field += '<li class="invisible hiddenElement"><label for="' + fieldname + '_Ep">Estart [mV]: </label>';
+    field += '<input type="text" id="' + fieldname + '_Ep" name="' + fieldname + '_Ep" value="0" /></li>';
+    field += '<li class="invisible hiddenElement"><label for="' + fieldname + '_Ek">Eend [mV]: </label>';
+    field += '<input type="text" id="' + fieldname + '_Ek" name="' + fieldname + '_Ek" value="100" /></li>';
+    field += '<li class="invisible hiddenElement"><label for="' + fieldname + '_dE">dE (SWV/DPV) or E0 (NPV) [mV]: </label>';
+    field += '<input type="text" id="' + fieldname + '_dE" name="' + fieldname + '_dE" value="0" /></li>';
+    field += '<li class="invisible hiddenElement"><label for="' + fieldname + '_t">Time per step [ms]: </label>';
+    field += '<input type="text" id="' + fieldname + '_t" name="' + fieldname + '_t" value="10" /></li>';
+    field += '</div></fieldset></li>';
 
     fieldname = 'f_' + id + '_' + 'isSampling';
     field += '<li><label for="' + fieldname + '">Is sampling data: </label>';
@@ -59,15 +116,6 @@ function addDescribeFile(id) {
     field += '<input type="text" id="' + fieldname + '_SFreq" name="' + fieldname + '_SFreq" value="1" /></li>';
     field += '</ul></li>';
 
-    fieldname = 'f_' + id + '_' + 'voltMethod';
-    field += '<li><label for="' + fieldname + '">Select method: </label>';
-    field += '<select id="' + fieldname + '" name="' + fieldname + '">';
-    field += '<option value="lsv">LSV</option>';
-    field += '<option value="scv">SCV</option>';
-    field += '<option value="npv">NPV</option>';
-    field += '<option value="dpv">DPV</option>';
-    field += '<option value="swv" selected>SWV</option>';
-    field += '<option value="chronoamp">Chronoamperometry</option></li></ul>';
     return field;
 }
 
@@ -100,6 +148,7 @@ function uploadmanagerProcessReply(data) {
         }
         toAppend += '</fieldset>';
         $("#file_list").append(toAppend);
+        firstColumnChanged(i);
     }
 }
 

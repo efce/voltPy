@@ -42,14 +42,22 @@ maxfile_size = 100000 # size in kB
 listOfFields = {
     'ignoreRows': None, # int 
 
-    'firstIsE': {
-        'on': [],
-        None: [
-            'firstIsE_Ep', # float
-            'firstIsE_Ek',# float
-            'firstIsE_dE',# float
-            'firstIsE_t',# float
-        ]
+    'firstColumn': {
+        'firstIsE': [
+            'firstColumn_t',# float
+            'firstColumn_dE',# float
+        ],
+        'firstIsT': [
+            'firstColumn_Ep', # float
+            'firstColumn_Ek',# float
+            'firstColumn_dE',# float
+        ],
+        'firstIsI': [
+            'firstColumn_Ep', # float
+            'firstColumn_Ek',# float
+            'firstColumn_dE',# float
+            'firstColumn_t',# float
+        ],
     },
 
     'isSampling': {
@@ -77,7 +85,6 @@ def ajax(request, user):
         return JsonResponse({})
     command = request.POST.get('command', '')
     jsonData = {}
-    print('cmd:', command)
     if command == 'filelist':
         filelist = request.POST.get('filelist', '')
         filelist = json.loads(filelist)
@@ -99,9 +106,7 @@ def ajax(request, user):
             for i,needD in enumerate(needsDescribe):
                 details[i] = {}
                 if needD:
-                    #TODO: process extra data ...
                     for f in listOfFields.keys():
-                        #TODO: doesnt work as intented
                         fieldname = ''.join(['f_', str(i), '_', f]);
                         fieldata = request.POST.get(fieldname, None) 
                         details[i][f] = fieldata

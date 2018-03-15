@@ -54,7 +54,7 @@ class Vol(Parser):
     
     def unserialize(self, sysname, data):
         c = self.CurveFromFile()
-        #self.vec_param = Param.PARAMNUM * [0]
+        c.vec_param = Param.PARAMNUM * [0]
         for i, val in enumerate(self.params):
             c.vec_param[i] = val
         # Decode name

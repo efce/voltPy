@@ -75,7 +75,7 @@ class Parser(ABC):
                 current_min = np.min(c.vec_current), 
                 current_max = np.max(c.vec_current), 
                 current_range = np.max(c.vec_current) - np.min(c.vec_current), 
-                samplingRate = c.vec_param.get(Param.nonaveragedsampling, 0)
+                samplingRate = c.vec_param[Param.nonaveragedsampling],
             )
             ci.save()
             order+=1
