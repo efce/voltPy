@@ -29,21 +29,15 @@ signal back to the original domain.
 
     def finalize(self, user):
         for cd in self.model.curveSet.curvesData.all():
-            ylen = len(cd.yVector)
+            newcd = cd.getCopy()
+            yvec = newcd.yVector
+            ylen = len(yvec)
             st = round(self.model.stepsData['SelectFrequency'])
             en = ylen - st - 1;
-            ffty = np.fft.fft(cd.yVector)
+            ffty = np.fft.fft(yvec)
             ffty[st:en] = [0]*(en-st)
-            newcd = deepcopy(cd)
-            newcd.id = None
-            newcd.pk = None
-            newcd.date = None
             iffty = np.fft.ifft(ffty)
             newcd.yVector = np.real(iffty).tolist()
-            newcd.method = self.__repr__()
-            newcd.date = timezone.now()
-            newcd.processing = self.model
-            newcd.basedOn = cd
             newcd.save()
             for a in self.model.curveSet.analytes.all():
                 self.model.curveSet.analytesConc[a.id][newcd.id] = \

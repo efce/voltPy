@@ -55,7 +55,6 @@ class Parser(ABC):
             cd = mmodels.CurveData(
                 curve = cb, 
                 date = c.date,
-                processing = None,
                 time = c.vec_time, 
                 potential = c.vec_potential,
                 current = c.vec_current, 

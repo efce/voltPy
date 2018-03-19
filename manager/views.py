@@ -81,7 +81,9 @@ def export(request, user, objType, objId):
             csvFile = cs.export()
             filename = filename % cs.name
         elif objType == 'an':
-            raise 'Not implemented'
+            mm = mmm.MethodManager(user=user, analysis_id=objId)
+            csvFile = mm.exportFile()
+            #raise 'Not implemented'
     except ObjectDoesNotExist:
         raise VoltPyDoesNotExists()
 

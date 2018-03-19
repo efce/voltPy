@@ -1,4 +1,3 @@
-from copy import deepcopy
 import numpy as np
 import django.forms as forms
 from django.utils import timezone
@@ -27,23 +26,15 @@ given number of plots.
             if ( len(f) > 1 ):
                 cid = f[0]
                 orgcd = self.model.curveSet.curvesData.get(id=cid)
-                newcd = deepcopy(orgcd)
+                newcd = orgcd.getCopy()
                 self.model.curveSet.curvesData.remove(orgcd)
-                newcd.pk = None
-                newcd.id = None
-                newcd.date = None
                 cnt = 1
+                yvecs = []
                 for cid in f[1:]:
                     cd = self.model.curveSet.curvesData.get(id=cid)
-                    old = np.dot(newcd.yVector, cnt)
-                    newBig = np.add(cd.yVector, old) 
-                    newcd.yVector = np.divide(newBig, cnt+1).tolist()
-                    cnt += 1
+                    yvecs.append(cd.yVector)
                     self.model.curveSet.curvesData.remove(cd)
-                newcd.method = self.__repr__()
-                newcd.date = timezone.now()
-                newcd.processing = self.model
-                newcd.basedOn = orgcd
+                newcd.yVector = np.mean(yvecs, axis=0).tolist()
                 newcd.save()
                 #TODO: move removal to model ?:
                 for a in self.model.curveSet.analytes.all():

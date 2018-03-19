@@ -1,4 +1,3 @@
-from copy import deepcopy
 import numpy as np
 from django.utils import timezone
 import manager.operations.methodmanager as mm
@@ -33,22 +32,16 @@ https://doi.org/10.1016/j.electacta.2014.05.076
 
     def finalize(self, user):
         for cd in self.model.curveSet.curvesData.all():
-            newcd = deepcopy(cd)
-            newcd.id = None
-            newcd.pk = None
-            newcd.date = None
-            xvec = range(len(cd.current))
-            yvec = cd.yVector
+            newcd = cd.getCopy()
+            yvec = newcd.yVector
+            xvec = range(len(yvec))
             degree = 4
             iterations = 50
             self.model.customData['iterations'] = iterations
             self.model.customData['degree'] = degree
             yvec = calc_abc(xvec, yvec, degree, iterations)['yvec']
             newcd.yVector = yvec
-            newcd.method = self.__repr__()
             newcd.date = timezone.now()
-            newcd.processing = self.model
-            newcd.basedOn = cd
             newcd.save()
             self.model.curveSet.curvesData.remove(cd)
             self.model.curveSet.curvesData.add(newcd)

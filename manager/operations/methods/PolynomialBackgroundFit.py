@@ -53,14 +53,10 @@ other right after it.
             fitlines = []
             for cd,fit in zip(self.model.curveSet.curvesData.all(), self.model.customData['fitCoeff']):
                 xvec = cd.xVector
-                polyval = lambda x: (
-                    fit['x3']*x**3
-                    + fit['x2']*x**2
-                    + fit['x1']*x
-                    + fit['x0'] )
+                p = (fit['x3'], fit['x2'], fit['x1'], fit['x0'])
                 fitlines.append(dict(
                     x=xvec,
-                    y=[ polyval(a) for a in xvec ],
+                    y=np.polyval(p,xvec).tolist(),
                     plottype='line',
                     color='red',
                 ))
@@ -73,20 +69,13 @@ other right after it.
         if self.model.curveSet.locked:
             raise ValueError("CurveSet used by Analysis method cannot be changed.")
         for cd,fit in zip(self.model.curveSet.curvesData.all(), self.model.customData['fitCoeff']):
-            newcd = deepcopy(cd)
-            newcd.id = None
-            newcd.pk = None
-            newcd.date = None
-            yvec = cd.yVector
-            xvec = cd.xVector
+            newcd = cd.getCopy()
+            yvec = newcd.yVector
+            xvec = newcd.xVector
             p = (fit['x3'], fit['x2'], fit['x1'], fit['x0'])
             ybkg = np.polyval(p, xvec)
             newyvec = list(np.subtract(yvec, ybkg));
             newcd.yVector = newyvec
-            newcd.method=self.__repr__()
-            newcd.date=timezone.now()
-            newcd.processing=self.model
-            newcd.basedOn = cd
             newcd.save()
             for a in self.model.curveSet.analytes.all():
                 self.model.curveSet.analytesConc[a.id][newcd.id] = \

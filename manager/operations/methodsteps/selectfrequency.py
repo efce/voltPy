@@ -2,6 +2,7 @@ from manager.operations.methodmanager import MethodStep
 from manager.forms import CursorsForm
 import manager.plotmanager as pm
 import numpy as np
+import math
 
 class SelectFrequency(MethodStep):
     plot_interaction='none'
@@ -40,10 +41,10 @@ class SelectFrequency(MethodStep):
         for cd in model.curveSet.curvesData.all():
             ylen = len(cd.yVector)
             newy = np.absolute(np.fft.fft(cd.yVector))
-            newy = newy[1:round(ylen/2.0)].tolist()
+            newy = newy[:round(ylen/2.0)].tolist()
             p.add(
                 y=newy,
-                x=range(round(ylen/2)),
+                x=range(math.floor(ylen/2)),
                 plottype='line',
                 color='red'
             )

@@ -1,5 +1,6 @@
 import numpy as np
 import io
+from copy import copy
 from enum import IntEnum
 from django.db import models
 from django.urls import reverse
@@ -278,12 +279,19 @@ class CurveData(models.Model):
     id = models.AutoField(primary_key=True)
     curve = models.ForeignKey(Curve, on_delete=models.CASCADE)
     date = models.DateField(auto_now_add=True)
-    processing = models.ForeignKey('Processing', null=True, default=None, on_delete=models.DO_NOTHING) #What it was processed with
     basedOn = models.ForeignKey('CurveData', null=True, default=None, on_delete=models.DO_NOTHING)
     time = PickledObjectField() # JSON List 
     potential = PickledObjectField() # JSON List 
     current = PickledObjectField() # JSON List 
     currentSamples = PickledObjectField() # JSON List 
+
+    def getCopy(self):
+        newcd = copy(self)
+        newcd.id = None
+        newcd.pk = None
+        newcd.date = None
+        newcd.basedOn = self
+        return newcd
 
     def isOwnedBy(self, user):
         return (self.curve.curveFile.owner == user)
@@ -389,7 +397,9 @@ class CurveSet(models.Model):
     undoAnalytesConc = PickledObjectField(default={}) # dictionary key is analyte id
     analytesConcUnits = PickledObjectField(default={}) # dictionary key is analyte id
     undoAnalytesConcUnits = PickledObjectField(default={}) # dictionary key is analyte id
+    undoProcessing = models.ForeignKey('Processing', null=True, default=None, on_delete=models.DO_NOTHING)
     deleted = models.BooleanField(default=False)
+    #TODO: Undo removes also processing method ! (store id somewhere?)
 
     def isOwnedBy(self, user):
         return (self.owner == user)
@@ -403,7 +413,7 @@ class CurveSet(models.Model):
     def __str__(self):
         return "%s" % self.name
 
-    def prepareUndo(self):
+    def prepareUndo(self, processingObject=None):
         self.undoCurvesData.clear()
         for cd in self.curvesData.all():
             self.undoCurvesData.add(cd)
@@ -412,6 +422,7 @@ class CurveSet(models.Model):
             self.undoAnalytes.add(a)
         self.undoAnalytesConc = self.analytesConc
         self.undoAnalytesConcUnits = self.analytesConcUnits
+        self.undoProcessing = processingObject
         self.save()
 
     def undo(self):
@@ -429,6 +440,9 @@ class CurveSet(models.Model):
         self.undoAnalytes.clear()
         self.undoAnalytesConc.clear()
         self.undoAnalytesConcUnits.clear()
+        if self.undoProcessing is not None:
+            self.undoProcessing.delete()
+            self.undoProcessing = None
         self.save()
 
     def hasUndo(self):
@@ -436,6 +450,9 @@ class CurveSet(models.Model):
             return False
         else:
             return True
+
+    def processingHistory(self):
+        return manager.models.Processing.objects.filter(curveSet=self).order_by('id')
 
     def export(self):
         return exportCDasFile(self.curvesData.all())

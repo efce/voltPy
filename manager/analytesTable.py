@@ -1,6 +1,5 @@
 import manager.models as mmodels
 import base64 as b64
-from django.db.models import Q
 from django.urls import reverse
 
 def analytesTable(user, obj, objType):

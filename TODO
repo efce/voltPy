@@ -29,3 +29,4 @@ x Seperate Operations out of methodmanager, make it a module/folder
 x Change the way operations write information into model to more intuitive
 - Protect JSON form NANs inf INFs -- handle all values gracefully in python
 - Ability to download the data of all displayed plots (in csv format)
+- Ability to process selected curve as all in the CurveSet (required for calibration method)

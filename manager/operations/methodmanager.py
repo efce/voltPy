@@ -92,6 +92,9 @@ class MethodManager:
             self.__method.process(user=user,request=request)
 
 
+    def exportFile(self):
+        pass
+
     def getJSON(self, user):
         if not self.__method.has_next:
             return { 'command': 'redirect', 'location': self.__model.getRedirectURL(user)  }
@@ -395,6 +398,9 @@ class Method(ABC):
         This should not be reimplemented.
         """
         return self.__class__.__name__
+
+    def exportCSV(self):
+        pass
 
 
 class AnalysisMethod(Method):

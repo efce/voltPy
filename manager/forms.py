@@ -1,6 +1,5 @@
 import django
 from django import forms
-from django.db.models import Q
 from django.utils import timezone
 from django.core.exceptions import ObjectDoesNotExist
 import manager.models as mmodels
