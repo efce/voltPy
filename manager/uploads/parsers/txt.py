@@ -27,7 +27,7 @@ class Txt(Parser):
         isSampling = details.get('isSampling', None) 
         spp = int(details.get('isSampling_SPP', 1)) # samples per point
         samplingFreq = float(details.get('isSampling_SFreq', 0)) # in kHz
-        fie = details.get('firstIsE', None) 
+        col1 = details.get('firstColumn', 'firstIsI') 
         Ep = float(details.get('firstColumn_Ep', 0))
         Ek = float(details.get('firstColumn_Ek', 1))
         dE = float(details.get('firstColumn_dE', 0))
@@ -36,28 +36,24 @@ class Txt(Parser):
         ptnr = len(pdfile[0])
 
         if isSampling == None:
-            fie = details.get('firstIsE', None) 
-            if fie != None:
+            if col1 == 'firstIsE': #potential in 1st col
                 potential = pdfile[0]
                 Ep = potential[0]
                 Ek = potential[len(potential)-1]
                 Estep = potential[1] - potential[0]
-                ptnr = len(potential)
                 time = [ i for i in range(len(pdfile[0])) ]
                 index = 1
-            else:
+            elif col1 == 'firstIsT': #time in 1st col
+                time = pdfile[0]
+                Estep = (Ek - Ep) / ptnr
+                potential = list(np.arange(Ep, Ek, Estep))
+                index = 1
+            else: #current in 1st col
                 Estep = (Ek - Ep) / ptnr
                 potential = list(np.arange(Ep, Ek, Estep))
                 time = list(np.arange(0, t_E*ptnr, t_E))
         else: #it is sampling data
-            if fie != None:
-                potential = pdfile[0]
-                Ep = potential[0]
-                Ek = potential[len(potential)-1]
-                Estep = potential[1] - potential[1+(2*spp)]
-                time = [ (i/samplingFreq) for i in range(len((pdfile[0])/spp)) ]
-                index = 1
-            else:
+            def processNonE():
                 lessPtnr = ( 'npv', 'dpv', 'swv' )
                 if method in lessPtnr:
                     Estep = (Ek - Ep) / (ptnr / (2*spp))
@@ -66,6 +62,20 @@ class Txt(Parser):
                     Estep = (Ek - Ep) / (ptnr / spp)
                     time = list(np.arange(0, t_E*ptnr/spp, t_E))
                 potential = list(np.arange(Ep, Ek, Estep))
+
+            if col1 == 'firstIsE':
+                potential = pdfile[0]
+                Ep = potential[0]
+                Ek = potential[len(potential)-1]
+                Estep = potential[1] - potential[1+(2*spp)]
+                time = [ (i/samplingFreq) for i in range(len((pdfile[0])/spp)) ]
+                index = 1
+            elif col1 == 'firstIsT':
+                processNonE()
+                time = pdfile[0]
+                index = 1
+            else:
+                processNonE()
 
         self.vec_param = [0]*Param.PARAMNUM
         self.vec_param[Param.Ek] = Ek
