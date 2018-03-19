@@ -12,15 +12,17 @@ function sleep (time) {
 };
 
 function voltpy_loading_start(text) {
-    window.scrollTo(0, 0);
+    //window.scrollTo(0, 0);
+    $('#voltpy-loading').text(text);
     $('body').css('overflow','hidden');
     $('#voltpy-loading').addClass('loading-cover');
+    $('#voltpy-loading').removeClass('loading-uncover');
     $('#voltpy-loading').css('line-height', $('#voltpy-loading').css('height'));
-    $('#voltpy-loading').text(text);
 }
 function voltpy_loading_done()
 {
-    $('#voltpy-loading').css('display','none');
+    $('#voltpy-loading').addClass('loading-uncover');
+    $('#voltpy-loading').removeClass('loading-cover');
     $('body').css('overflow','scroll');
 }
 
@@ -28,6 +30,7 @@ function voltpy_loading_done()
 function voltpy_query(url, object, funcOnReturn) {
     object['csrfmiddlewaretoken'] = document.getElementsByName('csrfmiddlewaretoken')[0].value;
     voltpy_loading_start('Loading ...');
+    sleep(10);
     function retFun(data) {
         funcOnReturn(data);
         voltpy_loading_done();

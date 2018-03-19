@@ -120,6 +120,8 @@ function addDescribeFile(id) {
 }
 
 function uploadmanagerProcessReply(data) {
+    $('#file_list').empty();
+
     var isOk = data['isOk'];
     if ( !isOk ) {
         $('#file_sender').attr('disabled', true);
@@ -131,7 +133,7 @@ function uploadmanagerProcessReply(data) {
     var files = $("#file_selector").get(0).files
     for (var i=0; i<files.length; i++) {
         var fid = 'file_' + i;
-        var fname = $('<div/>').html(files[i].name).text(); // <- Strip html tags
+        var fname = $('<div/>').html(files[i].name).text(); // <- Strip html tags form file names
         var flen = files[i].size/1000
         var classes = "selected_file";
         if (!errors[i] == '') {
