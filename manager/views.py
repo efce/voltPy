@@ -6,6 +6,7 @@ from django.template import loader
 import json
 import manager.models as mmodels
 import manager.forms as mforms
+import manager.uploads.uploadmanager as umanager
 import base64 as b64
 from manager.operations import methodmanager as mmm
 from manager.exceptions import VoltPyNotAllowed, VoltPyDoesNotExists
@@ -642,7 +643,8 @@ def editCurveSet(request,user,curveset_id):
 def upload(request, user):
 
     context = { 
-        'user': user
+        'user': user,
+        'allowedExt': umanager.allowedExt,
     }   
     return voltpy_render(
         request=request, 

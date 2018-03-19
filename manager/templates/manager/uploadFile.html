@@ -3,6 +3,7 @@
 {% block title %} Browse {% endblock %}
 
 {% block real_content %}
+<p> Allowed file types: {% for ft in allowedExt %} {{ ft }} {% endfor %}</p>
 <form method="post" action="./" enctype="multipart/form-data" id="file_form">
 	{% csrf_token %}
 	<table>
