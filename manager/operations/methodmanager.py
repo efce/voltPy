@@ -8,6 +8,7 @@ from django.http import HttpResponseRedirect
 from django.http import HttpResponse
 from django.utils import timezone
 from django import forms
+from django.db import transaction
 import manager.models as mmodels
 import manager.plotmanager as pm
 from manager.helpers.functions import generate_plot
@@ -335,29 +336,39 @@ class Method(ABC):
             else:
                 self.step['object'] = None
 
+    @transaction.atomic
     def process(self, user, request):
         """
         This processes current.active_step_num.
         """
-        isBack = request.POST.get('_voltJS_backButton', 0) 
-        if isBack != 0:
-            self.__prevStep()
-            return
+        sid=transaction.savepoint()
+        try:
+            isBack = request.POST.get('_voltJS_backButton', 0) 
+            if isBack != 0:
+                self.__prevStep()
+                return
 
-        isBack = request.POST.get('_voltJS_backButton', 0) 
-        print(self.step)
-        if self.step is None or self.step['object'] is None:
-            self.has_next = False
-        elif self.step['object'].process(user=user, request=request, model=self.model):
-            self.has_next = self.__nextStep()
+            isBack = request.POST.get('_voltJS_backButton', 0) 
+            if self.step is None or self.step['object'] is None:
+                self.has_next = False
+            elif self.step['object'].process(user=user, request=request, model=self.model):
+                self.has_next = self.__nextStep()
 
-        if not self.has_next:
-            self.model.curveSet.prepareUndo()
-            self.finalize(user)
-            self.model.active_step_num = None
-            self.model.completed = True
-            self.model.save()
-            self.step = None
+            if not self.has_next:
+                self.model.curveSet.prepareUndo()
+                self.finalize(user)
+                self.model.active_step_num = None
+                self.model.completed = True
+                self.model.save()
+                if isinstance(self.model, mmodels.Processing):
+                    for cd in self.model.curveSet.curvesData.all():
+                        cd.processedWith = self.model
+                        cd.save()
+                self.step = None
+        except:
+            transaction.savepoint_rollback(sid)
+            raise
+        transaction.savepoint_commit(sid)
 
     def getStepHTML(self, user, request):
         if self.step and self.step.get('object', None):

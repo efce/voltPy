@@ -6,9 +6,6 @@ import json
 from django.utils import timezone
 from django.utils.html import escape
 from django.db import transaction
-import manager.models as mmodels
-#import manager.forms as f
-from manager.helpers.decorators import with_user
 from django import forms
 from django.urls import reverse
 from django.template import loader
@@ -16,6 +13,8 @@ from django.http import JsonResponse
 from django.http import HttpResponse
 from django.http import HttpResponseRedirect
 from django.db import DatabaseError
+import manager.models as mmodels
+from manager.helpers.decorators import with_user
 
 allowedExt = ( #build based on parsers ?
     'vol', #EAGraph

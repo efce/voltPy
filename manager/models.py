@@ -279,11 +279,12 @@ class CurveData(models.Model):
     id = models.AutoField(primary_key=True)
     curve = models.ForeignKey(Curve, on_delete=models.CASCADE)
     date = models.DateField(auto_now_add=True)
-    basedOn = models.ForeignKey('CurveData', null=True, default=None, on_delete=models.DO_NOTHING)
     time = PickledObjectField() # JSON List 
     potential = PickledObjectField() # JSON List 
     current = PickledObjectField() # JSON List 
     currentSamples = PickledObjectField() # JSON List 
+    basedOn = models.ForeignKey('CurveData', null=True, default=None, on_delete=models.DO_NOTHING)
+    processedWith = models.ForeignKey('Processing', null=True, default=None, on_delete=models.DO_NOTHING)
 
     def getCopy(self):
         newcd = copy(self)
@@ -292,6 +293,18 @@ class CurveData(models.Model):
         newcd.date = None
         newcd.basedOn = self
         return newcd
+
+    def getProcessingHistory(self):
+        steps = []
+        c = self
+        while True:
+            steps.append(c.processedWith)
+            if c.basedOn is not None:
+                c = c.basedOn
+            else:
+                break
+        return steps
+
 
     def isOwnedBy(self, user):
         return (self.curve.curveFile.owner == user)
