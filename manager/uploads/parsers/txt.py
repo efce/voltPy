@@ -41,7 +41,6 @@ class Txt(Parser):
         method = details.get('voltMethod', 'lsv')
         ptnr = len(pdfile[0])
         cmulti = float(self.currentMultiplier.get(details.get('currentUnit', 'µA'), 1.0))
-        print('cmulti:', cmulti)
 
         if isSampling == None:
             if col1 == 'firstIsE': #potential in 1st col

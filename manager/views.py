@@ -706,9 +706,6 @@ def showCurveFile(request, user, file_id):
     )
 
     import manager.analytesTable as at
-
-    if ( __debug__): 
-        print(cf)
     plotScr, plotDiv = generate_plot(
         request=request, 
         user=user, 

@@ -20,9 +20,6 @@ class Vol(Parser):
         index = 0
         curvesNum = struct.unpack('<h', fileContent[index:index+2])[0]
         index += 2
-        if ( __debug__ ):
-            print("Number of curves in file: %i" % curvesNum)
-
         offsets=[]
         start_addr = 2 + (60*4) + (50*12) #num of curves (int16) + 60 params (int32[60]) + 50 curves names char[10] 
         if ( curvesNum > 0 and curvesNum <= 50 ):
@@ -48,9 +45,6 @@ class Vol(Parser):
                 index_end = index_start + offsets[i]
                 (c, retIndex) = self.unserialize(self.names[i], fileContent[index_start:index_end]) 
                 self._curves.append(c)
-                if ( retIndex < (index_end-index_start) ):
-                    print("WARNING!: last index lower than data end cyclic curve not processed ?")
-
     
     def unserialize(self, sysname, data):
         c = self.CurveFromFile()
@@ -65,20 +59,12 @@ class Vol(Parser):
         index+=10
         #TODO: verify with initial name
         c.name = cc[0].split(b'\0',1)[0].decode("cp1250") 
-        if ( __debug__ ):
-            print("The name is: %s" % c.name)
-        
         # Decode comment 
         cc=struct.unpack('{}s'.format(50), data[index:index+50])
         index+=50
         c.comment = cc[0].split(b'\0',1)[0].decode("cp1250")
-        if ( __debug__ ):
-            print("The comment is: %s" % c.comment)
-
         # Decode param:
         paramDiffNum = struct.unpack('<h', data[index:index+2])[0]
-        if ( __debug__ ):
-            print('Number of params: %i' % paramDiffNum)
         index += 2
         for i in range(0,paramDiffNum):
             paramId = struct.unpack('<h', data[index:index+2])[0]

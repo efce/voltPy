@@ -167,8 +167,6 @@ class EditAnalytesForm(forms.Form):
         for name,val in self.cleaned_data.items():
             if "curve_" in name:
                 curve_id = int(name[6:])
-                if ( __debug__ ):
-                    print("Updateing curve nr: %i with analyte %s, concentration: %s" % (curve_id, a.name, val))
                 try:
                     self.cs.curvesData.get(id=curve_id)
                 except ObjectDoesNotExist:

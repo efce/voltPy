@@ -43,9 +43,6 @@ class Volt(Parser):
                 break
             bytename.append(cc[0])
         c.name = bytename.decode('utf8')
-        if ( __debug__ ):
-            print("The name is: %s" % c.name)
-
         if ( isCompressed ):
             dataUnc = zlib.decompress(data[index+4:]) #QT qCompress add 4 bytes 
             # src: http://bohdan-danishevsky.blogspot.com/2013/11/qt-51-zlib-compression-compatible-with.html
@@ -63,13 +60,8 @@ class Volt(Parser):
                 break
             bytename.append(cc[0])
         c.comment = bytename.decode('utf8')
-        if ( __debug__ ):
-            print("The comment is: %s" % c.comment)
-
         # Decode param:
         paramNum = struct.unpack('<i', dataUnc[index:index+4])[0]
-        if ( __debug__ ):
-            print('Number of params: %i' % paramNum)
         index += 4
         listparam = struct.unpack('<'+paramNum*'i', dataUnc[index:index+4*paramNum])
         for i,v in enumerate(listparam):

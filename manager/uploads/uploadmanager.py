@@ -129,7 +129,6 @@ def ajax(request, user):
                 else:
                     #is OK
                     pass
-            print(details)
             if isOk:
                 #TODO: start parsing
                 fileset_id = parseAndCreateModels(files=files, details=details, user=user)
@@ -237,10 +236,8 @@ def _getParserClass(extension):
 
 def _parseGetCFID(cfile, details, user):
     ext = cfile.name.rsplit('.' ,1)[1]
-    print('Parsing %s: extension is %s' % (cfile.__str__, ext))
     parserClass = _getParserClass(ext)
     parserObj = parserClass(cfile, details)
-    print('parsed')
     cf_id = parserObj.saveModels(user)
     return cf_id
 
@@ -399,9 +396,6 @@ class UploadManager:
         index = 0
         curvesNum = struct.unpack('<h', fileContent[index:index+2])[0]
         index += 2
-        if ( __debug__ ):
-            print("Number of curves in file: %i" % curvesNum)
-
         offsets = []
         names = []
         start_addr = 2 + (60*4) + (50*12) #num of curves (int16) + 60 params (int32[60]) + 50 curves names char[10] 
@@ -440,9 +434,6 @@ class UploadManager:
         index = 0
         curvesNum = struct.unpack('<i', fileContent[index:index+4])[0]
         index += 4
-        if ( __debug__ ):
-            print("Number of curves in file: %i" % curvesNum)
-
         curves = []
         for i in range(0, curvesNum):
             curveSize = struct.unpack('I', fileContent[index:index+4])[0]

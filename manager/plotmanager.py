@@ -445,8 +445,7 @@ class PlotManager:
                     try:
                         onx = int(onx)
                     except ValueError:
-                        print('value error')
-                        return
+                        raise
                     ONX = mmodels.OnXAxis.objects.get(user=user)
                     for k,v in enumerate(dict(mmodels.OnXAxis.AVAILABLE).keys()):
                         if onx == k:
