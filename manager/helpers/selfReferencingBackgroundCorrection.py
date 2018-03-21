@@ -236,6 +236,7 @@ def peakParameters(curve):
 def fullDataAnalysis(dy, concs):
     import manager.helpers.fithelpers as fithelpers
     results = {}
+    best_result = {}
     minstd = float('inf')
     for wi,width in enumerate(dy):
         if width is None:

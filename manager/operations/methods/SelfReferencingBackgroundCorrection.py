@@ -68,8 +68,8 @@ https://doi.org/10.1002/elan.201300181"""
                 RANGES.append([])
                 RANGES[-1] = rng
         result = sbcm.selfReferencingBackgroundCorrection(Y, CONC, SENS, RANGES)
-        self.model.customData['result'] = result['__AVG__']
-        self.model.customData['resultStdDev'] = result['__STD__']
+        self.model.customData['result'] = result.get('__AVG__', None)
+        self.model.customData['resultStdDev'] = result.get('__STD__', None)
         self.model.customData['fitEquations'] = {}
         for k, v in result.items():
             if isinstance(k, str):
@@ -82,16 +82,22 @@ https://doi.org/10.1002/elan.201300181"""
     def getInfo(self, request, user):
         cs = self.model.curveSet
         unitsTrans = dict(mmodels.CurveSet.CONC_UNITS)
-        info = """
-        <p>Analyte: {analyte}<br />Final result: {res} {unit}<br />Std dev: {stddev} {unit}</p>
-        <p>Equations:<br>{eqs}</p>
-        """.format(
-            res=self.model.customData['result'],
-            stddev=self.model.customData['resultStdDev'],
-            eqs=self.model.customData['fitEquations'],
-            analyte=self.model.customData['analyte'],
-            unit=self.model.customData['units']
-        )
+        if self.model.customData['result'] is None:
+            info = """
+            <p> Could not calculate the final result. Please check your dataset and/or choose diffrent intervals.</p>
+            """
+
+        else:
+            info = """
+            <p>Analyte: {analyte}<br />Final result: {res} {unit}<br />Std dev: {stddev} {unit}</p>
+            <p>Equations:<br>{eqs}</p>
+            """.format(
+                res=self.model.customData['result'],
+                stddev=self.model.customData['resultStdDev'],
+                eqs=self.model.customData['fitEquations'],
+                analyte=self.model.customData['analyte'],
+                unit=self.model.customData['units']
+            )
         return {
             'head': '',
             'body': info,

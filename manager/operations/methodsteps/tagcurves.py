@@ -8,6 +8,8 @@ class TagCurves(ms.MethodStep):
         def __init__(self, *args, **kwargs):
             self.model = kwargs.pop('model')
             initialTags = kwargs.pop('initial', {})
+            if initialTags is None:
+                initialTags = {}
             super(TagCurves.TagCurvesForm, self).__init__(*args, **kwargs)
             for cd in self.model.curveSet.curvesData.all():
                 self.fields['cd'+str(cd.id)] = forms.CharField(

@@ -31,7 +31,7 @@ other right after it.
         return "3rd deg Polynomial Background Fit"
 
     def process(self, user, request):
-        ret = super(mm.ProcessingMethod, self).process(user, request)
+        ret = super(method.ProcessingMethod, self).process(user, request)
         self.model.customData['fitCoeff'] = []
         if ( self.model.active_step_num == 1 ):
             for cd in self.model.curveSet.curvesData.all():

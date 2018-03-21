@@ -377,7 +377,7 @@ class SelectCurvesForCurveSetForm(forms.Form):
                     if 'curveFile' == nameSplit[0]:
                         selectedCF[id1] = selectedCF.get(id1, {})
                         selectedCF[id1]['all'] = True
-                    elif 'cruveSet' == nameSplit[0]:
+                    elif 'curveSet' == nameSplit[0]:
                         selectedCS[id1] = selectedCS.get(id1, {})
                         selectedCS[id1]['all'] = True
                 elif len(nameSplit) == 4:
@@ -386,7 +386,7 @@ class SelectCurvesForCurveSetForm(forms.Form):
                     if 'curveFile' == nameSplit[0]:
                         selectedCF[id1] = selectedCF.get(id1, {})
                         selectedCF[id1][id2] = True
-                    elif 'cruveSet' == nameSplit[0]:
+                    elif 'curveSet' == nameSplit[0]:
                         selectedCS[id1] = selectedCS.get(id1, {})
                         selectedCS[id1][id2] = True
         # Get CurveSet from CurveFile at the end to decrease number of operations
