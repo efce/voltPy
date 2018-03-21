@@ -1,10 +1,10 @@
 import numpy as np
 from copy import deepcopy
 from django.utils import timezone
-import manager.operations.methodmanager as mm
+import manager.operations.method as method
 from manager.operations.methodsteps.selectfrequency import SelectFrequency
 
-class FFTLowPass(mm.ProcessingMethod):
+class FFTLowPass(method.ProcessingMethod):
     _steps = [ 
         {
             'class': SelectFrequency,
@@ -28,8 +28,10 @@ signal back to the original domain.
         return "Low Pass FFT filter"
 
     def finalize(self, user):
-        for cd in self.model.curveSet.curvesData.all():
+        cs = self.model.curveSet
+        for cd in cs.curvesData.all():
             newcd = cd.getCopy()
+            newcdConc = cs.getCurveConcDict(cd)
             yvec = newcd.yVector
             ylen = len(yvec)
             st = round(self.model.stepsData['SelectFrequency'])
@@ -39,12 +41,9 @@ signal back to the original domain.
             iffty = np.fft.ifft(ffty)
             newcd.yVector = np.real(iffty).tolist()
             newcd.save()
-            for a in self.model.curveSet.analytes.all():
-                self.model.curveSet.analytesConc[a.id][newcd.id] = \
-                    self.model.curveSet.analytesConc[a.id].pop(cd.id, 0)
-            self.model.curveSet.curvesData.remove(cd)
-            self.model.curveSet.curvesData.add(newcd)
-        self.model.curveSet.save()
+            cs.removeCurve(cd)
+            cs.addCurve(newcd, newcdConc)
+        cs.save()
         self.model.step = None
         self.model.completed = True
         self.model.save()

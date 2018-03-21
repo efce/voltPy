@@ -1,10 +1,11 @@
+from overrides import overrides
 import numpy as np
 import django.forms as forms
 from django.utils import timezone
-import manager.operations.methodmanager as mm
+import manager.operations.method as method
 from manager.operations.methodsteps.tagcurves import TagCurves
 
-class AverageCurves(mm.ProcessingMethod):
+class AverageCurves(method.ProcessingMethod):
     _steps = [ 
         {
             'class': TagCurves,
@@ -21,32 +22,32 @@ given number of plots.
     def __str__(cls):
         return "Average Curves"
 
+    @overrides
+    def initialForStep(self, step_num):
+        if step_num == 0:
+            if len(self.model.curveSet.analytesConc) > 0:
+                v = next(iter(self.model.curveSet.analytesConc.values()))
+                return v
+
     def finalize(self, user):
+        cs = self.model.curveSet
         for k,f in self.model.stepsData['TagCurves'].items():
             if ( len(f) > 1 ):
                 cid = f[0]
-                orgcd = self.model.curveSet.curvesData.get(id=cid)
+                orgcd = cs.curvesData.get(id=cid)
                 newcd = orgcd.getCopy()
-                self.model.curveSet.curvesData.remove(orgcd)
+                newcdConc = cs.getCurveConcDict(orgcd)
+                cs.removeCurve(orgcd)
                 cnt = 1
                 yvecs = []
                 for cid in f[1:]:
                     cd = self.model.curveSet.curvesData.get(id=cid)
                     yvecs.append(cd.yVector)
-                    self.model.curveSet.curvesData.remove(cd)
+                    cs.removeCurve(cd)
                 newcd.yVector = np.mean(yvecs, axis=0).tolist()
                 newcd.save()
-                #TODO: move removal to model ?:
-                for a in self.model.curveSet.analytes.all():
-                    self.model.curveSet.analytesConc[a.id] = self.model.curveSet.analytesConc.get(a.id,{})
-                    self.model.curveSet.analytesConc[a.id][newcd.id] = \
-                        self.model.curveSet.analytesConc[a.id].get(orgcd.id, 0)
-                for cid in f[1:]:
-                    for a in self.model.curveSet.analytes.all():
-                        self.model.curveSet.analytesConc[a.id].pop(cid, 0)
-
-                self.model.curveSet.curvesData.add(newcd)
-                self.model.curveSet.save()
+                cs.addCurve(newcd, newcdConc)
+        cs.save()
         self.model.step = None
         self.model.completed = True
         self.model.save()

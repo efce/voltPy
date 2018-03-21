@@ -1,5 +1,5 @@
 from manager.forms import CursorsForm
-from manager.operations.methodmanager import MethodStep
+from manager.operations.methodstep import MethodStep
 
 class SelectPoint(MethodStep):
     plot_interaction = 'set1cursor'

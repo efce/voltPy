@@ -1,4 +1,4 @@
-import manager.operations.methodmanager as mm
+import manager.operations.method as method
 from manager.operations.methodsteps.selectanalyte import SelectAnalyte
 from manager.operations.methodsteps.selectrange import SelectRange
 from manager.operations.methodsteps.tagcurves import TagCurves
@@ -8,7 +8,7 @@ import manager.helpers.selfReferencingBackgroundCorrection as sbcm
 import numpy as np
 from django import forms
 
-class SelfReferencingBackgroundCorrection(mm.AnalysisMethod):
+class SelfReferencingBackgroundCorrection(method.AnalysisMethod):
     _steps = [ 
         { 
             'class': SelectAnalyte,

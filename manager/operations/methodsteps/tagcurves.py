@@ -1,17 +1,18 @@
 from django import forms
-import manager.operations.methodmanager as mm
+import manager.operations.methodstep as ms
 
-class TagCurves(mm.MethodStep):
+class TagCurves(ms.MethodStep):
     plot_interaction = 'none'
 
     class TagCurvesForm(forms.Form):
         def __init__(self, *args, **kwargs):
             self.model = kwargs.pop('model')
+            initialTags = kwargs.pop('initial', {})
             super(TagCurves.TagCurvesForm, self).__init__(*args, **kwargs)
             for cd in self.model.curveSet.curvesData.all():
                 self.fields['cd'+str(cd.id)] = forms.CharField(
                     max_length=4, 
-                    initial='',
+                    initial=initialTags.get(cd.id,''),
                     label=''.join([cd.curve.name, ' ', cd.curve.comment]),
                     required=True
                 )
@@ -32,7 +33,7 @@ class TagCurves(mm.MethodStep):
     def process(self, user, request, model):
         if ( request.method == 'POST'
         and request.POST.get('tagcurvesform', False) != False ):
-            form = self.TagCurvesForm(request.POST, model=model)
+            form = self.TagCurvesForm(request.POST, model=model, initial=self.initial)
             if form.is_valid():
                 form.process()
                 return True
@@ -41,10 +42,10 @@ class TagCurves(mm.MethodStep):
         from django.template import loader
         if ( request.method == 'POST'
         and request.POST.get('tagcurvesform', False) != False ):
-            form = self.TagCurvesForm(request.POST, model=model)
+            form = self.TagCurvesForm(request.POST, model=model, initial=self.initial)
             form.is_valid()
         else:
-            form = self.TagCurvesForm(model=model)
+            form = self.TagCurvesForm(model=model, initial=self.initial)
         template = loader.get_template('manager/form.html')
         context = { 'form': form, 'submit': 'tagcurvesform' }
         return {

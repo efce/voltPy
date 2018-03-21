@@ -1,10 +1,10 @@
 import numpy as np
 from django.utils import timezone
-import manager.operations.methodmanager as mm
+import manager.operations.method as method
 from manager.operations.methodsteps.confirmation import Confirmation
 from manager.helpers.bkghelpers import calc_abc
 
-class AutomaticBaselineCorrection(mm.ProcessingMethod):
+class AutomaticBaselineCorrection(method.ProcessingMethod):
     _steps = [ 
         {
             'class': Confirmation,
@@ -31,8 +31,10 @@ https://doi.org/10.1016/j.electacta.2014.05.076
         return "Automatic Baseline Correction"
 
     def finalize(self, user):
-        for cd in self.model.curveSet.curvesData.all():
+        cs = self.model.curveSet
+        for cd in cs.curvesData.all():
             newcd = cd.getCopy()
+            newcdConc = cs.getCurveConcDict(cd)
             yvec = newcd.yVector
             xvec = range(len(yvec))
             degree = 4
@@ -43,12 +45,9 @@ https://doi.org/10.1016/j.electacta.2014.05.076
             newcd.yVector = yvec
             newcd.date = timezone.now()
             newcd.save()
-            self.model.curveSet.curvesData.remove(cd)
-            self.model.curveSet.curvesData.add(newcd)
-            for a in self.model.curveSet.analytes.all():
-                self.model.curveSet.analytesConc[a.id][newcd.id] = \
-                    self.model.curveSet.analytesConc[a.id].pop(cd.id, 0)
-        self.model.curveSet.save()
+            cs.removeCurve(cd)
+            cs.addCurve(newcd, newcdConc)
+        cs.save()
         self.model.step = None
         self.model.completed = True
         self.model.save()

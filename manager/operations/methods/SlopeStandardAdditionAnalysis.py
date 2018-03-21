@@ -1,11 +1,11 @@
 from numpy import polyfit, corrcoef
 from manager.operations.methodsteps.selectanalyte import SelectAnalyte
 from manager.operations.methodsteps.selectpoint import SelectPoint
-import manager.operations.methodmanager as mm
+import manager.operations.method as method
 import manager.models as mmodels
 import manager.plotmanager as pm
 
-class SlopeStandardAdditionAnalysis(mm.AnalysisMethod):
+class SlopeStandardAdditionAnalysis(method.AnalysisMethod):
     _steps = ( 
         { 
             'class': SelectAnalyte,

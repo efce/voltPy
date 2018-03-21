@@ -1,10 +1,12 @@
 import django
 from django import forms
+from django.db import transaction
+from django.db import DatabaseError
 from django.utils import timezone
 from django.core.exceptions import ObjectDoesNotExist
+import manager
 import manager.models as mmodels
 from manager.exceptions import VoltPyNotAllowed
-import manager
 
 class CursorsForm(forms.Form):
     def __init__(self, *args, **kwargs):
@@ -360,102 +362,84 @@ class SelectCurvesForCurveSetForm(forms.Form):
             ret['end']
         ])
 
+
+    @transaction.atomic 
     def process(self, user):
-        analytesConcUnits = {}
-        analytesConc = {}
+        sid=transaction.savepoint()
+
+        selectedCS = {}
+        selectedCF = {}
         for name,val in self.cleaned_data.items():
             if ( val == True ):
-                if ( '_' in name ):
-                    nameSplit = name.split('_')
-                    if "curveFile" == nameSplit[0]:
-                        vid = int(nameSplit[1])
-                        cf = mmodels.CurveFile.objects.get(id=vid)
-                        for a in cf.curveSet.analytes.all():
-                            analytesConcUnits[a.id] = cf.curveSet.analytesConcUnits[a.id]
-                            analytesConc[a.id] = {}
+                nameSplit = name.split('_')
+                if len(nameSplit) == 2:
+                    id1 = int(nameSplit[1])
+                    if 'curveFile' == nameSplit[0]:
+                        selectedCF[id1] = selectedCF.get(id1, {})
+                        selectedCF[id1]['all'] = True
+                    elif 'cruveSet' == nameSplit[0]:
+                        selectedCS[id1] = selectedCS.get(id1, {})
+                        selectedCS[id1]['all'] = True
+                elif len(nameSplit) == 4:
+                    id1 = int(nameSplit[1])
+                    id2 = int(nameSplit[3])
+                    if 'curveFile' == nameSplit[0]:
+                        selectedCF[id1] = selectedCF.get(id1, {})
+                        selectedCF[id1][id2] = True
+                    elif 'cruveSet' == nameSplit[0]:
+                        selectedCS[id1] = selectedCS.get(id1, {})
+                        selectedCS[id1][id2] = True
+        # Get CurveSet from CurveFile at the end to decrease number of operations
+        for k,v in selectedCF.items():
+            cf = mmodels.CurveFile.objects.get(id=k)
+            selectedCS[cf.curveSet.id] = selectedCS.get(cf.curveSet.id, {})
+            for vv in v.keys():
+                selectedCS[cf.curveSet.id][vv] = True
 
-                    elif "curveSet" == nameSplit[0]:
-                        vid = int(nameSplit[1])
-                        cs = mmodels.CurveSet.objects.get(id=vid)
-                        for a in cs.analytes.all():
-                            analytesConcUnits[a.id] = cs.analytesConcUnits[a.id]
-                            analytesConc[a.id] = {}
+        print('CSs:', selectedCS)
 
-        final_curvedatas = []
-        analytesConc = {}
-        for name,val in self.cleaned_data.items():
-            if ( val == True ):
-                if ( '_' in name ):
-                    nameSplit = name.split('_')
-                    if len(nameSplit) > 2:
-                        if "curveFile" == nameSplit[0]:
-                            vid = int(nameSplit[1])
-                            cf = mmodels.CurveFile.objects.get(id=vid)
-                            if "curveData" == nameSplit[2]:
-                                if ( val == True ) :
-                                    vid = int(nameSplit[3])
-                                    cd = mmodels.CurveData.objects.only('id','curve').get(id=vid)
-                                    if not cd.canBeReadBy(user):
-                                        raise 3
-                                    final_curvedatas.append(cd)
-                                    for aid,v in analytesConc.items():
-                                        analytesConc[aid][cd.id] = cf.curveSet.analytesConc.get(aid,{}).get(cd.id,0)
-                        elif "curveSet" == nameSplit[0]:
-                            if "curveData" == nameSplit[2]:
-                                    vid = int(nameSplit[3])
-                                    cd = mmodels.CurveData.objects.only('id','curve').get(id=vid)
-                                    if not cd.canBeReadBy(user):
-                                        raise 3
-                                    final_curvedatas.append(cd)
-                                    for aid,v in analytesConc.items():
-                                        analytesConc[aid][cd.id] = cs.analytesConc.get(aid,{}).get(cd.id,0)
-                    else:
-                        if "curveFile" == nameSplit[0]:
-                            if ( val == True ) :
-                                vid = int(nameSplit[1])
-                                cf = mmodels.CurveFile.objects.get(id=vid)
-                                if not cf.canBeReadBy(user):
-                                    raise 3
-                                cs = cf.curveSet;
-                                for cd in cs.curvesData.all():
-                                    final_curvedatas.append(cd)
-                                    for aid,v in analytesConc.items():
-                                        analytesConc[aid][cd.id] = cs.analytesConc.get(aid,{}).get(cd.id,0)
-
-                        elif "curveSet" == nameSplit[0]:
-                            if ( val == True ) :
-                                vid = int(nameSplit[1])
-                                cs = mmodels.CurveSet.objects.get(id=vid)
-                                if not cs.canBeReadBy(user):
-                                    raise 3
-                                for cd in cs.curvesData.all():
-                                    final_curvedatas.append(cd)
-                                    for aid,v in analytesConc.items():
-                                        analytesConc[aid][cd.id] = cs.analytesConc.get(aid,{}).get(cd.id,0)
-
-        if len(final_curvedatas) == 0:
+        if len(selectedCS) == 0:
             return False
-        final_curvedatas = list(set(final_curvedatas)) #only unique
 
-        cs = mmodels.CurveSet(
-            owner = user,
-            name = self.cleaned_data['name'],
-            date = timezone.now(),
-            locked = False,
-            deleted = False
-        )
-        cs.analytesConc = analytesConc
-        cs.analytesConcUnits = analytesConcUnits
-        cs.save()
-        for aid,v in analytesConcUnits.items():
-            cs.analytes.add(mmodels.Analyte.objects.get(id=aid))
-        cs.save()
-        self.curvesetid = cs.id
-        for cd in final_curvedatas:
-            cs.curvesData.add(cd)
-        cs.save()
-        return True
+        #Create new CurveSet:
+        try: 
+            newcs = mmodels.CurveSet(
+                owner = user,
+                name = self.cleaned_data['name'],
+                date = timezone.now(),
+                locked = False,
+                deleted = False
+            )
+            newcs.save()
+            for csid,cdids in selectedCS.items():
+                cs = mmodels.CurveSet.objects.get(id=csid)
+                if not cs.canBeReadBy(user):
+                    raise VoltPyNotAllowed()
 
+                for a in cs.analytes.all():
+                    if not newcs.analytes.filter(id=a.id).exists():
+                        newcs.analytes.add(a)
+                        newcs.analytesConcUnits[a.id] = cs.analytesConcUnits.get(a.id, '0g')
+                if 'all' in cdids.keys():
+                    for cd in cs.curvesData.all():
+                        newcs.addCurve(
+                            curveData=cd, 
+                            curveConcDict=cs.getCurveConcDict(cd)
+                        )
+                else:
+                    for cdid in cdids.keys():
+                        cd = mmodels.CurveData.objects.get(id=cdid)
+                        newcs.addCurve(
+                            curveData=cd, 
+                            curveConcDict=cs.getCurveConcDict(cd)
+                        )
+            newcs.save()
+        except DatabaseError:
+            transaction.savepoint_rollback(sid)
+            raise
+            return False
+        transaction.savepoint_commit(sid)
+        return newcs.id
 
 class DeleteForm(forms.Form):
     areyousure = forms.BooleanField(label = 'Are you sure?', required=False)

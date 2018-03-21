@@ -1,11 +1,11 @@
 from copy import deepcopy
 import numpy as np
 from django.utils import timezone
-import manager.operations.methodmanager as mm
+import manager.operations.method as method
 from manager.operations.methodsteps.selecttworanges import SelectTwoRanges
 from manager.operations.methodsteps.confirmation import Confirmation
 
-class PolynomialBackgroundFit(mm.ProcessingMethod):
+class PolynomialBackgroundFit(method.ProcessingMethod):
     _steps = [ 
         {
             'class': SelectTwoRanges,
@@ -66,10 +66,12 @@ other right after it.
 
     def finalize(self, user):
         import numpy as np
-        if self.model.curveSet.locked:
+        cs = self.model.curveSet
+        if cs.locked:
             raise ValueError("CurveSet used by Analysis method cannot be changed.")
-        for cd,fit in zip(self.model.curveSet.curvesData.all(), self.model.customData['fitCoeff']):
+        for cd,fit in zip(cs.curvesData.all(), self.model.customData['fitCoeff']):
             newcd = cd.getCopy()
+            newcdConc = cs.getCurveConcDict(cd)
             yvec = newcd.yVector
             xvec = newcd.xVector
             p = (fit['x3'], fit['x2'], fit['x1'], fit['x0'])
@@ -77,13 +79,10 @@ other right after it.
             newyvec = list(np.subtract(yvec, ybkg));
             newcd.yVector = newyvec
             newcd.save()
-            for a in self.model.curveSet.analytes.all():
-                self.model.curveSet.analytesConc[a.id][newcd.id] = \
-                    self.model.curveSet.analytesConc[a.id].pop(cd.id, 0)
-            self.model.curveSet.curvesData.remove(cd)
-            self.model.curveSet.curvesData.add(newcd)
-            self.model.curveSet.save()
-            self.model.save()
+            cs.removeCurve(cd)
+            cs.addCurve(newcd, newcdConc)
+        cs.save()
+        self.model.save()
         return True
 
 

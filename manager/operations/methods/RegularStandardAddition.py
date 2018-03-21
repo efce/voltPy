@@ -1,13 +1,13 @@
 from numpy import corrcoef
 import numpy as np
-import manager.operations.methodmanager as mm
+import manager.operations.method as method
 from manager.operations.methodsteps.selectanalyte import SelectAnalyte
 from manager.operations.methodsteps.selectrange import SelectRange
 import manager.plotmanager as pm
 import manager.models as mmodels
 from manager.helpers.fithelpers import calc_normal_equation_fit, calc_sx0
 
-class RegularStandardAddition(mm.AnalysisMethod):
+class RegularStandardAddition(method.AnalysisMethod):
     _steps = [
         { 
             'class': SelectAnalyte,

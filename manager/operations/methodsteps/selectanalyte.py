@@ -1,6 +1,6 @@
 from django.core.exceptions import ObjectDoesNotExist
 from django import forms
-from manager.operations.methodmanager import MethodStep
+from manager.operations.methodstep import MethodStep
 import manager.models as mmodels
 
 class SelectAnalyte(MethodStep):

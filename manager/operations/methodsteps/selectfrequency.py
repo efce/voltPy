@@ -1,4 +1,4 @@
-from manager.operations.methodmanager import MethodStep
+from manager.operations.methodstep import MethodStep
 from manager.forms import CursorsForm
 import manager.plotmanager as pm
 import numpy as np

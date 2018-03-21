@@ -1,5 +1,5 @@
 from django import forms
-from manager.operations.methodmanager import MethodStep
+from manager.operations.methodstep import MethodStep
 
 class Confirmation(MethodStep):
     plot_interaction = 'none'

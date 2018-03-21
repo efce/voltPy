@@ -271,11 +271,11 @@ def createCurveSet(request, user, toClone=[]):
     if request.method == 'POST':
         form = mforms.SelectCurvesForCurveSetForm(user, request.POST)
         if form.is_valid():
-            if ( form.process(user) == True ):
-                cs_id = form.curvesetid
-                if cs_id and cs_id > -1:
+            cs_id = form.process(user)
+            if cs_id  is not False:
+                if cs_id > -1:
                     return HttpResponseRedirect(
-                            reverse('showCurveSet', args=[user.id, cs_id])
+                        reverse('showCurveSet', args=[user.id, cs_id])
                     )
     else:
         form = mforms.SelectCurvesForCurveSetForm(user, toClone=toClone)

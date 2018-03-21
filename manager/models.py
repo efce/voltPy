@@ -378,6 +378,7 @@ class CurveData(models.Model):
 class Analyte(models.Model):
     id = models.AutoField(primary_key=True)
     name=models.CharField(max_length=125, unique=True)
+    atomicMass = models.FloatField(null=True, default=None) # to calculate between mol and wight
 
     def __str__(self):
         return self.name
@@ -403,16 +404,40 @@ class CurveSet(models.Model):
     locked = models.BooleanField(default=False)
     curvesData = models.ManyToManyField(CurveData, related_name="curvesData")
     undoCurvesData = models.ManyToManyField(CurveData, related_name="undoCurvesData")
-    redoCurvesData = models.ManyToManyField(CurveData, related_name="redoCurvesData")
     analytes = models.ManyToManyField(Analyte, related_name="analytes")
-    undoAnalytes  = models.ManyToManyField(Analyte, related_name="undoAnalytes")
+    undoAnalytes = models.ManyToManyField(Analyte, related_name="undoAnalytes")
     analytesConc = PickledObjectField(default={}) # dictionary key is analyte id
     undoAnalytesConc = PickledObjectField(default={}) # dictionary key is analyte id
     analytesConcUnits = PickledObjectField(default={}) # dictionary key is analyte id
     undoAnalytesConcUnits = PickledObjectField(default={}) # dictionary key is analyte id
     undoProcessing = models.ForeignKey('Processing', null=True, default=None, on_delete=models.DO_NOTHING)
     deleted = models.BooleanField(default=False)
-    #TODO: Undo removes also processing method ! (store id somewhere?)
+
+    def removeCurve(self, curveData):
+        self.curvesData.remove(curveData)
+        for k,v in self.analytesConc.items():
+            v.pop(curveData.id, None)
+
+    def addCurve(self, curveData, curveConcDict={}):
+        if not self.curvesData.filter(id=curveData.id).exists():
+            self.curvesData.add(curveData)
+        self.setCurveConcDict(curveData, curveConcDict)
+
+    def setCurveConcDict(self, curveData, curveConcDict):
+        newAnalytes = list(set(curveConcDict.keys()) - set(self.analytesConc.keys()))
+        for na in newAnalytes:
+            self.analytes.add(Analyte.objects.get(id=na))
+            self.analytesConc[na] = self.analytesConc.get(na, {})
+            for cd in self.curvesData.all():
+                self.analytesConc[na][cd.id] = 0.0
+        for k,v in self.analytesConc.items():
+            v[curveData.id] = curveConcDict.get(k, 0.0)
+
+    def getCurveConcDict(self, curveData):
+        ret = {}
+        for k,v in self.analytesConc.items():
+            ret[k] = v.get(curveData.id, 0.0)
+        return ret
 
     def isOwnedBy(self, user):
         return (self.owner == user)
@@ -439,6 +464,7 @@ class CurveSet(models.Model):
         self.save()
 
     def undo(self):
+        #TODO: Undo removes also processing method ! (store id somewhere?)
         if not self.hasUndo():
             return
         self.curvesData.clear()
@@ -500,8 +526,11 @@ class Analysis(models.Model):
     def canBeReadBy(self, user):
         return self.isOwnedBy(user)
 
-    def getRedirectURL(self, user):
-        return reverse('showAnalysis', args=[ user.id, self.id ])
+    def getUrl(self, user):
+        if self.completed:
+            return reverse('showAnalysis', args=[ user.id, self.id ])
+        else:
+            return reverse('analyze', args=[ user.id, self.id ])
 
 class Processing(models.Model):
     id = models.AutoField(primary_key=True)
@@ -532,7 +561,7 @@ class Processing(models.Model):
     def canBeReadBy(self, user):
         return self.isOwnedBy(user)
 
-    def getRedirectURL(self, user):
+    def getUrl(self, user):
         return reverse('showCurveSet', args=[ user.id, self.curveSet.id ])
 
 
