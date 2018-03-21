@@ -9,6 +9,12 @@ from manager.models import Curve as mcurve
 Param = mcurve.Param
 
 class Txt(Parser):
+    currentMultiplier = {
+        'nA': 1E-3,
+        'µA': 1E0,
+        'mA': 1E3,
+        'A': 1E6
+    }
 
     def readPandas(self, fileForPandas, skipRows):
         return pd.read_csv(fileForPandas, sep='\s+', header=None, skiprows=skipRows)
@@ -34,6 +40,8 @@ class Txt(Parser):
         t_E = float(details.get('firstColumn_t', 1))
         method = details.get('voltMethod', 'lsv')
         ptnr = len(pdfile[0])
+        cmulti = float(self.currentMultiplier.get(details.get('currentUnit', 'µA'), 1.0))
+        print('cmulti:', cmulti)
 
         if isSampling == None:
             if col1 == 'firstIsE': #potential in 1st col
@@ -101,4 +109,7 @@ class Txt(Parser):
                 c.vec_current = self.calculateMethod(c.vec_sampling, spp, self.vec_param[Param.method])
             c.vec_time = time
             c.date = datetime.datetime.now()
+            if cmulti != 1.0:
+                c.vec_current = np.multiply(np.array(c.vec_current), cmulti).tolist()
+                c.vec_sampling = np.multiply(np.array(c.vec_sampling), cmulti).tolist()
             self._curves.append(c)

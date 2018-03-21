@@ -72,8 +72,18 @@ function firstColumnChanged(fid) {
 function addDescribeFile(id) {
     var field = ''
 
-    var fieldname = 'f_' + id + '_' + 'ignoreRows';
-    field += '<ul><li><label for="' + fieldname + '">Rows to ignore: </label>';
+    var fieldname = 'f_' + id + '_' + 'currentUnit';
+    field += '<ul>';
+    field += '<li><label for="' + fieldname +'">Current unit: </label>';
+    field += '<select id="' + fieldname + '" name="' + fieldname + '">';
+    field += '<option value="nA">nA</option>';
+    field += '<option value="µA" selected>µA</option>';
+    field += '<option value="mA">mA</option>';
+    field += '<option value="A">A</option>';
+    field += '</select></li>';
+
+    fieldname = 'f_' + id + '_' + 'ignoreRows';
+    field += '<li><label for="' + fieldname + '">Rows to ignore: </label>';
     field += '<input id="' + fieldname + '" type="text" name="' + fieldname + '" value="0" /></li>';
 
     fieldname = 'f_' + id + '_' + 'voltMethod';

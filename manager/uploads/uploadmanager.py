@@ -40,7 +40,12 @@ maxfile_size = 100000 # size in kB
 
 listOfFields = {
     'ignoreRows': None, # int 
-
+    'currentUnit': {
+        'nA': [],
+        'µA': [],
+        'mA': [],
+        'A': [],
+    },
     'firstColumn': {
         'firstIsE': [
             'firstColumn_t',# float
@@ -58,7 +63,6 @@ listOfFields = {
             'firstColumn_t',# float
         ],
     },
-
     'isSampling': {
         'on': [
             'isSampling_SPP', # int Samples Per Point
@@ -66,7 +70,6 @@ listOfFields = {
         ],
         None: []
     },
-
     'voltMethod': {
         'lsv': [],
         'scv': [],
