@@ -464,7 +464,7 @@ class CurveSet(models.Model):
         else:
             return True
 
-    def processingHistory(self):
+    def getProcessingHistory(self):
         return manager.models.Processing.objects.filter(curveSet=self).order_by('id')
 
     def export(self):

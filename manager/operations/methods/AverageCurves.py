@@ -50,7 +50,6 @@ given number of plots.
         self.model.step = None
         self.model.completed = True
         self.model.save()
-
         return True
 
     def getInfo(self, request, user):
