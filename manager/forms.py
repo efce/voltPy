@@ -301,7 +301,7 @@ class SelectCurvesForCurveSetForm(forms.Form):
         ret['curveset'] = []
         ret['curvefile'] = []
         namefield = self.fields.pop('name')
-        ret['start'] += """<li class="main_list">Name: <input type="text" value="{0}" name="name" /></li>""".format(namefield.initial)
+        ret['start'] += """<li class="main_list">Name: <input type="text" value="{0}" name="name"  autocomplete="off"/></li>""".format(namefield.initial)
         prev_parent = ''
         for key,field in self.fields.items():
             if ( hasattr(self, 'cleaned_data' ) ):

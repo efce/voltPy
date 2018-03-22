@@ -82,7 +82,6 @@ class Method(ABC):
                 self.has_next = self.__nextStep()
 
             if not self.has_next:
-                self.model.curveSet.prepareUndo()
                 self.finalize(user)
                 self.model.active_step_num = None
                 self.model.completed = True

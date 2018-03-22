@@ -268,6 +268,7 @@ $(function(){{
                         deleted = False,
                         completed = False
                     )
+                    curveset.prepareUndo()
                     a.save()
                     return a.id
                 else:

@@ -458,8 +458,8 @@ class CurveSet(models.Model):
         self.undoAnalytes.clear()
         for a in self.analytes.all():
             self.undoAnalytes.add(a)
-        self.undoAnalytesConc = self.analytesConc
-        self.undoAnalytesConcUnits = self.analytesConcUnits
+        self.undoAnalytesConc = copy(self.analytesConc)
+        self.undoAnalytesConcUnits = copy(self.analytesConcUnits)
         self.undoProcessing = processingObject
         self.save()
 
@@ -473,8 +473,8 @@ class CurveSet(models.Model):
         self.analytes.clear()
         for a in self.undoAnalytes.all():
             self.analytes.add(a)
-        self.analytesConc = self.undoAnalytesConc
-        self.analytesConcUnits = self.undoAnalytesConcUnits
+        self.analytesConc = copy(self.undoAnalytesConc)
+        self.analytesConcUnits = copy(self.undoAnalytesConcUnits)
         self.undoCurvesData.clear()
         self.undoAnalytes.clear()
         self.undoAnalytesConc.clear()
