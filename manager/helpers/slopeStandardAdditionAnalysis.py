@@ -3,6 +3,7 @@ from scipy.signal import savgol_filter
 from scipy.stats import t
 from scipy.interpolate import UnivariateSpline
 from manager.helpers.fithelpers import calc_normal_equation_fit
+from manager.exceptions import VoltPyFailed
 
 def slopeStandardAdditionAnalysis(DATACELL, peakLocation, options):
     """
@@ -315,7 +316,7 @@ def slopeStandardAdditionAnalysis(DATACELL, peakLocation, options):
         print(order_r)
 
     if (order_r[0][1] == 0):
-        raise ValueError('Could not obtain result.')
+        raise VoltPyFailed('Could not obtain result, correlations are too low.')
     else:
         return result[order_r[0][0]]
 

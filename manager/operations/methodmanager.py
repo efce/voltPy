@@ -11,6 +11,7 @@ from django import forms
 from django.db import transaction
 import manager.models as mmodels
 import manager.plotmanager as pm
+from manager.exceptions import VoltPyFailed
 from manager.helpers.functions import generate_plot
 from manager.helpers.functions import voltpy_render
 from manager.helpers.functions import add_notification
@@ -90,7 +91,13 @@ class MethodManager:
         or request.POST.get('query') != 'methodmanager' ):
             return
         if self.__method:
-            self.__method.process(user=user,request=request)
+            try:
+                self.__method.process(user=user,request=request)
+            except VoltPyFailed as e:
+                self.__model.deleted = True
+                self.__model.save()
+                add_notification(request, 'Procedure failed. The data may be incompatible with the processing method. Please verify and try again.')
+                add_notification(request, 'Fail reason: %s' % e)
 
 
     def exportFile(self):

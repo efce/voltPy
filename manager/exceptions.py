@@ -3,3 +3,6 @@ class VoltPyNotAllowed(Exception):
 
 class VoltPyDoesNotExists(Exception):
     pass
+
+class VoltPyFailed(Exception):
+    pass

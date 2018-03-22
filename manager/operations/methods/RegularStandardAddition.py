@@ -50,10 +50,16 @@ This is standard addition method, where the height of the signal is calculated a
         ]
         self.model.customData['matrix'] = data
         p = calc_normal_equation_fit(data[0], data[1])
-        self.model.customData['fitEquation'] = p
-        self.model.customData['result'] = p['intercept']/p['slope']
-        self.model.customData['resultStdDev'] = calc_sx0(p['slope'],p['intercept'],data[0],data[1])
-        self.model.customData['corrCoef'] = corrcoef(data[0], data[1])[0,1]
+        if p['slope'] != 0:
+            self.model.customData['fitEquation'] = p
+            self.model.customData['result'] = p['intercept']/p['slope']
+            self.model.customData['resultStdDev'] = calc_sx0(p['slope'],p['intercept'],data[0],data[1])
+            self.model.customData['corrCoef'] = corrcoef(data[0], data[1])[0,1]
+        else:
+            self.model.customData['fitEquation'] = p
+            self.model.customData['result'] = None
+            self.model.customData['resultStdDev'] = None
+            self.model.customData['corrCoef'] = None
         self.model.completed = True
         self.model.step = 0
         self.model.save()

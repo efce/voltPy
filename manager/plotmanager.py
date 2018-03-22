@@ -132,7 +132,8 @@ class PlotManager:
         })
         #prepare calibration line
         xs = analysis.customData['matrix'][0]
-        xs.append(-analysis.customData['result'])
+        if analysis.customData['result'] is not None:
+            xs.append(-analysis.customData['result'])
         vx= [ min(xs), max(xs) ] # x variable is used by the fitEquation
         FofX = lambda xo: analysis.customData['fitEquation']['slope'] * xo + analysis.customData['fitEquation']['intercept']
         vy = [FofX(xi) for xi in vx ]

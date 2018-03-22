@@ -2,6 +2,7 @@ import manager.operations.method as method
 from manager.operations.methodsteps.selectanalyte import SelectAnalyte
 from manager.operations.methodsteps.selectrange import SelectRange
 from manager.operations.methodsteps.tagcurves import TagCurves
+from manager.exceptions import VoltPyFailed
 import manager.plotmanager as pm
 import manager.models as mmodels
 import manager.helpers.selfReferencingBackgroundCorrection as sbcm
@@ -54,6 +55,8 @@ https://doi.org/10.1002/elan.201300181"""
         self.model.customData['analyte'] = analyte.name
         unitsTrans = dict(mmodels.CurveSet.CONC_UNITS)
         self.model.customData['units'] = unitsTrans[self.model.curveSet.analytesConcUnits[analyte.id]]
+        if len(set(self.model.stepsData['TagCurves'].keys())) <= 2:
+            raise VoltPyFailed('Not enaugh sensitivities to analyze the data.')
         for name,cds in self.model.stepsData['TagCurves'].items():
             for cid in cds:
                 SENS.append(name)
