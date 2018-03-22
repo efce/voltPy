@@ -16,7 +16,7 @@
 
 {% block real_content %}
 <p>{{ infotext }}</p>
-<form method="post" action="" enctype="multipart/form-data" id="concform">
+<form method="post" action="" enctype="multipart/form-data" id="concform"  autocomplete="off">
 	<table>
 	{% csrf_token %}
 	{{ form.as_table }}
