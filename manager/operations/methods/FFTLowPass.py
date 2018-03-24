@@ -27,6 +27,7 @@ signal back to the original domain.
         return "Low Pass FFT filter"
 
     def finalize(self, user):
+        import matplotlib.pyplot as plt
         cs = self.model.curveSet
         for cd in cs.curvesData.all():
             newcd = cd.getCopy()
@@ -34,9 +35,12 @@ signal back to the original domain.
             yvec = newcd.yVector
             ylen = len(yvec)
             st = round(self.model.stepsData['SelectFrequency'])
-            en = ylen - st - 1
+            en = ylen - st + 1
             ffty = np.fft.fft(yvec)
+            plt.plot(np.abs(ffty))
             ffty[st:en] = [0]*(en-st)
+            plt.plot(np.abs(ffty))
+            plt.show()
             iffty = np.fft.ifft(ffty)
             newcd.yVector = np.real(iffty).tolist()
             newcd.save()
