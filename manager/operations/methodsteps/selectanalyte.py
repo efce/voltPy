@@ -3,16 +3,17 @@ from django import forms
 from manager.operations.methodstep import MethodStep
 import manager.models as mmodels
 
+
 class SelectAnalyte(MethodStep):
     plot_interaction = 'none'
 
     class AnalyteSelectionForm(forms.Form):
         def __init__(self, *args, **kwargs):
-            analytes = kwargs.pop('analytes',[])
+            analytes = kwargs.pop('analytes', [])
             super(SelectAnalyte.AnalyteSelectionForm, self).__init__(*args, **kwargs)
             choices = zip(
-                [-1] + [ x.id for x in analytes.all() ],
-                ['Select'] + [ x.name for x in analytes.all() ]
+                [-1] + [x.id for x in analytes.all()],
+                ['Select'] + [x.name for x in analytes.all()]
             )
             self.fields['analyteId'] = forms.ChoiceField(
                 choices=choices,
@@ -31,7 +32,7 @@ class SelectAnalyte(MethodStep):
         analyte_sel = self.AnalyteSelectionForm(analytes=cs.analytes)
         from django.template import loader
         template = loader.get_template('manager/form.html')
-        context = { 'form': analyte_sel, 'submit': 'selectAnalyte' }
+        context = {'form': analyte_sel, 'submit': 'selectAnalyte'}
         analyte_sel_disp = template.render(
             context=context,
             request=request
@@ -42,7 +43,7 @@ class SelectAnalyte(MethodStep):
         Data preview:<br />
         {1}
         """.format(analyte_sel_disp, at_disp)
-        return { 'head': style, 'desc': '', 'body': txt }
+        return {'head': style, 'desc': '', 'body': txt}
 
     def process(self, user, request, model):
         cs = model.curveSet
@@ -59,4 +60,3 @@ class SelectAnalyte(MethodStep):
             return True
         else:
             return False
-

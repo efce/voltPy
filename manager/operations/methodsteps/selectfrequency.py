@@ -1,11 +1,12 @@
+import numpy as np
+import math
 from manager.operations.methodstep import MethodStep
 from manager.forms import CursorsForm
 import manager.plotmanager as pm
-import numpy as np
-import math
+
 
 class SelectFrequency(MethodStep):
-    plot_interaction='none'
+    plot_interaction = 'none'
 
     def process(self, user, request, model):
         cf = CursorsForm(request.POST, cursors_num=1)
@@ -13,7 +14,7 @@ class SelectFrequency(MethodStep):
             cfcd = cf.cleaned_data
             if (len(cfcd) == 1):
                 data = None
-                for k,v in cfcd.items():
+                for k, v in cfcd.items():
                     try:
                         data = float(v)
                     except:
@@ -30,8 +31,8 @@ class SelectFrequency(MethodStep):
         cf = CursorsForm(cursors_num=1)
         template = loader.get_template('manager/form.html')
         context = { 
-            'form': cf, 
-            'submit': 'forward' 
+            'form': cf,
+            'submit': 'forward'
         }
         cf_txt = template.render(
             context=context,
@@ -51,6 +52,5 @@ class SelectFrequency(MethodStep):
         
         p.setInteraction('set1cursor')
         p.include_x_switch = True
-        src,div = p.getEmbeded(request, user, 'processing', model.id)
-        return { 'head': src, 'body' : ' '.join((div, cf_txt)) }
-
+        src, div = p.getEmbeded(request, user, 'processing', model.id)
+        return {'head': src, 'body': ' '.join((div, cf_txt))}

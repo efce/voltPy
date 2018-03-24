@@ -1,8 +1,7 @@
 import numpy as np
-from copy import deepcopy
-from django.utils import timezone
 import manager.operations.method as method
 from manager.operations.methodsteps.selectfrequency import SelectFrequency
+
 
 class FFTLowPass(method.ProcessingMethod):
     _steps = [ 
@@ -35,7 +34,7 @@ signal back to the original domain.
             yvec = newcd.yVector
             ylen = len(yvec)
             st = round(self.model.stepsData['SelectFrequency'])
-            en = ylen - st - 1;
+            en = ylen - st - 1
             ffty = np.fft.fft(yvec)
             ffty[st:en] = [0]*(en-st)
             iffty = np.fft.ifft(ffty)

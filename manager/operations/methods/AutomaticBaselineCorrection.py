@@ -4,6 +4,7 @@ import manager.operations.method as method
 from manager.operations.methodsteps.confirmation import Confirmation
 from manager.helpers.bkghelpers import calc_abc
 
+
 class AutomaticBaselineCorrection(method.ProcessingMethod):
     _steps = [ 
         {
@@ -13,8 +14,7 @@ class AutomaticBaselineCorrection(method.ProcessingMethod):
         },
     ]
     model = None
-    description = \
-"""
+    description = """
 Automatic Baseline Correction (ABC) removes the background by the means
 of automatic polynomial fitting. This implementation is taken from [1].
 ABC usually two parameters to work, however, there are some values

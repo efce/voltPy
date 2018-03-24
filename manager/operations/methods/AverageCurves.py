@@ -1,9 +1,8 @@
 from overrides import overrides
 import numpy as np
-import django.forms as forms
-from django.utils import timezone
 import manager.operations.method as method
 from manager.operations.methodsteps.tagcurves import TagCurves
+
 
 class AverageCurves(method.ProcessingMethod):
     _steps = [ 
@@ -31,14 +30,13 @@ given number of plots.
 
     def finalize(self, user):
         cs = self.model.curveSet
-        for k,f in self.model.stepsData['TagCurves'].items():
-            if ( len(f) > 1 ):
+        for k, f in self.model.stepsData['TagCurves'].items():
+            if (len(f) > 1):
                 cid = f[0]
                 orgcd = cs.curvesData.get(id=cid)
                 newcd = orgcd.getCopy()
                 newcdConc = cs.getCurveConcDict(orgcd)
                 cs.removeCurve(orgcd)
-                cnt = 1
                 yvecs = []
                 for cid in f[1:]:
                     cd = self.model.curveSet.curvesData.get(id=cid)

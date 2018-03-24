@@ -1,9 +1,8 @@
-from copy import deepcopy
 import numpy as np
-from django.utils import timezone
 import manager.operations.method as method
 from manager.operations.methodsteps.selecttworanges import SelectTwoRanges
 from manager.operations.methodsteps.confirmation import Confirmation
+
 
 class PolynomialBackgroundFit(method.ProcessingMethod):
     _steps = [ 
@@ -31,9 +30,9 @@ other right after it.
         return "3rd deg Polynomial Background Fit"
 
     def process(self, user, request):
-        ret = super(method.ProcessingMethod, self).process(user, request)
+        ret = super(PolynomialBackgroundFit, self).process(user, request)
         self.model.customData['fitCoeff'] = []
-        if ( self.model.active_step_num == 1 ):
+        if self.model.active_step_num == 1:
             for cd in self.model.curveSet.curvesData.all():
                 st1 = cd.xvalueToIndex(user, self.model.stepsData['SelectTwoRanges'][0])
                 en1 = cd.xvalueToIndex(user, self.model.stepsData['SelectTwoRanges'][1])
@@ -49,14 +48,14 @@ other right after it.
         return ret
 
     def getAddToPlot(self):
-        if ( self.model.active_step_num == 1 ):
+        if self.model.active_step_num == 1:
             fitlines = []
-            for cd,fit in zip(self.model.curveSet.curvesData.all(), self.model.customData['fitCoeff']):
+            for cd, fit in zip(self.model.curveSet.curvesData.all(), self.model.customData['fitCoeff']):
                 xvec = cd.xVector
                 p = (fit['x3'], fit['x2'], fit['x1'], fit['x0'])
                 fitlines.append(dict(
                     x=xvec,
-                    y=np.polyval(p,xvec).tolist(),
+                    y=np.polyval(p, xvec).tolist(),
                     plottype='line',
                     color='red',
                 ))
@@ -69,14 +68,14 @@ other right after it.
         cs = self.model.curveSet
         if cs.locked:
             raise ValueError("CurveSet used by Analysis method cannot be changed.")
-        for cd,fit in zip(cs.curvesData.all(), self.model.customData['fitCoeff']):
+        for cd, fit in zip(cs.curvesData.all(), self.model.customData['fitCoeff']):
             newcd = cd.getCopy()
             newcdConc = cs.getCurveConcDict(cd)
             yvec = newcd.yVector
             xvec = newcd.xVector
             p = (fit['x3'], fit['x2'], fit['x1'], fit['x0'])
             ybkg = np.polyval(p, xvec)
-            newyvec = list(np.subtract(yvec, ybkg));
+            newyvec = list(np.subtract(yvec, ybkg))
             newcd.yVector = newyvec
             newcd.save()
             cs.removeCurve(cd)
@@ -84,7 +83,6 @@ other right after it.
         cs.save()
         self.model.save()
         return True
-
 
     def getInfo(self, request, user):
         return {

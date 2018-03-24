@@ -1,12 +1,12 @@
 from django import forms
 from manager.operations.methodstep import MethodStep
 
+
 class Confirmation(MethodStep):
     plot_interaction = 'none'
 
     class ConfirmForm(forms.Form):
         pass
-
 
     def process(self, user, request, model):
         if request.POST.get('confirm', False) == 'Forward':
@@ -28,4 +28,4 @@ class Confirmation(MethodStep):
             context=context,
             request=request
         )
-        return { 'head': '', 'desc': '', 'body': conf_txt }
+        return {'head': '', 'desc': '', 'body': conf_txt}
