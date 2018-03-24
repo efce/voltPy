@@ -1,15 +1,10 @@
 import sys
 import os
-from abc import ABC, abstractmethod, abstractclassmethod
 from django import forms
 from django.core.exceptions import ObjectDoesNotExist
 from django.urls import reverse
 from django.http import HttpResponseRedirect
-from django.http import HttpResponse
-from django.utils import timezone
-from django.db import transaction
 import manager.models as mmodels
-import manager.plotmanager as pm
 from manager.exceptions import VoltPyFailed
 from manager.helpers.functions import generate_plot
 from manager.helpers.functions import voltpy_render
@@ -31,8 +26,8 @@ class MethodManager:
 
     def __init__(self, user, **kwargs):
         self.methods = {
-            'processing': dict(), 
-            'analysis': dict() 
+            'processing': dict(),
+            'analysis': dict()
         }
         self.__type = None
         self.__method = None
@@ -66,7 +61,7 @@ class MethodManager:
     def __loadMethods(self):
         dir_path = os.path.dirname(os.path.realpath(__file__))
         methodspath = dir_path + "/methods/"
-        onlyfiles = [ 
+        onlyfiles = [
             f for f in os.listdir(methodspath) if os.path.isfile(os.path.join(methodspath, f)) and f.endswith('.py')
         ]
         sys.path.append(methodspath)
@@ -112,20 +107,21 @@ class MethodManager:
             return {'command': 'reload'}
 
     def getContent(self, request, user):
+        if self.__model.deleted:
+            add_notification(request, 'Procedure delted.', 0)
+            return HttpResponseRedirect(reverse("showCurveSet", args=[user.id, self.__model.curveSet.id]))
+
         if any([
             self.__method.has_next is False,
             self.__method.step is None
         ]):
             return HttpResponseRedirect(self.__model.getUrl(user))
-        elif not self.isMethodSelected():
+
+        if not self.isMethodSelected():
             return HttpResponseRedirect(reverse("browseCurveSet"))
 
-        if self.__model.deleted:
-            add_notification(request, 'Procedure delted.', 0)
-            return HttpResponseRedirect(reverse("showCurveSet", args=[user.id, self.__model.curveSet.id]))
-
-        stepText = dict( 
-            head='', 
+        stepText = dict(
+            head='',
             body='No text'
         )
 

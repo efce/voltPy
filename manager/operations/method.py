@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod, abstractclassmethod
 from django.db import transaction
-from django.core.exceptions import ObjectDoesNotExist
 import manager.models as mmodels
+
 
 class Method(ABC):
     """
@@ -12,7 +12,11 @@ class Method(ABC):
     model = None
     has_next = True
     description = None
-    
+
+    @property
+    def _steps(self):
+        raise NotImplementedError
+
     def __init__(self, model):
         if not model:
             raise ValueError('Model has to be set')
@@ -25,7 +29,6 @@ class Method(ABC):
                 self.has_next = False
         else:
             self.has_next = False
-
 
     def __initializeStep(self):
         if self.step['class'] is not None:
@@ -68,7 +71,7 @@ class Method(ABC):
         """
         This processes current.active_step_num.
         """
-        sid=transaction.savepoint()
+        sid = transaction.savepoint()
         try:
             isBack = request.POST.get('_voltJS_backButton', 0) 
             if isBack != 0:
@@ -104,13 +107,13 @@ class Method(ABC):
                 model=self.model
             )
             return { 
-            #Step data come form step class, but description comes from method
-                'head': stepHTML.get('head',''), 
-                'body': stepHTML.get('body',''), 
-                'desc': self.step.get('desc','')
+            # Step data come form step class, but description comes from method
+                'head': stepHTML.get('head', ''),
+                'body': stepHTML.get('body', ''),
+                'desc': self.step.get('desc', '')
             }
         else:
-            return { 'head': '', 'body': '' , 'desc': ''}
+            return {'head': '', 'body': '', 'desc': ''}
 
     def getAddToPlot(self):
         return None
@@ -140,7 +143,7 @@ class Method(ABC):
         pass
 
 
-class AnalysisMethod(Method):
+class AnalysisMethod(Method, ABC):
     """
     Should be inherited by classes providing 
     data analysis procedures.
@@ -150,7 +153,7 @@ class AnalysisMethod(Method):
         return 'analysis'
 
 
-class ProcessingMethod(Method):
+class ProcessingMethod(Method, ABC):
     """
     Should be inherted by classes providing
     data processing procedures.
@@ -158,4 +161,3 @@ class ProcessingMethod(Method):
     @classmethod
     def type(self):
         return 'processing'
-
