@@ -2,6 +2,7 @@ import base64 as b64
 from django.urls import reverse
 import manager.models as mmodels
 
+
 def analytesTable(user, obj, objType):
     """
     cs - is CurveFile or CurveSet for which the table will be prepared.
@@ -45,7 +46,7 @@ def analytesTable(user, obj, objType):
                         'user_id': user.id,
                         'objType': objType,
                         'objId': obj.id, 
-                        'analyteId':a.id
+                        'analyteId': a.id
                     }).encode()
                 ).decode('UTF-8'),
                 a.id,

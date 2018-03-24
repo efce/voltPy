@@ -1,14 +1,10 @@
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
-{% include "./bokeh.js" %}
-<script type="text/javascript">
-
 $( function() {
- window.voltPy1 = {};
+    window.voltPy1 = {}
 });
 
 // Implementation of sleep. Used during reload, to allow the server some time for processing.
 function sleep (time) {
-    return new Promise((resolve) => setTimeout(resolve, time));
+    return new Promise((resolve) => setTimeout(resolve, time))
 };
 
 function voltpy_loading_start(text) {
@@ -18,13 +14,14 @@ function voltpy_loading_start(text) {
     $('#voltpy-loading').addClass('loading-cover');
     $('#voltpy-loading').removeClass('loading-uncover');
     $('#voltpy-loading').css('line-height', $('#voltpy-loading').css('height'));
-}
+};
+
 function voltpy_loading_done()
 {
     $('#voltpy-loading').addClass('loading-uncover');
     $('#voltpy-loading').removeClass('loading-cover');
     $('body').css('overflow','scroll');
-}
+};
 
 // Function used for communication between the page and server, with loading text.
 function voltpy_query(url, object, funcOnReturn) {
@@ -39,7 +36,6 @@ function voltpy_query(url, object, funcOnReturn) {
 };
 
 function queryServer(url, object, plot=null, lineData=null, cursors=null) {
-    //TODO: partial 
     function processReplyPartial (data) {
         processJSONReply(data, plot, lineData, cursors);
     }
@@ -47,7 +43,7 @@ function queryServer(url, object, plot=null, lineData=null, cursors=null) {
 };
 
 // This is main JS function for sending and processing JSON.
-function processJSONReply(data, plot='',lineData='',cursors='') {
+function processJSONReply(data, plot='', lineData='', cursors='') {
     switch (data.command) {
     case 'none':
         return;
@@ -100,8 +96,8 @@ $( function() {
     // one or more classes:
     // _voltJS_ifNegativeDisable@<classNameToDisable>
     // _voltJS_ifNegativeEnable@<classNameTOEnable>
-    iclassDisable = '_voltJS_ifNegativeDisable@'
-    iclassEnable = '_voltJS_ifNegativeEnable@'
+    iclassDisable = '_voltJS_ifNegativeDisable@';
+    iclassEnable = '_voltJS_ifNegativeEnable@';
     $( '._voltJS_testForNegative' ).on('change', function() {
         var classes = this.className.split(" ");
         var onOff = (this.value < 0);
@@ -173,11 +169,11 @@ $( function() {
 
 $( function() {
     // TODO: find some nicer way to change Bokeh plots colors
-    var iclass = '_voltJS_highlightCurve@'
-    $( '._voltJS_plotHighlight' ).hover( function() { // on hover in
-        $(this).css('background-color', 'red');
-        $(this).css('color', 'white');
-        var classes = this.className.split(' ');
+    var iclass = '_voltJS_highlightCurve@';
+    function highlightOn(element) { // on hover in
+        $(element).css('background-color', 'red');
+        $(element).css('color', 'white');
+        var classes = element.className.split(' ');
         classes.forEach( function(name) {
             if (name.startsWith(iclass)) {
                 var number = name.substring(iclass.length);
@@ -186,10 +182,12 @@ $( function() {
                 Bokeh.documents[0]._all_models_by_name._dict[cname].glyph.line_color = 'red';
             }
         }); 
-    }, function() { // on hover out
-        var classes = this.className.split(" ");
-        $(this).css('background-color', 'white');
-        $(this).css('color', 'black');
+    };
+
+    function highlightOff(element) { // on hover out
+        var classes = element.className.split(' ');
+        $(element).css('background-color', 'white');
+        $(element).css('color', 'black');
         classes.forEach( function(name) {
             if (name.startsWith(iclass)) {
                 var number = name.substring(iclass.length);
@@ -198,7 +196,21 @@ $( function() {
                 Bokeh.documents[0]._all_models_by_name._dict[cname].glyph.line_color = 'blue';
             }
         }); 
-    });
+    }
+
+    $( '._voltJS_plotHighlight' ).hover(
+        function() {
+            highlightOn(this);
+        }, function() {
+            highlightOff(this);
+        }
+    );
+    $( '._voltJS_plotHighlightInput' ).focusin(
+        function() { highlightOn(this) }
+    );
+    $( '._voltJS_plotHighlightInput' ).focusout(
+        function() { highlightOff(this); }
+    );
 });
 
 $( function() {
@@ -220,4 +232,3 @@ $( function() {
         e.preventDefault();
     });
 });
-</script>

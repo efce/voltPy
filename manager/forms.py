@@ -37,7 +37,7 @@ class EditName(forms.Form):
         super(EditName, self).__init__(*args, **kwargs)
         assert self.model is not None
         self.fields['e_name'] = forms.CharField(
-            max_length=64, 
+            max_length=64,
             initial=self.model.name,
             required=False,
             label=label_name
@@ -52,7 +52,7 @@ class EditName(forms.Form):
     def process(self, user, request):
         if not self.model.canBeUpdatedBy(user):
             raise VoltPyNotAllowed
-        try: 
+        try:
             if self.model.id != int(self.cleaned_data['e_id']):
                 raise VoltPyNotAllowed
         except:
@@ -132,11 +132,15 @@ class EditAnalytesForm(forms.Form):
                 val = self.cs.analytesConc.get(analyte.id, {}).get(cd.id, '')
             else:
                 val = ''
-            self.fields["curve_%d" % cd.id] = forms.FloatField(
-                label=cd.curve.name + ":\n" + cd.curve.comment,
+            self.fields['curve_%d' % cd.id] = forms.FloatField(
+                label=cd.curve.name + ": " + cd.curve.comment,
                 required=True,
                 initial=val
             )
+            self.fields['curve_%d' % cd.id].widget.attrs['class'] = ' '.join([
+                '_voltJS_plotHighlightInput',
+                '_voltJS_highlightCurve@%d' % cd.id,
+            ])
 
     def clean(self):
         super().clean()
@@ -345,7 +349,7 @@ class SelectCurvesForCurveSetForm(forms.Form):
                 )
                 prev_parent = field.maintype
             else:
-                ret[field.maintype].append( """
+                ret[field.maintype].append("""
 <li class="_voltJS_toExpand curve_list {startingClass}">
     <input id="id_{name}" class="_voltJS_toDisable" type="checkbox" name="{name}"{checkedText} />
     <label for="id_{name}">{label}</label>
