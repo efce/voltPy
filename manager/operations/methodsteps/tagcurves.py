@@ -12,12 +12,16 @@ class TagCurves(ms.MethodStep):
                 initialTags = {}
             super(TagCurves.TagCurvesForm, self).__init__(*args, **kwargs)
             for cd in self.model.curveSet.curvesData.all():
-                self.fields['cd'+str(cd.id)] = forms.CharField(
+                self.fields['cd%d' % cd.id] = forms.CharField(
                     max_length=4, 
                     initial=initialTags.get(cd.id,''),
                     label=''.join([cd.curve.name, ' ', cd.curve.comment]),
                     required=True
                 )
+                self.fields['cd%d' % cd.id].widget.attrs['class'] = ' '.join([
+                    '_voltJS_plotHighlightInput',
+                    '_voltJS_highlightCurve@%d' % cd.id,
+                ])
 
         def process(self):
             ret = {}
