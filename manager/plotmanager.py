@@ -15,6 +15,7 @@ from bokeh.layouts import widgetbox, column, row
 from bokeh.models.widgets import RadioButtonGroup, Button, Paragraph
 import bokeh
 
+
 class PlotManager:
     methodmanager = None
     interaction = 'none'
@@ -33,7 +34,7 @@ class PlotManager:
     ]
 
     def __init__(self):
-        self.__random = str(random.random()).replace(".","")
+        self.__random = str(random.random()).replace(".", "")
         self.__line = []
         self.__scatter = []
         self.p = figure(
@@ -45,7 +46,6 @@ class PlotManager:
             width=self.plot_width-20
         )
 
-
     def curveSetHelper(self, user, cs):
         if not cs.canBeReadBy(user):
             raise VoltPyNotAllowed
@@ -54,7 +54,7 @@ class PlotManager:
             onxs = mmodels.OnXAxis.objects.get(user=user)
             onx = onxs.selected
         except ObjectDoesNotExist:
-            onxs = mmodels.OnXAxis(selected='P',user=user)
+            onxs = mmodels.OnXAxis(selected='P', user=user)
             onxs.save()
             onx = onxs.selected
 
@@ -67,7 +67,7 @@ class PlotManager:
                         x=range(1, len(cd.currentSamples)+1),
                         y=cd.currentSamples,
                         plottype='line',
-                        name = 'curve_' + str(cd.id),
+                        name='curve_%i' % cd.id,
                         color='blue',
                     )
                 )
@@ -79,7 +79,7 @@ class PlotManager:
                         x=cd.time,
                         y=cd.current,
                         plottype='line',
-                        name = 'curve_' + str(cd.id),
+                        name='curve_%i' % cd.id,
                         color='blue',
                     )
                 )
@@ -90,29 +90,27 @@ class PlotManager:
                         x=cd.potential,
                         y=cd.current,
                         plottype='line',
-                        name = 'curve_' + str(cd.id),
+                        name='curve_%i' % cd.id,
                         color='blue',
                     )
                 )
 
         return ret
 
-
     def xLabelHelper(self, user):
         try:
             onxs = mmodels.OnXAxis.objects.get(user=user)
             onx = onxs.selected
         except ObjectDoesNotExist:
-            onxs = mmodels.OnXAxis(selected='P',user=user)
+            onxs = mmodels.OnXAxis(selected='P', user=user)
             onxs.save()
             onx = onxs.selected
-        if ( onx == 'S' ):
+        if onx == 'S':
             return "Sample no."
-        elif ( onx == 'T' ):
+        elif onx == 'T':
             return "t / ms"
         else:
             return "E / mV"
-
 
     def analysisHelper(self, user, value_id):
         # TODO: makeover :)
@@ -130,31 +128,38 @@ class PlotManager:
             'color': 'red',
             'size': 8
         })
-        #prepare calibration line
+        # prepare calibration line
         xs = analysis.customData['matrix'][0]
         if analysis.customData['result'] is not None:
             xs.append(-analysis.customData['result'])
-        vx= [ min(xs), max(xs) ] # x variable is used by the fitEquation
-        FofX = lambda xo: analysis.customData['fitEquation']['slope'] * xo + analysis.customData['fitEquation']['intercept']
-        vy = [FofX(xi) for xi in vx ]
+        vx = [min(xs), max(xs)]  # x variable is used by the fitEquation
+
+        def FofX(xo):
+            return (
+                analysis.customData['fitEquation']['slope']
+                * xo
+                + analysis.customData['fitEquation']['intercept']
+            )
+
+        vy = [FofX(xi) for xi in vx]
         ret.append({
             'x': vx,
             'y': vy,
-            'plottype':'line',
+            'plottype': 'line',
             'color': 'blue',
             'line_width': 2
         })
         return ret
 
     def add(self, x=[], y=[], name='', plottype='line', color="blue", **kwargs):
-        allowedtyped = [ 'line', 'scatter', 'cursor' ];
+        allowedtyped = ['line', 'scatter', 'cursor']
         if plottype == 'line':
             self.p.line(
                 x=x,
                 y=y,
                 name=name,
                 color=color,
-                line_width=kwargs.get('line_width',2),
+                line_width=kwargs.get('line_width', 2),
             )
         elif plottype == 'scatter':
             self.p.scatter(
@@ -162,12 +167,12 @@ class PlotManager:
                 y=y,
                 name=name,
                 color=color,
-                size=kwargs.get('size',8)
+                size=kwargs.get('size', 8)
             )
         elif plottype == 'cursor':
-            if ( len(x) > 1 ):
+            if (len(x) > 1):
                 ValueError('When adding cursor only one x value is allowed')
-            C= Span(
+            C = Span(
                 location=x[0],
                 dimension='height', 
                 line_color=color,
@@ -185,14 +190,26 @@ class PlotManager:
         onx = onx.selected
         self.p.xaxis.axis_label = self.xlabel
         self.p.yaxis.axis_label = self.ylabel
-        vline = Span(location=0, dimension='height', line_color='black', line_width=1, level='underlay')
-        hline = Span(location=0, dimension='width', line_color='black', line_width=1, level='underlay')
+        vline = Span(
+            location=0, 
+            dimension='height', 
+            line_color='black', 
+            line_width=1, 
+            level='underlay'
+        )
+        hline = Span(
+            location=0, 
+            dimension='width', 
+            line_color='black', 
+            line_width=1, 
+            level='underlay'
+        )
         self.p.renderers.extend([vline, hline])
-        for k,l in dict(mmodels.OnXAxis.AVAILABLE).items():
+        for k, l in dict(mmodels.OnXAxis.AVAILABLE).items():
             labels.append(l)
         active = -1
-        for i,k in enumerate(dict(mmodels.OnXAxis.AVAILABLE).keys()):
-            if k==onx:
+        for i, k in enumerate(dict(mmodels.OnXAxis.AVAILABLE).keys()):
+            if k == onx:
                 active = i
 
         funmaster = """
@@ -262,11 +279,11 @@ class PlotManager:
             js_globalBase,
             funmaster
         ])
-        srcEmpty = ColumnDataSource(data = dict( x=[], y=[]))
-        self.p.line(x='x',y='y',source=srcEmpty, color='red', line_dash='dashed')
+        srcEmpty = ColumnDataSource(data = dict(x=[], y=[]))
+        self.p.line(x='x', y='y', source=srcEmpty, color='red', line_dash='dashed')
         cursors = []
         for i in range(4):
-            C= Span(
+            C = Span(
                 location=None,
                 dimension='height', 
                 line_color='green',

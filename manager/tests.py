@@ -22,6 +22,7 @@ Test should:
     check the result of processing
 """
 
+
 def addFilesToRequest(request, filepaths_list, post_name='files[]'):
     _filelist = []
     for filepath in filepaths_list:
@@ -47,9 +48,10 @@ class TestUser(TestCase):
         u = mmodels.User.objects.all()
         self.assertEqual(u[0].name, "U1")
 
+
 class TestFileUpload(TestCase):
     listOfFields = {
-        'ignoreRows': None, # int 
+        'ignoreRows': None,  # int 
         'currentUnit': {
             'nA': [],
             'µA': [],
@@ -58,25 +60,25 @@ class TestFileUpload(TestCase):
         },
         'firstColumn': {
             'firstIsE': [
-                'firstColumn_t',# float
-                'firstColumn_dE',# float
+                'firstColumn_t',   # float
+                'firstColumn_dE',  # float
             ],
             'firstIsT': [
-                'firstColumn_Ep', # float
-                'firstColumn_Ek',# float
-                'firstColumn_dE',# float
+                'firstColumn_Ep',  # float
+                'firstColumn_Ek',  # float
+                'firstColumn_dE',  # float
             ],
             'firstIsI': [
-                'firstColumn_Ep', # float
-                'firstColumn_Ek',# float
-                'firstColumn_dE',# float
-                'firstColumn_t',# float
+                'firstColumn_Ep',  # float
+                'firstColumn_Ek',  # float
+                'firstColumn_dE',  # float
+                'firstColumn_t',   # float
             ],
         },
         'isSampling': {
             'on': [
-                'isSampling_SPP', # int Samples Per Point
-                'isSampling_SFreq', # float 
+                'isSampling_SPP',    # int Samples Per Point
+                'isSampling_SFreq',  # float 
             ],
             None: []
         },
@@ -108,16 +110,14 @@ class TestFileUpload(TestCase):
         './test_files/test_file.voltc',
     ]
 
-
     def setUp(self):
         self.user = mmodels.User(name="UTest")
         self.user.save()
 
     def test_file_upload(self):
         factory = RequestFactory()
-        filelist = []
         postdata = {}
-        for fid,filepath in enumerate(self.file_list):
+        for fid, filepath in enumerate(self.file_list):
             testname = "tęśß ńąµę"
             testcomment = "ßęśß ćóµµęńß"
             rstr = 'f_%i_%s'
@@ -140,7 +140,7 @@ class TestFileUpload(TestCase):
         pu = um.ajax(user_id=str(self.user.id), request=request)
         assert pu.status_code == 200
         ret = json.loads(pu.content)
-        if not 'success' in ret['command']:
+        if 'success' not in ret['command']:
             self.fail('success not reposted by uploadmanager')
 
         fileset = mmodels.FileSet.objects.all()[0]
@@ -148,7 +148,7 @@ class TestFileUpload(TestCase):
         for f in fileset.files.all():
             cs = f.curveSet
             assert len(cs.curvesData.all()) == 24
-            #TODO: more tests
+            # TODO: more tests
 
         #fid = pu.getFileId()
         #cf = mmodels.CurveFile.objects.get(id=fid)
@@ -163,8 +163,9 @@ class TestFileUpload(TestCase):
         #float(cd.yVector[3])
         #float(cd.xVector[3])
 
+
 class TestMethodManager(TestCase):
-    testmethod="""
+    testmethod = """
 import manager.methodmanager as mm
 
 class TestMethod(mm.ProcessingMethod):
@@ -190,7 +191,6 @@ main_class = TestMethod
         self.user = mmodels.User(name="UTest")
         self.user.save()
         filepath = "./pb_4mgL_CTAB.volt"
-        from pathlib import Path
         test_file = Path(filepath)
         if not test_file.is_file():
             self.fail("test file: pb_4mgL_CTAB.volt is missing")
@@ -198,11 +198,11 @@ main_class = TestMethod
         pu = mpu.ProcessUpload(self.user, ufile, 'name', 'comment')
         fid = pu.getFileId()
         cs = mmodels.CurveSet(
-            owner = self.user,
-            name = 'test cs',
-            date = timezone.now(),
-            locked = False,
-            deleted = False
+            owner=self.user,
+            name='test cs',
+            date=timezone.now(),
+            locked=False,
+            deleted=False
         )
         cs.save()
         self.curveset = cs
@@ -231,7 +231,7 @@ main_class = TestMethod
         p = mmodels.Processing(
             owner=self.user,
             curveSet=self.curveset,
-            date = timezone.now(),
+            date=timezone.now(),
             customData={},
             name='PROC',
             method='TestMethod',

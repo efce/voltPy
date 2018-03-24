@@ -1,6 +1,6 @@
-import manager.models as mmodels
 import base64 as b64
 from django.urls import reverse
+import manager.models as mmodels
 
 def analytesTable(user, obj, objType):
     """
@@ -57,10 +57,15 @@ def analytesTable(user, obj, objType):
     ret.append('</tr></table></td></tr><tr><td><div class="atContentsContainer"><table class="atContents">')
 
     for cd in cs.curvesData.only('id', 'curve'):
-        ret.append('<tr class="_voltJS_plotHighlight _voltJS_highlightCurve@{0}"><td> {1} </td>'.format(cd.id, cd.curve.name))
+        ret.append(
+            '<tr class="_voltJS_plotHighlight _voltJS_highlightCurve@{0}"><td> {1} </td>'.format(
+                cd.id, 
+                cd.curve.name
+            )
+        )
         for a in cs.analytes.all():
             conc = cs.analytesConc.get(a.id, {}).get(cd.id, 0)
-            ret.append('<td class="atOther _voltJS_changeValue_%s"> %f </td>' % (a.id, conc) )
+            ret.append('<td class="atOther _voltJS_changeValue_%s"> %f </td>' % (a.id, conc))
         ret.append('<td class="atOther">')
         if not cs.locked:
             ret.append(htmlButton.format(
