@@ -15,11 +15,12 @@
     </td></tr>
 <tr><td>{{ disp_name_edit | safe }} &nbsp;</td></tr>
 <tr><td>Date created: {{ curveset.date | date:"c" }} </td></tr>
-<tr><td>Uses curves from: 
+<tr><td>Uses curves from:<ul>
     {% for f in filesUsed %}
-    <a href="{% url 'showCurveFile' user.id f.id %}">{{ f }}</a>&nbsp;
+    <li><a href="{% url 'showCurveFile' user.id f.id %}">{{ f }}</a></li>
     {% endfor %}
     </td></tr>
+    <td>Processed with:<ul>{% for p in curveset.getProcessingHistory %}<li>{{ p }}</li>{% endfor %}</ul></td>
 </table>
 <br />
 
