@@ -1,10 +1,11 @@
-from numpy import corrcoef
+import numpy as np
 import manager.operations.method as method
 from manager.operations.methodsteps.selectanalyte import SelectAnalyte
 from manager.operations.methodsteps.selectrange import SelectRange
 import manager.plotmanager as pm
 import manager.models as mmodels
 from manager.helpers.fithelpers import calc_normal_equation_fit, calc_sx0
+from manager.exceptions import VoltPyFailed
 
 
 class RegularStandardAddition(method.AnalysisMethod):
@@ -28,6 +29,11 @@ calculated as a difference between max and min signal in the given range.
     @classmethod
     def __str__(cls):
         return "Regular Standard Addition"
+
+    def exportableData(self):
+        if not self.model.completed:
+            raise VoltPyFailed('Incomplete data')
+        return np.matrix(self.model.customData['matrix']).T
 
     def finalize(self, user):
         xvalues = []
@@ -55,7 +61,7 @@ calculated as a difference between max and min signal in the given range.
             self.model.customData['fitEquation'] = p
             self.model.customData['result'] = p['intercept']/p['slope']
             self.model.customData['resultStdDev'] = calc_sx0(p['slope'], p['intercept'], data[0], data[1])
-            self.model.customData['corrCoef'] = corrcoef(data[0], data[1])[0, 1]
+            self.model.customData['corrCoef'] = np.corrcoef(data[0], data[1])[0, 1]
         else:
             self.model.customData['fitEquation'] = p
             self.model.customData['result'] = None

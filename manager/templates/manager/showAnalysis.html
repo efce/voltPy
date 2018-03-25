@@ -13,6 +13,8 @@
 <tr><td>{{ disp_name_edit | safe }} </td></tr>
 <tr><td>Date created: {{ analysis.date | date:"c" }} </td></tr>
 <tr><td>CurveSet used: <a href="{% url 'showCurveSet' user.id analysis.curveSet.id %}">{{ analysis.curveSet.name }}</a> </td></tr>
+<tr><td><button class="{{ exportData }}"> Export Data </button></td></tr>
+        
 </table>
 {{ text | safe }}
 

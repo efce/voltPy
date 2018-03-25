@@ -7,11 +7,11 @@
 <tr>
     <td>CurveSet ID: {{ curveset.id }}</td>
     <td style="border-left: 1px black solid;" rowspan=3>
-        &nbsp;<button class="_voltJS_urlChanger _voltJS_url@{{ cloneCSUrl }}"> Copy </button>
+        &nbsp;<button class="{{ cloneCS }}"> Copy </button>
         <br /><br />
-        &nbsp;<button class="_voltJS_urlChanger _voltJS_url@{{ undoCSUrl }}"{% if not curveset.hasUndo %} disabled{% endif %}> Undo </button>
+        &nbsp;<button class="{{ undoCS }}"{% if not curveset.hasUndo %} disabled{% endif %}> Undo </button>
         <br /><br />
-        &nbsp;<button class="_voltJS_urlChanger _voltJS_url@{{ exportCSUrl }}"> Export </button>
+        &nbsp;<button class="{{ exportCS }}"> Export </button>
     </td></tr>
 <tr><td>{{ disp_name_edit | safe }} &nbsp;</td></tr>
 <tr><td>Date created: {{ curveset.date | date:"c" }} </td></tr>

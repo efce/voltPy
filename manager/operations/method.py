@@ -123,6 +123,10 @@ class Method(ABC):
         pass
 
     @abstractmethod
+    def exportableData(self):
+        pass
+
+    @abstractmethod
     def finalize(self, user):
         pass
 
@@ -139,8 +143,6 @@ class Method(ABC):
         """
         return self.__class__.__name__
 
-    def exportCSV(self):
-        pass
 
 
 class AnalysisMethod(Method, ABC):

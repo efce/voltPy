@@ -4,9 +4,14 @@
 
 {% block real_content %}
 <table class="table_no_breaks">
-<tr><td>File ID: {{ curvefile.id }}</td><td style="border-left: 1px black solid;" rowspan=5>&nbsp;<button class="_voltJS_urlChanger _voltJS_url@{{ cloneCSUrl }}"> Create CurveSet </button>
-        <br /><br />
-        &nbsp;<button class="_voltJS_urlChanger _voltJS_url@{{ exportCSUrl }}"> Export </button> </td></tr>
+<tr>
+        <td>File ID: {{ curvefile.id }}</td>
+        <td style="border-left: 1px black solid;" rowspan=5>
+                &nbsp;<button class="{{ cloneCS }}"> Create CurveSet </button>
+                <br /><br />
+                &nbsp;<button class="{{ exportCF }}"> Export </button> 
+        </td>
+</tr>
 <tr><td>{{ disp_name_edit | safe }} &nbsp;</td></tr>
 <tr><td>Filename: {{ curvefile.fileName }}</td></tr>
 <tr><td>System name: {{ curvefile.name }}</td></tr>

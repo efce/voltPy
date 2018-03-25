@@ -6,21 +6,23 @@ from django.db import models
 from django.urls import reverse
 from picklefield.fields import PickledObjectField
 
-''' Not a model, just helper '''
+
 def exportCDasFile(cds):
+    ''' Not a model, just helper '''
     cdict = {}
     explen = len(cds)
-    for i,cd in enumerate(cds):
-        for x,y in zip(cd.xVector, cd.yVector):
+    for i, cd in enumerate(cds):
+        for x, y in zip(cd.xVector, cd.yVector):
             tmp = cdict.get(x, [None]*explen)
             tmp[i] = y
             cdict[x] = tmp
-    xcol = np.array(list(cdict.keys())).reshape((-1,1))
+    xcol = np.array(list(cdict.keys())).reshape((-1, 1))
     ycols = np.array(list(cdict.values()))
     allCols = np.concatenate((xcol, ycols), axis=1)
     memoryFile = io.StringIO()
     np.savetxt(memoryFile, allCols, delimiter=",", newline="\r\n", fmt='%s')
     return memoryFile
+
 
 ''' Models: '''
 class Group(models.Model):

@@ -4,6 +4,7 @@ from manager.operations.methodsteps.selectpoint import SelectPoint
 import manager.operations.method as method
 import manager.models as mmodels
 import manager.plotmanager as pm
+from manager.exceptions import VoltPyFailed
 
 
 class SlopeStandardAdditionAnalysis(method.AnalysisMethod):
@@ -59,7 +60,7 @@ https://doi.org/10.1039/C7AN00185A
         tp = 3
         twvec = self.__chooseTw(tptw)
         if not twvec:
-            raise 3
+            raise VoltPyFailed('Could not select tp and tw, too little samples per point.')
         numM = self.model.curveSet.curvesData.all()[0].curve.params[Param.method]
         ctype = 'dp'
         if numM == Param.method_dpv:
@@ -87,6 +88,12 @@ https://doi.org/10.1039/C7AN00185A
         self.model.completed = True
         self.model.step = None
         self.model.save()
+
+    def exportableData(self):
+        if not self.model.completed:
+            raise VoltPyFailed('Incomplete data for export.')
+        arrexp = np.array(self.model.customData['matrix'])
+        return arrexp
 
     def getInfo(self, request, user):
         p = pm.PlotManager()

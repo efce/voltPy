@@ -1,5 +1,8 @@
 import sys
 import os
+import io
+import numpy as np
+import base64 as b64
 from django import forms
 from django.core.exceptions import ObjectDoesNotExist
 from django.urls import reverse
@@ -98,7 +101,10 @@ class MethodManager:
                 add_notification(request, 'Fail reason: %s' % e)
 
     def exportFile(self):
-        pass
+        memoryFile = io.StringIO()
+        numpyarr = self.__method.exportableData()
+        np.savetxt(memoryFile, numpyarr, delimiter=",", newline="\r\n", fmt='%s')
+        return memoryFile, self.__model.name
 
     def getJSON(self, user):
         if not self.__method.has_next:
