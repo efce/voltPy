@@ -144,7 +144,6 @@ class Method(ABC):
         return self.__class__.__name__
 
 
-
 class AnalysisMethod(Method, ABC):
     """
     Should be inherited by classes providing 
@@ -163,3 +162,6 @@ class ProcessingMethod(Method, ABC):
     @classmethod
     def type(self):
         return 'processing'
+
+    def exportableData(self):
+        return None
