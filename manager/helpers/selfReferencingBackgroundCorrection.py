@@ -236,6 +236,7 @@ def peakParameters(curve):
 def fullDataAnalysis(dy, concs):
     import manager.helpers.fithelpers as fithelpers
     results = {}
+    best_result = {}
     minstd = float('inf')
     for wi,width in enumerate(dy):
         if width is None:
@@ -254,7 +255,7 @@ def fullDataAnalysis(dy, concs):
                     if sens is None:
                         continue
                     results[wi][spi][ei][sei] = {}
-                    yvconc = concs[wi,spi,wi,sei,:]
+                    yvconc = concs[wi,spi,ei,sei,:]
                     p = np.polyfit(yvconc, sens, 1)
                     results[wi][spi][ei][sei]['fit'] = {'slope': p[0], 'intercept': p[1]}
                     results[wi][spi][ei][sei]['sx0'] = fithelpers.calc_sx0(p[0], p[1], yvconc, sens)

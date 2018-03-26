@@ -2,70 +2,74 @@
 
 <html>
 <head>
-	<title>{% block title %}{% endblock %}</title> 
-	<meta charset="utf-8" />
-<style>
-#topmenu div { margin: auto; }
-#topmenu ul { list-style-type: none; margin: 0; padding: 0; overflow: hidden; background-color: #333; }
-#topmenu li { float: left; } 
-#topmenu li a { display: block; color: white; text-align: center; padding: 12px 14px; text-decoration: none; }
-#topmenu li a:hover { background-color: #111; }
-.wht { background: white; color: black ;  text-align: center; padding: 12px 14px; text-decoration: none; }
-#notification { background: #229; color: white; }
-{% block style %} 
-{% endblock %}
-</style>
-{{ scripts | safe }}
-{% block scripts %} 
-{% endblock %}
+  <title>
+    {% block title %}
+    {% endblock %}
+  </title> 
+  <meta charset="utf-8" />
+  {% include "manager/js/main.inc" %}
+  {{ bokeh_scripts | safe }}
+  {% block head %} 
+  {% endblock %}
+  <style>
+    {% include "manager/css/main.css" %}
+    {% block style %} 
+    {% endblock %}
+  </style>
 </head>
 
 <body>
-<div id="voltpy-loading"></div>
+
+<div id="voltpy-loading" class="loading-uncover">
+</div>
 
 {% block content %}
 <div id="content">
-{% block navigation %}
-<div id="topmenu">
-<ul>
-{% if user %}
-	<li><a href="{% url 'index' user.id %}">Index</a></li>
-	<li><a href="{% url 'browseCurveFile' user.id %}">Browse Files</a></li>
-	<li><a href="{% url 'upload' user.id %}">Upload File</a></li>
-	<li><a href="{% url 'browseCurveSet' user.id %}">Browse Curve Sets</a></li>
-	<li><a href="{% url 'createCurveSet' user.id %}">Create Curve Set</a></li>
-	<li><a href="{% url 'browseAnalysis' user.id %}">Browse Analysis</a></li>
-	<li class="wht">Logged in as:</li><li class="wht">{{ user }}</li> 
-	<li><a href="{% url 'logout' %}">Logout</a></li>
-{% else %}
-	<li><a href="{% url 'indexNoUser' %}">Index</a></li>
-	<li><a href="{% url 'login' %}">Login</a></li>
-	<li><a href="{% url 'signin' %}">Sign In</a></li>
-{% endif%}
-</ul>
-</div>
-{% endblock %}
-{% if notifications %}
-<div id="notifications">
-	{% for n in notifications %}
-	<p class="{{ n.severity }}">{{ n.text }}</p>
-	{% endfor %}
-</div>
-{% endif %}
+  {% block navigation %}
+  <div id="topmenu">
+    <ul>
+    {% if user %}
+      <li><a href="{% url 'index' user.id %}">Index</a></li>
+      <li><a href="{% url 'upload' user.id %}">Upload Files</a></li>
+      <li><a href="{% url 'browseFileSets' user.id %}">Browse FileSets</a></li>
+      <li><a href="{% url 'browseCurveFile' user.id %}">Browse Files</a></li>
+      <li><a href="{% url 'browseCurveSet' user.id %}">Browse Curve Sets</a></li>
+      <li><a href="{% url 'createCurveSet' user.id %}">Create Curve Set</a></li>
+      <li><a href="{% url 'browseAnalysis' user.id %}">Browse Analysis</a></li>
+      <li class="wht">Logged in as:</li><li class="wht">{{ user }}</li> 
+      <li><a href="{% url 'logout' %}">Logout</a></li>
+    {% else %}
+      <li><a href="{% url 'indexNoUser' %}">Index</a></li>
+      <li><a href="{% url 'login' %}">Login</a></li>
+    {% endif%}
+    </ul>
+  </div>
+  {% endblock %}
 
-{% if mainPlot %}
-<div style="float:left">
-{{ mainPlot | safe }}
-</div>
-{% endif %}
-<div style="float:left">
-{% block real_content %} {% endblock %}
-</div>
+  {% if notifications %}
+  <div id="notifications">
+    <a class="closeX"></a>
+    {% for n in notifications %}
+      <p class="{{ n.severity }}">{{ n.text }}</p>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  {% if mainPlot %}
+  <div style="float:left; width: 55%;">
+    {{ mainPlot | safe }}
+  </div>
+  {% endif %}
+
+  <div style="float:left; width: 44%;">
+    {% block real_content %} {% endblock %}
+  </div>
 
 </div> <!-- end content -->
 {% endblock %} 
 
-{% block footer %}{% endblock %}
+{% block footer %}
+{% endblock %}
 
 </body> 
 </html>

@@ -1,16 +1,32 @@
-- User login system
+- User login system - WIP in branch userauth
 - Rework of UI/UX with themes (?)
 - User settings panel/priviledges
 - Sharing of curves/curvesets/analyses via link (readonly/editable)
 - Classes instead of functions for views
 - Debugging of Bokeh plot switching
-- Better plots with legends (or color markings of curve name/comments in html table)
-- Rework of curves selection for curveset
-- Curve processing history browsable lists
+x Better plots with legends (or color markings of curve name/comments in html table)
+- Dynamic adjustment of plot size based on client resolution/window size (?)
+x Rework of curves selection for curveset - v0.1 done
+- Curve processing history browsable lists - SOME PRELIMINARY WORK with 1c04e6179eb286c9413104d5d0410f726d5f00d5
 - Separation of JavaScripts from py files / code cleanups
+- Separation of HTML from py files / creation of HTML draw only funtions
+- Separation of CSS from all files (?)
+- Guidelines on how to add new Anlsysis/Processing methods
+- Own form superclass (?), with notifications after processing and automatic handling of bound/unboud forms
+x Multiple analytes for single curve support - DONE
+- Support for additional file formats and additional file/curve informations
 - Additional processing/analysis methods:
   - splines
   - wavelets
   - ATLD
   - ICA
   - Calibration method
+  - OSC
+  - Whitening
+x Support for UNDO
+x Seperate Operations out of methodmanager, make it a module/folder
+- Add operation for changing set of variables in method (like advanced settigns)
+x Change the way operations write information into model to more intuitive
+- Protect JSON form NANs inf INFs -- handle all values gracefully in python
+- Ability to download the data of all displayed plots (in csv format)
+- Ability to process selected curve as all in the CurveSet (required for calibration method)

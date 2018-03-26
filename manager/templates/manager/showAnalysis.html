@@ -2,10 +2,20 @@
 
 {% block title %} Show {% endblock %}
 
-{% block scripts %} {{ head | safe }} {% endblock %}
+{% block head %} 
+  {{ head | safe }} 
+{% endblock %}
 
 {% block real_content %}
-<p>Analysis ID: {{ analysis.id }} </p>
+<table class="table_no_breaks">
+<tr><td>Analysis method: {{ analysis.method }} </td></tr>
+<tr><td>Analysis ID: {{ analysis.id }} </td></tr>
+<tr><td>{{ disp_name_edit | safe }} </td></tr>
+<tr><td>Date created: {{ analysis.date | date:"c" }} </td></tr>
+<tr><td>CurveSet used: <a href="{% url 'showCurveSet' user.id analysis.curveSet.id %}">{{ analysis.curveSet.name }}</a> </td></tr>
+<tr><td><button class="{{ exportData }}"> Export Data </button></td></tr>
+        
+</table>
 {{ text | safe }}
 
 {% endblock %}

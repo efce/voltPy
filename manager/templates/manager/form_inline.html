@@ -1,0 +1,11 @@
+<form class="form_inline" method="post" action="#" enctype="multipart/form-data" autocomplete="off">
+	{% csrf_token %}
+    {% for hidden_field in form.hidden_fields %}
+        {{ hidden_field.errors }}
+        {{ hidden_field }}
+    {% endfor %}
+    {% for f in form.visible_fields %}
+    {{ f.label_tag }}&nbsp;{{ f }}&nbsp;
+    {% endfor %}
+    <input name="{{ submit }}" type="submit" value="{{ submit_text }}" />
+</form>

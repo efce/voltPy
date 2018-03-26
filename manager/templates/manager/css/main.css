@@ -1,0 +1,155 @@
+{% include "./closeX.css" %}
+#topmenu div { 
+  margin: auto; 
+}
+#topmenu ul { 
+  list-style-type: none; 
+  margin: 0; 
+  padding: 0; 
+  overflow: hidden; 
+  background-color: #333; 
+}
+#topmenu li { 
+  float: left; 
+} 
+#topmenu li a { 
+  display: block; 
+  color: white; 
+  text-align: center; 
+  padding: 12px 14px; 
+  text-decoration: none; 
+}
+#topmenu li a:hover { 
+  background-color: #111; 
+}
+.wht { 
+  background: white; 
+  color: black ;  
+  text-align: center; 
+  padding: 12px 14px; 
+  text-decoration: none; 
+}
+
+.hiddenElement {
+    margin: 2px;
+}
+
+.invisible {
+    display: none;
+}
+.visible {
+    display: block;
+}
+#notifications { 
+  border: 1px #ACF solid;
+  margin: 10px;
+  padding: 10px;
+  border-radius: 10px;
+  background-color: #AAA; 
+  color: #000;
+}
+.loading-cover {
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  width: 100%;
+  font-size: large;
+  height: 100%;
+  z-index: 999;
+  background-color: white;
+  color: black;
+  display: block;
+  text-align: center;
+  vertical-align: middle;
+  opacity: 0.9;
+}
+.loading-uncover {
+    position: absolute;
+    top: -1px;
+    left: -1px;
+    width: 1px;
+    height: 1px;
+    z-index: 0;
+    display: none;
+}
+
+.form_inline {
+    display: inline;
+}
+
+.table_no_breaks {
+    padding: 0;
+    margin: 0;
+    border: 0px;
+    border-spacing: 0px;
+    border-collapse: collapse !important;
+}
+
+.table_no_breaks tr,td {
+    padding: 0;
+    margin: 0;
+    border: 0px;
+    border-collapse: collapse !important;
+    border-spacing: 0px;
+}
+
+.file_error {
+    color: red;
+}
+
+form label { 
+	float: left; 
+	max-width: 400px; 
+	word-wrap: break-word; 
+	display: inline;
+	white-space: pre-line; 
+	margin-bottom: 5px;
+}
+
+.formSubmit {
+    height: 30px;
+    width: 150px;
+    margin: auto;
+    margin-left: 50px;
+}
+
+form table th {
+    width: 140px;
+}
+
+.analytesTable {
+    min-width: 445px;
+    border: 1px solid black;
+}
+
+.atHeader {
+    width: 93%
+}
+
+.atHeader th {
+    color:white;
+    background-color:grey;
+    border: 1px black solid;
+}
+
+.analytesTable td,th {
+    width: 220px;
+}
+
+.atContentsContainer {
+    width: 100%; 
+    height: 450px; 
+    overflow: auto;
+}
+
+.atContents {
+    width: 95%;
+}
+
+.atContents td {
+    border: 1px black solid;
+}
+
+fieldset li {
+    margin-top: 4px !important;
+}

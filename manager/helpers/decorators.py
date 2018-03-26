@@ -1,4 +1,5 @@
 from django.http import HttpResponseRedirect
+from django.urls import reverse
 from django.core.exceptions import ObjectDoesNotExist
 from manager.exceptions import VoltPyNotAllowed, VoltPyDoesNotExists
 import manager.models as mmodels
@@ -27,11 +28,8 @@ def with_user(fun):
         user_id = kwargs.pop('user_id', None)
         try:
             user_id = int(user_id)
-        except (TypeError, ValueError):
-            raise VoltPyNotAllowed(None)
-        try:
             user = mmodels.User.objects.get(id=user_id)
-        except ObjectDoesNotExist:
+        except (TypeError, ValueError, ObjectDoesNotExist):
             raise VoltPyNotAllowed(None)
         kwargs['user'] = user
         return fun(*args, **kwargs)
