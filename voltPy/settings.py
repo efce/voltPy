@@ -126,3 +126,4 @@ CMS_PLACEHOLDER_CACHE = False
 CMS_PLUGIN_CACHE = False
 
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+LOGIN_REDIRECT_URL = 'index'

@@ -12,13 +12,13 @@ def redirect_on_voltpyexceptions(fun):
         except VoltPyNotAllowed as e:
             print("Got not allowed! ", repr(e))
             if user is None:
-                return HttpResponseRedirect(reverse('indexNoUser'))
+                return HttpResponseRedirect(reverse('index'))
             else:
                 return HttpResponseRedirect(reverse('index'))
         except VoltPyDoesNotExists as e:
             print("Got does not exists! ", repr(e))
             if user is None:
-                return HttpResponseRedirect(reverse('indexNoUser'))
+                return HttpResponseRedirect(reverse('index'))
             else:
                 return HttpResponseRedirect(reverse('index'))
     return wrap

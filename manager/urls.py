@@ -6,8 +6,6 @@ from manager.uploads import uploadmanager
 
 urlpatterns = [
     url(r'^$', 
-        views.indexNoUser, name='indexNoUser'),
-    url(r'^(?P<user_id>[0-9]+)/$', 
         views.index, name='index'),
     url(r'^signin/$',
         views.signin, name='signin'),
@@ -72,5 +70,5 @@ urlpatterns = [
 ]
 
 urlpatterns += [
-            path('accounts/', include('django.contrib.auth.urls')),
+            path('', include('django.contrib.auth.urls')),
 ]

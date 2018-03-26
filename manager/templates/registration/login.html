@@ -2,6 +2,11 @@
 
 {% block content %}
 
+{% if user.is_authenticated %}
+      Hi {{ user.username }},<br /> You are aleady login!<br /><br />
+      <a href="{% url 'logout' %}">logout</a>
+    {% else %}
+
 {% if form.errors %}
 <p>Your username and password didn't match. Please try again.</p>
 {% endif %}
@@ -36,4 +41,5 @@
 {# Assumes you setup the password_reset view in your URLconf #}
 <p><a href="{% url 'password_reset' %}">Lost password?</a></p>
 
+{% endif %}
 {% endblock %}

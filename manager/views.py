@@ -8,8 +8,8 @@ from django.http import JsonResponse
 from django.shortcuts import render, redirect
 from django.template import loader
 from django.urls import reverse
-from django.utils.encoding import force_bytes
-from django.utils.http import urlsafe_base64_encode
+from django.utils.encoding import force_bytes,force_text
+from django.utils.http import urlsafe_base64_encode,urlsafe_base64_decode
 import json
 from manager.forms import SignInForm
 from manager.tokens import account_activation_token
@@ -29,15 +29,6 @@ from manager.helpers.decorators import with_user
 from manager.helpers.decorators import redirect_on_voltpyexceptions
 
 
-@redirect_on_voltpyexceptions
-def indexNoUser(request):
-    context = {'user': None}
-    return voltpy_render(
-        request=request, 
-        template_name='manager/index.html', 
-        context=context
-    )
-
 def signin(request):
     if request.method == 'POST':
         form = SignInForm(request.POST)
@@ -50,7 +41,7 @@ def signin(request):
             message = loader.render_to_string('registration/account_activation_email.html', {
                 'user': user,
                 'domain': current_site.domain,
-                'uid': urlsafe_base64_encode(force_bytes(user.pk)),
+                'uid': urlsafe_base64_encode(force_bytes(user.pk)).decode(),
                 'token': account_activation_token.make_token(user),
             })
             user.email_user(subject, message)
@@ -71,7 +62,7 @@ def activate(request, uidb64, token):
         user.profile.email_confirmed = True
         user.save()
         login(request, user)
-        return redirect('home')
+        return redirect('index')
     else:
         return render(request, 'registration/account_activation_invalid.html')
     
@@ -84,9 +75,8 @@ def account_activation_sent(request):
     )
 
 @redirect_on_voltpyexceptions
-@with_user
-def index(request, user):
-    context = {'user': user}
+def index(request):
+    context = {'user': request.user}
     return voltpy_render(
         request=request,
         template_name='manager/index.html',
