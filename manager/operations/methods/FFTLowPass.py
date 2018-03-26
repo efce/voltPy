@@ -4,11 +4,11 @@ from manager.operations.methodsteps.selectfrequency import SelectFrequency
 
 
 class FFTLowPass(method.ProcessingMethod):
-    _steps = [ 
+    _steps = [
         {
             'class': SelectFrequency,
             'title': 'Select frequency threshhold.',
-            'desc': 'Select frequency treshhold and press Forward, or press Back to change the selection.',
+            'desc': 'Select frequency treshhold on the plot and press Forward.',
         },
     ]
     description = """
@@ -47,11 +47,5 @@ signal back to the original domain.
         self.model.completed = True
         self.model.save()
         return True
-
-    def getInfo(self, request, user):
-        return {
-            'head': '',
-            'body': ''
-        }
 
 main_class = FFTLowPass

@@ -10,12 +10,12 @@ from manager.exceptions import VoltPyFailed
 
 class RegularStandardAddition(method.AnalysisMethod):
     _steps = [
-        { 
+        {
             'class': SelectAnalyte,
             'title': 'Select analyte',
             'desc': """Select analyte.""",
         },
-        { 
+        {
             'class': SelectRange,
             'title': 'Select range',
             'desc': 'Select range containing peak and press Forward, or press Back to change the selection.',
@@ -71,7 +71,7 @@ calculated as a difference between max and min signal in the given range.
         self.model.step = 0
         self.model.save()
 
-    def getInfo(self, request, user):
+    def getFinalContent(self, request, user):
         p = pm.PlotManager()
         data = p.analysisHelper(self.model.owner, self.model.id)
         for d in data:

@@ -334,7 +334,7 @@ def showAnalysis(request, user, analysis_id):
     )
 
     mm = mmm.MethodManager(user=user, analysis_id=analysis_id)
-    info = mm.getInfo(request=request, user=user)
+    info = mm.getFinalContent(request=request, user=user)
     plotScr, plotDiv = generate_plot(
         request=request,
         user=user,
@@ -856,7 +856,7 @@ def editAnalyte(request, user, objType, objId, analyteId):
 def analyze(request, user, analysis_id):
     mm = mmm.MethodManager(user=user, analysis_id=analysis_id)
     mm.process(request=request, user=user)
-    return mm.getContent(request=request, user=user) 
+    return mm.getStepContent(request=request, user=user) 
 
 
 @redirect_on_voltpyexceptions
@@ -864,7 +864,7 @@ def analyze(request, user, analysis_id):
 def process(request, user, processing_id):
     mm = mmm.MethodManager(user=user, processing_id=processing_id)
     mm.process(request=request, user=user)
-    return mm.getContent(request=request, user=user) 
+    return mm.getStepContent(request=request, user=user) 
 
 
 @with_user
@@ -884,7 +884,7 @@ def plotInteraction(request, user):
         }
         mm = mmm.MethodManager(user=user, **kwrg)
         mm.process(request=request, user=user)
-        ret = mm.getJSON(user=user)
+        ret = mm.ajax(user=user)
     elif request.POST.get('query') == 'plotmanager': 
         import manager.plotmanager as mpm
         pm = mpm.PlotManager()

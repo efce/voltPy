@@ -51,10 +51,4 @@ given number of plots.
         self.model.save()
         return True
 
-    def getInfo(self, request, user):
-        return {
-            'head': '',
-            'body': ''
-        }
-
 main_class = AverageCurves

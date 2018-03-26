@@ -1,11 +1,12 @@
 import numpy as np
+from overrides import overrides
 import manager.operations.method as method
 from manager.operations.methodsteps.selecttworanges import SelectTwoRanges
 from manager.operations.methodsteps.confirmation import Confirmation
 
 
 class PolynomialBackgroundFit(method.ProcessingMethod):
-    _steps = [ 
+    _steps = [
         {
             'class': SelectTwoRanges,
             'title': 'Choose two fit intervals.',
@@ -47,7 +48,8 @@ other right after it.
                 self.model.save()
         return ret
 
-    def getAddToPlot(self):
+    @overrides
+    def addToMainPlot(self):
         if self.model.active_step_num == 1:
             fitlines = []
             for cd, fit in zip(self.model.curveSet.curvesData.all(), self.model.customData['fitCoeff']):
@@ -64,7 +66,6 @@ other right after it.
             return None
 
     def finalize(self, user):
-        import numpy as np
         cs = self.model.curveSet
         if cs.locked:
             raise ValueError("CurveSet used by Analysis method cannot be changed.")
@@ -83,11 +84,5 @@ other right after it.
         cs.save()
         self.model.save()
         return True
-
-    def getInfo(self, request, user):
-        return {
-            'head': '',
-            'body': ''
-        }
 
 main_class = PolynomialBackgroundFit

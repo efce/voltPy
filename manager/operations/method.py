@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod, abstractclassmethod
 from django.db import transaction
+from django.db import DatabaseError
 import manager.models as mmodels
 
 
@@ -59,11 +60,11 @@ class Method(ABC):
             self.step = self._steps[self.model.active_step_num]
             self.__initializeStep()
 
-    """ 
-    This will be passed to step as initial value.
-    Override if some initial values are needed.
-    """
     def initialForStep(self, step_num):
+        """
+        This will be passed to step as initial value.
+        Override if some initial values are needed.
+        """
         return None
 
     @transaction.atomic
@@ -96,10 +97,13 @@ class Method(ABC):
                 self.step = None
         except:
             transaction.savepoint_rollback(sid)
-            raise
+            raise DatabaseError
         transaction.savepoint_commit(sid)
 
-    def getStepHTML(self, user, request):
+    def getStepContent(self, user, request):
+        """
+        Return the content which steps what to display.
+        """
         if self.step and self.step.get('object', None):
             stepHTML = self.step['object'].getHTML(
                 user=user,
@@ -107,7 +111,7 @@ class Method(ABC):
                 model=self.model
             )
             return { 
-            # Step data come form step class, but description comes from method
+                #  Step data come form step class, but description comes from method
                 'head': stepHTML.get('head', ''),
                 'body': stepHTML.get('body', ''),
                 'desc': self.step.get('desc', '')
@@ -115,19 +119,39 @@ class Method(ABC):
         else:
             return {'head': '', 'body': '', 'desc': ''}
 
-    def getAddToPlot(self):
+    def addToMainPlot(self):
+        """
+        Requires override.
+        Is called to prepare main plot, after adding all elements,
+        of CurveSet. This should return Dict, and will be passed to
+        PlotManager.add() method.
+        """
         return None
 
     @abstractmethod
-    def getInfo(self, request, user):
+    def getFinalContent(self, request, user):
+        """
+        Return content with the final results after the
+        analysis if compled. This is not required from
+        processing methods.
+        """
         pass
 
     @abstractmethod
     def exportableData(self):
+        """
+        This procedure should provide 2d numpy matrix, which
+        includes data presented on the anaysis's final plot.
+        """
         pass
 
     @abstractmethod
     def finalize(self, user):
+        """
+        This will be used when all defined steps are completed.
+        In case of error with the steps it should raise
+        VoltPyFailed() and provide explanation.
+        """
         pass
 
     @abstractclassmethod
@@ -146,11 +170,11 @@ class Method(ABC):
 
 class AnalysisMethod(Method, ABC):
     """
-    Should be inherited by classes providing 
+    Should be inherited by classes providing
     data analysis procedures.
     """
     @classmethod
-    def type(self):
+    def type(cls):
         return 'analysis'
 
 
@@ -160,8 +184,11 @@ class ProcessingMethod(Method, ABC):
     data processing procedures.
     """
     @classmethod
-    def type(self):
+    def type(cls):
         return 'processing'
 
     def exportableData(self):
+        return None
+
+    def getFinalContent(self, request, user):
         return None

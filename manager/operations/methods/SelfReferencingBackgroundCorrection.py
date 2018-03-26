@@ -1,4 +1,3 @@
-import numpy as np
 import manager.operations.method as method
 from manager.operations.methodsteps.selectanalyte import SelectAnalyte
 from manager.operations.methodsteps.selectrange import SelectRange
@@ -6,7 +5,6 @@ from manager.operations.methodsteps.tagcurves import TagCurves
 from manager.exceptions import VoltPyFailed
 import manager.models as mmodels
 import manager.helpers.selfReferencingBackgroundCorrection as sbcm
-from manager.exceptions import VoltPyFailed
 
 
 class SelfReferencingBackgroundCorrection(method.AnalysisMethod):
@@ -85,7 +83,7 @@ https://doi.org/10.1002/elan.201300181"""
         self.model.save()
         return True
 
-    def getInfo(self, request, user):
+    def getFinalContent(self, request, user):
         cs = self.model.curveSet
         unitsTrans = dict(mmodels.CurveSet.CONC_UNITS)
         if self.model.customData['result'] is None:

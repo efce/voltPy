@@ -97,22 +97,34 @@ class MethodManager:
             except VoltPyFailed as e:
                 self.__model.deleted = True
                 self.__model.save()
-                add_notification(request, 'Procedure failed. The data may be incompatible with the processing method. Please verify and try again.')
+                add_notification(request, """
+                    Procedure failed. The data may be incompatible with the processing method. 
+                    Please verify and try again.
+                """)
                 add_notification(request, 'Fail reason: %s' % e)
 
     def exportFile(self):
+        """
+        Exports data provided by the methods as csv files.
+        """
         memoryFile = io.StringIO()
         numpyarr = self.__method.exportableData()
         np.savetxt(memoryFile, numpyarr, delimiter=",", newline="\r\n", fmt='%s')
         return memoryFile, self.__model.name
 
-    def getJSON(self, user):
+    def ajax(self, user):
+        """
+        Replies to json request.
+        """
         if not self.__method.has_next:
             return {'command': 'redirect', 'location': self.__model.getUrl(user)}
         else:
             return {'command': 'reload'}
 
-    def getContent(self, request, user):
+    def getStepContent(self, request, user):
+        """
+        Provides contents of processing step of methods.
+        """
         if self.__model.deleted:
             add_notification(request, 'Procedure delted.', 0)
             return HttpResponseRedirect(reverse("showCurveSet", args=[user.id, self.__model.curveSet.id]))
@@ -132,7 +144,7 @@ class MethodManager:
         )
 
         if self.__method.step:
-            stepText = self.__method.getStepHTML(
+            stepText = self.__method.getStepContent(
                 user=user,
                 request=request
             )
@@ -143,14 +155,14 @@ class MethodManager:
             )
 
             plotScr, plotDiv = generate_plot(
-                request=request, 
+                request=request,
                 user=user, 
                 plot_type='curveset',
                 value_id=self.__model.curveSet.id,
                 vtype=self.__method.type(),
                 vid=self.__model.id,
                 interactionName=self.__method.step['class'].plot_interaction,
-                add=self.__method.getAddToPlot()
+                add=self.__method.addToMainPlot()
             )
 
             context = {
@@ -176,6 +188,9 @@ class MethodManager:
             )
 
     def getAnalysisSelectionForm(self, *args, **kwargs):
+        """
+        Returns form instance with selection of analysis methods.
+        """
         return MethodManager.SelectionForm(
             self,
             self.methods['analysis'],
@@ -186,8 +201,11 @@ class MethodManager:
         )
 
     def getProcessingSelectionForm(self, *args, **kwargs):
+        """
+        Returns form instance with selection of processing methods.
+        """
         return MethodManager.SelectionForm(
-            self, 
+            self,
             self.methods['processing'],
             type='processing', 
             prefix='processing',
@@ -195,9 +213,12 @@ class MethodManager:
             **kwargs
         )
 
-    def getInfo(self, request, user):
+    def getFinalContent(self, request, user):
+        """
+        Returns content of finalized analysis method.
+        """
         if self.__method:
-            return self.__method.getInfo(request=request, user=user)
+            return self.__method.getFinalContent(request=request, user=user)
         else:
             return ''
 

@@ -1,4 +1,3 @@
-import numpy as np
 from django.utils import timezone
 import manager.operations.method as method
 from manager.operations.methodsteps.confirmation import Confirmation
@@ -6,7 +5,7 @@ from manager.helpers.bkghelpers import calc_abc
 
 
 class AutomaticBaselineCorrection(method.ProcessingMethod):
-    _steps = [ 
+    _steps = [
         {
             'class': Confirmation,
             'title': 'Config before proceding.',
@@ -51,11 +50,5 @@ https://doi.org/10.1016/j.electacta.2014.05.076
         self.model.step = None
         self.model.completed = True
         self.model.save()
-
-    def getInfo(self, request, user):
-        return {
-            'head': '',
-            'body': ''
-        }
 
 main_class = AutomaticBaselineCorrection
