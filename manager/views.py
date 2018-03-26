@@ -1,10 +1,18 @@
-from django.urls import reverse
+from django.contrib.auth import login, authenticate
+from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.models import User
+from django.contrib.sites.shortcuts import get_current_site
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpResponseRedirect
 from django.http import JsonResponse
+from django.shortcuts import render, redirect
+from django.template.loader import render_to_string
+from django.urls import reverse
+from django.utils.encoding import force_bytes
+from django.utils.http import urlsafe_base64_encode
 import json
-import manager.models as mmodels
-import manager.forms as mforms
+from manager.forms import SignInForm
+from manager.tokens import account_activation_token
 from manager import methodmanager as mmm
 from manager.exceptions import VoltPyNotAllowed, VoltPyDoesNotExists
 from manager.helpers.functions import add_notification
@@ -13,6 +21,8 @@ from manager.helpers.functions import generate_plot
 from manager.helpers.functions import voltpy_render
 from manager.helpers.decorators import with_user
 from manager.helpers.decorators import redirect_on_voltpyexceptions
+import manager.models as mmodels
+import manager.forms as mforms
 
 @redirect_on_voltpyexceptions
 def indexNoUser(request):
@@ -20,6 +30,51 @@ def indexNoUser(request):
     return voltpy_render(
         request=request, 
         template_name='manager/index.html', 
+        context=context
+    )
+
+def signin(request):
+    if request.method == 'POST':
+        form = SignInForm(request.POST)
+        if form.is_valid():
+            user = form.save(commit=False)
+            user.is_active = False
+            user.save()
+            current_site = get_current_site(request)
+            subject = 'Activate Your VoltPy Account'
+            message = render_to_string('registration/account_activation_email.html', {
+                'user': user,
+                'domain': current_site.domain,
+                'uid': urlsafe_base64_encode(force_bytes(user.pk)),
+                'token': account_activation_token.make_token(user),
+            })
+            user.email_user(subject, message)
+            return redirect('account_activation_sent')
+    else:
+        form = SignInForm()
+    return render(request, 'registration/signin.html', {'form': form})
+
+def activate(request, uidb64, token):
+    try:
+        uid = force_text(urlsafe_base64_decode(uidb64))
+        user = User.objects.get(pk=uid)
+    except (TypeError, ValueError, OverflowError, User.DoesNotExist):
+        user = None
+
+    if user is not None and account_activation_token.check_token(user, token):
+        user.is_active = True
+        user.profile.email_confirmed = True
+        user.save()
+        login(request, user)
+        return redirect('home')
+    else:
+        return render(request, 'registration/account_activation_invalid.html')
+    
+def account_activation_sent(request):
+    context = {'user': None}
+    return voltpy_render(
+        request=request, 
+        template_name='registration/account_activation_sent.html', 
         context=context
     )
 

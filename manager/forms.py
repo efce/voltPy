@@ -4,6 +4,17 @@ from django.db.models import Q
 from django.utils import timezone
 from .processupload import ProcessUpload
 from .models import *
+from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.models import User
+
+
+class SignInForm(UserCreationForm):
+    email = forms.EmailField(max_length=254, help_text='Required. Inform a valid email address.')
+
+    class Meta:
+        model = User
+        fields = ('username', 'email', 'password1', 'password2', )
+
 
 class UploadFileForm(forms.Form):
     name = forms.CharField(label="Name", max_length=128)

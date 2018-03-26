@@ -1,4 +1,5 @@
 from django.conf.urls import url
+from django.urls import include, path
 
 from . import views
 
@@ -7,10 +8,8 @@ urlpatterns = [
         views.indexNoUser, name='indexNoUser'),
     url(r'^(?P<user_id>[0-9]+)/$', 
         views.index, name='index'),
-    url(r'^login/$', 
-        views.login, name='login'),
-    url(r'^logout/$', 
-        views.logout, name='logout'),
+    url(r'^signin/$',
+        views.signin, name='signin'),
     url(r'^(?P<user_id>[0-9]+)/browse-files/$', 
         views.browseCurveFile, name='browseCurveFile'),
     url(r'^(?P<user_id>[0-9]+)/upload-file/$', 
@@ -49,4 +48,12 @@ urlpatterns = [
         views.showProcessed, name='showProcessed'),
     url(r'^(?P<user_id>[0-9]+)/plot-interaction/$',
         views.plotInteraction, name='plotInteraction'),
+    url(r'^account_activation_sent/$',
+        views.account_activation_sent, name='account_activation_sent'),
+    url(r'^activate/(?P<uidb64>[0-9A-Za-z_\-]+)/(?P<token>[0-9A-Za-z]{1,13}-[0-9A-Za-z]{1,20})/$',
+        views.activate, name='activate'),
+]
+
+urlpatterns += [
+            path('accounts/', include('django.contrib.auth.urls')),
 ]
