@@ -27,8 +27,7 @@ def addFilesToRequest(request, filepaths_list, post_name='files[]'):
     _filelist = []
     for filepath in filepaths_list:
         test_file = Path(filepath)
-        if not test_file.is_file():
-            raise 
+        assert test_file.is_file()
         with open(test_file.absolute(), "rb") as ufile:
             bytefile = io.BytesIO(ufile.read())
             fsize = ufile.tell()
@@ -37,6 +36,17 @@ def addFilesToRequest(request, filepaths_list, post_name='files[]'):
         _filelist.append(inmemoryfile)
     request.FILES.setlist(post_name, _filelist)
     return request
+
+
+def uploadFile(user):
+    file_list = ['./test_files/test_file.volt']
+    factory = RequestFactory()
+    request = factory.post('/', data={
+        'fileset_name': 'test',
+        'command': 'upload'
+    })
+    request = addFilesToRequest(request, file_list, 'files[]')
+    pu = um.ajax(user_id=str(user.id), request=request)
 
 
 class TestUser(TestCase):
@@ -109,10 +119,15 @@ class TestFileUpload(TestCase):
         './test_files/test_file.volt',
         './test_files/test_file.voltc',
     ]
+    curves_per_file = 24
+    curve_length = 250
+    sampling_length = 10000
 
     def setUp(self):
         self.user = mmodels.User(name="UTest")
         self.user.save()
+        self.user2 = mmodels.User(name="Utest2")
+        self.user2.save()
 
     def test_file_upload(self):
         factory = RequestFactory()
@@ -138,38 +153,36 @@ class TestFileUpload(TestCase):
         request = factory.post('/', data=postdata)
         request = addFilesToRequest(request, self.file_list, 'files[]')
         pu = um.ajax(user_id=str(self.user.id), request=request)
-        assert pu.status_code == 200
+        self.assertEqual(200, pu.status_code, 'code 200 expected')
         ret = json.loads(pu.content)
         if 'success' not in ret['command']:
             self.fail('success not reposted by uploadmanager')
 
         fileset = mmodels.FileSet.objects.all()[0]
-        assert len(fileset.files.all()) == len(self.file_list)
+        self.assertEqual(len(self.file_list), len(fileset.files.all()), 'incomplete fileset')
         for f in fileset.files.all():
             cs = f.curveSet
-            assert len(cs.curvesData.all()) == 24
-            # TODO: more tests
-
-        #fid = pu.getFileId()
-        #cf = mmodels.CurveFile.objects.get(id=fid)
-        #self.assertEqual(cf.name, testname)
-        #self.assertEqual(cf.comment, testcomment)
-        #c = mmodels.Curve.objects.all()
-        #self.assertEqual(len(c), 24) #there should be 24 curves in file
-        #ci = mmodels.CurveIndex.objects.all()
-        #self.assertEqual(len(ci), 24)
-        #cd = mmodels.CurveData.objects.all()
-        #self.assertEqual(len(cd), 24)
-        #float(cd.yVector[3])
-        #float(cd.xVector[3])
+            self.assertEqual(len(cs.curvesData.all()), self.curves_per_file)
+            for cd in cs.curvesData.all():
+                self.assertEqual(self.curve_length, len(cd.current), f.fileName)
+                float(cd.current[3])  # Test "random" element
+                float(cd.potential[3])
+                float(cd.time[3])
+                self.assertTrue(cd.canBeReadBy(self.user))
+                self.assertTrue(cd.canBeUpdatedBy(self.user))
+                self.assertTrue(cd.isOwnedBy(self.user))
+                self.assertFalse(cd.canBeReadBy(self.user2))
+                self.assertFalse(cd.canBeUpdatedBy(self.user2))
+                self.assertFalse(cd.isOwnedBy(self.user2))
+        # TODO: more tests
 
 
 class TestMethodManager(TestCase):
     testmethod = """
-import manager.methodmanager as mm
+import manager.operations.method as method
 
-class TestMethod(mm.ProcessingMethod):
-    _operations = [
+class TestMethod(method.ProcessingMethod):
+    _steps = [
     ]
 
     def __str__(self):
@@ -181,7 +194,7 @@ class TestMethod(mm.ProcessingMethod):
         self.model.completed = True
         self.model.save()
 
-    def getInfo(self, request, user):
+    def getFinalContent(self, request, user):
         return { 'head': '', 'body': '' }
 
 main_class = TestMethod
@@ -190,27 +203,10 @@ main_class = TestMethod
     def setUp(self):
         self.user = mmodels.User(name="UTest")
         self.user.save()
-        filepath = "./pb_4mgL_CTAB.volt"
-        test_file = Path(filepath)
-        if not test_file.is_file():
-            self.fail("test file: pb_4mgL_CTAB.volt is missing")
-        ufile = open(test_file.absolute(), "rb")
-        pu = mpu.ProcessUpload(self.user, ufile, 'name', 'comment')
-        fid = pu.getFileId()
-        cs = mmodels.CurveSet(
-            owner=self.user,
-            name='test cs',
-            date=timezone.now(),
-            locked=False,
-            deleted=False
-        )
-        cs.save()
-        self.curveset = cs
-        for cd in mmodels.CurveData.objects.all():
-            cs.curveData.add(cd)
-
+        uploadFile(self.user)
+        self.curveset = mmodels.CurveSet.objects.all()[0]
         BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        self.methods_path = os.path.join(BASE_DIR, 'manager', 'methods')
+        self.methods_path = os.path.join(BASE_DIR, 'manager', 'operations', 'methods')
         self.assertTrue(os.path.isdir(self.methods_path))
         self.testmethodfile = os.path.join(self.methods_path, 'TestMethod.py')
         with open(self.testmethodfile, 'w') as f:
@@ -224,7 +220,6 @@ main_class = TestMethod
         mema = mm.MethodManager(user=self.user, curveset_id=self.curveset.id)
         self.assertTrue(mema.methods.get('processing', False))
         self.assertTrue(mema.methods.get('analysis', False))
-        print(mema.methods)
         self.assertEqual(mema.methods['processing']['TestMethod'].__name__, 'TestMethod')
 
     def test_methods_usage(self):
@@ -232,18 +227,19 @@ main_class = TestMethod
             owner=self.user,
             curveSet=self.curveset,
             date=timezone.now(),
-            customData={},
             name='PROC',
             method='TestMethod',
-            step=0,
+            active_step_num=0,
             deleted=False,
             completed=False
         )
         p.save()
         mema = mm.MethodManager(user=self.user, processing_id=p.id)
+
         class req:
             method = 'POST'
             POST = {}
+
             def __init__(self):
                 self.POST['query'] = 'methodmanager'
 

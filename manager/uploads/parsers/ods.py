@@ -20,7 +20,7 @@ class Ods(Txt):
         for i, row in enumerate(sheet.rows()):
             # row is a list of cells
             # assume the header is on the first row
-            if i <= skipRows:
+            if i < skipRows:
                 continue
             for j, cell in enumerate(row):
                 # use header instead of column index
