@@ -28,6 +28,12 @@ given number of plots.
                 v = next(iter(self.model.curveSet.analytesConc.values()))
                 return v
 
+    def apply(self, curveSet):
+        """
+        This does not support appliyng existing
+        """
+        return
+
     def finalize(self, user):
         cs = self.model.curveSet
         for k, f in self.model.stepsData['TagCurves'].items():

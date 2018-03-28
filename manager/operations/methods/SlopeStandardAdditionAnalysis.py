@@ -95,6 +95,12 @@ https://doi.org/10.1039/C7AN00185A
         arrexp = np.array(self.model.customData['matrix'])
         return arrexp
 
+    def apply(self, curveSet):
+        """
+        This procedure cannot be applied to other data.
+        """
+        return
+
     def getFinalContent(self, request, user):
         p = pm.PlotManager()
         p.plot_width = 500

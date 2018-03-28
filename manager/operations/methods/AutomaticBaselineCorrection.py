@@ -2,6 +2,7 @@ from django.utils import timezone
 import manager.operations.method as method
 from manager.operations.methodsteps.confirmation import Confirmation
 from manager.helpers.bkghelpers import calc_abc
+from manager.exceptions import VoltPyNotAllowed
 
 
 class AutomaticBaselineCorrection(method.ProcessingMethod):
@@ -29,24 +30,31 @@ https://doi.org/10.1016/j.electacta.2014.05.076
     def __str__(cls):
         return "Automatic Baseline Correction"
 
-    def finalize(self, user):
-        cs = self.model.curveSet
-        for cd in cs.curvesData.all():
+    def apply(self, curveSet):
+        if self.model.completed is not True:
+            raise VoltPyNotAllowed('Incomplete procedure.')
+        self.__perform(curveSet)
+
+    def __perform(self, curveSet):
+        iterations = self.model.customData['iterations']
+        degree = self.model.customData['degree']
+        for cd in curveSet.curvesData.all():
             newcd = cd.getCopy()
-            newcdConc = cs.getCurveConcDict(cd)
+            newcdConc = curveSet.getCurveConcDict(cd)
             yvec = newcd.yVector
             xvec = range(len(yvec))
-            degree = 4
-            iterations = 50
-            self.model.customData['iterations'] = iterations
-            self.model.customData['degree'] = degree
             yvec = calc_abc(xvec, yvec, degree, iterations)['yvec']
             newcd.yVector = yvec
             newcd.date = timezone.now()
             newcd.save()
-            cs.removeCurve(cd)
-            cs.addCurve(newcd, newcdConc)
-        cs.save()
+            curveSet.removeCurve(cd)
+            curveSet.addCurve(newcd, newcdConc)
+        curveSet.save()
+
+    def finalize(self, user):
+        self.model.customData['iterations'] = 50
+        self.model.customData['degree'] = 4
+        self.__perform(self.model.curveSet)
         self.model.step = None
         self.model.completed = True
         self.model.save()

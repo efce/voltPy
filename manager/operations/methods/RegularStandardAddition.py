@@ -35,6 +35,12 @@ calculated as a difference between max and min signal in the given range.
             raise VoltPyFailed('Incomplete data')
         return np.matrix(self.model.customData['matrix']).T
 
+    def apply(self, curveSet):
+        """
+        This procedure cannot be applied to other data.
+        """
+        return
+
     def finalize(self, user):
         xvalues = []
         yvalues = []

@@ -1,6 +1,7 @@
 import numpy as np
 import manager.operations.method as method
 from manager.operations.methodsteps.selectfrequency import SelectFrequency
+from manager.exceptions import VoltPyNotAllowed
 
 
 class FFTLowPass(method.ProcessingMethod):
@@ -26,11 +27,10 @@ signal back to the original domain.
     def __str__(cls):
         return "Low Pass FFT filter"
 
-    def finalize(self, user):
-        cs = self.model.curveSet
-        for cd in cs.curvesData.all():
+    def __perform(self, curveSet):
+        for cd in curveSet.curvesData.all():
             newcd = cd.getCopy()
-            newcdConc = cs.getCurveConcDict(cd)
+            newcdConc = curveSet.getCurveConcDict(cd)
             yvec = newcd.yVector
             ylen = len(yvec)
             st = round(self.model.stepsData['SelectFrequency'])
@@ -40,9 +40,17 @@ signal back to the original domain.
             iffty = np.fft.ifft(ffty)
             newcd.yVector = np.real(iffty).tolist()
             newcd.save()
-            cs.removeCurve(cd)
-            cs.addCurve(newcd, newcdConc)
-        cs.save()
+            curveSet.removeCurve(cd)
+            curveSet.addCurve(newcd, newcdConc)
+        curveSet.save()
+
+    def apply(self, curveSet):
+        if self.model.completed is not True:
+            raise VoltPyNotAllowed('Incomplete procedure.')
+        self.__perform(curveSet)
+
+    def finalize(self, user):
+        self.__perform(self.model.curveSet)
         self.model.step = None
         self.model.completed = True
         self.model.save()

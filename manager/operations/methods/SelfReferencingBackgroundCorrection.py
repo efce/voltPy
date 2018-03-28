@@ -47,6 +47,12 @@ https://doi.org/10.1002/elan.201300181"""
             raise VoltPyFailed("Data incomplete")
         raise ValueError("Not impletented")
 
+    def apply(self, curveSet):
+        """
+        This procedure cannot be applied to other data.
+        """
+        return
+
     def finalize(self, user):
         Y = []
         CONC = []

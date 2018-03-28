@@ -3,6 +3,7 @@ from overrides import overrides
 import manager.operations.method as method
 from manager.operations.methodsteps.selecttworanges import SelectTwoRanges
 from manager.operations.methodsteps.confirmation import Confirmation
+from manager.exceptions import VoltPyNotAllowed
 
 
 class PolynomialBackgroundFit(method.ProcessingMethod):
@@ -65,13 +66,15 @@ other right after it.
         else:
             return None
 
-    def finalize(self, user):
-        cs = self.model.curveSet
-        if cs.locked:
-            raise ValueError("CurveSet used by Analysis method cannot be changed.")
-        for cd, fit in zip(cs.curvesData.all(), self.model.customData['fitCoeff']):
+    def apply(self, curveSet):
+        if self.model.completed is not True:
+            raise VoltPyNotAllowed('Incomplete procedure.')
+        self.__perform(curveSet)
+
+    def __perform(self, curveSet):
+        for cd, fit in zip(curveSet.curvesData.all(), self.model.customData['fitCoeff']):
             newcd = cd.getCopy()
-            newcdConc = cs.getCurveConcDict(cd)
+            newcdConc = curveSet.getCurveConcDict(cd)
             yvec = newcd.yVector
             xvec = newcd.xVector
             p = (fit['x3'], fit['x2'], fit['x1'], fit['x0'])
@@ -79,9 +82,14 @@ other right after it.
             newyvec = list(np.subtract(yvec, ybkg))
             newcd.yVector = newyvec
             newcd.save()
-            cs.removeCurve(cd)
-            cs.addCurve(newcd, newcdConc)
-        cs.save()
+            curveSet.removeCurve(cd)
+            curveSet.addCurve(newcd, newcdConc)
+        curveSet.save()
+
+    def finalize(self, user):
+        self.__perform(self.model.curveSet)
+        self.model.step = None
+        self.model.completed = True
         self.model.save()
         return True
 

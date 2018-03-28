@@ -188,6 +188,9 @@ class TestMethod(method.ProcessingMethod):
     def __str__(self):
         return "TestMethod"
 
+    def apply(self, curveSet):
+        return
+
     def finalize(self, user):
         self.model.customData['FINALIZED'] = user.id
         self.model.step = None
