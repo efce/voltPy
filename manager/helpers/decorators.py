@@ -17,8 +17,10 @@ def redirect_on_voltpyexceptions(fun):
             return HttpResponseRedirect(reverse('index'))
     return wrap
 
+
 def with_user(fun):
-    def wrap(request,*args, **kwargs):
+    @login_required
+    def wrap(request, *args, **kwargs):
         try:
             user = request.user
         except (AttributeError, TypeError, ValueError, ObjectDoesNotExist):
