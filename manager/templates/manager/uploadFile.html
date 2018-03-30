@@ -186,7 +186,7 @@ $("#file_selector").change(function() {
         'command': 'filelist',
         'filelist': JSON.stringify(filearray)
     }
-    voltpy_query('{% url "ajaxUpload" 1 %}', obj, uploadmanagerProcessReply);
+    voltpy_query('{% url "ajaxUpload" %}', obj, uploadmanagerProcessReply);
 });
 
 $("form#file_form").submit(function(e) {
@@ -195,7 +195,7 @@ $("form#file_form").submit(function(e) {
     $(this).append('<input type="hidden" name="command" value="upload" />');
     var formData = new FormData(this);
     $.ajax({
-        url: "{% url "ajaxUpload" 1 %}",
+        url: "{% url "ajaxUpload" %}",
         type: 'POST',
         data: formData,
         success: function (data) {

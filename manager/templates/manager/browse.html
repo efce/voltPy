@@ -8,8 +8,8 @@
 {% if list_to_disp %}
     <ul>
     {% for d in list_to_disp %}
-    <li><a href="{% url action1 user.id d.id %}">{{ d }}</a>
-    <a href="{% url action2 user.id d.id %}">{{ action2_text }}</a></li>
+    <li><a href="{% url action1 d.id %}">{{ d }}</a>
+    <a href="{% url action2 d.id %}">{{ action2_text }}</a></li>
     {% endfor %}
     </ul>
 {% else %}

@@ -14,11 +14,13 @@ class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     email_confirmed = models.BooleanField(default=False)
 
+
 @receiver(post_save, sender=User)
 def update_user_profile(sender, instance, created, **kwargs):
     if created:
         Profile.objects.create(user=instance)
     instance.profile.save()
+
 
 def exportCDasFile(cds):
     ''' Not a model, just helper '''
@@ -35,23 +37,6 @@ def exportCDasFile(cds):
     memoryFile = io.StringIO()
     np.savetxt(memoryFile, allCols, delimiter=",", newline="\r\n", fmt='%s')
     return memoryFile
-
-
-''' Models: '''
-class Group(models.Model):
-    name = models.TextField(unique=True)
-    
-    def __str__(self):
-        return "id: %i; name: %s" % (self.id, self.name)
-
-
-class User(models.Model):
-    id = models.AutoField(primary_key=True)
-    name = models.TextField(unique=True)
-    groups = models.ManyToManyField(Group)
-
-    def __str__(self):
-        return self.name
 
 
 class CurveFile(models.Model):
@@ -543,9 +528,9 @@ class Analysis(models.Model):
 
     def getUrl(self, user):
         if self.completed:
-            return reverse('showAnalysis', args=[ user.id, self.id ])
+            return reverse('showAnalysis', args=[ self.id ])
         else:
-            return reverse('analyze', args=[ user.id, self.id ])
+            return reverse('analyze', args=[ self.id ])
 
 class Processing(models.Model):
     id = models.AutoField(primary_key=True)
@@ -577,7 +562,7 @@ class Processing(models.Model):
         return self.isOwnedBy(user)
 
     def getUrl(self, user):
-        return reverse('showCurveSet', args=[ user.id, self.curveSet.id ])
+        return reverse('showCurveSet', args=[ self.curveSet.id ])
 
 
 class OnXAxis(models.Model):

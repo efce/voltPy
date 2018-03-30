@@ -115,7 +115,7 @@ class MethodManager:
     def getContent(self, request, user):
         if self.__model.deleted:
             add_notification(request, 'Procedure delted.', 0)
-            return HttpResponseRedirect(reverse("showCurveSet", args=[user.id, self.__model.curveSet.id]))
+            return HttpResponseRedirect(reverse("showCurveSet", args=[self.__model.curveSet.id]))
 
         if any([
             self.__method.has_next is False,
