@@ -526,7 +526,7 @@ def showCurveSet(request, user, curveset_id):
         filesUsed.add(cd.curve.curveFile)
 
     import manager.analytesTable as at
-    at_disp = at.analytesTable(user, cs, objType='cs')
+    at_disp = at.analytesTable(cs, objType='cs')
 
     mm = mmm.MethodManager(user=user, curveset_id=curveset_id)
     if request.method == 'POST':
@@ -759,7 +759,7 @@ def showCurveFile(request, user, file_id):
         value_id=cf.id
     )
 
-    at_disp = at.analytesTable(user, cf, objType='cf')
+    at_disp = at.analytesTable(cf, objType='cf')
 
     context = { 
         'scripts': plotScr,
