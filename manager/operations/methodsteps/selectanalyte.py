@@ -27,7 +27,7 @@ class SelectAnalyte(MethodStep):
 
         style = "<style>.atOther { display: none; };</style>"
         import manager.analytesTable as at
-        at_disp = at.analytesTable(user, cs, objType='cs')
+        at_disp = at.analytesTable(cs, objType='cs')
 
         analyte_sel = self.AnalyteSelectionForm(analytes=cs.analytes)
         from django.template import loader

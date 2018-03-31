@@ -1,4 +1,5 @@
-from abc import ABC, abstractmethod, abstractclassmethod
+from abc import ABC, abstractmethod
+
 
 class MethodStep(ABC):
     def __init__(self, initial={}):
@@ -9,5 +10,5 @@ class MethodStep(ABC):
         pass
 
     def getHTML(self, user, request, model):
-        return { 'head': '', 'body' : '' }
+        return {'head': '', 'body': ''}
 
