@@ -1,20 +1,29 @@
 import ezodf
 import pandas as pd
-from .txt import Txt
+from overrides import overrides
+from manager.uploads.parsers.txt import Txt
 
 
 class Ods(Txt):
+    """
+    Parser for ODS files.
+    Code based on: https://stackoverflow.com/a/36180806
+    """
+
+    @overrides
     def readPandas(self, fileForPandas, skipRows):
-        # Code based on: https://stackoverflow.com/a/36180806
         doc = ezodf.opendoc(fileForPandas.file)
 
-        #print("Spreadsheet contains %d sheet(s)." % len(doc.sheets))
-        #for sheet in doc.sheets:
-        #    print("-"*40)
-        #    print("   Sheet name : '%s'" % sheet.name)
-        #    print("Size of Sheet : (rows=%d, cols=%d)" % (sheet.nrows(), sheet.ncols()) )
+        """
+        Available extra debug info:
+        print("Spreadsheet contains %d sheet(s)." % len(doc.sheets))
+        for sheet in doc.sheets:
+            print("-"*40)
+            print("   Sheet name : '%s'" % sheet.name)
+            print("Size of Sheet : (rows=%d, cols=%d)" % (sheet.nrows(), sheet.ncols()) )
+        """
 
-        # convert the first sheet to a pandas.DataFrame
+        # convert the first sheet to a pandas.DataFrame:
         sheet = doc.sheets[0]
         df_dict = {}
         for i, row in enumerate(sheet.rows()):

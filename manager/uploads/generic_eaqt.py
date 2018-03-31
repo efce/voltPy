@@ -1,10 +1,14 @@
 import datetime
-from abc import ABC, abstractproperty
+from abc import ABC
 from manager.models import Curve as mcurve
 Param = mcurve.Param
 LSV = mcurve.LSV
 
+
 class Generic_EAQt(ABC):
+    """
+    This is helper for parsing vol, volt and voltc files
+    """
     vec_param = {}
     vec_potential = []
     vec_current = []
@@ -24,14 +28,14 @@ class Generic_EAQt(ABC):
 
     def getMethod(self):
         methods = {
-            Param.method_scv : 'SCV',
-            Param.method_npv : 'NPV',
-            Param.method_dpv : 'DPV',
-            Param.method_sqw : 'SWV',
-            Param.method_lsv : 'LSV',
+            Param.method_scv: 'SCV',
+            Param.method_npv: 'NPV',
+            Param.method_dpv: 'DPV',
+            Param.method_sqw: 'SWV',
+            Param.method_lsv: 'LSV',
         }
         num = self.vec_param[Param.method]
-        if ( num >= 0 and num < len(methods) ):
+        if num >= 0 and num < len(methods):
             return methods[num]
         else:
             return ''
