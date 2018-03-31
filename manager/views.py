@@ -1,9 +1,18 @@
-from django.urls import reverse
+from django.contrib.auth import login, authenticate
+from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.models import User
+from django.contrib.sites.shortcuts import get_current_site
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpResponseRedirect
 from django.http import JsonResponse
+from django.shortcuts import render, redirect
 from django.template import loader
+from django.urls import reverse
+from django.utils.encoding import force_bytes,force_text
+from django.utils.http import urlsafe_base64_encode,urlsafe_base64_decode
 import json
+from manager.forms import SignInForm
+from manager.tokens import account_activation_token
 import manager.models as mmodels
 import manager.forms as mforms
 import manager.uploads.uploadmanager as umanager
@@ -20,44 +29,59 @@ from manager.helpers.decorators import with_user
 from manager.helpers.decorators import redirect_on_voltpyexceptions
 
 
-@redirect_on_voltpyexceptions
-def indexNoUser(request):
+def signin(request):
+    if request.method == 'POST':
+        form = SignInForm(request.POST)
+        if form.is_valid():
+            user = form.save(commit=False)
+            user.is_active = False
+            user.save()
+            current_site = get_current_site(request)
+            subject = 'Activate Your VoltPy Account'
+            message = loader.render_to_string('registration/account_activation_email.html', {
+                'user': user,
+                'domain': current_site.domain,
+                'uid': urlsafe_base64_encode(force_bytes(user.pk)).decode(),
+                'token': account_activation_token.make_token(user),
+            })
+            user.email_user(subject, message)
+            return redirect('account_activation_sent')
+    else:
+        form = SignInForm()
+    return render(request, 'registration/signin.html', {'form': form})
+
+def activate(request, uidb64, token):
+    try:
+        uid = force_text(urlsafe_base64_decode(uidb64))
+        user = User.objects.get(pk=uid)
+    except (TypeError, ValueError, OverflowError, User.DoesNotExist):
+        user = None
+
+    if user is not None and account_activation_token.check_token(user, token):
+        user.is_active = True
+        user.profile.email_confirmed = True
+        user.save()
+        login(request, user)
+        return redirect('index')
+    else:
+        return render(request, 'registration/account_activation_invalid.html')
+    
+def account_activation_sent(request):
     context = {'user': None}
     return voltpy_render(
         request=request, 
-        template_name='manager/index.html', 
+        template_name='registration/account_activation_sent.html', 
         context=context
     )
 
-
 @redirect_on_voltpyexceptions
-@with_user
-def index(request, user):
-    context = {'user': user}
+def index(request):
+    context = {'request': request}
     return voltpy_render(
         request=request,
         template_name='manager/index.html',
         context=context
     )
-
-
-@redirect_on_voltpyexceptions
-def login(request):
-    # TODO: temp
-    user_id = 1
-    try:
-        user = mmodels.User.objects.get(id=user_id)
-    except ObjectDoesNotExist:
-        user = mmodels.User(name="Użytkownik numer %i" % user_id)
-        user.save()
-    add_notification(request, "Logged in successfuly.", 0)
-    return HttpResponseRedirect(reverse('index', args=[user.id]))
-
-
-def logout(request):
-    add_notification(request, "Logged out successfuly.", 0)
-    return HttpResponseRedirect(reverse('indexNoUser'))
-
 
 @redirect_on_voltpyexceptions
 @with_user
@@ -113,7 +137,7 @@ def browseFileSet(request, user):
         'whenEmpty': ''.join([
                             "You have no files uploaded. ",
                             "<a href='{url}'>Upload one</a>.".format( 
-                                url=reverse('upload', args=[user.id])
+                                url=reverse('upload')
                             ),
                         ])
     }
@@ -138,7 +162,7 @@ def browseCurveFile(request, user):
         'whenEmpty': ''.join([
                             "You have no files uploaded. ",
                             "<a href='{url}'>Upload one</a>.".format( 
-                                url=reverse('upload', args=[user.id])
+                                url=reverse('upload')
                             ),
                         ])
     }
@@ -163,7 +187,7 @@ def browseAnalysis(request, user):
         'whenEmpty': ''.join([
                             "Analysis can only be performed on the CurveSet. ",
                             "<a href='{url}'>Choose one</a>.".format( 
-                                url=reverse('browseCurveSet', args=[user.id])
+                                url=reverse('browseCurveSet')
                             ),
                         ])
     }
@@ -190,7 +214,7 @@ def browseCurveSet(request, user):
         'whenEmpty': ''.join([
                             "You have no CurveSets. ",
                             "<a href='{url}'>Prepare one</a>.".format( 
-                                url=reverse('createCurveSet', args=[user.id])
+                                url=reverse('createCurveSet')
                             ),
                         ])
     }
@@ -235,7 +259,7 @@ def deleteCurve(request, user, objType, objId, delId):
             user, 
             cd, 
             deleteFrom=deleteFrom,
-            onSuccessRedirect=reverse('showCurveFile', args=[user.id, deleteFrom.id])
+            onSuccessRedirect=reverse('showCurveFile', args=[deleteFrom.id])
         )
     else:  # curveset
         try:
@@ -248,7 +272,7 @@ def deleteCurve(request, user, objType, objId, delId):
             user, 
             cd, 
             deleteFrom=deleteFrom,
-            onSuccessRedirect=reverse('showCurveSet', args=[user.id, deleteFrom.id])
+            onSuccessRedirect=reverse('showCurveSet', args=[deleteFrom.id])
         )
 
 
@@ -288,7 +312,7 @@ def createCurveSet(request, user, toClone=[]):
             if cs_id is not False:
                 if cs_id > -1:
                     return HttpResponseRedirect(
-                        reverse('showCurveSet', args=[user.id, cs_id])
+                        reverse('showCurveSet', args=[cs_id])
                     )
     else:
         form = mforms.SelectCurvesForCurveSetForm(user, toClone=toClone)
@@ -321,7 +345,7 @@ def showAnalysis(request, user, analysis_id):
         raise VoltPyNotAllowed(user)
 
     if an.completed is False:
-        return HttpResponseRedirect(reverse('analyze', args=[user.id, an.id]))
+        return HttpResponseRedirect(reverse('analyze', args=[an.id]))
 
     form_data = {'model': an, 'label_name': 'Analysis name'}
     form_ret = form_helper(
@@ -351,7 +375,6 @@ def showAnalysis(request, user, analysis_id):
         'text': info.get('body', ''),
         'exportData': get_redirect_class(
             reverse('export', kwargs={
-                'user_id': user.id,
                 'objType': 'an',
                 'objId': an.id,
             })
@@ -418,14 +441,12 @@ def showFileSet(request, user, fileset_id):
         'fileset': fs,
         'exportFS': get_redirect_class(
             reverse('export', kwargs={
-                'user_id': user.id,
                 'objType': 'fs', 
                 'objId': fs.id, 
             })
         ),
         'cloneCS': get_redirect_class(
             reverse('cloneCurveSet', kwargs={
-                'user_id': user.id,
                 'toClone_txt': ','.join([str(f.curveSet.id) for f in fs.files.all()])
             })
         ),
@@ -452,7 +473,7 @@ def undoCurveSet(request, user, curveset_id):
         if confForm.confirmed():
             cs.undo()
             add_notification(request, 'Changes undone.')
-            return HttpResponseRedirect(reverse('showCurveSet', args=[user.id, cs.id]))
+            return HttpResponseRedirect(reverse('showCurveSet', args=[cs.id]))
         else:
             add_notification(request, 'Check the checkbox to confirm.', 1)
 
@@ -513,7 +534,7 @@ def showCurveSet(request, user, curveset_id):
             formAnalyze = mm.getAnalysisSelectionForm(request.POST)
             if formAnalyze.is_valid():
                 analyzeid = formAnalyze.process(user, cs)
-                return HttpResponseRedirect(reverse('analyze', args=[user.id, analyzeid]))
+                return HttpResponseRedirect(reverse('analyze', args=[analyzeid]))
         else:
             formAnalyze = mm.getAnalysisSelectionForm()
 
@@ -524,7 +545,7 @@ def showCurveSet(request, user, curveset_id):
             formProcess = mm.getProcessingSelectionForm(request.POST)
             if formProcess.is_valid():
                 procid = formProcess.process(user, cs)
-                return HttpResponseRedirect(reverse('process', args=[user.id, procid]))
+                return HttpResponseRedirect(reverse('process', args=[procid]))
         else:
             formProcess = mm.getProcessingSelectionForm(disabled=cs.locked)
 
@@ -544,20 +565,17 @@ def showCurveSet(request, user, curveset_id):
         'formAnalyze': formAnalyze,
         'exportCS': get_redirect_class(
             reverse('export', kwargs={
-                'user_id': user.id,
                 'objType': 'cs',
                 'objId': cs.id,
             })
         ),
         'undoCS': get_redirect_class(
             reverse('undoCurveSet', kwargs={
-                'user_id': user.id,
                 'curveset_id': cs.id,
             })
         ),
         'cloneCS': get_redirect_class(
             reverse('cloneCurveSet', kwargs={
-                'user_id': user.id,
                 'toClone_txt': cs.id, 
             })
         ),
@@ -573,7 +591,7 @@ def showCurveSet(request, user, curveset_id):
 @with_user
 def cloneCurveSet(request, user, toClone_txt):
     toClone_ids = [int(x) for x in toClone_txt.split(',')]
-    return createCurveSet(request, user_id=user.id, toClone=toClone_ids)
+    return createCurveSet(request, toClone=toClone_ids)
 
 
 @redirect_on_voltpyexceptions
@@ -604,7 +622,7 @@ def editCurveSet(request, user, curveset_id):
             formGenerate = mm.getAnalysisSelectionForm(request.POST)
             if formGenerate.is_valid():
                 analyzeid = formGenerate.process(user, cs)
-                return HttpResponseRedirect(reverse('analyze', args=[user.id, analyzeid]))
+                return HttpResponseRedirect(reverse('analyze', args=[analyzeid]))
         else:
             formGenerate = mm.getAnalysisSelectionForm()
 
@@ -615,7 +633,7 @@ def editCurveSet(request, user, curveset_id):
             formProc = mm.getProcessingSelectionForm(request.POST)
             if formProc.is_valid():
                 procid = formProc.process(user, cs)
-                return HttpResponseRedirect(reverse('process', args=[user.id, procid]))
+                return HttpResponseRedirect(reverse('process', args=[procid]))
         else:
             formProc = mm.getProcessingSelectionForm(disabled=cs.locked)
 
@@ -624,7 +642,7 @@ def editCurveSet(request, user, curveset_id):
             if formAnalyte.is_valid():
                 if formAnalyte.process(user) is True:
                     return HttpResponseRedirect(
-                        reverse('editCurveSet', args=[user.id, curveset_id])
+                        reverse('editCurveSet', args=[curveset_id])
                     )
         else:
             formAnalyte = mforms.EditAnalytesForm(user, "CurveSet", curveset_id)
@@ -688,7 +706,7 @@ def editCurveFile(request, user, file_id,):
         if form.is_valid():
             if form.process(user) is True:
                 return HttpResponseRedirect(
-                    reverse('browseCurveFile', args=[user.id])
+                    reverse('browseCurveFile')
                 )
     else:
         form = mforms.EditAnalytesForm(user, "File", file_id)
@@ -752,14 +770,12 @@ def showCurveFile(request, user, file_id):
         'at': at_disp,
         'exportCF': get_redirect_class(
             reverse('export', kwargs={
-                'user_id': user.id,
                 'objType': 'cf',
                 'objId': cf.id,
             })
         ),
         'cloneCS': get_redirect_class(
             reverse('cloneCurveSet', kwargs={
-                'user_id': user.id,
                 'toClone_txt': cf.curveSet.id,
             })
         ),
@@ -800,11 +816,11 @@ def editAnalyte(request, user, objType, objId, analyteId):
             if form.process(user) is True:
                 if objType == 'cf':
                     return HttpResponseRedirect(
-                        reverse('showCurveFile', args=[user.id, objId])
+                        reverse('showCurveFile', args=[objId])
                     )
                 else:
                     return HttpResponseRedirect(
-                        reverse('showCurveSet', args=[user.id, objId])
+                        reverse('showCurveSet', args=[objId])
                     )
     else:
         form = mforms.EditAnalytesForm(user, objType, objId, analyteId)

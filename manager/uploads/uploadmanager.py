@@ -133,7 +133,7 @@ def ajax(request, user):
                 #TODO: start parsing
                 fileset_id = parseAndCreateModels(files=files, details=details, user=user)
                 jsonData['command'] = 'success'
-                jsonData['location'] = reverse('showFileSet', args=[ user.id, fileset_id])
+                jsonData['location'] = reverse('showFileSet', args=[fileset_id])
             else:
                 jsonData['command'] = 'failed'
                 raise 91

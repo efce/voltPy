@@ -64,7 +64,7 @@ def delete_helper(request, user, item, deleteFrom=None, onSuccessRedirect=None):
     """
     if item is None:
         return HttpResponseRedirect(
-            reverse('index', args=[user.id])
+            reverse('index')
         )
 
     itemclass = str(item.__class__.__name__)
@@ -77,13 +77,13 @@ def delete_helper(request, user, item, deleteFrom=None, onSuccessRedirect=None):
             if a:
                 if deleteFrom is not None:
                     fromclass = str(deleteFrom.__class__.__name__)
-                    onSuccessRedirect = reverse('show'+fromclass, args=[user.id, deleteFrom.id])
+                    onSuccessRedirect = reverse('show'+fromclass, args=[deleteFrom.id])
                     return HttpResponseRedirect(
                         onSuccessRedirect
                     )
                 else:
                     if onSuccessRedirect is None:
-                        onSuccessRedirect = reverse('browse'+itemclass, args=[user.id])
+                        onSuccessRedirect = reverse('browse'+itemclass)
                     return HttpResponseRedirect(
                         onSuccessRedirect
                     )

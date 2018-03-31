@@ -3,10 +3,20 @@ from django import forms
 from django.db import transaction
 from django.db import DatabaseError
 from django.utils import timezone
+from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
 import manager
 import manager.models as mmodels
 from manager.exceptions import VoltPyNotAllowed
+
+
+class SignInForm(UserCreationForm):
+    email = forms.EmailField(max_length=254, help_text='Required. Inform a valid email address.')
+
+    class Meta:
+        model = User
+        fields = ('username', 'email', 'password1', 'password2', )
 
 
 class CursorsForm(forms.Form):

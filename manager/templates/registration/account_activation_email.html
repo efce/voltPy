@@ -1,0 +1,7 @@
+{% autoescape off %}
+Hi {{ user.username }},
+
+Please don't give a fuck and click on the link below to confirm your registration:
+
+http://{{ domain }}{% url 'activate' uid token %}
+{% endautoescape %}

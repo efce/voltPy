@@ -1,37 +1,31 @@
 from django.http import HttpResponseRedirect
 from django.urls import reverse
 from django.core.exceptions import ObjectDoesNotExist
+from django.contrib.auth.decorators import login_required
 from manager.exceptions import VoltPyNotAllowed, VoltPyDoesNotExists
 import manager.models as mmodels
 
 def redirect_on_voltpyexceptions(fun):
     def wrap(*args, **kwargs):
-        user = kwargs.get('user', None)
         try:
             return fun(*args, **kwargs)
         except VoltPyNotAllowed as e:
             print("Got not allowed! ", repr(e))
-            if user is None:
-                return HttpResponseRedirect(reverse('indexNoUser'))
-            else:
-                return HttpResponseRedirect(reverse('index'))
+            return HttpResponseRedirect(reverse('index'))
         except VoltPyDoesNotExists as e:
             print("Got does not exists! ", repr(e))
-            if user is None:
-                return HttpResponseRedirect(reverse('indexNoUser'))
-            else:
-                return HttpResponseRedirect(reverse('index'))
+            return HttpResponseRedirect(reverse('index'))
     return wrap
 
+
 def with_user(fun):
-    def wrap(*args, **kwargs):
-        user_id = kwargs.pop('user_id', None)
+    @login_required
+    def wrap(request, *args, **kwargs):
         try:
-            user_id = int(user_id)
-            user = mmodels.User.objects.get(id=user_id)
-        except (TypeError, ValueError, ObjectDoesNotExist):
-            raise VoltPyNotAllowed(None)
+            user = request.user
+        except (AttributeError, TypeError, ValueError, ObjectDoesNotExist):
+            raise VoltPyNotAllowed("Z with usera")
         kwargs['user'] = user
-        return fun(*args, **kwargs)
+        return fun(request,*args, **kwargs)
     return wrap
 

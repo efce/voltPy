@@ -20,7 +20,6 @@ def analytesTable(user, obj, objType):
             bname='Add analyte',
             goTo=get_redirect_class(
                 reverse('editAnalyte', kwargs={
-                    'user_id': user.id,
                     'objType': objType,
                     'objId': obj.id,
                     'analyteId': 'new'
@@ -61,7 +60,6 @@ def analytesTable(user, obj, objType):
                 an_unit=unitsTrans[cs.analytesConcUnits[a.id]],
                 goTo=get_redirect_class(
                     reverse('editAnalyte', kwargs={
-                        'user_id': user.id,
                         'objType': objType,
                         'objId': obj.id, 
                         'analyteId': a.id
@@ -90,7 +88,6 @@ def analytesTable(user, obj, objType):
                     bname='Delete',
                     goTo=get_redirect_class(
                         reverse('deleteCurve', kwargs={
-                            'user_id': user.id,
                             'objType': objType,
                             'objId': obj.id, 
                             'delId': cd.id

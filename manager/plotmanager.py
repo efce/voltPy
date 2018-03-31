@@ -265,7 +265,7 @@ class PlotManager:
         }
         """
         js_globalBase = "var cursors = [cursor1, cursor2, cursor3, cursor4];"
-        jsonurl = reverse('plotInteraction', args=[ user.id ])
+        jsonurl = reverse('plotInteraction')
 
         js_postRequired = '\n'.join([
             js_globalBase,
