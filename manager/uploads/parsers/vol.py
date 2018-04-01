@@ -19,8 +19,8 @@ class Vol(Parser):
 
     def __init__(self, cfile, details):
         """
-        details are not needed, and are ignored 
-        as vol file contains all the info required 
+        details are not needed, and are ignored
+        as vol file contains all the info required
         for upload by itself.
         """
         self.names = []
