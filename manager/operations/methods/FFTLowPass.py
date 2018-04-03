@@ -44,7 +44,7 @@ signal back to the original domain.
             curveSet.addCurve(newcd, newcdConc)
         curveSet.save()
 
-    def apply(self, curveSet):
+    def apply(self, user, curveSet):
         if self.model.completed is not True:
             raise VoltPyNotAllowed('Incomplete procedure.')
         self.__perform(curveSet)

@@ -35,6 +35,7 @@ class MethodManager:
         self.__type = None
         self.__method = None
         self.__model = None
+        self.__user = user
 
         self.__loadMethods()
 
@@ -187,17 +188,26 @@ class MethodManager:
                 context=context,
             )
 
-    def applyTo(self, curveset_id):
+    def applyTo(self, user, request, curveset_id):
         try:
             cs = mmodels.CurveSet.objects.get(id=int(curveset_id))
         except (ObjectDoesNotExist, ValueError):
             raise VoltPyDoesNotExists
+        try:
+            ret_id = self.__method.apply(user=user, curveSet=cs)
+        except VoltPyFailed as e:
+            add_notification(request, """
+                Procedure failed. The data may be incompatible with the processing method. 
+                Please verify and try again.
+            """)
+            raise e
 
-        ret_id = self.__method.apply(curveSet=cs)
-        if self.__method.type == "processing":
-            return HttpResponseRedirect("curveSet", args=[cs.id])
-        elif self.__method.type == "analysis":
-            return HttpResponseRedirect("Analysis", args=[ret_id])
+        if self.__method.type() == "processing":
+            return reverse("showCurveSet", args=[cs.id])
+        elif self.__method.type() == "analysis":
+            return reverse("showAnalysis", args=[ret_id])
+        else:
+            raise VoltPyDoesNotExists("Error?")
 
     def getAnalysisSelectionForm(self, *args, **kwargs):
         """

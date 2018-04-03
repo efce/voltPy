@@ -95,7 +95,7 @@ https://doi.org/10.1039/C7AN00185A
         arrexp = np.array(self.model.customData['matrix'])
         return arrexp
 
-    def apply(self, curveSet):
+    def apply(self, user, curveSet):
         """
         This procedure cannot be applied to other data.
         """

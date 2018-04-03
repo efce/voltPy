@@ -155,7 +155,7 @@ class Method(ABC):
         pass
 
     @abstractclassmethod
-    def apply(self, curveSet):
+    def apply(self, user, curveSet):
         """
         This should apply already completed processing/analysis method,
         to the new curveSet with the same settings as original.

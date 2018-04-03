@@ -30,7 +30,7 @@ https://doi.org/10.1016/j.electacta.2014.05.076
     def __str__(cls):
         return "Automatic Baseline Correction"
 
-    def apply(self, curveSet):
+    def apply(self, user, curveSet):
         if self.model.completed is not True:
             raise VoltPyNotAllowed('Incomplete procedure.')
         self.__perform(curveSet)

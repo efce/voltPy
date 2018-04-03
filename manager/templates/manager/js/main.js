@@ -258,7 +258,7 @@ function addApplyToCurveSetChooser(model_num) {
     form = '<div class="floatMenu" id="id_ApplyModel">';
     form += '<a class="closeX" onclick="$(this).parent(\'div\').hide();"></a>';
     form += 'Search: <input type="text" onkeyup="setCurveList(' + model_num + ', \'curve_list\');" id="curveSearch" /><br />';
-    form += 'Select:<div id="curve_list"></div></div>';
+    form += 'Apply to:<div id="curve_list"></div></div>';
     $('body').append($(form));
     setCurveList(model_num, 'curve_list');
 }

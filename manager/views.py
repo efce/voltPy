@@ -845,7 +845,13 @@ def applyModel(request, user, objType, objId, curveset_id):
     if request.method == "POST" and request.POST.get('confirm', False):
         confForm = mforms.GenericConfirmForm(request.POST)
         if confForm.confirmed():
-            return HttpResponseRedirect(mm.applyTo(curveset_id))
+            return HttpResponseRedirect(
+                mm.applyTo(
+                    user=user,
+                    request=request,
+                    curveset_id=curveset_id
+                )
+            )
         else:
             add_notification(request, 'Check the checkbox to confirm.', 1)
 

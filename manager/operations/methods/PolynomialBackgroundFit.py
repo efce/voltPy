@@ -66,7 +66,7 @@ other right after it.
         else:
             return None
 
-    def apply(self, curveSet):
+    def apply(self, user, curveSet):
         if self.model.completed is not True:
             raise VoltPyNotAllowed('Incomplete procedure.')
         self.__perform(curveSet)

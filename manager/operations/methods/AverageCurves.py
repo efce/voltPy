@@ -28,7 +28,7 @@ given number of plots.
                 v = next(iter(self.model.curveSet.analytesConc.values()))
                 return v
 
-    def apply(self, curveSet):
+    def apply(self, user, curveSet):
         """
         This does not support appliyng existing
         """

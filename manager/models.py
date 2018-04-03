@@ -533,6 +533,15 @@ class Analysis(models.Model):
         else:
             return reverse('analyze', args=[ self.id ])
 
+    def getCopy(self):
+        newan = copy(self)
+        newan.id = None
+        newan.pk = None
+        newan.date = None
+        newan.deleted = False
+        newan.curveSet = None
+        return newan
+
 class Processing(models.Model):
     id = models.AutoField(primary_key=True)
     owner = models.ForeignKey(User, on_delete=models.DO_NOTHING)
@@ -565,6 +574,15 @@ class Processing(models.Model):
 
     def getUrl(self, user):
         return reverse('showCurveSet', args=[ self.curveSet.id ])
+
+    def getCopy(self):
+        newpr = copy(self)
+        newpr.id = None
+        newpr.pk = None
+        newpr.date = None
+        newpr.deleted = False
+        newpr.curveSet = None
+        return newpr
 
 
 class OnXAxis(models.Model):

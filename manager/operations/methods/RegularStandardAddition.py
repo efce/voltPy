@@ -35,11 +35,19 @@ calculated as a difference between max and min signal in the given range.
             raise VoltPyFailed('Incomplete data')
         return np.matrix(self.model.customData['matrix']).T
 
-    def apply(self, curveSet):
-        """
-        This procedure cannot be applied to other data.
-        """
-        return
+    def apply(self, user, curveSet):
+        an = self.model.getCopy()
+        an.curveSet = curveSet
+        an.appliesModel = self.model
+        an.save()
+        self.model = an
+    #try:
+        self.finalize(user)
+    #except:
+        #an.deleted = True
+        #an.save()
+        #raise VoltPyFailed('Could not apply model.')
+        return an.id
 
     def finalize(self, user):
         xvalues = []
