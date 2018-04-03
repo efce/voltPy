@@ -402,7 +402,8 @@ def showAnalysis(request, user, analysis_id):
                 'objType': 'an',
                 'objId': an.id,
             })
-        )
+        ),
+        'applyModel': '_voltJS_applyModel _voltJS_model@' + str(an.id),
     }
     return voltpy_render(
         request=request,
@@ -853,7 +854,7 @@ def applyModel(request, user, objType, objId, curveset_id):
 
     context = {
         'text_to_confirm': 'This will apply model {model} to curveset {cs}'.format(
-            model=objjId,
+            model=objId,
             cs=curveset_id
         ),
         'form': confForm,

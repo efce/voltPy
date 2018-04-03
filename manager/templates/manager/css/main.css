@@ -48,6 +48,18 @@
   background-color: #AAA; 
   color: #000;
 }
+
+.floatMenu {
+    background:white;
+    padding: 5px;
+    width: 500px;
+    z-index: 1000;
+    position: fixed;
+    top: 100px;
+    right: 100px;
+    border: gray 2px solid;
+}
+
 .loading-cover {
   position: absolute;
   top: 0px;

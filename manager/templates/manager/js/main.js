@@ -8,7 +8,7 @@ function sleep (time) {
 };
 
 function searchCurveSet(txt, funcResults) {
-    url = 'ajax/search-curveset/';
+    url = '/manager/ajax/search-curveset/';
     csfr = $("{% csrf_token %}").val();
     object = {
         'search': txt,
@@ -94,7 +94,7 @@ function processJSONReply(data, plot='', lineData='', cursors='') {
 
 $( function() {
     $(".closeX").on('click', function(e) {
-        $(e.target).closest('div').css('display', 'none');
+        $(e.target).parent('div').css('display', 'none');
     });
 });
 
@@ -230,6 +230,53 @@ $( function() {
 });
 function toggleShow(e) {
     $(e.target).next('._voltJS_toShow' ).toggleClass('invisible visible');
+}
+
+$( function() {
+    imodel = '_voltJS_model@';
+    $('._voltJS_applyModel').click( function() {
+        var classes = this.className.split(' ');
+        classes.forEach( function(name) {
+            if (name.startsWith(imodel)) {
+                var number = name.substring(imodel.length);
+                addApplyToCurveSetChooser(number);
+            }
+        });
+    });
+});
+
+function addApplyToCurveSetChooser(model_num) {
+    var amd = $('#id_ApplyModel');
+    if (amd.length) {
+        if (amd.css('display') == 'none') {
+            amd.css('display', 'block');
+        } else {
+            amd.css('display', 'none');
+        }
+        return;
+    }
+    form = '<div class="floatMenu" id="id_ApplyModel">';
+    form += '<a class="closeX" onclick="$(this).parent(\'div\').hide();"></a>';
+    form += 'Search: <input type="text" onkeyup="setCurveList(' + model_num + ', \'curve_list\');" id="curveSearch" /><br />';
+    form += 'Select:<div id="curve_list"></div></div>';
+    $('body').append($(form));
+    setCurveList(model_num, 'curve_list');
+}
+
+function setCurveList(model_num, id_where) {
+    txt = $('#curveSearch').val();
+    function setLinks(data) {
+        setApplyModelLinks(model_num, id_where, data);
+    }
+    searchCurveSet(txt, setLinks);
+}
+
+function setApplyModelLinks(model_num, id_where, data) {
+    $('#' + id_where).empty();
+    kdata = data['result'];
+    for (key in kdata) {
+        $('#' + id_where).append($('<a href="/manager/apply-model/an/' + model_num + '/' + key + '/">id' + key + ': ' + kdata[key] + '</a> <br />'));
+    }
 }
 
 $( function() {

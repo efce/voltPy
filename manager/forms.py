@@ -200,7 +200,7 @@ class EditAnalytesForm(forms.Form):
         if not self.cs.analytes.filter(id=a.id).exists():
             self.cs.analytes.add(a)
 
-        if manager.helpers.functions.isNumber(self.original_id) and a.id != self.original_id:
+        if manager.helpers.functions.is_number(self.original_id) and a.id != self.original_id:
             self.cs.analytesConc.pop(self.original_id, None)
             self.cs.analytesConcUnits.pop(self.original_id, None)
             try:
