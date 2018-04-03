@@ -193,10 +193,10 @@ class MethodManager:
         except (ObjectDoesNotExist, ValueError):
             raise VoltPyDoesNotExists
 
-        ret_id = self.__model.apply(curveSet=cs)
-        if self.__model.type == "processing":
+        ret_id = self.__method.apply(curveSet=cs)
+        if self.__method.type == "processing":
             return HttpResponseRedirect("curveSet", args=[cs.id])
-        elif self.__model.type == "analysis":
+        elif self.__method.type == "analysis":
             return HttpResponseRedirect("Analysis", args=[ret_id])
 
     def getAnalysisSelectionForm(self, *args, **kwargs):
