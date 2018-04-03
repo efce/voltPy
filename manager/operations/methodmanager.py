@@ -187,6 +187,18 @@ class MethodManager:
                 context=context,
             )
 
+    def applyTo(self, curveset_id):
+        try:
+            cs = mmodels.CurveSet.objects.get(id=int(curveset_id))
+        except (ObjectDoesNotExist, ValueError):
+            raise VoltPyDoesNotExists
+
+        ret_id = self.__model.apply(curveSet=cs)
+        if self.__model.type == "processing":
+            return HttpResponseRedirect("curveSet", args=[cs.id])
+        elif self.__model.type == "analysis":
+            return HttpResponseRedirect("Analysis", args=[ret_id])
+
     def getAnalysisSelectionForm(self, *args, **kwargs):
         """
         Returns form instance with selection of analysis methods.
@@ -196,7 +208,7 @@ class MethodManager:
             self.methods['analysis'],
             type='analysis',
             prefix='analysis',
-            *args, 
+            *args,
             **kwargs
         )
 

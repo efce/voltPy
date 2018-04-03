@@ -7,6 +7,16 @@ function sleep (time) {
     return new Promise((resolve) => setTimeout(resolve, time))
 };
 
+function searchCurveSet(txt, funcResults) {
+    url = 'ajax/search-curveset/';
+    csfr = $("{% csrf_token %}").val();
+    object = {
+        'search': txt,
+        'csrfmiddlewaretoken': csfr,
+    };
+    $.post(url, object).done(funcResults);
+}
+
 function voltpy_loading_start(text) {
     //window.scrollTo(0, 0);
     $('#voltpy-loading').text(text);

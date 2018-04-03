@@ -156,7 +156,7 @@ def generate_plot(request, user, plot_type, value_id, **kwargs):
     return pm.getEmbeded(request, user, vtype, vid)
 
 
-def isNumber(s):
+def is_number(s):
     try:
         float(s)
         return True

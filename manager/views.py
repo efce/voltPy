@@ -26,6 +26,7 @@ from manager.helpers.functions import form_helper
 from manager.helpers.functions import generate_plot
 from manager.helpers.functions import voltpy_render
 from manager.helpers.functions import voltpy_serve_csv
+from manager.helpers.functions import is_number
 from manager.helpers.functions import get_redirect_class
 from manager.helpers.decorators import with_user
 from manager.helpers.decorators import redirect_on_voltpyexceptions
@@ -408,6 +409,28 @@ def showAnalysis(request, user, analysis_id):
         template_name='manager/showAnalysis.html',
         context=context
     )
+
+
+@redirect_on_voltpyexceptions
+@with_user
+def searchCurveSet(request, user):
+    # TODO: zabezpieczyć user
+    if request.method != 'POST':
+        return JsonResponse({})
+    searchStr = request.POST.get('search', '')
+    css = []
+    if searchStr == '':
+        css = mmodels.CurveSet.objects.all()
+    else:
+        if is_number(searchStr):
+            cs_id = float(searchStr)
+            css.extend(mmodels.CurveSet.objects.filter(id=cs_id))
+        css.extend(mmodels.CurveSet.objects.filter(name__icontains=searchStr))
+
+    ret = {}
+    for cs in css:
+        ret[cs.id] = cs.__str__()
+    return JsonResponse({'result': ret})
 
 
 @redirect_on_voltpyexceptions
@@ -806,6 +829,39 @@ def showCurveFile(request, user, file_id):
     return voltpy_render(
         request=request,
         template_name='manager/showFile.html',
+        context=context
+    )
+
+
+@redirect_on_voltpyexceptions
+@with_user
+def applyModel(request, user, objType, objId, curveset_id):
+    if objType == 'an':
+        mm = mmm.MethodManager(user=user, analysis_id=objId)
+    elif objType == 'pr':
+        mm = mmm.MethodManager(user=user, processing_id=objId)
+
+    if request.method == "POST" and request.POST.get('confirm', False):
+        confForm = mforms.GenericConfirmForm(request.POST)
+        if confForm.confirmed():
+            return HttpResponseRedirect(mm.applyTo(curveset_id))
+        else:
+            add_notification(request, 'Check the checkbox to confirm.', 1)
+
+    else:
+        confForm = mforms.GenericConfirmForm()
+
+    context = {
+        'text_to_confirm': 'This will apply model {model} to curveset {cs}'.format(
+            model=objjId,
+            cs=curveset_id
+        ),
+        'form': confForm,
+        'user': user,
+    }
+    return voltpy_render(
+        request=request,
+        template_name='manager/confirmGeneric.html',
         context=context
     )
 

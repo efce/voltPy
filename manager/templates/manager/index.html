@@ -3,5 +3,20 @@
 {% block title %} INDEX {% endblock %}
 
 {% block real_content %}
-Welcome to the index page!
+Welcome to the index page!<br />
+Search for CurveSets: <input onkeyup="search()" id='ss' />
+<div id="curve_list"></div>
+<script>
+    function search() {
+        txt = $('#ss').val();
+        searchCurveSet(txt, addOpt);
+    }
+    function addOpt(data) {
+        $('#curve_list').empty();
+        kdata = data['result'];
+        for (key in kdata) {
+            $('#curve_list').append($('<a href="/manager/show-curveset/' + key + '/">id' + key + ': ' + kdata[key] + '</a> <br />'));
+        }
+    }
+</script>
 {% endblock %}
