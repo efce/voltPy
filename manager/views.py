@@ -1,3 +1,4 @@
+import json
 from django.contrib.auth import login, authenticate
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
@@ -8,9 +9,10 @@ from django.http import JsonResponse
 from django.shortcuts import render, redirect
 from django.template import loader
 from django.urls import reverse
-from django.utils.encoding import force_bytes,force_text
-from django.utils.http import urlsafe_base64_encode,urlsafe_base64_decode
-import json
+from django.utils.encoding import force_bytes
+from django.utils.encoding import force_text
+from django.utils.http import urlsafe_base64_encode
+from django.utils.http import urlsafe_base64_decode
 from manager.forms import SignInForm
 from manager.tokens import account_activation_token
 import manager.models as mmodels
@@ -50,7 +52,9 @@ def signin(request):
         form = SignInForm()
     return render(request, 'registration/signin.html', {'form': form})
 
+
 def activate(request, uidb64, token):
+    # TODO: move logic somewhere else:
     try:
         uid = force_text(urlsafe_base64_decode(uidb64))
         user = User.objects.get(pk=uid)
@@ -65,14 +69,16 @@ def activate(request, uidb64, token):
         return redirect('index')
     else:
         return render(request, 'registration/account_activation_invalid.html')
-    
+
+
 def account_activation_sent(request):
     context = {'user': None}
     return voltpy_render(
-        request=request, 
-        template_name='registration/account_activation_sent.html', 
+        request=request,
+        template_name='registration/account_activation_sent.html',
         context=context
     )
+
 
 @redirect_on_voltpyexceptions
 def index(request):
@@ -82,6 +88,7 @@ def index(request):
         template_name='manager/index.html',
         context=context
     )
+
 
 @redirect_on_voltpyexceptions
 @with_user
@@ -135,14 +142,14 @@ def browseFileSet(request, user):
         'action2': "deleteFileSet",
         'action2_text': ' (delete) ',
         'whenEmpty': ''.join([
-                            "You have no files uploaded. ",
-                            "<a href='{url}'>Upload one</a>.".format( 
-                                url=reverse('upload')
-                            ),
-                        ])
+            "You have no files uploaded. ",
+            "<a href='{url}'>Upload one</a>.".format(
+                url=reverse('upload')
+            ),
+        ])
     }
     return voltpy_render(
-        request=request, 
+        request=request,
         template_name='manager/browse.html',
         context=context
     )
@@ -160,14 +167,14 @@ def browseCurveFile(request, user):
         'action2': "deleteCurveFile",
         'action2_text': ' (delete) ',
         'whenEmpty': ''.join([
-                            "You have no files uploaded. ",
-                            "<a href='{url}'>Upload one</a>.".format( 
-                                url=reverse('upload')
-                            ),
-                        ])
+            "You have no files uploaded. ",
+            "<a href='{url}'>Upload one</a>.".format(
+                url=reverse('upload')
+            ),
+        ])
     }
     return voltpy_render(
-        request=request, 
+        request=request,
         template_name='manager/browse.html',
         context=context
     )
@@ -185,14 +192,14 @@ def browseAnalysis(request, user):
         'action2': "deleteAnalysis",
         'action2_text': ' (delete) ',
         'whenEmpty': ''.join([
-                            "Analysis can only be performed on the CurveSet. ",
-                            "<a href='{url}'>Choose one</a>.".format( 
-                                url=reverse('browseCurveSet')
-                            ),
-                        ])
+            "Analysis can only be performed on the CurveSet. ",
+            "<a href='{url}'>Choose one</a>.".format(
+                url=reverse('browseCurveSet')
+            ),
+        ])
     }
     return voltpy_render(
-        request=request, 
+        request=request,
         template_name='manager/browse.html',
         context=context
     )
@@ -212,14 +219,14 @@ def browseCurveSet(request, user):
         'action2': 'deleteCurveSet',
         'action2_text': ' (delete) ',
         'whenEmpty': ''.join([
-                            "You have no CurveSets. ",
-                            "<a href='{url}'>Prepare one</a>.".format( 
-                                url=reverse('createCurveSet')
-                            ),
-                        ])
+            "You have no CurveSets. ",
+            "<a href='{url}'>Prepare one</a>.".format(
+                url=reverse('createCurveSet')
+            ),
+        ])
     }
     return voltpy_render(
-        request=request, 
+        request=request,
         template_name='manager/browse.html',
         context=context
     )
@@ -232,7 +239,11 @@ def deleteFileSet(request, user, fileset_id):
         fs = mmodels.FileSet.objects.get(id=fileset_id)
     except ObjectDoesNotExist:
         fs = None
-    return delete_helper(request, user, fs)
+    return delete_helper(
+        request=request,
+        user=user,
+        item=fs
+    )
 
 
 @redirect_on_voltpyexceptions
@@ -242,7 +253,11 @@ def deleteCurveFile(request, user, file_id):
         cfile = mmodels.CurveFile.objects.get(id=file_id)
     except ObjectDoesNotExist:
         cfile = None
-    return delete_helper(request, user, cfile)
+    return delete_helper(
+        request=request,
+        user=user,
+        item=cfile
+    )
 
 
 @redirect_on_voltpyexceptions
@@ -255,9 +270,9 @@ def deleteCurve(request, user, objType, objId, delId):
         except ObjectDoesNotExist:
             c = None
         return delete_helper(
-            request, 
-            user, 
-            cd, 
+            request=request,
+            user=user,
+            item=cd,
             deleteFrom=deleteFrom,
             onSuccessRedirect=reverse('showCurveFile', args=[deleteFrom.id])
         )
@@ -268,9 +283,9 @@ def deleteCurve(request, user, objType, objId, delId):
         except ObjectDoesNotExist:
             cd = None
         return delete_helper(
-            request, 
-            user, 
-            cd, 
+            request=request,
+            user=user,
+            item=cd,
             deleteFrom=deleteFrom,
             onSuccessRedirect=reverse('showCurveSet', args=[deleteFrom.id])
         )
@@ -283,7 +298,11 @@ def deleteAnalysis(request, user, analysis_id):
         a = mmodels.Analysis.objects.get(id=analysis_id)
     except ObjectDoesNotExist:
         a = None
-    return delete_helper(request, user, a)
+    return delete_helper(
+        request=request,
+        user=user,
+        item=a
+    )
 
 
 @redirect_on_voltpyexceptions
@@ -293,7 +312,11 @@ def deleteCurveSet(request, user, curveset_id):
         a = mmodels.CurveSet.objects.get(id=curveset_id)
     except ObjectDoesNotExist:
         a = None
-    return delete_helper(request, user, a)
+    return delete_helper(
+        request=request,
+        user=user,
+        item=a
+    )
 
 
 @redirect_on_voltpyexceptions
@@ -349,7 +372,7 @@ def showAnalysis(request, user, analysis_id):
 
     form_data = {'model': an, 'label_name': 'Analysis name'}
     form_ret = form_helper(
-        user=user, 
+        user=user,
         request=request,
         formClass=mforms.EditName,
         submitName='anEditName',
@@ -381,7 +404,7 @@ def showAnalysis(request, user, analysis_id):
         )
     }
     return voltpy_render(
-        request=request, 
+        request=request,
         template_name='manager/showAnalysis.html',
         context=context
     )
@@ -399,7 +422,7 @@ def showProcessed(request, user, processing_id):
         'processing': processing_id,
     }
     return voltpy_render(
-        request=request, 
+        request=request,
         template_name='manager/showAnalysis.html',
         context=context
     )
@@ -418,7 +441,7 @@ def showFileSet(request, user, fileset_id):
 
     form_data = {'model': fs, 'label_name': 'FileSet name'}
     edit_name_form = form_helper(
-        user=user, 
+        user=user,
         request=request,
         formClass=mforms.EditName,
         submitName='anEditName',
@@ -441,8 +464,8 @@ def showFileSet(request, user, fileset_id):
         'fileset': fs,
         'exportFS': get_redirect_class(
             reverse('export', kwargs={
-                'objType': 'fs', 
-                'objId': fs.id, 
+                'objType': 'fs',
+                'objId': fs.id,
             })
         ),
         'cloneCS': get_redirect_class(
@@ -452,7 +475,7 @@ def showFileSet(request, user, fileset_id):
         ),
     }
     return voltpy_render(
-        request=request, 
+        request=request,
         template_name='manager/showFileSet.html',
         context=context
     )
@@ -480,14 +503,14 @@ def undoCurveSet(request, user, curveset_id):
     else:
         confForm = mforms.GenericConfirmForm()
 
-    context = { 
+    context = {
         'text_to_confirm': 'This will undo changes to CurveSet {0}'.format(cs.id),
         'form': confForm,
         'user': user,
     }
 
     return voltpy_render(
-        request=request, 
+        request=request,
         template_name='manager/confirmGeneric.html',
         context=context
     )
@@ -576,7 +599,7 @@ def showCurveSet(request, user, curveset_id):
         ),
         'cloneCS': get_redirect_class(
             reverse('cloneCurveSet', kwargs={
-                'toClone_txt': cs.id, 
+                'toClone_txt': cs.id,
             })
         ),
     }
@@ -629,7 +652,7 @@ def editCurveSet(request, user, curveset_id):
         if all([
             not cs.locked,
             'startProcessing' in request.POST
-         ]):
+        ]):
             formProc = mm.getProcessingSelectionForm(request.POST)
             if formProc.is_valid():
                 procid = formProc.process(user, cs)
@@ -666,10 +689,10 @@ def editCurveSet(request, user, curveset_id):
         plot_type='curveset',
         value_id=cs.id
     )
-    context = { 
+    context = {
         'scripts': plotScr + formProc.getJS(request) + formGenerate.getJS(request),
         'mainPlot': plotDiv,
-        'formAnalyte': formAnalyte, 
+        'formAnalyte': formAnalyte,
         'startAnalyze': formGenerate,
         'startProcessing': formProc,
         'user': user,
@@ -761,7 +784,7 @@ def showCurveFile(request, user, file_id):
 
     at_disp = at.analytesTable(cf, objType='cf')
 
-    context = { 
+    context = {
         'scripts': plotScr,
         'mainPlot': plotDiv,
         'user': user,
@@ -781,7 +804,7 @@ def showCurveFile(request, user, file_id):
         ),
     }
     return voltpy_render(
-        request=request, 
+        request=request,
         template_name='manager/showFile.html',
         context=context
     )
@@ -847,10 +870,10 @@ def editAnalyte(request, user, objType, objId, analyteId):
             infotext = 'Adding new analyte in '
         infotext = 'Editing {0} in '.format(analyte.name)
 
-    context = { 
+    context = {
         'scripts': plotScr,
         'mainPlot': plotDiv,
-        'user': user, 
+        'user': user,
         'obj_name': dispType,
         'obj_id': objId,
         'form': form,
@@ -861,7 +884,7 @@ def editAnalyte(request, user, objType, objId, analyteId):
         ])
     }
     return voltpy_render(
-        request=request, 
+        request=request,
         template_name='manager/editAnalyte.html',
         context=context
     )
@@ -872,7 +895,7 @@ def editAnalyte(request, user, objType, objId, analyteId):
 def analyze(request, user, analysis_id):
     mm = mmm.MethodManager(user=user, analysis_id=analysis_id)
     mm.process(request=request, user=user)
-    return mm.getStepContent(request=request, user=user) 
+    return mm.getStepContent(request=request, user=user)
 
 
 @redirect_on_voltpyexceptions
@@ -880,7 +903,7 @@ def analyze(request, user, analysis_id):
 def process(request, user, processing_id):
     mm = mmm.MethodManager(user=user, processing_id=processing_id)
     mm.process(request=request, user=user)
-    return mm.getStepContent(request=request, user=user) 
+    return mm.getStepContent(request=request, user=user)
 
 
 @with_user
