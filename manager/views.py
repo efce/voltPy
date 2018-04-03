@@ -421,11 +421,11 @@ def searchCurveSet(request, user):
     searchStr = request.POST.get('search', '')
     css = []
     if searchStr == '':
-        css = mmodels.CurveSet.objects.all()
+        css = mmodels.CurveSet.objects.filter(deleted=False)
     else:
         if is_number(searchStr):
             cs_id = float(searchStr)
-            css.extend(mmodels.CurveSet.objects.filter(id=cs_id))
+            css.extend(mmodels.CurveSet.objects.filter(id=cs_id, deleted=False))
         css.extend(mmodels.CurveSet.objects.filter(name__icontains=searchStr))
 
     ret = {}
