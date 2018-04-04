@@ -525,7 +525,7 @@ def undoCurveSet(request, user, curveset_id):
         if confForm.confirmed():
             cs.undo()
             add_notification(request, 'Changes undone.')
-            return HttpResponseRedirect(reverse('showCurveSet', args=[cs.id]))
+            return HttpResponseRedirect(cs.getUrl())
         else:
             add_notification(request, 'Check the checkbox to confirm.', 1)
 

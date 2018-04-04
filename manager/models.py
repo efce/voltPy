@@ -496,6 +496,9 @@ class CurveSet(models.Model):
     def export(self):
         return exportCDasFile(self.curvesData.all())
 
+    def getUrl(self):
+        return reverse('showCurveSet', args=[self.id])
+
 
 class Analysis(models.Model):
     id = models.AutoField(primary_key=True)
@@ -527,11 +530,11 @@ class Analysis(models.Model):
     def canBeReadBy(self, user):
         return self.isOwnedBy(user)
 
-    def getUrl(self, user):
+    def getUrl(self):
         if self.completed:
-            return reverse('showAnalysis', args=[ self.id ])
+            return reverse('showAnalysis', args=[self.id])
         else:
-            return reverse('analyze', args=[ self.id ])
+            return reverse('analyze', args=[self.id])
 
     def getCopy(self):
         newan = copy(self)
@@ -572,8 +575,8 @@ class Processing(models.Model):
     def canBeReadBy(self, user):
         return self.isOwnedBy(user)
 
-    def getUrl(self, user):
-        return reverse('showCurveSet', args=[ self.curveSet.id ])
+    def getUrl(self):
+        return reverse('showCurveSet', args=[self.curveSet.id])
 
     def getCopy(self):
         newpr = copy(self)

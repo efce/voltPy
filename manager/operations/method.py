@@ -193,6 +193,10 @@ class AnalysisMethod(Method, ABC):
     def type(cls):
         return 'analysis'
 
+    @classmethod
+    def isAnalysis(cls):
+        return True
+
 
 class ProcessingMethod(Method, ABC):
     """
@@ -202,6 +206,10 @@ class ProcessingMethod(Method, ABC):
     @classmethod
     def type(cls):
         return 'processing'
+
+    @classmethod
+    def isAnalysis(cls):
+        return False
 
     def exportableData(self):
         return None

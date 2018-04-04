@@ -1,8 +1,8 @@
 import sys
 import os
 import io
-import numpy as np
 import base64 as b64
+import numpy as np
 from django import forms
 from django.core.exceptions import ObjectDoesNotExist
 from django.urls import reverse
@@ -18,11 +18,11 @@ from manager.helpers.functions import add_notification
 class MethodManager:
     """
     MethodManager loads and manages the data processing
-    and analysis procedures. Each procedure should be 
+    and analysis procedures. Each procedure should be
     placed in "./methods/" directory and it should contain
     variable main_class = <Class Object>.
     The main class object should inherit
-    either from AnalysisMethod or ProcessingMethod. 
+    either from AnalysisMethod or ProcessingMethod.
     If procedure meets the requirements it should be immedietly
     avaiable for usage.
     """
@@ -118,7 +118,7 @@ class MethodManager:
         Replies to json request.
         """
         if not self.__method.has_next:
-            return {'command': 'redirect', 'location': self.__model.getUrl(user)}
+            return {'command': 'redirect', 'location': self.__model.getUrl()}
         else:
             return {'command': 'reload'}
 
@@ -128,13 +128,13 @@ class MethodManager:
         """
         if self.__model.deleted:
             add_notification(request, 'Procedure delted.', 0)
-            return HttpResponseRedirect(reverse("showCurveSet", args=[self.__model.curveSet.id]))
+            return HttpResponseRedirect(self.__model.curveSet.getUrl())
 
         if any([
             self.__method.has_next is False,
             self.__method.step is None
         ]):
-            return HttpResponseRedirect(self.__model.getUrl(user))
+            return HttpResponseRedirect(self.__model.getUrl())
 
         if not self.isMethodSelected():
             return HttpResponseRedirect(reverse("browseCurveSet"))
@@ -157,7 +157,7 @@ class MethodManager:
 
             plotScr, plotDiv = generate_plot(
                 request=request,
-                user=user, 
+                user=user,
                 plot_type='curveset',
                 value_id=self.__model.curveSet.id,
                 vtype=self.__method.type(),
@@ -200,17 +200,15 @@ class MethodManager:
             ret_id = self.__method.apply(user=user, curveSet=cs)
         except VoltPyFailed as e:
             add_notification(request, """
-                Procedure failed. The data may be incompatible with the processing method. 
+                Procedure failed. The data may be incompatible with the processing method.
                 Please verify and try again.
             """)
             raise e
 
-        if self.__method.type() == "processing":
-            return reverse("showCurveSet", args=[cs.id])
-        elif self.__method.type() == "analysis":
-            return reverse("showAnalysis", args=[ret_id])
+        if not self.__method.isAnalysis():
+            return cs.getUrl()
         else:
-            raise VoltPyDoesNotExists("Error?")
+            return reverse("showAnalysis", args=[ret_id])
 
     def getAnalysisSelectionForm(self, *args, **kwargs):
         """
@@ -232,7 +230,7 @@ class MethodManager:
         return MethodManager.SelectionForm(
             self,
             self.methods['processing'],
-            type='processing', 
+            type='processing',
             prefix='processing',
             *args, 
             **kwargs
@@ -245,7 +243,7 @@ class MethodManager:
         if self.__method:
             return self.__method.getFinalContent(request=request, user=user)
         else:
-            return ''
+            raise VoltPyDoesNotExists('Method could not be loaded.')
 
     def isMethodSelected(self):
         return (self.__method is not None)
@@ -258,9 +256,11 @@ class MethodManager:
         def __init__(self,  parent, methods, *args, **kwargs):
             self.type = kwargs.pop('type', 'processing')
             if self.type == 'processing':
-                label = "Processing method"
+                label = 'Processing method'
             elif self.type == 'analysis':
                 label = 'Analysis method'
+            else:
+                raise ValueError('Wrong value %s as type in %s' % (self.type, self.__str__()))
             disabled = kwargs.pop('disabled', False)
             super(MethodManager.SelectionForm, self).__init__(*args, **kwargs)
             self.methods = methods
@@ -272,16 +272,20 @@ class MethodManager:
                 )
             )
 
+            defKey = list(self.methods)[0]
+            defMethod = self.methods[defKey]
+
             self.fields['method'] = forms.ChoiceField(
                 choices=choices,
-                required=True, 
+                required=True,
                 label=label,
-                disabled=disabled
+                disabled=disabled,
+                initial=defKey
             )
             self.fields['method-description'] = forms.CharField(
                 widget=forms.Textarea(attrs={'readonly': 'readonly'}),
                 required=False,
-                initial=self.methods[list(self.methods)[0]].description,
+                initial=defMethod.description,
                 label="Description:"
             )
 
@@ -310,7 +314,7 @@ $(function(){{
             return js_data
 
         def process(self, user, curveset):
-            if self.type == 'processing':
+            if self.isAnalysis() is False:
                 if self.cleaned_data.get('method') in self.methods:
                     a = mmodels.Processing(
                         owner=user,
@@ -326,7 +330,7 @@ $(function(){{
                     return a.id
                 else:
                     return None
-            elif self.type == 'analysis':
+            elif self.isAnalysis() is True:
                 if self.cleaned_data.get('method') in self.methods:
                     a = mmodels.Analysis(
                         owner=user,

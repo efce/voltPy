@@ -9,6 +9,7 @@ from django.core.exceptions import ObjectDoesNotExist
 import manager
 import manager.models as mmodels
 from manager.exceptions import VoltPyNotAllowed
+from manager.exceptions import VoltPyDoesNotExists
 
 
 class SignInForm(UserCreationForm):
@@ -154,30 +155,39 @@ class EditAnalytesForm(forms.Form):
 
     def clean(self):
         super().clean()
-        if int(self.cleaned_data.get('existingAnalyte', -1)) == -1:
+        try:
+            an_id = int(self.cleaned_data.get('existingAnalyte', -1))
+            self.cleaned_data['existingAnalyte'] = an_id
+        except ValueError:
+            raise forms.ValidationError(
+                'Wrong value for selected analyte.'
+            )
+        if an_id == -1:
             if not self.cleaned_data.get('newAnalyte', '').strip():
                 raise forms.ValidationError(
                     'New analyte cannot be empty string.'
                 )
+            else:
+                self.cleaned_data['newAnalyte'] = self.cleaned_data.get('newAnalyte', '').strip()
+        else:
+            if not mmodels.Analyte.filter(id=an_id).exists():
+                raise forms.ValidationError(
+                    'Could not identify selected analyte.'
+                )
+
+        return self.cleaned_data
 
     def process(self, user):
         a = None
         if int(self.cleaned_data.get('existingAnalyte', -1)) == -1:
-            analyteName = self.cleaned_data.get('newAnalyte', '').strip()
-            if not analyteName:
-                # TODO: meaningful exception -- analyte cannot be empty
-                raise 3 
+            analyteName = self.cleaned_data['newAnalyte']
             try:
                 a = mmodels.Analyte.objects.get(name=analyteName)
             except mmodels.Analyte.DoesNotExist:
                 a = mmodels.Analyte(name=analyteName)
                 a.save()
         else:
-            try:
-                a = mmodels.Analyte.objects.get(id=int(self.cleaned_data.get('existingAnalyte')))
-            except:
-                # TODO: meaningfull exeption -- analyte id does not exists
-                raise 3
+            a = mmodels.Analyte.objects.get(id=self.cleaned_data['existingAnalyte'])
 
         units = self.cleaned_data['units']
 
@@ -189,18 +199,20 @@ class EditAnalytesForm(forms.Form):
                 try:
                     self.cs.curvesData.get(id=curve_id)
                 except ObjectDoesNotExist:
-                    # TODO: something went really south ...
-                    raise 3
+                    raise VoltPyDoesNotExists('Curve id %d does not exists.' % curve_id)
 
                 if not self.cs.canBeUpdatedBy(user):
-                    raise 3
-                
+                    raise VoltPyNotAllowed('Operation not allowed')
+
                 conc[curve_id] = float(val)
 
         if not self.cs.analytes.filter(id=a.id).exists():
             self.cs.analytes.add(a)
 
-        if manager.helpers.functions.is_number(self.original_id) and a.id != self.original_id:
+        if all([
+            manager.helpers.functions.is_number(self.original_id),
+            a.id != self.original_id
+        ]):
             self.cs.analytesConc.pop(self.original_id, None)
             self.cs.analytesConcUnits.pop(self.original_id, None)
             try:
