@@ -233,6 +233,10 @@ function toggleShow(e) {
 }
 
 $( function() {
+    $('._disabled').attr('disabled', 'disabled');
+});
+
+$( function() {
     imodel = '_voltJS_model@';
     $('._voltJS_applyModel').click( function() {
         var classes = this.className.split(' ');

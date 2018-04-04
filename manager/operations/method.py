@@ -18,6 +18,14 @@ class Method(ABC):
     def _steps(self):
         raise NotImplementedError
 
+    @property
+    def can_be_applied(self):
+        """
+        Described if after creating model it can
+        be applied to other curveset with apply method.
+        """
+        raise NotImplementedError
+
     def __init__(self, model):
         if not model:
             raise ValueError('Model has to be set')

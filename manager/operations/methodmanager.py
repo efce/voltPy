@@ -8,11 +8,11 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.urls import reverse
 from django.http import HttpResponseRedirect
 import manager.models as mmodels
+from manager.exceptions import VoltPyDoesNotExists
 from manager.exceptions import VoltPyFailed
 from manager.helpers.functions import generate_plot
 from manager.helpers.functions import voltpy_render
 from manager.helpers.functions import add_notification
-from manager.exceptions import VoltPyDoesNotExists
 
 
 class MethodManager:
@@ -187,6 +187,9 @@ class MethodManager:
                 template_name='manager/method.html',
                 context=context,
             )
+
+    def methodCanBeApplied(self):
+        return self.__method.can_be_applied
 
     def applyTo(self, user, request, curveset_id):
         try:

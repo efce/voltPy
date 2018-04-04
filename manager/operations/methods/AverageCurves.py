@@ -1,5 +1,6 @@
 from overrides import overrides
 import numpy as np
+from manager.exceptions import VoltPyFailed
 import manager.operations.method as method
 from manager.operations.methodsteps.tagcurves import TagCurves
 
@@ -32,7 +33,7 @@ given number of plots.
         """
         This does not support appliyng existing
         """
-        return
+        raise VoltPyFailed('Average curve does not support apply function.')
 
     def finalize(self, user):
         cs = self.model.curveSet

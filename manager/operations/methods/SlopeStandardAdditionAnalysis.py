@@ -8,6 +8,7 @@ from manager.exceptions import VoltPyFailed
 
 
 class SlopeStandardAdditionAnalysis(method.AnalysisMethod):
+    can_be_applied = False
     _steps = (
         {
             'class': SelectAnalyte,
@@ -99,7 +100,7 @@ https://doi.org/10.1039/C7AN00185A
         """
         This procedure cannot be applied to other data.
         """
-        return
+        raise VoltPyFailed('Slope Standard Addition does not supports apply function.')
 
     def getFinalContent(self, request, user):
         p = pm.PlotManager()
@@ -143,17 +144,17 @@ https://doi.org/10.1039/C7AN00185A
 
         scripts, div = p.getEmbeded(request, user, 'analysis', self.model.id)
         unitsTrans = dict(mmodels.CurveSet.CONC_UNITS)
-        ret = { 
+        ret = {
             'head': scripts,
             'body': ''.join([
-                                div, 
-                                '<p>Analyte: {0}<br />Result: {1} {3}<br />STD: {2} {3}</p>'.format(
-                                    self.model.customData['analyte'],
-                                    self.model.customData['result'],
-                                    self.model.customData['resultStdDev'],
-                                    self.model.customData['units'] 
-                                )
-                            ])
+                div,
+                '<p>Analyte: {0}<br />Result: {1} {3}<br />STD: {2} {3}</p>'.format(
+                    self.model.customData['analyte'],
+                    self.model.customData['result'],
+                    self.model.customData['resultStdDev'],
+                    self.model.customData['units'] 
+                )
+            ])
         }
         return ret
 

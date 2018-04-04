@@ -51,7 +51,7 @@ https://doi.org/10.1002/elan.201300181"""
         """
         This procedure cannot be applied to other data.
         """
-        return
+        raise VoltPyFailed('Self Referencing Background Correction does not support apply function.')
 
     def finalize(self, user):
         Y = []

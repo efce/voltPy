@@ -9,6 +9,7 @@ from manager.exceptions import VoltPyFailed
 
 
 class RegularStandardAddition(method.AnalysisMethod):
+    can_be_applied = True
     _steps = [
         {
             'class': SelectAnalyte,

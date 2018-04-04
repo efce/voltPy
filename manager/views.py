@@ -389,6 +389,11 @@ def showAnalysis(request, user, analysis_id):
         plot_type='curveset',
         value_id=an.curveSet.id
     )
+    if mm.methodCanBeApplied():
+        applyClass = '_voltJS_applyModel _voltJS_model@' + str(an.id)
+    else:
+        applyClass = '_disabled'
+
     context = {
         'scripts': plotScr,
         'mainPlot': plotDiv,
@@ -403,7 +408,7 @@ def showAnalysis(request, user, analysis_id):
                 'objId': an.id,
             })
         ),
-        'applyModel': '_voltJS_applyModel _voltJS_model@' + str(an.id),
+        'applyModel': applyClass
     }
     return voltpy_render(
         request=request,
