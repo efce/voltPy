@@ -4,9 +4,11 @@ import json
 from pathlib import Path
 from django.test import TestCase
 from django.utils import timezone
-from django.utils.datastructures import MultiValueDict
 from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.test.client import RequestFactory
+from django.contrib.auth import login, authenticate
+from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.models import User
 import manager.models as mmodels
 import manager.uploads.uploadmanager as um
 import manager.operations.methodmanager as mm
@@ -21,6 +23,9 @@ Test should:
     process file
     check the result of processing
 """
+
+uname = 'ssssss'  # 'TESTźćµó'
+upass = '!@#ASDŁÓĘ®ŊŒŊŚŒĘ'
 
 
 def addFilesToRequest(request, filepaths_list, post_name='files[]'):
@@ -45,18 +50,25 @@ def uploadFile(user):
         'fileset_name': 'test',
         'command': 'upload'
     })
+    request.user = user
+    request.session = {}
     request = addFilesToRequest(request, file_list, 'files[]')
-    pu = um.ajax(user_id=str(user.id), request=request)
+    pu = um.ajax(request=request)
 
 
 class TestUser(TestCase):
     def setUp(self):
-        user = mmodels.User(name="U1")
-        user.save()
+        user = User.objects.create_user(
+            username=uname,
+            email='test@test.test',
+            password=upass
+        )
 
     def test_user(self):
-        u = mmodels.User.objects.all()
-        self.assertEqual(u[0].name, "U1")
+        us = User.objects.all()
+        self.assertEqual(us[0].username, uname)
+        user = authenticate(username=uname, password=upass)
+        self.assertIsNotNone(user)
 
 
 class TestFileUpload(TestCase):
@@ -124,10 +136,18 @@ class TestFileUpload(TestCase):
     sampling_length = 10000
 
     def setUp(self):
-        self.user = mmodels.User(name="UTest")
-        self.user.save()
-        self.user2 = mmodels.User(name="Utest2")
-        self.user2.save()
+        u = User.objects.create_user(
+            username=uname,
+            email='test@test.test',
+            password=upass
+        )
+        u.save()
+        self.user = authenticate(username=uname, password=upass)
+        self.user2 = User.objects.create_user(
+            username='ASDASDDA',
+            email='test@test.test',
+            password=upass
+        )
 
     def test_file_upload(self):
         factory = RequestFactory()
@@ -151,8 +171,10 @@ class TestFileUpload(TestCase):
         postdata['command'] = 'upload'
         postdata['fileset_name'] = '";drop tables; Test SĘ™ÆŚĆ<≤≥≠²³¢'
         request = factory.post('/', data=postdata)
+        request.user = self.user
+        request.session = {}
         request = addFilesToRequest(request, self.file_list, 'files[]')
-        pu = um.ajax(user_id=str(self.user.id), request=request)
+        pu = um.ajax(request=request)
         self.assertEqual(200, pu.status_code, 'code 200 expected')
         ret = json.loads(pu.content)
         if 'success' not in ret['command']:
@@ -204,8 +226,13 @@ main_class = TestMethod
     """
 
     def setUp(self):
-        self.user = mmodels.User(name="UTest")
-        self.user.save()
+        u = User.objects.create_user(
+            username=uname,
+            email='test@test.test',
+            password=upass
+        )
+        u.save()
+        self.user = authenticate(username=uname, password=upass)
         uploadFile(self.user)
         self.curveset = mmodels.CurveSet.objects.all()[0]
         BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
