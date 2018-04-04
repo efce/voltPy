@@ -6,6 +6,7 @@ from manager.exceptions import VoltPyNotAllowed
 
 
 class AutomaticBaselineCorrection(method.ProcessingMethod):
+    can_be_applied = True
     _steps = [
         {
             'class': Confirmation,

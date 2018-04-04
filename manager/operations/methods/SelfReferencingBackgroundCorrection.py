@@ -8,6 +8,7 @@ import manager.helpers.selfReferencingBackgroundCorrection as sbcm
 
 
 class SelfReferencingBackgroundCorrection(method.AnalysisMethod):
+    can_be_applied = False
     _steps = [
         {
             'class': SelectAnalyte,

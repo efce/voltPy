@@ -102,16 +102,16 @@ calculated as a difference between max and min signal in the given range.
         return {
             'head': scr,
             'body': ''.join([
-                                div,
-                                'Equation: y={2}*x+{3}<br />Analyte: {4}<br />Result: {0} {5}<br />STD: {1} {5}'.format(
-                                    self.model.customData['result'],
-                                    self.model.customData['resultStdDev'],
-                                    self.model.customData['fitEquation']['slope'],
-                                    self.model.customData['fitEquation']['intercept'],
-                                    self.model.customData['analyte'],
-                                    self.model.customData['units'] 
-                                )
-                            ])
+                div,
+                'Equation: y={2}*x+{3}<br />Analyte: {4}<br />Result: {0} {5}<br />STD: {1} {5}'.format(
+                    self.model.customData['result'],
+                    self.model.customData['resultStdDev'],
+                    self.model.customData['fitEquation']['slope'],
+                    self.model.customData['fitEquation']['intercept'],
+                    self.model.customData['analyte'],
+                    self.model.customData['units'] 
+                )
+            ])
         }
 
 main_class = RegularStandardAddition 

@@ -6,6 +6,7 @@ from manager.operations.methodsteps.tagcurves import TagCurves
 
 
 class AverageCurves(method.ProcessingMethod):
+    can_be_applied = False
     _steps = [ 
         {
             'class': TagCurves,

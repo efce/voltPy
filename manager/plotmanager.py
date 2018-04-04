@@ -1,19 +1,20 @@
-import manager.models as mmodels
-from manager.exceptions import VoltPyNotAllowed
 import io
 import numpy as np
-import json 
+import json
 import django
 import random
+from copy import copy
 from django.urls import reverse
 from django.core.exceptions import ObjectDoesNotExist
+import bokeh
 from bokeh.plotting import figure, ColumnDataSource
 from bokeh.embed import components
 from bokeh.models.callbacks import CustomJS
 from bokeh.models import Span
 from bokeh.layouts import widgetbox, column, row
 from bokeh.models.widgets import RadioButtonGroup, Button, Paragraph
-import bokeh
+import manager.models as mmodels
+from manager.exceptions import VoltPyNotAllowed
 
 
 class PlotManager:
@@ -122,14 +123,14 @@ class PlotManager:
         # prepare data points
         ret = []
         ret.append({
-            'x': analysis.customData['matrix'][0], 
+            'x': analysis.customData['matrix'][0],
             'y': analysis.customData['matrix'][1],
             'plottype': 'scatter',
             'color': 'red',
             'size': 8
         })
         # prepare calibration line
-        xs = analysis.customData['matrix'][0]
+        xs = copy(analysis.customData['matrix'][0])
         if analysis.customData['result'] is not None:
             xs.append(-analysis.customData['result'])
         vx = [min(xs), max(xs)]  # x variable is used by the fitEquation

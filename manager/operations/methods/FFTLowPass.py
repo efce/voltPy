@@ -5,6 +5,7 @@ from manager.exceptions import VoltPyNotAllowed
 
 
 class FFTLowPass(method.ProcessingMethod):
+    can_be_applied = True
     _steps = [
         {
             'class': SelectFrequency,
