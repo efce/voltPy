@@ -481,7 +481,7 @@ class SelectCurvesForCurveSetForm(forms.Form):
 class DeleteForm(forms.Form):
     areyousure = forms.BooleanField(label='Are you sure?', required=False)
 
-    def __init__(self, item,  *args, **kwargs):
+    def __init__(self, item, *args, **kwargs):
         super(DeleteForm, self).__init__(*args, **kwargs)
         self.fields['item_id'] = forms.CharField(
             widget=forms.HiddenInput(),
