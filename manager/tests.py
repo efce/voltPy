@@ -187,7 +187,7 @@ class TestFileUpload(TestCase):
             self.assertEqual(len(cs.curvesData.all()), self.curves_per_file)
             for cd in cs.curvesData.all():
                 self.assertEqual(self.curve_length, len(cd.current), f.fileName)
-                float(cd.current[3])  # Test "random" element
+                float(cd.current[3])  # Test "random" element - selected by dice roll
                 float(cd.potential[3])
                 float(cd.time[3])
                 self.assertTrue(cd.canBeReadBy(self.user))
