@@ -6,6 +6,7 @@ from django.http import JsonResponse
 from django.db import DatabaseError
 import manager.models as mmodels
 from manager.helpers.decorators import with_user
+from manager.exceptions import VoltPyFailed
 
 
 allowedExt = (  # TODO: build based on parsers
@@ -151,7 +152,7 @@ def verifyFileExt(filelist):
     """
     Verify the file list:
         - are file parsable based on extensions
-        - are any files required missing 
+        - are any files required missing
 
     filelist -- list of file names
 
@@ -226,9 +227,9 @@ def parseAndCreateModels(files, details, user):
             d = details[i]
             cf_ids.append(_parseGetCFID(f, d, user))
         fsid = _saveFileSet(cf_ids, user, details)
-    except DatabaseError:
+    except (DatabaseError, VoltPyFailed):
         transaction.savepoint_rollback(sid)
-        return -1
+        raise
     transaction.savepoint_commit(sid)
     return fsid
 
@@ -269,6 +270,9 @@ def _parseGetCFID(cfile, details, user):
     """
     ext = cfile.name.rsplit('.', 1)[1]
     parserClass = _getParserClass(ext)
-    parserObj = parserClass(cfile, details)
-    cf_id = parserObj.saveModels(user)
+    try:
+        parserObj = parserClass(cfile, details)
+        cf_id = parserObj.saveModels(user)
+    except:
+        raise VoltPyFailed('Could not parse file %s' % cfile.name)
     return cf_id

@@ -12,6 +12,7 @@ from django.contrib.auth.models import User
 import manager.models as mmodels
 import manager.uploads.uploadmanager as um
 import manager.operations.methodmanager as mm
+from manager.exceptions import VoltPyDoesNotExists,VoltPyFailed,VoltPyFailed
 
 # Create your tests here.
 """
@@ -43,13 +44,26 @@ def addFilesToRequest(request, filepaths_list, post_name='files[]'):
     return request
 
 
-def uploadFile(user):
-    file_list = ['./test_files/test_file.volt']
+def uploadFiles(user, list_of_files=None):
+    if list_of_files is None:
+        file_list = ['./test_files/test_file.volt']
+    else:
+        file_list = list_of_files
     factory = RequestFactory()
-    request = factory.post('/', data={
-        'fileset_name': 'test',
-        'command': 'upload'
-    })
+    postdata = {}
+    for fid, fn in enumerate(file_list):
+        testname = "tęśß ńąµę"
+        testcomment = "ßęśß ćóµµęńß"
+        rstr = 'f_%i_%s'
+        postdata[rstr % (fid, 'firstColumn')] = 'firstIsE'
+        postdata[rstr % (fid, 'voltMethod')] = 'dpv'
+        postdata[rstr % (fid, 'currentUnit')] = 'µA'
+        postdata[rstr % (fid, 'ignoreRows')] = '0'
+        postdata[rstr % (fid, 'firstColumn_dE')] = '30'
+        postdata[rstr % (fid, 'firstColumn_t')] = '10'
+    postdata['fileset_name'] = 'test'
+    postdata['command'] = 'upload'
+    request = factory.post('/', data=postdata)
     request.user = user
     request.session = {}
     request = addFilesToRequest(request, file_list, 'files[]')
@@ -63,6 +77,7 @@ class TestUser(TestCase):
             email='test@test.test',
             password=upass
         )
+        user.save()
 
     def test_user(self):
         us = User.objects.all()
@@ -120,6 +135,13 @@ class TestFileUpload(TestCase):
         './test_files/test_file.xls',
         './test_files/test_file.xlsx',
         './test_files/test_file.ods',
+        './test_files/test_file.vol',
+    ]
+
+    file_list_fail = [
+        './test_files/test_file_fail.csv',
+        './test_files/test_file_fail.volt',
+        './test_files/test_file_fail.xls',
     ]
 
     file_list_sampling = [
@@ -178,7 +200,7 @@ class TestFileUpload(TestCase):
         self.assertEqual(200, pu.status_code, 'code 200 expected')
         ret = json.loads(pu.content)
         if 'success' not in ret['command']:
-            self.fail('success not reposted by uploadmanager')
+            self.fail('success not reported by uploadmanager')
 
         fileset = mmodels.FileSet.objects.all()[0]
         self.assertEqual(len(self.file_list), len(fileset.files.all()), 'incomplete fileset')
@@ -187,7 +209,7 @@ class TestFileUpload(TestCase):
             self.assertEqual(len(cs.curvesData.all()), self.curves_per_file)
             for cd in cs.curvesData.all():
                 self.assertEqual(self.curve_length, len(cd.current), f.fileName)
-                float(cd.current[3])  # Test "random" element - selected by dice roll
+                float(cd.current[3])  # Test random element - selected by a dice roll
                 float(cd.potential[3])
                 float(cd.time[3])
                 self.assertTrue(cd.canBeReadBy(self.user))
@@ -197,6 +219,10 @@ class TestFileUpload(TestCase):
                 self.assertFalse(cd.canBeUpdatedBy(self.user2))
                 self.assertFalse(cd.isOwnedBy(self.user2))
         # TODO: more tests
+
+        # Negative tests:
+        for fpath in self.file_list_fail:
+            self.assertRaises(VoltPyFailed, uploadFiles, user=self.user, list_of_files=[fpath])
 
 
 class TestMethodManager(TestCase):
@@ -233,7 +259,7 @@ main_class = TestMethod
         )
         u.save()
         self.user = authenticate(username=uname, password=upass)
-        uploadFile(self.user)
+        uploadFiles(self.user)
         self.curveset = mmodels.CurveSet.objects.all()[0]
         BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         self.methods_path = os.path.join(BASE_DIR, 'manager', 'operations', 'methods')
