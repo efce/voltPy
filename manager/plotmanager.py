@@ -1,18 +1,21 @@
 import io
 import numpy as np
 import json
-import django
 import random
 from copy import copy
+import django
 from django.urls import reverse
 from django.core.exceptions import ObjectDoesNotExist
 import bokeh
-from bokeh.plotting import figure, ColumnDataSource
 from bokeh.embed import components
-from bokeh.models.callbacks import CustomJS
-from bokeh.models import Span
 from bokeh.layouts import widgetbox, column, row
-from bokeh.models.widgets import RadioButtonGroup, Button, Paragraph
+from bokeh.models import Span
+from bokeh.models import BoxAnnotation
+from bokeh.models.widgets import Button
+from bokeh.models.widgets import Paragraph
+from bokeh.models.widgets import RadioButtonGroup
+from bokeh.models.callbacks import CustomJS
+from bokeh.plotting import figure, ColumnDataSource
 import manager.models as mmodels
 from manager.exceptions import VoltPyNotAllowed
 
@@ -192,6 +195,13 @@ class PlotManager:
                 cursors[1].location = cb_obj.x;
                 cursors[1].line_alpha = 1;
                 $('#id_val_cursor_1').val(cb_obj.x);
+                if (cursors[0].location < cursors[1].location) {
+                    hboxes[0].left = cursors[0].location;
+                    hboxes[0].right = cursors[1].location;
+                } else {
+                    hboxes[0].right = cursors[0].location;
+                    hboxes[0].left = cursors[1].location;
+                }
             } else {
                 //cursors are set, do nothing.
                 return;
@@ -202,10 +212,19 @@ class PlotManager:
                 cursors[0].location = cb_obj.x;
                 cursors[0].line_alpha = 1;
                 $('#id_val_cursor_0').val(cb_obj.x);
+                hboxes[0].left = null;
+                hboxes[0].right = null;
             } else if (cursors[1].location == null) {
                 cursors[1].location = cb_obj.x;
                 cursors[1].line_alpha = 1;
                 $('#id_val_cursor_1').val(cb_obj.x);
+                if (cursors[0].location < cursors[1].location) {
+                    hboxes[0].left = cursors[0].location;
+                    hboxes[0].right = cursors[1].location;
+                } else {
+                    hboxes[0].right = cursors[0].location;
+                    hboxes[0].left = cursors[1].location;
+                }
             } else if (cursors[2].location == null) {
                 cursors[2].location = cb_obj.x;
                 cursors[2].line_alpha = 1;
@@ -214,6 +233,15 @@ class PlotManager:
                 cursors[3].location = cb_obj.x;
                 cursors[3].line_alpha = 1;
                 $('#id_val_cursor_3').val(cb_obj.x);
+                var locs = [ ];
+                for (var i = 0; i<4; i++) {
+                    locs[i] = cursors[i].location
+                }
+                locs.sort();
+                hboxes[0].left = locs[0];
+                hboxes[0].right = locs[1];
+                hboxes[1].left = locs[2];
+                hboxes[1].right = locs[3];
             } else {
                 //cursors are set, do nothing.
                 return;
@@ -223,7 +251,7 @@ class PlotManager:
             return;
         }
         """
-        js_globalBase = "var cursors = [cursor1, cursor2, cursor3, cursor4];"
+        js_globalBase = "var cursors = [cursor1, cursor2, cursor3, cursor4]; var hboxes = [hbox1, hbox2];"
         jsonurl = reverse('plotInteraction')
 
         js_postRequired = '\n'.join([
@@ -238,20 +266,28 @@ class PlotManager:
             js_globalBase,
             funmaster
         ])
-        srcEmpty = ColumnDataSource(data = dict(x=[], y=[]))
+        srcEmpty = ColumnDataSource(data={'x': [], 'y': []})
         self.p.line(x='x', y='y', source=srcEmpty, color='red', line_dash='dashed')
         cursors = []
         for i in range(4):
             C = Span(
                 location=None,
-                dimension='height', 
+                dimension='height',
                 line_color='green',
-                line_dash='dashed', 
+                line_dash='dashed',
                 line_width=2,
                 line_alpha=0
             )
             self.p.add_layout(C)
             cursors.append(C)
+        hboxes = []
+        for i in range(2):
+            B = BoxAnnotation(
+                fill_alpha=0.1,
+                fill_color='red',
+            )
+            self.p.add_layout(B)
+            hboxes.append(B)
 
         args = dict(
             lineSrc=srcEmpty,
@@ -259,7 +295,9 @@ class PlotManager:
             cursor1=cursors[0],
             cursor2=cursors[1],
             cursor3=cursors[2],
-            cursor4=cursors[3]
+            cursor4=cursors[3],
+            hbox1=hboxes[0],
+            hbox2=hboxes[1]
         )
         js_plot = '\n'.join([
             js_globalBase,
@@ -271,22 +309,22 @@ class PlotManager:
         js_axisSub = """
         var yheight = (plot.y_range.end - plot.y_range.start);
         var yavg = yheight/2 + plot.y_range.start;
-        var source = new Bokeh.ColumnDataSource({ data: { 
+        var source = new Bokeh.ColumnDataSource({ data: {
                 x: [plot.x_range.start, plot.x_range.end],
-                y: [yavg, yavg] 
+                y: [yavg, yavg]
             } 
         });
         var cover = new Bokeh.Line({
-            x: { field: "x" }, 
-            y: { field: "y"}, 
-            line_color: "#FFFFFF", 
+            x: { field: "x" },
+            y: { field: "y"},
+            line_color: "#FFFFFF",
             line_width: plot.plot_height,
-        }); 
+        });
         plot.add_glyph(cover, source);
-        var object = { 
-            'query': 'plotmanager', 
+        var object = {
+            'query': 'plotmanager',
             'onx': cb_obj.active,
-            'csrfmiddlewaretoken': token, 
+            'csrfmiddlewaretoken': token,
         };
         queryServer(jsonurl, object);
         """
@@ -307,20 +345,27 @@ class PlotManager:
         if ( coma == 'set1cursor'
         || coma == 'set2cursors'
         || coma == 'set4cursors' ) {
-            for (i=cursors.length-1; i>=0; i--) {
-                if ( cursors[i].location != null ) {
+            for (var i=cursors.length-1; i>=0; i--) {
+                if (cursors[i].location != null) {
                     cursors[i].location = null;
                     cursors[i].line_alpha = 0;
                     $('#id_val_cursor_' + i).val('');
+                    if (i == 3) {
+                        hboxes[1].left = null;
+                        hboxes[1].right = null;
+                    } else if (i == 1) {
+                        hboxes[0].left = null;
+                        hboxes[0].right = null;
+                    }
                     break;
                 }
             }
         } else if ( coma == 'confirm' ) {
-            var object = { 
+            var object = {
                 'query': 'methodmanager',
                 'command': 'cancel',
-                'csrfmiddlewaretoken': token, 
-                'vtype': vtype, 
+                'csrfmiddlewaretoken': token,
+                'vtype': vtype,
                 'vid': vid
             }
             queryServer(jsonurl, object, plot, lineSrc, cursors);
@@ -361,15 +406,15 @@ class PlotManager:
         default:
             return;
         }
-        var object = { 
+        var object = {
             'query': 'methodmanager',
             'command': window.voltPy1.command,
-            'cursor1': cursors[0].location, 
-            'cursor2': cursors[1].location, 
-            'cursor3': cursors[2].location, 
-            'cursor4': cursors[3].location, 
-            'csrfmiddlewaretoken': token, 
-            'vtype': vtype, 
+            'cursor1': cursors[0].location,
+            'cursor2': cursors[1].location,
+            'cursor3': cursors[2].location,
+            'cursor4': cursors[3].location,
+            'csrfmiddlewaretoken': token,
+            'vtype': vtype,
             'vid': vid
         }
         queryServer(jsonurl, object, plot, lineSrc, cursors);
@@ -423,7 +468,6 @@ class PlotManager:
                         onx = int(onx)
                     except ValueError:
                         raise
-                    ONX = user.profile.show_on_x
                     for k,v in enumerate(dict(mmodels.Profile.ONX_OPTIONS).keys()):
                         if onx == k:
                             newkey = v
