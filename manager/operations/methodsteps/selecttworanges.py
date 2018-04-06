@@ -16,6 +16,7 @@ class SelectTwoRanges(MethodStep):
                         data.append(float(v))
                     except:
                         return False
+                data.sort()
                 model.stepsData['SelectTwoRanges'] = data
                 model.save()
                 return True
