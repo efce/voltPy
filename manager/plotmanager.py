@@ -51,61 +51,19 @@ class PlotManager:
         if not cs.canBeReadBy(user):
             raise VoltPyNotAllowed
 
-        try:
-            onxs = mmodels.OnXAxis.objects.get(user=user)
-            onx = onxs.selected
-        except ObjectDoesNotExist:
-            onxs = mmodels.OnXAxis(selected='P', user=user)
-            onxs.save()
-            onx = onxs.selected
-
         ret = []
-
-        if onx == 'S':
-            for cd in cs.curvesData.all():
-                ret.append(
-                    dict(
-                        x=range(1, len(cd.currentSamples)+1),
-                        y=cd.currentSamples,
-                        plottype='line',
-                        name='curve_%i' % cd.id,
-                        color='blue',
-                    )
-                )
-
-        elif onx == 'T':
-            for cd in cs.curvesData.all():
-                ret.append(
-                    dict(
-                        x=cd.time,
-                        y=cd.current,
-                        plottype='line',
-                        name='curve_%i' % cd.id,
-                        color='blue',
-                    )
-                )
-        else:
-            for cd in cs.curvesData.all():
-                ret.append(
-                    dict(
-                        x=cd.potential,
-                        y=cd.current,
-                        plottype='line',
-                        name='curve_%i' % cd.id,
-                        color='blue',
-                    )
-                )
-
+        for cd in cs.curvesData.all():
+            ret.append({
+                'x': cd.xVector,
+                'y': cd.yVector,
+                'plottype': 'line',
+                'name': 'curve_%i' % cd.id,
+                'color': 'blue',
+            })
         return ret
 
     def xLabelHelper(self, user):
-        try:
-            onxs = mmodels.OnXAxis.objects.get(user=user)
-            onx = onxs.selected
-        except ObjectDoesNotExist:
-            onxs = mmodels.OnXAxis(selected='P', user=user)
-            onxs.save()
-            onx = onxs.selected
+        onx = user.profile.show_on_x
         if onx == 'S':
             return "Sample no."
         elif onx == 'T':
@@ -187,29 +145,29 @@ class PlotManager:
         self.p.height = self.plot_height
         self.p.width = self.plot_width
         labels = []
-        onx = mmodels.OnXAxis.objects.get(user=user)
-        onx = onx.selected
+        onx = user.profile.show_on_x
         self.p.xaxis.axis_label = self.xlabel
         self.p.yaxis.axis_label = self.ylabel
         vline = Span(
-            location=0, 
-            dimension='height', 
-            line_color='black', 
-            line_width=1, 
+            location=0,
+            dimension='height',
+            line_color='black',
+            line_width=1,
             level='underlay'
         )
         hline = Span(
-            location=0, 
-            dimension='width', 
-            line_color='black', 
-            line_width=1, 
+            location=0,
+            dimension='width',
+            line_color='black',
+            line_width=1,
             level='underlay'
         )
         self.p.renderers.extend([vline, hline])
-        for k, l in dict(mmodels.OnXAxis.AVAILABLE).items():
+        dict_onx = dict(mmodels.Profile.ONX_OPTIONS)
+        for k, l in dict_onx.items():
             labels.append(l)
         active = -1
-        for i, k in enumerate(dict(mmodels.OnXAxis.AVAILABLE).keys()):
+        for i, k in enumerate(dict_onx.keys()):
             if k == onx:
                 active = i
 
@@ -465,15 +423,15 @@ class PlotManager:
                         onx = int(onx)
                     except ValueError:
                         raise
-                    ONX = mmodels.OnXAxis.objects.get(user=user)
-                    for k,v in enumerate(dict(mmodels.OnXAxis.AVAILABLE).keys()):
+                    ONX = user.profile.show_on_x
+                    for k,v in enumerate(dict(mmodels.Profile.ONX_OPTIONS).keys()):
                         if onx == k:
                             newkey = v
                             break
                     else:
                         return
-                    ONX.selected = newkey
-                    ONX.save()
+                    user.profile.show_on_x = newkey
+                    user.profile.save()
                     return { 'command': 'reload' }
 
 

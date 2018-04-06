@@ -314,7 +314,7 @@ $(function(){{
             return js_data
 
         def process(self, user, curveset):
-            if self.isAnalysis() is False:
+            if self.type == 'processing':
                 if self.cleaned_data.get('method') in self.methods:
                     a = mmodels.Processing(
                         owner=user,
@@ -330,7 +330,7 @@ $(function(){{
                     return a.id
                 else:
                     return None
-            elif self.isAnalysis() is True:
+            elif self.type == 'analysis':
                 if self.cleaned_data.get('method') in self.methods:
                     a = mmodels.Analysis(
                         owner=user,

@@ -8,11 +8,18 @@ from django.contrib.auth.models import User
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from picklefield.fields import PickledObjectField
+import manager
 
 
 class Profile(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    ONX_OPTIONS = (
+        ('P', 'Potential'),
+        ('T', 'Time'),
+        ('S', 'Samples')
+    )
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
     email_confirmed = models.BooleanField(default=False)
+    show_on_x = models.CharField(max_length=1, choices=ONX_OPTIONS, default='P')
 
 
 @receiver(post_save, sender=User)
@@ -305,9 +312,8 @@ class CurveData(models.Model):
                 break
         return steps
 
-
     def isOwnedBy(self, user):
-        return (self.curve.curveFile.owner == user)
+        return self.curve.curveFile.owner == user
 
     def canBeUpdatedBy(self, user):
         return self.isOwnedBy(user)
@@ -316,27 +322,15 @@ class CurveData(models.Model):
         return self.isOwnedBy(user)
 
     def xvalueToIndex(self, user, value):
-        onx = OnXAxis.objects.get(user=user).selected
-        if ( onx == 'P' ):
-            diffvec = [ abs(x-value) for x in self.potential ]
-            index, value = min(enumerate(diffvec), key=lambda p: p[1])
-            return index
-        if ( onx == 'T' ):
-            diffvec = [ abs(x-value) for x in self.time ]
-            index, value = min(enumerate(diffvec), key=lambda p: p[1])
-            return index
-        if ( onx == 'S' ):
-            if value < 0:
-                return 0
-            elif value > len(self.currentSamples):
-                return len(self.currentSamples)-1
-            else:
-                return int(value)
+        diffvec = np.abs(np.subtract(self.xVector, value))
+        index = np.argmin(diffvec)
+        return index
+
 
     @property
     def xVector(self):
-        user = User.objects.get(id=1) #TODO FIXME do zmiany !!
-        onx = OnXAxis.objects.get(user=user).selected
+        user = manager.helpers.functions.getUser()
+        onx = user.profile.show_on_x
         if ( onx == 'P' ):
             return self.potential
         if ( onx == 'T' ):
@@ -344,10 +338,11 @@ class CurveData(models.Model):
         if ( onx == 'S' ):
             return range(len(self.currentSamples))
 
+
     @xVector.setter
     def xVector(self, val):
-        user = User.objects.get(id=1) #TODO FIXME do zmiany !!
-        onx = OnXAxis.objects.get(user=user).selected
+        user = manager.helpers.functions.getUser()
+        onx = user.profile.show_on_x
         if ( onx == 'P' ):
             self.potential = val
         if ( onx == 'T' ):
@@ -357,8 +352,8 @@ class CurveData(models.Model):
 
     @property
     def yVector(self):
-        user = User.objects.get(id=1) #TODO FIXME do zmiany !!
-        onx = OnXAxis.objects.get(user=user).selected
+        user = manager.helpers.functions.getUser()
+        onx = user.profile.show_on_x
         if ( onx == 'P' ) or ( onx == 'T' ):
             return self.current
         if ( onx == 'S' ):
@@ -366,8 +361,8 @@ class CurveData(models.Model):
 
     @yVector.setter
     def yVector(self, val):
-        user = User.objects.get(id=1) #TODO FIXME do zmiany !!
-        onx = OnXAxis.objects.get(user=user).selected
+        user = manager.helpers.functions.getUser()
+        onx = user.profile.show_on_x
         if ( onx == 'P'
         or onx == 'T' ):
             self.current = val
@@ -586,25 +581,3 @@ class Processing(models.Model):
         newpr.deleted = False
         newpr.curveSet = None
         return newpr
-
-
-class OnXAxis(models.Model):
-    AVAILABLE = (
-        ('P', 'Potential'), 
-        ('T', 'Time'), 
-        ('S', 'Samples')
-    )
-    selected = models.CharField(max_length=1, choices=AVAILABLE, default='P')
-    user = models.OneToOneField(User, on_delete=models.DO_NOTHING)
-    
-    def __str__(self):
-        return self.selected;
-
-    def isOwnedBy(self, user):
-        return (self.user == user)
-
-    def canBeUpdatedBy(self, user):
-        return self.isOwnedBy(user)
-
-    def canBeReadBy(self, user):
-        return self.isOwnedBy(user)

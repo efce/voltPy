@@ -5,10 +5,11 @@ from django.urls import reverse
 from django.http import HttpResponseRedirect
 from django.shortcuts import render
 from django.template import loader
-from manager.exceptions import VoltPyNotAllowed, VoltPyDoesNotExists
+from manager.exceptions import VoltPyNotAllowed
 import manager.plotmanager as mpm
 import manager.forms as mforms
 import manager.models as mmodels
+from manager.helpers.decorators import with_user
 
 
 def voltpy_render(*args, **kwargs):
@@ -39,7 +40,7 @@ def voltpy_render(*args, **kwargs):
 def voltpy_serve_csv(request, filedata, filename):
     from django.utils.encoding import smart_str
     response = render(
-        request=request, 
+        request=request,
         template_name='manager/export.html',
         context={'data': filedata.getvalue()}
     )
@@ -206,3 +207,7 @@ def form_helper(
 def get_redirect_class(redirectUrl):
     ret = '_voltJS_urlChanger _voltJS_url@%s'
     return ret % b64.b64encode(redirectUrl.encode()).decode('UTF-8')
+
+
+def getUser():
+    return with_user._user

@@ -226,7 +226,7 @@ class EditAnalytesForm(forms.Form):
         self.cs.save()
         return True
 
-
+"""
 class SelectXForm(forms.Form):
     onXAxis = forms.ChoiceField(choices=mmodels.OnXAxis.AVAILABLE)
 
@@ -245,7 +245,7 @@ class SelectXForm(forms.Form):
         self.onx.selected = self.cleaned_data.get('onXAxis')
         self.onx.save()
         return True
-
+"""
 
 class SelectCurvesForCurveSetForm(forms.Form):
     curvesetid = -1
