@@ -44,7 +44,7 @@ https://doi.org/10.1039/C7AN00185A
         from manager.helpers.prepareStructForSSAA import prepareStructForSSAA
         Param = mmodels.Curve.Param
         self.model.customData['selectedIndex'] = \
-            self.model.curveSet.curvesData.all()[0].xvalueToIndex(user, self.model.stepsData['SelectPoint'])
+            self.model.curveSet.curvesData.all()[0].xValue2Index(self.model.stepsData['SelectPoint'])
         peak = self.model.customData.get('selectedIndex', 0)
         X = []
         Conc = []
@@ -62,6 +62,8 @@ https://doi.org/10.1039/C7AN00185A
         twvec = self.__chooseTw(tptw)
         if not twvec:
             raise VoltPyFailed('Could not select tp and tw, too little samples per point.')
+        # TODO:Test if all curves are registered with the same method ?
+        # have the same number of points ?
         numM = self.model.curveSet.curvesData.all()[0].curve.params[Param.method]
         ctype = 'dp'
         if numM == Param.method_dpv:
@@ -73,7 +75,7 @@ https://doi.org/10.1039/C7AN00185A
         elif numM == Param.method_scv:
             ctype = 'sc'
         else:
-            raise TypeError('Method numer %i not supported' % numM)
+            raise TypeError('Method number %i not supported' % numM)
 
         prepare = prepareStructForSSAA(X, Conc, tptw, 3, twvec, ctype)
                 

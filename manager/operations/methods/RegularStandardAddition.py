@@ -59,8 +59,8 @@ calculated as a difference between max and min signal in the given range.
         unitsTrans = dict(mmodels.CurveSet.CONC_UNITS)
         self.model.customData['units'] = unitsTrans[self.model.curveSet.analytesConcUnits[analyte.id]]
         for cd in self.model.curveSet.curvesData.all():
-            startIndex = cd.xvalueToIndex(user, selRange[0])
-            endIndex = cd.xvalueToIndex(user, selRange[1])
+            startIndex = cd.xValue2Index(selRange[0])
+            endIndex = cd.xValue2Index(selRange[1])
             if endIndex < startIndex:
                 endIndex, startIndex = startIndex, endIndex
             yvalues.append(max(cd.yVector[startIndex:endIndex])-min(cd.yVector[startIndex:endIndex]))

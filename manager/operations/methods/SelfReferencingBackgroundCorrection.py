@@ -73,8 +73,8 @@ https://doi.org/10.1002/elan.201300181"""
                 Y[-1] = cd.yVector
                 CONC.append(self.model.curveSet.analytesConc.get(analyte.id, {}).get(cd.id, 0))
                 rng = [
-                    cd.xvalueToIndex(user, self.model.stepsData['SelectRange'][0]),
-                    cd.xvalueToIndex(user, self.model.stepsData['SelectRange'][1])
+                    cd.xValue2Index(self.model.stepsData['SelectRange'][0]),
+                    cd.xValue2Index(self.model.stepsData['SelectRange'][1])
                 ]
                 RANGES.append([])
                 RANGES[-1] = rng

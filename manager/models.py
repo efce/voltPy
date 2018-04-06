@@ -52,7 +52,7 @@ class CurveFile(models.Model):
     name = models.TextField()
     comment = models.TextField()
     fileName = models.TextField()
-    fileDate = models.DateField(auto_now=False, auto_now_add=False) # Each file has its curveset 
+    fileDate = models.DateField(auto_now=False, auto_now_add=False)  # Each file has its curveset 
     curveSet = models.ForeignKey('CurveSet', on_delete=models.DO_NOTHING)
     uploadDate = models.DateField(auto_now_add=True)
     deleted = models.BooleanField(default=False)
@@ -64,7 +64,7 @@ class CurveFile(models.Model):
         ordering = ('uploadDate')
 
     def isOwnedBy(self, user):
-        return (self.owner == user)
+        return self.owner == user
 
     def canBeUpdatedBy(self, user):
         return self.isOwnedBy(user)
@@ -112,30 +112,30 @@ class Curve(models.Model):
         VOL_CMAX = 50  # maximum number of curves in ".vol" file (not in .volt)
         VOL_PMAX = 62  # number of parameters of each curve in ".vol" file
 
-        method = 0  #measurment method
+        method = 0  # measurment method
         method_scv = 0
         method_npv = 1
         method_dpv = 2
         method_sqw = 3
         method_lsv = 4
 
-        sampl = 1  #type of sampling (usually single sampling for SCV/LSV and double sampling for NPV/DPV/SQW)
+        sampl = 1  # type of sampling (usually single sampling for SCV/LSV and double sampling for NPV/DPV/SQW)
         sampl_single = 0
         sampl_double = 1
 
-        el23 = 2  #cell setup dummy = internal
+        el23 = 2  # cell setup dummy = internal
         el23_dummy = 2
         el23_two = 0
         el23_three = 1
 
-        aver = 3  #average the curve for  # of measuremnts
+        aver = 3  # average the curve for  # of measuremnts
 
-        messc = 4  #cyclicity of measurement
+        messc = 4  # cyclicity of measurement
         messc_single = 0
         messc_cyclic = 1
         messc_multicyclic = 2
 
-        crange = 5  #current range (other for micro and other for marco)
+        crange = 5  # current range (other for micro and other for marco)
         crange_macro_100nA = 6
         crange_macro_1uA = 5
         crange_macro_10uA = 4
@@ -148,69 +148,69 @@ class Curve(models.Model):
         crange_micro_500nA = 1
         crange_micro_5uA = 0
 
-        mespv = 6  #polarographic (DME) or voltamperometric (other)
+        mespv = 6   # polarographic (DME) or voltamperometric (other)
         mespv_polarography = 0
         mespv_voltamperometry = 1
 
-        electr = 7  #type of electrode used
+        electr = 7   # type of electrode used
         electr_macro = 0
         electr_dme = 0
         electr_solid = 1
         electr_cgmde = 2
         electr_micro = 3
-        electr_microDme = 3  #does not exists IRL
+        electr_microDme = 3   # does not exists IRL
         electr_microSolid = 4
         electr_microCgmde = 5
         electr_multi = 6
         electr_multiSolid = 6
 
-        multi = 8  #multielectrode measurement (with m164 electrode stand) -- bitewise description of aquisition channels
-        Ep = 9     #start potential [mV]
-        Ek = 10    #end potential [mV]
-        Estep = 11  #potential step [mV]
-        dEdt = 11   #lsv potential change rate (according to lsv_stepE and lsv_time)
-        E0 = 12     #NPV base potential [mV]
-        dE = 12     #DPV/SQW impulse potential [mV]
-        EstartLSV = 12     #LSV multicyclic starting potential [mV]
-        tp = 13     #probing time [ms]
-        tw = 14     #waiting time [ms]
-        tk = 15     #unknown [ms]
-        td = 15     #before first potential step apply potential [ms]
-        ts = 15     #LSV multicyclic time of starting potential
-        ptnr = 16   #number of points of the curve
-        kn = 17     #hammer (knock power?)
-        mix = 18    #mixer speed
+        multi = 8   # multielectrode measurement (with m164 electrode stand) -- bitewise description of aquisition channels
+        Ep = 9      # start potential [mV]
+        Ek = 10     # end potential [mV]
+        Estep = 11   # potential step [mV]
+        dEdt = 11    # lsv potential change rate (according to lsv_stepE and lsv_time)
+        E0 = 12      # NPV base potential [mV]
+        dE = 12      # DPV/SQW impulse potential [mV]
+        EstartLSV = 12      # LSV multicyclic starting potential [mV]
+        tp = 13      # probing time [ms]
+        tw = 14      # waiting time [ms]
+        tk = 15      # unknown [ms]
+        td = 15      # before first potential step apply potential [ms]
+        ts = 15      # LSV multicyclic time of starting potential
+        ptnr = 16    # number of points of the curve
+        kn = 17      # hammer (knock power?)
+        mix = 18     # mixer speed
 
-        breaknr = 19  #number of interruput (eg. preconcentration) 0-7
-        breakmin = 20  #time in [min] of each interrupt (from 20 to 26)
-        breaksec = 27  #time in [sec] of each interrupt (from 27 to 34)
-        breakE = 34    #potential in [sec] of each interrupt (from 34 to 40)
+        breaknr = 19   # number of interruput (eg. preconcentration) 0-7
+        breakmin = 20   # time in [min] of each interrupt (from 20 to 26)
+        breaksec = 27   # time in [sec] of each interrupt (from 27 to 34)
+        breakE = 34     # potential in [sec] of each interrupt (from 34 to 40)
 
-        impnr = 41  #/* offset of nr of imp. - KER-KW  */
-        imptime = 42  #/* offset of impulse time         */
-        inttime = 43  #/* offset of interrupt time       */
-        gtype = 44  #/* offset of type of generation   */
-        maxse = 45  #/* nr of impulse in max. drop */
+        impnr = 41   # /* offset of nr of imp. - KER-KW  */
+        imptime = 42   # /* offset of impulse time         */
+        inttime = 43   # /* offset of interrupt time       */
+        gtype = 44   # /* offset of type of generation   */
+        maxse = 45   # /* nr of impulse in max. drop */
 
-        param46 = 46  # not in use
+        param46 = 46   #  not in use
 
-        inf_smooth = 47  #was curve smoothed
+        inf_smooth = 47   # was curve smoothed
         inf_smooth_no = 0
         inf_smooth_yes = 1
 
-        inf_bkgs = 48  #was background subtracted
+        inf_bkgs = 48   # was background subtracted
         inf_bkgs_no = 0
         inf_bkgs_yes = 1
 
-        inf_move = 49  #was the baseline moved
+        inf_move = 49   # was the baseline moved
         inf_move_no = 0
         inf_move_yes = 1
 
-        sti = 50  #stirrer speed
-        kp = 51   #knock power
-        kpt = 52  #knock pulse time
+        sti = 50   # stirrer speed
+        kp = 51    # knock power
+        kpt = 52   # knock pulse time
 
-        Escheck = 53  #use Es potential for LSV measurement
+        Escheck = 53   # use Es potential for LSV measurement
         Escheck_no = 0
         Escheck_yes = 1
 
@@ -229,16 +229,18 @@ class Curve(models.Model):
 
     class LSV():
         LSVstepE = [  # potential step [mV]
-            0.125, 0.25, 0.25, 0.125, 0.25, 0.5, 0.25, 0.5,1.0, 0.25, 0.5, 1.0, 2.0, 5.0 ];
+            0.125, 0.25, 0.25, 0.125, 0.25, 0.5, 0.25, 0.5, 1.0, 0.25, 0.5, 1.0, 2.0, 5.0
+        ]
         LSVtime = [  # time [ms]
-            120, 120, 60, 20, 20, 20, 5, 5, 5, 1, 1, 1, 1, 1 ];
+            120, 120, 60, 20, 20, 20, 5, 5, 5, 1, 1, 1, 1, 1
+        ]
 
     id = models.AutoField(primary_key=True)
     curveFile = models.ForeignKey(CurveFile, on_delete=models.CASCADE)
     orderInFile = models.IntegerField()
     name = models.TextField()
     comment = models.TextField()
-    params = PickledObjectField() # JSON List
+    params = PickledObjectField()  # JSON List
     date = models.DateField(auto_now=False, auto_now_add=False)
     deleted = models.BooleanField(default=0)
 
@@ -261,16 +263,16 @@ class Curve(models.Model):
 class CurveIndex(models.Model):
     id = models.AutoField(primary_key=True)
     curve = models.ForeignKey(Curve, on_delete=models.CASCADE)
-    potential_min = models.FloatField() # in mV
-    potential_max = models.FloatField() # in mV
-    potential_step = models.FloatField() # in mV
-    time_min = models.FloatField() # in ms
-    time_max = models.FloatField() # in ms
-    time_step = models.FloatField() # is ms
-    current_min = models.FloatField() # in mV
-    current_max = models.FloatField() # in mV
-    current_range = models.FloatField() # in mV
-    samplingRate = models.IntegerField() # in kHz
+    potential_min = models.FloatField()  # in mV
+    potential_max = models.FloatField()  # in mV
+    potential_step = models.FloatField()  # in mV
+    time_min = models.FloatField()  # in ms
+    time_max = models.FloatField()  # in ms
+    time_step = models.FloatField()  # is ms
+    current_min = models.FloatField()  # in mV
+    current_max = models.FloatField()  # in mV
+    current_range = models.FloatField()  # in mV
+    samplingRate = models.IntegerField()  # in kHz
 
     def isOwnedBy(self, user):
         return (self.curve.curveFile.owner == user)
@@ -286,10 +288,10 @@ class CurveData(models.Model):
     id = models.AutoField(primary_key=True)
     curve = models.ForeignKey(Curve, on_delete=models.CASCADE)
     date = models.DateField(auto_now_add=True)
-    time = PickledObjectField() # JSON List 
-    potential = PickledObjectField() # JSON List 
-    current = PickledObjectField() # JSON List 
-    currentSamples = PickledObjectField() # JSON List 
+    time = PickledObjectField()  # JSON List 
+    potential = PickledObjectField()  # JSON List 
+    current = PickledObjectField()  # JSON List 
+    currentSamples = PickledObjectField()  # JSON List 
     basedOn = models.ForeignKey('CurveData', null=True, default=None, on_delete=models.DO_NOTHING)
     processedWith = models.ForeignKey('Processing', null=True, default=None, on_delete=models.DO_NOTHING)
 
@@ -321,59 +323,56 @@ class CurveData(models.Model):
     def canBeReadBy(self, user):
         return self.isOwnedBy(user)
 
-    def xvalueToIndex(self, user, value):
+    def xValue2Index(self, value):
         diffvec = np.abs(np.subtract(self.xVector, value))
         index = np.argmin(diffvec)
         return index
-
 
     @property
     def xVector(self):
         user = manager.helpers.functions.getUser()
         onx = user.profile.show_on_x
-        if ( onx == 'P' ):
+        if onx == 'P':
             return self.potential
-        if ( onx == 'T' ):
+        if onx == 'T':
             return self.time
-        if ( onx == 'S' ):
+        if onx == 'S':
             return range(len(self.currentSamples))
-
 
     @xVector.setter
     def xVector(self, val):
         user = manager.helpers.functions.getUser()
         onx = user.profile.show_on_x
-        if ( onx == 'P' ):
+        if onx == 'P':
             self.potential = val
-        if ( onx == 'T' ):
+        if onx == 'T':
             self.time = val
-        if ( onx == 'S' ):
+        if onx == 'S':
             pass
 
     @property
     def yVector(self):
         user = manager.helpers.functions.getUser()
         onx = user.profile.show_on_x
-        if ( onx == 'P' ) or ( onx == 'T' ):
+        if onx == 'P' or onx == 'T':
             return self.current
-        if ( onx == 'S' ):
+        if onx == 'S':
             return self.currentSamples
 
     @yVector.setter
     def yVector(self, val):
         user = manager.helpers.functions.getUser()
         onx = user.profile.show_on_x
-        if ( onx == 'P'
-        or onx == 'T' ):
+        if onx == 'P' or onx == 'T':
             self.current = val
-        if ( onx == 'S' ):
+        if onx == 'S':
             self.currentSamples = val
 
 
 class Analyte(models.Model):
     id = models.AutoField(primary_key=True)
-    name=models.CharField(max_length=125, unique=True)
-    atomicMass = models.FloatField(null=True, default=None) # to calculate between mol and wight
+    name = models.CharField(max_length=125, unique=True)
+    atomicMass = models.FloatField(null=True, default=None)  # to calculate between mol and wight
 
     def __str__(self):
         return self.name
@@ -383,14 +382,14 @@ class CurveSet(models.Model):
     minusOneSS = b'\xE2\x81\xBB\xC2\xB9'.decode("utf-8", "replace")
     cdot = b'\xC2\xB7'.decode("utf-8", "replace")
     CONC_UNITS = (
-        ('9g','ng{cdot}L{ssm1}'.format(cdot=cdot,ssm1=minusOneSS)),
-        ('6g','µg{cdot}L{ssm1}'.format(cdot=cdot,ssm1=minusOneSS)),
-        ('3g','mg{cdot}L{ssm1}'.format(cdot=cdot,ssm1=minusOneSS)),
-        ('0g','g{cdot}L{ssm1}'.format(cdot=cdot,ssm1=minusOneSS)),
-        ('9M','nM'),
-        ('6M','µM'),
-        ('3M','mM'),
-        ('0M','M')
+        ('9g', 'ng{cdot}L{ssm1}'.format(cdot=cdot, ssm1=minusOneSS)),
+        ('6g', 'µg{cdot}L{ssm1}'.format(cdot=cdot, ssm1=minusOneSS)),
+        ('3g', 'mg{cdot}L{ssm1}'.format(cdot=cdot, ssm1=minusOneSS)),
+        ('0g', 'g{cdot}L{ssm1}'.format(cdot=cdot, ssm1=minusOneSS)),
+        ('9M', 'nM'),
+        ('6M', 'µM'),
+        ('3M', 'mM'),
+        ('0M', 'M')
     )
     id = models.AutoField(primary_key=True)
     owner = models.ForeignKey(User, on_delete=models.DO_NOTHING)
@@ -401,10 +400,10 @@ class CurveSet(models.Model):
     undoCurvesData = models.ManyToManyField(CurveData, related_name="undoCurvesData")
     analytes = models.ManyToManyField(Analyte, related_name="analytes")
     undoAnalytes = models.ManyToManyField(Analyte, related_name="undoAnalytes")
-    analytesConc = PickledObjectField(default={}) # dictionary key is analyte id
-    undoAnalytesConc = PickledObjectField(default={}) # dictionary key is analyte id
-    analytesConcUnits = PickledObjectField(default={}) # dictionary key is analyte id
-    undoAnalytesConcUnits = PickledObjectField(default={}) # dictionary key is analyte id
+    analytesConc = PickledObjectField(default={})  # dictionary key is analyte id
+    undoAnalytesConc = PickledObjectField(default={})  # dictionary key is analyte id
+    analytesConcUnits = PickledObjectField(default={})  # dictionary key is analyte id
+    undoAnalytesConcUnits = PickledObjectField(default={})  # dictionary key is analyte id
     undoProcessing = models.ForeignKey('Processing', null=True, default=None, on_delete=models.DO_NOTHING)
     deleted = models.BooleanField(default=False)
 
@@ -430,7 +429,7 @@ class CurveSet(models.Model):
 
     def getCurveConcDict(self, curveData):
         ret = {}
-        for k,v in self.analytesConc.items():
+        for k, v in self.analytesConc.items():
             ret[k] = v.get(curveData.id, 0.0)
         return ret
 
@@ -438,7 +437,7 @@ class CurveSet(models.Model):
         return (self.owner == user)
 
     def canBeUpdatedBy(self, user):
-        return self.isOwnedBy(user) #and not self.locked
+        return self.isOwnedBy(user)  # and not self.locked
 
     def canBeReadBy(self, user):
         return self.isOwnedBy(user)
@@ -459,7 +458,7 @@ class CurveSet(models.Model):
         self.save()
 
     def undo(self):
-        #TODO: Undo removes also processing method ! (store id somewhere?)
+        # TODO: Undo removes also processing method ! (store id somewhere?)
         if not self.hasUndo():
             return
         self.curvesData.clear()
@@ -511,13 +510,13 @@ class Analysis(models.Model):
     completed = models.BooleanField(default=False)
 
     def __str__(self):
-        return "%s %s: %s" % (self.date, self.method, self.name);
+        return "%s %s: %s" % (self.date, self.method, self.name)
 
     class META:
         ordering = ('date')
 
     def isOwnedBy(self, user):
-        return (self.owner == user)
+        return self.owner == user
 
     def canBeUpdatedBy(self, user):
         return self.isOwnedBy(user)
@@ -539,6 +538,7 @@ class Analysis(models.Model):
         newan.deleted = False
         newan.curveSet = None
         return newan
+
 
 class Processing(models.Model):
     id = models.AutoField(primary_key=True)
