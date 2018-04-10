@@ -126,7 +126,6 @@ def asd(R, X0, Y0, I, J, K, F, lambdaa, eps, maxiter):
     Z = xy2z(R, X, Y, K, F)
     (X, Y, Z) = scale_factors(X, Y, Z)
     (X, Y, Z, order) = sort_factor(X, Y, Z)
-    """
     if __debug__:
         plt.subplot(3, 1, 1)
         plt.plot(X)
@@ -135,7 +134,6 @@ def asd(R, X0, Y0, I, J, K, F, lambdaa, eps, maxiter):
         plt.subplot(3, 1, 3)
         plt.plot(Z)
         plt.show()
-    """
     return X, Y, Z, errflag, cnt_iter, cnv
 
 
