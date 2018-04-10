@@ -1,4 +1,5 @@
 import numpy as np
+from scipy.optimize import curve_fit
 from manager.operations.methodsteps.selectanalyte import SelectAnalyte
 import manager.operations.method as method
 import manager.models as mmodels
@@ -73,7 +74,7 @@ Chemom. Intell. Lab. Syst., vol. 65, no. 1, pp. 119–137, 2003.
                 pos = int(i/tptw)
                 main_data[:, pos, ii] = cd.currentSamples[i:i+tptw]
         an_num = len(cs.analytes.all())
-        factors = an_num + 1
+        factors = an_num + 2
 
         X0 = []
         Y0 = []
@@ -93,12 +94,48 @@ Chemom. Intell. Lab. Syst., vol. 65, no. 1, pp. 119–137, 2003.
             0.000001,
             250
         )
+
+        dE = cd1.curve.params[Param.dE]
+
+        def capacitive(t, R, eps, tau):
+            return dE/R * np.exp(-(t+eps)/tau)
+        capacitive_bounds = ((0, 0, 0), (10**10, 1000, 10000))
+
+        def faradaic(t, a, eps):
+            return np.dot(a, np.sqrt(np.add(t, eps)))
+        faradaic_bounds = ((-10**7, 0), (10**7, 1000))
+        
+        is_farad = []
+        #import pdb; pdb.set_trace()
+        for i, sp in enumerate(SamplingPred.T):
+            x = np.array(range(sp.shape[0]-1))
+            farad_fit, farad_cov = curve_fit(
+                f=faradaic,
+                xdata=x,
+                ydata=sp[1:],
+                bounds=faradaic_bounds
+            )
+            capac_fit, capac_cov = curve_fit(
+                f=capacitive,
+                xdata=x,
+                ydata=sp[1:],
+                bounds=capacitive_bounds
+            )
+
+            if capac_cov[0, 1] > farad_cov[0, 1]:
+                is_farad.append(False)
+            else:
+                is_farad.append(True)
+
         tobeat = 0
         best_factor = -1
         factor_conc = []
         for i, cp in enumerate(ConcentrationPred.T):
+            if not is_farad[i]:
+                continue
             rr = np.corrcoef(cp, concs)
-            if np.abs(rr[0, 1]) > tobeat:
+            if np.abs(rr[0, 1]) > ((1/1+(1-tobeat)) * tobeat):
+                # Prefer lower index because it has higher total variance
                 best_factor = i
                 tobeat = np.abs(rr[0, 1])
                 factor_conc = cp
@@ -163,7 +200,7 @@ Chemom. Intell. Lab. Syst., vol. 65, no. 1, pp. 119–137, 2003.
         yvecs = np.dot(np.matrix(bfd['y']).T, np.matrix(bfd['z']))
         yvecs = np.dot(yvecs, mult)
         yvecs2 = np.zeros((int(yvecs.shape[0]/2),yvecs.shape[1]))
-        for i in np.arange(0, yvecs.shape[0], 2):
+        for i in np.arange(0, yvecs.shape[0]-1, 2):
             i = int(i)
             yvecs2[int(i/2), :] = yvecs[i+1, :] - yvecs[i, :]
         p2 = pm.PlotManager()
