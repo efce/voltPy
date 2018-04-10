@@ -902,7 +902,7 @@ def editAnalyte(request, user, objType, objId, analyteId):
         raise VoltPyNotAllowed
 
     if request.method == 'POST':
-        form = mforms.EditAnalytesForm(user, objType, objId, analyteId, request.POST)
+        form = mforms.EditAnalytesForm(user, 'cs', cs.id, analyteId, request.POST)
         if form.is_valid():
             if form.process(user) is True:
                 if objType == 'cf':
@@ -914,7 +914,7 @@ def editAnalyte(request, user, objType, objId, analyteId):
                         reverse('showCurveSet', args=[objId])
                     )
     else:
-        form = mforms.EditAnalytesForm(user, objType, objId, analyteId)
+        form = mforms.EditAnalytesForm(user, 'cs', cs.id, analyteId)
 
     if objType == 'cf':
         plotType = 'file'

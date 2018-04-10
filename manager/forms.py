@@ -170,7 +170,7 @@ class EditAnalytesForm(forms.Form):
             else:
                 self.cleaned_data['newAnalyte'] = self.cleaned_data.get('newAnalyte', '').strip()
         else:
-            if not mmodels.Analyte.filter(id=an_id).exists():
+            if not mmodels.Analyte.objects.filter(id=an_id).exists():
                 raise forms.ValidationError(
                     'Could not identify selected analyte.'
                 )
