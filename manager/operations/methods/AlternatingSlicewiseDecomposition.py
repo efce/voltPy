@@ -78,8 +78,6 @@ Chemom. Intell. Lab. Syst., vol. 65, no. 1, pp. 119–137, 2003.
                 main_data_2[:, pos, cnum] = cd.currentSamples[(i+tptw):(i+(2*tptw))]
         an_num = len(cs.analytes.all())
         factors = an_num + 2
-        plt.plot(main_data_1[20,:,:])
-        plt.show()
 
         X0 = []
         Y0 = []
@@ -232,9 +230,6 @@ Chemom. Intell. Lab. Syst., vol. 65, no. 1, pp. 119–137, 2003.
         yv1 = recompose(bfd1)
         yv0 = recompose(bfd0)
         yvecs2 = np.subtract(yv1, yv0)
-        import pdb; pdb.set_trace()
-        plt.plot(yvecs2)
-        plt.show()
 
         p2 = pm.PlotManager()
         p2.plot_width = 500
