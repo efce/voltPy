@@ -1,5 +1,5 @@
 import numpy as np
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 
 
 def asd(R, X0, Y0, I, J, K, F, lambdaa, eps, maxiter):
@@ -7,14 +7,14 @@ def asd(R, X0, Y0, I, J, K, F, lambdaa, eps, maxiter):
     Implements Alternating Slice-wise Decomposition.
     Implementation based on:
 
-    N. M. Faber, R. Bro, and P. K. Hopke, 
+    N. M. Faber, R. Bro, and P. K. Hopke,
     “Recent developments in CANDECOMP/PARAFAC algorithms:A critical review,”
     Chemom. Intell. Lab. Syst., vol. 65, no. 1, pp. 119–137, 2003.
 
-    R -- 3d matrix to be decomposed
-    X0 -- 1d initial guess of 1st dimension
-    Y0 -- 1d initial guess of 2nd dimension
-    I, J, K -- number of variables in x, y,  order
+    R -- 3d matrix: signals to be decomposed
+    X0 -- 1d vector: initial guess of 1st(x) dimension
+    Y0 -- 1d vector: initial guess of 2nd(y) dimension
+    I, J, K -- scalar: number of variables in x, y and z respectively
     F -- scalar: estaminated number of components
     lambdaa -- scalar: penalty weight
     eps -- scalar: threshold for convergens criterion
@@ -120,12 +120,13 @@ def asd(R, X0, Y0, I, J, K, F, lambdaa, eps, maxiter):
     errflag = True
     if cnt_iter < maxiter:
         errflag = False
-        
+
     X = Ux.dot(A)
     Y = Uy.dot(B)
     Z = xy2z(R, X, Y, K, F)
     (X, Y, Z) = scale_factors(X, Y, Z)
-    (X, Y, Z, order) = sort_factor(X, Y, Z)
+    (X, Y, Z, __) = sort_factor(X, Y, Z)
+    """
     if __debug__:
         plt.subplot(3, 1, 1)
         plt.plot(X)
@@ -134,6 +135,7 @@ def asd(R, X0, Y0, I, J, K, F, lambdaa, eps, maxiter):
         plt.subplot(3, 1, 3)
         plt.plot(Z)
         plt.show()
+    """
     return X, Y, Z, errflag, cnt_iter, cnv
 
 

@@ -1,14 +1,14 @@
 import numpy as np
 from scipy.optimize import curve_fit
-import matplotlib.pyplot as plt
+from django.utils import timezone
+# import matplotlib.pyplot as plt
 from manager.operations.methodsteps.selectanalyte import SelectAnalyte
 import manager.operations.method as method
 import manager.models as mmodels
-import manager.plotmanager as pm
-from manager.exceptions import VoltPyFailed
+from manager.exceptions import VoltPyFailed, VoltPyNotAllowed
 
 
-class AlternatingSlicewiseDecomposition(method.AnalysisMethod):
+class ASDDecomposition(method.ProcessingMethod):
     can_be_applied = False
     _steps = (
         {
@@ -19,8 +19,7 @@ class AlternatingSlicewiseDecomposition(method.AnalysisMethod):
     )
     description = """
 Decomposes the data into factor, for which automatically selects,
-the one which is correlated to the selected analytes and
-tries to calculate final result with standard addition method.
+the one which is correlated to the selected analyte.
 It uses ASD, which is implemented based on:
 
 N. M. Faber, R. Bro, and P. K. Hopke, 
@@ -33,11 +32,10 @@ Chemom. Intell. Lab. Syst., vol. 65, no. 1, pp. 119–137, 2003.
     def __str__(cls):
         return "Alternating Slice-wise Decomposition"
 
-    def finalize(self, user):
+    def __perform(self, curveSet):
         import manager.helpers.alternatingSlicewiseDiagonalization as asd
         Param = mmodels.Curve.Param
-        cs = self.model.curveSet
-        cd1 = cs.curvesData.all()[0]
+        cd1 = curveSet.curvesData.all()[0]
         if all([
             cd1.curve.params[Param.method] != Param.method_dpv,
             cd1.curve.params[Param.method] != Param.method_sqw
@@ -54,29 +52,28 @@ Chemom. Intell. Lab. Syst., vol. 65, no. 1, pp. 119–137, 2003.
             Param.Estep
         ]
         # TODO: assert all curves have the same tp/tw and no. of points
-        for cd in cs.curvesData.all():
+        for cd in curveSet.curvesData.all():
             for p in needSame:
                 if cd.curve.params[p] != cd1.curve.params[p]:
                     raise VoltPyFailed('All curves in curveSet have to be similar.')
-        
+
         self.model.customData['tp'] = cd1.curve.params[Param.tp]
         self.model.customData['tw'] = cd1.curve.params[Param.tw]
         tptw = cd1.curve.params[Param.tp] + cd1.curve.params[Param.tw]
-        analyte = cs.analytes.all()[0]
+        analyte = curveSet.analytes.all()[0]
         concs = []
-        for cd in cs.curvesData.all():
-            concs.append(cs.analytesConc[analyte.id].get(cd.id, 0))
+        for cd in curveSet.curvesData.all():
+            concs.append(curveSet.analytesConc[analyte.id].get(cd.id, 0))
         self.model.customData['analyte'] = analyte.name
-        self.model.customData['units'] = cs.analytesConcUnits[analyte.id]
-        main_data_1 = np.zeros((tptw, int(len(cd1.currentSamples)/tptw/2), len(cs.curvesData.all())))
-        main_data_2 = np.zeros((tptw, int(len(cd1.currentSamples)/tptw/2), len(cs.curvesData.all())))
-        for cnum, cd in enumerate(cs.curvesData.all()):
+        main_data_1 = np.zeros((tptw, int(len(cd1.currentSamples)/tptw/2), len(curveSet.curvesData.all())))
+        main_data_2 = np.zeros((tptw, int(len(cd1.currentSamples)/tptw/2), len(curveSet.curvesData.all())))
+        for cnum, cd in enumerate(curveSet.curvesData.all()):
             pos = 0
             for i in np.arange(0, len(cd1.currentSamples), 2*tptw):
                 pos = int(i/(2*tptw))
                 main_data_1[:, pos, cnum] = cd.currentSamples[i:(i+tptw)]
                 main_data_2[:, pos, cnum] = cd.currentSamples[(i+tptw):(i+(2*tptw))]
-        an_num = len(cs.analytes.all())
+        an_num = len(curveSet.analytes.all())
         factors = an_num + 2
 
         X0 = []
@@ -97,8 +94,8 @@ Chemom. Intell. Lab. Syst., vol. 65, no. 1, pp. 119–137, 2003.
             0.000001,
             100
         )
-        #X0 = SamplingPred1
-        #Y0 = PotentialPred1
+        X0 = SamplingPred1.T
+        Y0 = PotentialPred1.T
         SamplingPred2, PotentialPred2, ConcentrationPred2, errflag2, iter_num2, cnv2 = asd.asd(
             main_data_2,
             X0,
@@ -121,16 +118,9 @@ Chemom. Intell. Lab. Syst., vol. 65, no. 1, pp. 119–137, 2003.
         def faradaic(t, a, eps):
             return np.dot(a, np.sqrt(np.add(t, eps)))
         faradaic_bounds = ((-10**7, 0), (10**7, 1000))
-        
-        i_type = -1
-        chosen = {}
-        for SamplingPred, ConcentrationPred, PotentialPred in (
-            (SamplingPred1, ConcentrationPred1, PotentialPred1),
-            (SamplingPred2, ConcentrationPred2, PotentialPred2)
-            ):
-            i_type += 1
+
+        def best_fit_factor(SamplingPred, PotentialPred, ConcentrationPred):
             is_farad = []
-            #import pdb; pdb.set_trace()
             for i, sp in enumerate(SamplingPred.T):
                 x = np.array(range(sp.shape[0]-1))
                 farad_fit, farad_cov = curve_fit(
@@ -167,95 +157,49 @@ Chemom. Intell. Lab. Syst., vol. 65, no. 1, pp. 119–137, 2003.
             if best_factor == -1:
                 raise VoltPyFailed
 
-            chosen[i_type] = {}
-            chosen[i_type]['x'] = SamplingPred[:, best_factor]
-            chosen[i_type]['y'] = PotentialPred[:, best_factor]
-            chosen[i_type]['z'] = ConcentrationPred[:, best_factor]
-        
-        self.model.customData['matrix'] = [concs, factor_conc]
-        self.model.customData['bestFactorData'] = chosen
-        #self.model.customData['RegressionLine'] = np.polyfit(concs, factor_conc, 1)
-        self.model.save()
-
-    def exportableData(self):
-        raise NotImplementedError
-
-    def apply(self, user, curveSet):
-        """
-        This procedure cannot be applied to other data.
-        """
-        raise VoltPyFailed('Slope Standard Addition does not supports apply function.')
-
-    def getFinalContent(self, request, user):
-        p = pm.PlotManager()
-        p.plot_width = 500
-        p.plot_height = 400
-        unitsTrans = dict(mmodels.CurveSet.CONC_UNITS)
-        p.xlabel = 'c_({analyte}) / {units}'.format(
-            analyte=self.model.customData['analyte'],
-            units=unitsTrans.get(self.model.customData['units'], 'M')
-        )
-        p.ylabel = 'a.u.'
-        xvec = self.model.customData['matrix'][0]
-        yvec = self.model.customData['matrix'][1]
-
-        p.add(
-            x=xvec,
-            y=yvec,
-            plottype='scatter',
-            color='red',
-            size=7
-        )
-
-       # x = [0, xvec[-1]]
-       # eq = self.model.customData['RegressionLine']
-       # if eq[0] != 0:
-       #     x[0] = -eq[1]/eq[0]
-       # y = np.polyval(eq, x)
-       # p.add(
-       #     x=x,
-       #     y=y,
-       #     plottype='line',
-       #     color='blue',
-       # )
-        scripts, div = p.getEmbeded(request, user, 'analysis', self.model.id)
+            chosen = {}
+            chosen['x'] = SamplingPred[:, best_factor]
+            chosen['y'] = PotentialPred[:, best_factor]
+            chosen['z'] = ConcentrationPred[:, best_factor]
+            return chosen
 
         def recompose(bfd):
             mult = np.mean(bfd['x'][self.model.customData['tw']:])
             yvecs = np.dot(np.matrix(bfd['y']).T, np.matrix(bfd['z']))
             yvecs = np.dot(yvecs, mult)
             return yvecs
-        bfd0 = self.model.customData['bestFactorData'][0]
-        bfd1 = self.model.customData['bestFactorData'][1]
-        yv1 = recompose(bfd1)
+
+        bfd0 = best_fit_factor(SamplingPred1, PotentialPred1, ConcentrationPred1)
+        bfd1 = best_fit_factor(SamplingPred2, PotentialPred2, ConcentrationPred2)
         yv0 = recompose(bfd0)
+        yv1 = recompose(bfd1)
         yvecs2 = np.subtract(yv1, yv0)
 
-        p2 = pm.PlotManager()
-        p2.plot_width = 500
-        p2.plot_height = 400
-        cs = self.model.curveSet
-        for yv in yvecs2.T:
-            yvf = [x for x in yv.T]
-            p2.add(
-                y=yvf,
-                x=cs.curvesData.all()[0].potential,
-                plottype='line'
-            )
-        scripts2, div2 = p2.getEmbeded(request, user, 'curveset', self.model.id)
-        ret = {
-            'head': '\n'.join([scripts, scripts2]),
-            'body': ''.join([
-                div,
-                '<p>Analyte: {0}<br />Result: {1} {3}<br />STD: {2} {3}</p>'.format(
-                    self.model.customData['analyte'],
-                    0, #-x[0],
-                    0,
-                    unitsTrans.get(self.model.customData['units'], 'M')
-                ),
-                div2
-            ])
-        }
-        return ret
+        if yvecs2.shape[1] == len(curveSet.curvesData.all()):
+            for i, cd in enumerate(curveSet.curvesData.all()):
+                newcd = cd.getCopy()
+                newcdConc = curveSet.getCurveConcDict(cd)
+                newy = yvecs2[:, i].T
+                newy = newy.tolist()[0]
+                newcd.yVector = newy
+                newcd.date = timezone.now()
+                newcd.save()
+                curveSet.removeCurve(cd)
+                curveSet.addCurve(newcd, newcdConc)
+            curveSet.save()
+        else:
+            raise VoltPyFailed('Computation error.')
 
-main_class = AlternatingSlicewiseDecomposition
+    def finalize(self, user):
+        self.__perform(self.model.curveSet)
+        self.model.step = None
+        self.model.completed = True
+        self.model.save()
+
+    def apply(self, user, curveSet):
+        if self.model.completed is not True:
+            raise VoltPyNotAllowed('Incomplete procedure.')
+        self.__perform(curveSet)
+
+
+main_class = ASDDecomposition

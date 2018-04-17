@@ -1,10 +1,13 @@
 import numpy as np
+from scipy.stats import t
 import manager.operations.method as method
 from manager.operations.methodsteps.selectanalyte import SelectAnalyte
 from manager.operations.methodsteps.selectrange import SelectRange
 import manager.plotmanager as pm
 import manager.models as mmodels
-from manager.helpers.fithelpers import calc_normal_equation_fit, calc_sx0
+from manager.helpers.fithelpers import calc_normal_equation_fit
+from manager.helpers.fithelpers import calc_sx0
+from manager.helpers.fithelpers import significant_digit
 from manager.exceptions import VoltPyFailed
 
 
@@ -99,17 +102,20 @@ calculated as a difference between max and min signal in the given range.
         )
         p.ylabel = 'i / µA'
         scr, div = p.getEmbeded(request, user, 'analysis', self.model.id)
+        n = len(self.model.customData['matrix'][0])
+        conf_interval = self.model.customData['resultStdDev'] * t.ppf(0.975, n-2)
+        sd = significant_digit(conf_interval, 2)
         return {
             'head': scr,
             'body': ''.join([
                 div,
-                'Equation: y={2}*x+{3}<br />Analyte: {4}<br />Result: {0} {5}<br />STD: {1} {5}'.format(
-                    self.model.customData['result'],
-                    self.model.customData['resultStdDev'],
-                    self.model.customData['fitEquation']['slope'],
-                    self.model.customData['fitEquation']['intercept'],
-                    self.model.customData['analyte'],
-                    self.model.customData['units'] 
+                'Equation: y={slope}*x+{int}<br />Analyte: {an}<br />Result: {res} &plusmn; {ci} {anu}'.format(
+                    res='%.*f' % (sd, self.model.customData['result']),
+                    ci='%.*f' % (sd, conf_interval),
+                    slope=self.model.customData['fitEquation']['slope'],
+                    int=self.model.customData['fitEquation']['intercept'],
+                    an=self.model.customData['analyte'],
+                    anu=self.model.customData['units']
                 )
             ])
         }
