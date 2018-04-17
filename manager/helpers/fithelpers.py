@@ -25,8 +25,8 @@ def calc_normal_equation_fit(xvec, yvec):
 
 def calc_sx0(slope, intercept, xvec, yvec):
     """
-    Computes standard deviation of x0 for
-    slope, intercept and points [xvec, yvec]
+    Computes standard deviation of x0, slope, and intercept
+    for slope, intercept and points [xvec, yvec]
     """
     yevec = np.polyval((slope, intercept), xvec)  # [slope*x+intercept for x in xvec]
     y0index = -1
@@ -37,6 +37,7 @@ def calc_sx0(slope, intercept, xvec, yvec):
         raise ValueError('Requires point with coordinates (0, y).')
     xmean = np.average(xvec)
     sr = np.sqrt(1/(len(xvec)-2) * np.sum((yi-ye)**2 for yi, ye in zip(yvec, yevec)))
+    sxx = np.sum(np.power(np.subtract(xvec, xmean), 2))
     sx0 = np.multiply(
         (sr/slope),
         np.sqrt(
@@ -46,7 +47,9 @@ def calc_sx0(slope, intercept, xvec, yvec):
                 / (slope**2*np.sum((xi-xmean)**2 for xi in xvec))
             )
     )
-    return sx0
+    sSlope = np.divide(sr, np.sqrt(sxx))
+    sIntercept = sr * np.sqrt(np.sum(np.power(xvec, 2))/(len(xvec)*sxx))
+    return sx0, sSlope, sIntercept
 
 
 def significant_digit(value, sig_num=2):
@@ -54,7 +57,6 @@ def significant_digit(value, sig_num=2):
     Calculates on which decimal place is the sig_num'th significant digit
     """
     fl = -np.floor(np.log10(value))
-    if fl > (0+sig_num):
+    if fl + sig_num < 0:
         return int(0)
-    else:
-        return int((fl + sig_num) - 1)
+    return int((fl + sig_num) - 1)

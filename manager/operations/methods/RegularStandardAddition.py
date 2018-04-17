@@ -75,10 +75,13 @@ calculated as a difference between max and min signal in the given range.
         ]
         self.model.customData['matrix'] = data
         p = calc_normal_equation_fit(data[0], data[1])
+        sx0, sslope, sintercept = calc_sx0(p['slope'], p['intercept'], data[0], data[1])
         if p['slope'] != 0:
             self.model.customData['fitEquation'] = p
+            self.model.customData['slopeStdDev'] = sslope
+            self.model.customData['interceptStdDev'] = sintercept
             self.model.customData['result'] = p['intercept']/p['slope']
-            self.model.customData['resultStdDev'] = calc_sx0(p['slope'], p['intercept'], data[0], data[1])
+            self.model.customData['resultStdDev'] = sx0,
             self.model.customData['corrCoef'] = np.corrcoef(data[0], data[1])[0, 1]
         else:
             self.model.customData['fitEquation'] = p
@@ -103,17 +106,30 @@ calculated as a difference between max and min signal in the given range.
         p.ylabel = 'i / µA'
         scr, div = p.getEmbeded(request, user, 'analysis', self.model.id)
         n = len(self.model.customData['matrix'][0])
-        conf_interval = self.model.customData['resultStdDev'] * t.ppf(0.975, n-2)
+        talpha = t.ppf(0.975, n-2)
+        conf_interval = np.multiply(self.model.customData['resultStdDev'], talpha)
         sd = significant_digit(conf_interval, 2)
+        slope_interval = np.multiply(self.model.customData['slopeStdDev'], talpha)
+        slopesd = significant_digit(slope_interval, 2)
+        int_interval = np.multiply(self.model.customData['interceptStdDev'], talpha)
+        intsd = significant_digit(int_interval, 2)
         return {
             'head': scr,
             'body': ''.join([
                 div,
-                'Equation: y={slope}*x+{int}<br />Analyte: {an}<br />Result: {res} &plusmn; {ci} {anu}'.format(
+                """
+                    Analyte: {an}<br />
+                    Equation: y = {slope}(&plusmn;{sci}) &middot; x + {int}(&plusmn;{ici})<br />
+                    r = {corrcoef}<br />
+                    Result: {res}&plusmn;{ci} {anu}
+                """.format(
                     res='%.*f' % (sd, self.model.customData['result']),
                     ci='%.*f' % (sd, conf_interval),
-                    slope=self.model.customData['fitEquation']['slope'],
-                    int=self.model.customData['fitEquation']['intercept'],
+                    corrcoef='%.4f' % self.model.customData['corrCoef'],
+                    slope='%.*f' % (slopesd, self.model.customData['fitEquation']['slope']),
+                    sci='%.*f' % (slopesd, slope_interval),
+                    int='%.*f' % (intsd, self.model.customData['fitEquation']['intercept']),
+                    ici='%.*f' % (intsd, int_interval),
                     an=self.model.customData['analyte'],
                     anu=self.model.customData['units']
                 )
