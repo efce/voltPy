@@ -1,17 +1,19 @@
+from overrides import overrides
 from django.utils import timezone
 import manager.operations.method as method
-from manager.operations.methodsteps.confirmation import Confirmation
+from manager.operations.methodsteps.settings import Settings
 from manager.helpers.bkghelpers import calc_abc
 from manager.exceptions import VoltPyNotAllowed
+from manager.exceptions import VoltPyFailed
 
 
 class AutomaticBaselineCorrection(method.ProcessingMethod):
     can_be_applied = True
     _steps = [
         {
-            'class': Confirmation,
-            'title': 'Config before proceding.',
-            'desc': 'To confirm press Forward.',
+            'class': Settings,
+            'title': 'Method settings.',
+            'desc': 'Set method parameters.',
         },
     ]
     model = None
@@ -26,6 +28,11 @@ and polynomial degree are set to 40 and 4 respectivly.
 baseline correction in voltammetry. Electrochimica Acta, 136, 195–203.
 https://doi.org/10.1016/j.electacta.2014.05.076
     """
+
+    @overrides
+    def initialForStep(self, step_num):
+        if step_num == 0:
+            return {'Degree': 4, 'Iterations': 50}
 
     @classmethod
     def __str__(cls):
@@ -53,8 +60,11 @@ https://doi.org/10.1016/j.electacta.2014.05.076
         curveSet.save()
 
     def finalize(self, user):
-        self.model.customData['iterations'] = 50
-        self.model.customData['degree'] = 4
+        try:
+            self.model.customData['iterations'] = int(self.model.stepsData['Settings']['Iterations'])
+            self.model.customData['degree'] = int(self.model.stepsData['Settings']['Degree'])
+        except ValueError:
+            raise VoltPyFailed('Wrong values for degree or iterations.')
         self.__perform(self.model.curveSet)
         self.model.step = None
         self.model.completed = True
