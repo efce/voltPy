@@ -1,4 +1,4 @@
-- User login system - WIP in branch userauth
+x User login system
 - Rework of UI/UX with themes (?)
 - User settings panel/priviledges
 - Sharing of curves/curvesets/analyses via link (readonly/editable)
@@ -18,15 +18,16 @@ x Multiple analytes for single curve support - DONE
 - Additional processing/analysis methods:
   - splines
   - wavelets
-  - ATLD
+  x ATLD (implemented ASD)
   - ICA
   - Calibration method
   - OSC
-  - Whitening
+  - Genetic algorith od Łukasza
+  - PLS od Łukasza
 x Support for UNDO
 x Seperate Operations out of methodmanager, make it a module/folder
 - Add operation for changing set of variables in method (like advanced settigns)
 x Change the way operations write information into model to more intuitive
 - Protect JSON form NANs inf INFs -- handle all values gracefully in python
-- Ability to download the data of all displayed plots (in csv format)
+x Ability to download the data of all displayed plots (in csv format)
 - Ability to process selected curve as all in the CurveSet (required for calibration method)
