@@ -6,20 +6,22 @@ class Settings(MethodStep):
     plot_interaction = 'none'
 
     class SettingsForm(forms.Form):
-        def __init__(self, request, data):
-            super(Settings.SettingsForm, self).__init__(request)
-            if data is not None:
-                for k, v in data.items():
+        def __init__(self, *args, **kwargs):
+            initial_data = kwargs.pop('initial', {})
+            super(Settings.SettingsForm, self).__init__(*args, **kwargs)
+            if initial_data:
+                for k, v in initial_data.items():
                     self.fields[k] = forms.CharField(
                         max_length=30,
-                        initial=v,
-                        label=k
+                        initial=v.get('default', ''),
+                        label=k,
+                        validators=[v['validator']] if v.get('validator', False) else None
                     )
 
     def process(self, user, request, model):
         if request.POST.get('confirm', False) == 'Forward':
-            form = self.SettingsForm(request=request.POST, data=self.initial)
-            if form.is_valid():
+            form = self.SettingsForm(request.POST, initial=self.initial)
+            if form.is_valid() is True:
                 user_data = {}
                 for k, v in self.initial.items():
                     user_data[k] = form.cleaned_data[k]
@@ -34,9 +36,9 @@ class Settings(MethodStep):
     def getHTML(self, user, request, model):
         from django.template import loader
         if request.POST.get('confirm', False) == 'Forward':
-            set_form = self.SettingsForm(data=self.initial, request=request.POST)
+            set_form = self.SettingsForm(request.POST, initial=self.initial)
         else:
-            set_form = self.SettingsForm(data=self.initial, request=None)
+            set_form = self.SettingsForm(initial=self.initial)
         template = loader.get_template('manager/form.html')
         context = {
             'form': set_form,

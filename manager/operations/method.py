@@ -8,23 +8,64 @@ class Method(ABC):
     """
     These should be implemented by classes providing
     either processing or analysis procedures.
+    The methods should be placed in ./operations/methods
+    directory.
     """
-    step = None
-    model = None
-    has_next = True
-    description = None
 
     @property
     def _steps(self):
+        """
+        list of dicts:
+        Each dict is definision of what steps have to be taken
+        before the method is applied. The list of avaiable steps,
+        should be taken from manager.operations.methodsteps.
+        Each dict should have following fields:
+            'class': <classObject, of class which extends MethodStep>,
+            'title': <text, which should be displayed on the bar>,
+            'desc': <text, to be displayed as the prefix for the step>,
+
+        Example:
+
+        from manager.operations.methodsteps.selectanalyte import SelectAnalyte
+        from manager.operations.methodsteps.selectrange import SelectRange
+        ...
+
+        _steps = [
+            {
+                'class': SelectAnalyte,
+                'title': 'Select analyte',
+                'desc': 'Select analyte.',
+            },
+            {
+                'class': SelectRange,
+                'title': 'Select range',
+                'desc': 'Select range containing peak and press Forward, or press Back to change the selection.',
+            },
+        ]
+        """
         raise NotImplementedError
 
     @property
     def can_be_applied(self):
         """
-        Described if after creating model it can
+        boolean:
+        Describes if after creating the model it can
         be applied to other curveset with apply method.
         """
         raise NotImplementedError
+
+    @property
+    def description(self):
+        """
+        text:
+        It is displayed to the user as methods description.
+        Please, include references.
+        """
+        raise NotImplementedError
+
+    step = None
+    model = None
+    has_next = True
 
     def __init__(self, model):
         if not model:
@@ -54,8 +95,7 @@ class Method(ABC):
             self.step = self._steps[self.model.active_step_num]
             self.__initializeStep()
             return True
-        else:
-            return False
+        return False
 
     def __prevStep(self):
         self.model.active_step_num = self.model.active_step_num - 1

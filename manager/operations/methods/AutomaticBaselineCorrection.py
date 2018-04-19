@@ -31,8 +31,19 @@ https://doi.org/10.1016/j.electacta.2014.05.076
 
     @overrides
     def initialForStep(self, step_num):
+        from manager.helpers.validators import validate_polynomial_degree
         if step_num == 0:
-            return {'Degree': 4, 'Iterations': 50}
+            return {
+                'Degree': {
+                    'default': 4,
+                    'validator': validate_polynomial_degree
+                },
+                'Iterations': {
+                    'default': 50,
+                    'validator': validate_polynomial_degree
+                    #  There are the same requirements for iterators as polynomial degree
+                }
+            }
 
     @classmethod
     def __str__(cls):
