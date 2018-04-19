@@ -43,10 +43,13 @@ other right after it.
         self.model.customData['fitCoeff'] = []
         if self.model.active_step_num == 2:
             for cd in self.model.curveSet.curvesData.all():
-                st1 = cd.xValue2Index(self.model.stepsData['SelectTwoRanges'][0])
-                en1 = cd.xValue2Index(self.model.stepsData['SelectTwoRanges'][1])
-                st2 = cd.xValue2Index(self.model.stepsData['SelectTwoRanges'][2])
-                en2 = cd.xValue2Index(self.model.stepsData['SelectTwoRanges'][3])
+                v = []
+                v.append(cd.xValue2Index(self.model.stepsData['SelectTwoRanges'][0]))
+                v.append(cd.xValue2Index(self.model.stepsData['SelectTwoRanges'][1]))
+                v.append(cd.xValue2Index(self.model.stepsData['SelectTwoRanges'][2]))
+                v.append(cd.xValue2Index(self.model.stepsData['SelectTwoRanges'][3]))
+                v.sort()
+                (st1, en1, st2, en2) = (v[0], v[1], v[2], v[3])
                 xvec = cd.xVector[st1:en1]
                 xvec.extend(cd.xVector[st2:en2])
                 yvec = cd.yVector[st1:en1]
@@ -62,8 +65,15 @@ other right after it.
 
     @overrides
     def initialForStep(self, step_num):
+        from manager.helpers.validators import validate_polynomial_degree
+
         if step_num == 0:
-            return {'Degree': 3}
+            return {
+                'Degree': {
+                    'default': 3,
+                    'validator': validate_polynomial_degree
+                }
+            }
         return None
 
     @overrides

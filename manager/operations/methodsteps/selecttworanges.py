@@ -17,6 +17,7 @@ class SelectTwoRanges(MethodStep):
                     except:
                         return False
                 data.sort()
+                print(data)
                 model.stepsData['SelectTwoRanges'] = data
                 model.save()
                 return True

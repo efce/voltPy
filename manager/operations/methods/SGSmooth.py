@@ -28,30 +28,18 @@ Savitzky-Golay smoothing algorithm.
 
     @overrides
     def initialForStep(self, step_num):
-        from django.core.exceptions import ValidationError
-
-        def val_window_span(v):
-            print(v)
-            vv = int(v)
-            if vv < 0:
-                raise ValidationError('Window span has to be positive.')
-            if (vv % 2) != 1:
-                raise ValidationError('Windows span has to be odd.')
+        from manager.helpers.validators import validate_polynomial_degree
+        from manager.helpers.validators import validate_window_span
         
-        def val_degree(v):
-            vv = int(v)
-            if vv < 0:
-                raise ValidationError('Window span has to be positive.')
-
         if step_num == 0:
             return {
                 'Window Span': {
                     'default': 13, 
-                    'validator': val_window_span
+                    'validator': validate_window_span
                 }, 
                 'Degree': {
                     'default': 3,
-                    'validator': val_degree
+                    'validator': validate_polynomial_degree
                 }
             }
         return None
@@ -72,7 +60,7 @@ Savitzky-Golay smoothing algorithm.
                 self.model.customData['WindowSpan'],
                 self.model.customData['Degree']
             )
-            newcd.yVector = newyvec
+            newcd.yVector = newyvec.tolist()
             newcd.save()
             curveSet.removeCurve(cd)
             curveSet.addCurve(newcd, newcdConc)
