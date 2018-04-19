@@ -3,12 +3,19 @@ from overrides import overrides
 import manager.operations.method as method
 from manager.operations.methodsteps.selecttworanges import SelectTwoRanges
 from manager.operations.methodsteps.confirmation import Confirmation
+from manager.operations.methodsteps.settings import Settings
 from manager.exceptions import VoltPyNotAllowed
+from manager.exceptions import VoltPyFailed
 
 
 class PolynomialBackgroundFit(method.ProcessingMethod):
     can_be_applied = True
     _steps = [
+        {
+            'class': Settings,
+            'title': 'Method settings.',
+            'desc': 'Change methods settings.',
+        },
         {
             'class': SelectTwoRanges,
             'title': 'Choose two fit intervals.',
@@ -20,7 +27,6 @@ class PolynomialBackgroundFit(method.ProcessingMethod):
             'desc': 'Press Forward to confirm background shape or press Back to return to interval selection.',
         },
     ]
-    degree = 3
     description = """
 The polynomial fit is the most wiedly used background correction method,
 where the polynomial of given order (in this case 3rd) is fitted into two
@@ -30,12 +36,12 @@ other right after it.
 
     @classmethod
     def __str__(cls):
-        return "3rd deg Polynomial Background Fit"
+        return "Polynomial Background Fit"
 
     def process(self, user, request):
         ret = super(PolynomialBackgroundFit, self).process(user, request)
         self.model.customData['fitCoeff'] = []
-        if self.model.active_step_num == 1:
+        if self.model.active_step_num == 2:
             for cd in self.model.curveSet.curvesData.all():
                 st1 = cd.xValue2Index(self.model.stepsData['SelectTwoRanges'][0])
                 en1 = cd.xValue2Index(self.model.stepsData['SelectTwoRanges'][1])
@@ -45,18 +51,28 @@ other right after it.
                 xvec.extend(cd.xVector[st2:en2])
                 yvec = cd.yVector[st1:en1]
                 yvec.extend(cd.yVector[st2:en2])
-                p = np.polyfit(xvec, yvec, self.degree)
-                self.model.customData['fitCoeff'].append({'x3': p[0], 'x2': p[1], 'x1': p[2], 'x0': p[3]})
+                try:
+                    degree = int(self.model.stepsData['Settings']['Degree'])
+                except ValueError:
+                    raise VoltPyFailed('Wrong degree of polynomial')
+                p = np.polyfit(xvec, yvec, degree)
+                self.model.customData['fitCoeff'].append(p)
                 self.model.save()
         return ret
 
     @overrides
+    def initialForStep(self, step_num):
+        if step_num == 0:
+            return {'Degree': 3}
+        return None
+
+    @overrides
     def addToMainPlot(self):
-        if self.model.active_step_num == 1:
+        if self.model.active_step_num == 2:
             fitlines = []
             for cd, fit in zip(self.model.curveSet.curvesData.all(), self.model.customData['fitCoeff']):
                 xvec = cd.xVector
-                p = (fit['x3'], fit['x2'], fit['x1'], fit['x0'])
+                p = fit
                 fitlines.append(dict(
                     x=xvec,
                     y=np.polyval(p, xvec).tolist(),
@@ -78,7 +94,7 @@ other right after it.
             newcdConc = curveSet.getCurveConcDict(cd)
             yvec = newcd.yVector
             xvec = newcd.xVector
-            p = (fit['x3'], fit['x2'], fit['x1'], fit['x0'])
+            p = fit
             ybkg = np.polyval(p, xvec)
             newyvec = list(np.subtract(yvec, ybkg))
             newcd.yVector = newyvec
