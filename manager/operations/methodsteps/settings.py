@@ -8,12 +8,14 @@ class Settings(MethodStep):
     class SettingsForm(forms.Form):
         def __init__(self, request, data):
             super(Settings.SettingsForm, self).__init__(request)
+            self.data = data
             if data is not None:
                 for k, v in data.items():
                     self.fields[k] = forms.CharField(
                         max_length=30,
-                        initial=v,
-                        label=k
+                        initial=v.get('default', ''),
+                        label=k,
+                        validators=[v.get('validator', None)]
                     )
 
     def process(self, user, request, model):
