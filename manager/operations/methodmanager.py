@@ -1,7 +1,7 @@
 import sys
 import os
 import io
-import base64 as b64
+from typing import Dict
 import numpy as np
 from django import forms
 from django.core.exceptions import ObjectDoesNotExist
@@ -23,8 +23,8 @@ class MethodManager:
     variable main_class = <Class Object>.
     The main class object should inherit
     either from AnalysisMethod or ProcessingMethod.
-    If procedure meets the requirements it should be immedietly
-    avaiable for usage.
+    If procedure meets the requirements it should be immediately
+    available for usage.
     """
 
     def __init__(self, user, **kwargs):
@@ -113,7 +113,7 @@ class MethodManager:
         np.savetxt(memoryFile, numpyarr, delimiter=",", newline="\r\n", fmt='%s')
         return memoryFile, self.__model.name
 
-    def ajax(self, user):
+    def ajax(self, user) -> Dict:
         """
         Replies to json request.
         """
@@ -139,10 +139,10 @@ class MethodManager:
         if not self.isMethodSelected():
             return HttpResponseRedirect(reverse("browseCurveSet"))
 
-        stepText = dict(
-            head='',
-            body='No text'
-        )
+        stepText = {
+            'head': '',
+            'body': 'No text'
+        }
 
         if self.__method.step:
             stepText = self.__method.getStepContent(
@@ -188,10 +188,10 @@ class MethodManager:
                 context=context,
             )
 
-    def methodCanBeApplied(self):
+    def methodCanBeApplied(self) -> bool:
         return self.__method.can_be_applied
 
-    def applyTo(self, user, request, curveset_id):
+    def applyTo(self, user, request, curveset_id) -> None:
         try:
             cs = mmodels.CurveSet.objects.get(id=int(curveset_id))
         except (ObjectDoesNotExist, ValueError):
@@ -214,7 +214,7 @@ class MethodManager:
         """
         Returns form instance with selection of analysis methods.
         """
-        return MethodManager.SelectionForm(
+        return MethodManager._SelectionForm(
             self,
             self.methods['analysis'],
             type='analysis',
@@ -227,7 +227,7 @@ class MethodManager:
         """
         Returns form instance with selection of processing methods.
         """
-        return MethodManager.SelectionForm(
+        return MethodManager._SelectionForm(
             self,
             self.methods['processing'],
             type='processing',
@@ -236,7 +236,7 @@ class MethodManager:
             **kwargs
         )
 
-    def getFinalContent(self, request, user):
+    def getFinalContent(self, request, user) -> Dict:
         """
         Returns content of finalized analysis method.
         """
@@ -245,15 +245,15 @@ class MethodManager:
         else:
             raise VoltPyDoesNotExists('Method could not be loaded.')
 
-    def isMethodSelected(self):
+    def isMethodSelected(self) -> bool:
         return (self.__method is not None)
 
-    class SelectionForm(forms.Form):
+    class _SelectionForm(forms.Form):
         """
         Should not be obtained directly, only by:
         MethoManager.getSelectionForm('processing'/'analysis')
         """
-        def __init__(self,  parent, methods, *args, **kwargs):
+        def __init__(self,  parent, methods: Dict, *args, **kwargs):
             self.type = kwargs.pop('type', 'processing')
             if self.type == 'processing':
                 label = 'Processing method'
@@ -262,7 +262,7 @@ class MethodManager:
             else:
                 raise ValueError('Wrong value %s as type in %s' % (self.type, self.__str__()))
             disabled = kwargs.pop('disabled', False)
-            super(MethodManager.SelectionForm, self).__init__(*args, **kwargs)
+            super(MethodManager._SelectionForm, self).__init__(*args, **kwargs)
             self.methods = methods
             self.parent = parent
             choices = list(
@@ -289,7 +289,7 @@ class MethodManager:
                 label="Description:"
             )
 
-        def getJS(self, request):
+        def getJS(self, request) -> str:
             import json
             js_dict = json.dumps(
                 dict(
@@ -328,8 +328,7 @@ $(function(){{
                     curveset.prepareUndo()
                     a.save()
                     return a.id
-                else:
-                    return None
+                return None
             elif self.type == 'analysis':
                 if self.cleaned_data.get('method') in self.methods:
                     a = mmodels.Analysis(
@@ -345,5 +344,4 @@ $(function(){{
                     curveset.locked = True  # CurveSet cannot be changed when used by Analysis method.
                     curveset.save()
                     return a.id
-                else:
-                    return None
+            return None

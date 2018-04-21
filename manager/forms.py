@@ -247,6 +247,7 @@ class SelectXForm(forms.Form):
         return True
 """
 
+
 class SelectCurvesForCurveSetForm(forms.Form):
     curvesetid = -1
 
@@ -324,7 +325,7 @@ class SelectCurvesForCurveSetForm(forms.Form):
                 self.fields[cname].maintype = 'curveset'
                 self.fields[cname].cptype = 'child'
 
-    def drawByHand(self, request):
+    def drawByHand(self, request) -> str:
         # TODO: Load curves dynamically after pressing extend 
         # TODO: Django template is order of magnitude too slow for this, so do it by hand ...
         token = django.middleware.csrf.get_token(request)
@@ -495,8 +496,10 @@ class DeleteForm(forms.Form):
                 if (form_item_id != int(item.id)):
                     return False
                 if item.canBeUpdatedBy(user):
-                    if deleteFrom is None \
-                    or deleteFrom.__class__.__name__ != 'CurveSet':
+                    if any([
+                        deleteFrom is None,
+                        deleteFrom.__class__.__name__ != 'CurveSet'
+                    ]):
                         item.deleted = True
                         item.save()
                         return True

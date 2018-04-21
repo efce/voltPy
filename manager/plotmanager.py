@@ -3,6 +3,7 @@ import numpy as np
 import json
 import random
 from copy import copy
+from typing import Dict
 import django
 from django.urls import reverse
 from django.core.exceptions import ObjectDoesNotExist
@@ -74,11 +75,11 @@ class PlotManager:
         else:
             return "E / mV"
 
-    def analysisHelper(self, user, value_id):
+    def analysisHelper(self, user, value_id: int):
         # TODO: makeover :)
         analysis = mmodels.Analysis.objects.get(id=value_id)
         if not analysis.canBeReadBy(user):
-            raise 3
+            raise VoltPyNotAllowed('Operation not allowed')
         if not analysis.completed:
             return
         # prepare data points
@@ -114,6 +115,9 @@ class PlotManager:
         return ret
 
     def add(self, x=[], y=[], name='', plottype='line', color="blue", **kwargs):
+        """
+        Adds new object to the plot.
+        """
         allowedtyped = ['line', 'scatter', 'cursor']
         if plottype == 'line':
             self.p.line(
@@ -289,16 +293,16 @@ class PlotManager:
             self.p.add_layout(B)
             hboxes.append(B)
 
-        args = dict(
-            lineSrc=srcEmpty,
-            plot=self.p,
-            cursor1=cursors[0],
-            cursor2=cursors[1],
-            cursor3=cursors[2],
-            cursor4=cursors[3],
-            hbox1=hboxes[0],
-            hbox2=hboxes[1]
-        )
+        args = {
+            'lineSrc': srcEmpty,
+            'plot': self.p,
+            'cursor1': cursors[0],
+            'cursor2': cursors[1],
+            'cursor3': cursors[2],
+            'cursor4': cursors[3],
+            'hbox1': hboxes[0],
+            'hbox2': hboxes[1]
+        }
         js_plot = '\n'.join([
             js_globalBase,
             funmaster
@@ -312,11 +316,11 @@ class PlotManager:
         var source = new Bokeh.ColumnDataSource({ data: {
                 x: [plot.x_range.start, plot.x_range.end],
                 y: [yavg, yavg]
-            } 
+            }
         });
         var cover = new Bokeh.Line({
-            x: { field: "x" },
-            y: { field: "y"},
+            x: {field: "x"},
+            y: {field: "y"},
             line_color: "#FFFFFF",
             line_width: plot.plot_height,
         });
@@ -335,7 +339,7 @@ class PlotManager:
         ])
 
         radio_button_group = RadioButtonGroup(
-            labels=labels, 
+            labels=labels,
             active=active,
             callback=CustomJS(args=args, code=js_xaxis)
         )
@@ -442,11 +446,11 @@ class PlotManager:
         )
         px = Paragraph(text="""X axis:""", width=50)
         if not self.interaction or self.interaction == 'none':
-            w=widgetbox(radio_button_group)
+            w = widgetbox(radio_button_group)
             actionbar = row([px, w], width=self.plot_width)
         else:
-            w=widgetbox(radio_button_group)
-            #actionbar = row([px, w, bback, bforward], width=self.plot_width)
+            w = widgetbox(radio_button_group)
+            # actionbar = row([px, w, bback, bforward], width=self.plot_width)
             actionbar = row([px, w, bunselect], width=self.plot_width-50)
 
         if self.include_x_switch:
@@ -455,20 +459,19 @@ class PlotManager:
             layout = column([self.p])
         return layout
 
-
     def plotInteraction(self, request, user):
         self.request = request
         data = getattr(request, 'POST', None)
-        if ( data ):
-            query = data.get('query', '')  
-            if ( query == 'plotmanager' ):
+        if data:
+            query = data.get('query', '')
+            if query == 'plotmanager':
                 onx = data.get('onx', None)
-                if ( onx is not None ):
+                if onx is not None:
                     try:
                         onx = int(onx)
                     except ValueError:
                         raise
-                    for k,v in enumerate(dict(mmodels.Profile.ONX_OPTIONS).keys()):
+                    for k, v in enumerate(dict(mmodels.Profile.ONX_OPTIONS).keys()):
                         if onx == k:
                             newkey = v
                             break
@@ -476,10 +479,10 @@ class PlotManager:
                         return
                     user.profile.show_on_x = newkey
                     user.profile.save()
-                    return { 'command': 'reload' }
+                    return {'command': 'reload'}
 
-
-    def __operation(self, data):
+    """
+    def __operation(self, data: Dict):
         switch = {
             'addLine': self.__addLine,
             'addCursor': self.__addCursor,
@@ -497,7 +500,7 @@ class PlotManager:
     def __addLine(self):
         if not data['operation'] == 'addLine':
             return
-        if ( self.isJson ):
+        if self.isJson:
             ret = {
                 'command': 'addLine',
                 'yvec': data['yvec'],
@@ -508,6 +511,7 @@ class PlotManager:
             srcEmpty = ColumnDataSource(data = dict( x=[], y=[]))
             self.p.line(x='xvec',y='yvec',source=data, color='red', line_dash='dashed')
             return
+    """
 
     def setInteraction(self, name):
         assert name in self.interactions
@@ -515,10 +519,11 @@ class PlotManager:
 
     def getEmbeded(self, request, user, vtype, vid):
         layout = self._prepareFigure(request, user, vtype, vid)
-        src,div = components(layout) 
+        src, div = components(layout) 
         src = '\n'.join([
             src,
-            "<script type='text/javascript'>$(function(){window.voltPy1 = { 'command': '" + \
-                    self.interaction + "' };});</script>"
+            """<script type='text/javascript'>
+            $(function(){window.voltPy1 = { 'command': '%s' };});
+            </script>""" % self.interaction
         ])
-        return src,div
+        return src, div

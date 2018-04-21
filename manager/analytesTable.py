@@ -3,7 +3,7 @@ from manager.helpers.functions import get_redirect_class
 import manager.models as mmodels
 
 
-def analytesTable(obj, objType):
+def analytesTable(obj, objType: str) -> str:
     """
     cs - is CurveFile or CurveSet for which the table will be prepared.
     """

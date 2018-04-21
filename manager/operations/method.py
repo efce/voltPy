@@ -1,4 +1,12 @@
+"""
+This is default template for processing and analysis methods.
+New procedures should extend either AnalysisMethod or
+ProcessingMethod.
+"""
+
+from typing import Dict, Tuple
 from abc import ABC, abstractmethod, abstractclassmethod
+import numpy as np
 from django.db import transaction
 from django.db import DatabaseError
 import manager.models as mmodels
@@ -8,21 +16,23 @@ class Method(ABC):
     """
     These should be implemented by classes providing
     either processing or analysis procedures.
+    This class should not be extended, please
+    extend either ProcessingMethod or AnalysisMethod.
     The methods should be placed in ./operations/methods
     directory.
     """
 
     @property
-    def _steps(self):
+    def _steps(self) -> Tuple:
         """
-        list of dicts:
-        Each dict is definision of what steps have to be taken
-        before the method is applied. The list of avaiable steps,
-        should be taken from manager.operations.methodsteps.
+        tuple of dicts:
+        Each dict defines what steps have to be taken
+        before the method can be applied. The avaiable steps
+        should be selected from manager.operations.methodsteps.
         Each dict should have following fields:
-            'class': <classObject, of class which extends MethodStep>,
-            'title': <text, which should be displayed on the bar>,
-            'desc': <text, to be displayed as the prefix for the step>,
+            'class': <classObject: class which extends MethodStep>,
+            'title': <text: will be displayed on the title bar>,
+            'desc': <text: will be displayed as the preamble for the step>,
 
         Example:
 
@@ -30,7 +40,7 @@ class Method(ABC):
         from manager.operations.methodsteps.selectrange import SelectRange
         ...
 
-        _steps = [
+        _steps = (
             {
                 'class': SelectAnalyte,
                 'title': 'Select analyte',
@@ -41,23 +51,21 @@ class Method(ABC):
                 'title': 'Select range',
                 'desc': 'Select range containing peak and press Forward, or press Back to change the selection.',
             },
-        ]
+        )
         """
         raise NotImplementedError
 
     @property
-    def can_be_applied(self):
+    def can_be_applied(self) -> bool:
         """
-        boolean:
         Describes if after creating the model it can
         be applied to other curveset with apply method.
         """
         raise NotImplementedError
 
     @property
-    def description(self):
+    def description(self) -> str:
         """
-        text:
         It is displayed to the user as methods description.
         Please, include references.
         """
@@ -108,7 +116,7 @@ class Method(ABC):
             self.step = self._steps[self.model.active_step_num]
             self.__initializeStep()
 
-    def initialForStep(self, step_num):
+    def initialForStep(self, step_num: int):
         """
         This will be passed to step as initial value.
         Override if some initial values are needed.
@@ -148,7 +156,7 @@ class Method(ABC):
             raise DatabaseError
         transaction.savepoint_commit(sid)
 
-    def getStepContent(self, user, request):
+    def getStepContent(self, user, request) -> Dict:
         """
         Return the content which steps what to display.
         """
@@ -158,16 +166,15 @@ class Method(ABC):
                 request=request, 
                 model=self.model
             )
-            return { 
+            return {
                 #  Step data come form step class, but description comes from method
                 'head': stepHTML.get('head', ''),
                 'body': stepHTML.get('body', ''),
                 'desc': self.step.get('desc', '')
             }
-        else:
-            return {'head': '', 'body': '', 'desc': ''}
+        return {'head': '', 'body': '', 'desc': ''}
 
-    def addToMainPlot(self):
+    def addToMainPlot(self) -> Dict:
         """
         Requires override.
         Is called to prepare main plot, after adding all elements,
@@ -177,16 +184,20 @@ class Method(ABC):
         return None
 
     @abstractmethod
-    def getFinalContent(self, request, user):
+    def getFinalContent(self, request, user) -> Dict:
         """
         Return content with the final results after the
         analysis if compled. This is not required from
         processing methods.
+        Returns {
+            'head': ''
+            'body': ''
+        }
         """
         pass
 
     @abstractmethod
-    def exportableData(self):
+    def exportableData(self) -> np.matrix:
         """
         This procedure should provide 2d numpy matrix, which
         includes data presented on the anaysis's final plot.
@@ -194,7 +205,7 @@ class Method(ABC):
         pass
 
     @abstractmethod
-    def finalize(self, user):
+    def finalize(self, user) -> None:
         """
         This will be used when all defined steps are completed.
         In case of error with the steps it should raise
@@ -202,7 +213,7 @@ class Method(ABC):
         """
         pass
 
-    @abstractclassmethod
+    @abstractmethod
     def apply(self, user, curveSet):
         """
         This should apply already completed processing/analysis method,

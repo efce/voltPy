@@ -64,7 +64,7 @@ other right after it.
         return ret
 
     @overrides
-    def initialForStep(self, step_num):
+    def initialForStep(self, step_num: int):
         from manager.helpers.validators import validate_polynomial_degree
 
         if step_num == 0:
@@ -90,8 +90,7 @@ other right after it.
                     color='red',
                 ))
             return fitlines
-        else:
-            return None
+        return None
 
     def apply(self, user, curveSet):
         if self.model.completed is not True:

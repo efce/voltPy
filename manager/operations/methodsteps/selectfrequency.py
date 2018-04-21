@@ -30,7 +30,7 @@ class SelectFrequency(MethodStep):
         from django.template import loader
         cf = CursorsForm(cursors_num=1)
         template = loader.get_template('manager/form.html')
-        context = { 
+        context = {
             'form': cf,
             'submit': 'forward'
         }
@@ -45,7 +45,7 @@ class SelectFrequency(MethodStep):
             newy = newy[:round(ylen/2.0)].tolist()
             p.add(
                 y=newy,
-                x=range(math.floor(ylen/2)),
+                x=range(math.ceil(ylen/2)),
                 plottype='line',
                 color='red'
             )
