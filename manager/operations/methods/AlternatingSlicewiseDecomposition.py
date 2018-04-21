@@ -180,8 +180,7 @@ Chemom. Intell. Lab. Syst., vol. 65, no. 1, pp. 119–137, 2003.
                 newcd = cd.getCopy()
                 newcdConc = curveSet.getCurveConcDict(cd)
                 newy = yvecs2[:, i].T
-                newy = newy.tolist()[0]
-                newcd.yVector = newy
+                newcd.yVector = newy.squeeze()
                 newcd.date = timezone.now()
                 newcd.save()
                 curveSet.removeCurve(cd)

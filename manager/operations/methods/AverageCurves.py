@@ -50,7 +50,7 @@ given number of plots.
                     cd = self.model.curveSet.curvesData.get(id=cid)
                     yvecs.append(cd.yVector)
                     cs.removeCurve(cd)
-                newcd.yVector = np.mean(yvecs, axis=0).tolist()
+                newcd.yVector = np.mean(yvecs, axis=0)
                 newcd.save()
                 cs.addCurve(newcd, newcdConc)
         cs.save()

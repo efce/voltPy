@@ -28,7 +28,7 @@ class PolynomialBackgroundFit(method.ProcessingMethod):
         },
     ]
     description = """
-The polynomial fit is the most wiedly used background correction method,
+The polynomial fit is the most wieldy used background correction method,
 where the polynomial of given order (in this case 3rd) is fitted into two
 intevals -- one should be directly in front of the peak of interest and
 other right after it.
@@ -85,7 +85,7 @@ other right after it.
                 p = fit
                 fitlines.append(dict(
                     x=xvec,
-                    y=np.polyval(p, xvec).tolist(),
+                    y=np.polyval(p, xvec),
                     plottype='line',
                     color='red',
                 ))
