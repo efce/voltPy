@@ -18,7 +18,7 @@ class SimpleNumpyField(models.BinaryField):
         if value is None:
             return value
         bf = io.BytesIO(value)
-        return np.load(bf)
+        return np.load(bf)['arr_0']
 
     @overrides
     def to_python(self, value):
@@ -27,13 +27,13 @@ class SimpleNumpyField(models.BinaryField):
         if value is None:
             return value
         bf = io.BytesIO(value)
-        return np.load(bf)
+        return np.load(bf)['arr_0']
 
     @overrides
     def get_prep_value(self, value):
         value = np.array(value)
         bf = io.BytesIO()
-        np.save(bf, value)
+        np.savez_compressed(bf, value)
         return bf.getvalue()
 
 
