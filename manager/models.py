@@ -491,7 +491,7 @@ class CurveSet(models.Model):
         for na in newAnalytes:
             self.analytes.add(Analyte.objects.get(id=na))
             self.analytesConc[na] = self.analytesConc.get(na, {})
-            self.analytesConcUnits[na] = self.analytesConcUnits.get(na, CONC_UNIT_DEF)
+            self.analytesConcUnits[na] = self.analytesConcUnits.get(na, self.CONC_UNIT_DEF)
             for cd in self.curvesData.all():
                 self.analytesConc[na][cd.id] = 0.0
         for k, v in self.analytesConc.items():

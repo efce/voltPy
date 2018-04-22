@@ -50,10 +50,8 @@ other right after it.
                 v.append(cd.xValue2Index(self.model.stepsData['SelectTwoRanges'][3]))
                 v.sort()
                 (st1, en1, st2, en2) = (v[0], v[1], v[2], v[3])
-                xvec = cd.xVector[st1:en1]
-                xvec.extend(cd.xVector[st2:en2])
-                yvec = cd.yVector[st1:en1]
-                yvec.extend(cd.yVector[st2:en2])
+                xvec = np.append(cd.xVector[st1:en1], cd.xVector[st2:en2])
+                yvec = np.append(cd.yVector[st1:en1], cd.yVector[st2:en2])
                 try:
                     degree = int(self.model.stepsData['Settings']['Degree'])
                 except ValueError:
@@ -105,7 +103,7 @@ other right after it.
             xvec = newcd.xVector
             p = fit
             ybkg = np.polyval(p, xvec)
-            newyvec = list(np.subtract(yvec, ybkg))
+            newyvec = np.subtract(yvec, ybkg)
             newcd.yVector = newyvec
             newcd.save()
             curveSet.removeCurve(cd)
