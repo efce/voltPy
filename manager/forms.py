@@ -265,7 +265,7 @@ class SelectCurvesForCurveSetForm(forms.Form):
         super(SelectCurvesForCurveSetForm, self).__init__(*args, **kwargs)
         from django.db.models import Prefetch
         self.fields['name'] = forms.CharField(
-            max_length=124, 
+            max_length=124,
             required=True,
             initial=newName
         )
@@ -460,15 +460,15 @@ class SelectCurvesForCurveSetForm(forms.Form):
                 if 'all' in cdids.keys():
                     for cd in cs.curvesData.all():
                         newcs.addCurve(
-                            curveData=cd, 
-                            curveConcDict=cs.getCurveConcDict(cd)
+                            curveData=cd,
+                            concDict=cs.getCurveConcDict(cd)
                         )
                 else:
                     for cdid in cdids.keys():
                         cd = mmodels.CurveData.objects.get(id=cdid)
                         newcs.addCurve(
-                            curveData=cd, 
-                            curveConcDict=cs.getCurveConcDict(cd)
+                            curveData=cd,
+                            concDict=cs.getCurveConcDict(cd)
                         )
             newcs.save()
         except DatabaseError:

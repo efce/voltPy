@@ -45,12 +45,12 @@ calculated as a difference between max and min signal in the given range.
         an.appliesModel = self.model
         an.save()
         self.model = an
-    #try:
-        self.finalize(user)
-    #except:
-        #an.deleted = True
-        #an.save()
-        #raise VoltPyFailed('Could not apply model.')
+        try:
+            self.finalize(user)
+        except:
+            an.deleted = True
+            an.save()
+            raise VoltPyFailed('Could not apply model.')
         return an.id
 
     def finalize(self, user):

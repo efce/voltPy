@@ -39,7 +39,7 @@ signal back to the original domain.
             ffty = np.fft.fft(yvec)
             ffty[st:en] = [0]*(en-st)
             iffty = np.fft.ifft(ffty)
-            newcd.yVector = np.real(iffty).tolist()
+            newcd.yVector = np.real(iffty)
             newcd.save()
             curveSet.removeCurve(cd)
             curveSet.addCurve(newcd, newcdConc)

@@ -2,6 +2,8 @@ import numpy as np
 import io
 from copy import copy
 from enum import IntEnum
+from typing import Dict
+from overrides import overrides
 from django.db import models
 from django.urls import reverse
 from django.contrib.auth.models import User
@@ -9,6 +11,30 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 from picklefield.fields import PickledObjectField
 import manager
+
+
+class SimpleNumpyField(models.BinaryField):
+    def from_db_value(self, value, expression, connection):
+        if value is None:
+            return value
+        bf = io.BytesIO(value)
+        return np.load(bf)['arr_0']
+
+    @overrides
+    def to_python(self, value):
+        if isinstance(value, np.ndarray):
+            return value
+        if value is None:
+            return value
+        bf = io.BytesIO(value)
+        return np.load(bf)['arr_0']
+
+    @overrides
+    def get_prep_value(self, value):
+        value = np.array(value)
+        bf = io.BytesIO()
+        np.savez_compressed(bf, value)
+        return bf.getvalue()
 
 
 class Profile(models.Model):
@@ -284,16 +310,55 @@ class CurveIndex(models.Model):
         return self.isOwnedBy(user)
 
 
+class SamplingData(models.Model):
+    id = models.AutoField(primary_key=True)
+    data = SimpleNumpyField(null=True, default=None)
+
+
 class CurveData(models.Model):
     id = models.AutoField(primary_key=True)
     curve = models.ForeignKey(Curve, on_delete=models.CASCADE)
     date = models.DateField(auto_now_add=True)
-    time = PickledObjectField()  # JSON List 
-    potential = PickledObjectField()  # JSON List 
-    current = PickledObjectField()  # JSON List 
-    currentSamples = PickledObjectField()  # JSON List 
+    time = SimpleNumpyField(null=True, default=None)
+    potential = SimpleNumpyField(null=True, default=None)
+    current = SimpleNumpyField(null=True, default=None)
     basedOn = models.ForeignKey('CurveData', null=True, default=None, on_delete=models.DO_NOTHING)
     processedWith = models.ForeignKey('Processing', null=True, default=None, on_delete=models.DO_NOTHING)
+    _currentSamples = models.ForeignKey(SamplingData, on_delete=models.DO_NOTHING, default=None, null=True)
+    __currentSamplesChanged = False
+
+    @property
+    def currentSamples(self):
+        if self._currentSamples is None:
+            sd = SamplingData()
+            sd.save()
+            self._currentSamples = sd
+        return self._currentSamples.data
+
+    @currentSamples.setter
+    def currentSamples(self, value):
+        self.__currentSamplesChanged = True
+        sd = SamplingData()
+        sd.data = value
+        sd.save()
+        self._currentSamples = sd
+
+    @overrides
+    def __init__(self, *args, **kwargs):
+        cs = kwargs.pop('currentSamples', None)
+        super(CurveData, self).__init__(*args, **kwargs)
+        if cs is not None:
+            self.currentSamples = cs
+        
+    @overrides
+    def save(self, *args, **kwargs):
+        if self.__currentSamplesChanged:
+            self._currentSamples.save()
+            self.__currentSamplesChanged = False
+        self.potential = np.array(self.potential)
+        self.current = np.array(self.current)
+        self.time = np.array(self.time)
+        super().save(*args, **kwargs)
 
     def getCopy(self):
         newcd = copy(self)
@@ -391,6 +456,8 @@ class CurveSet(models.Model):
         ('3M', 'mM'),
         ('0M', 'M')
     )
+    CONC_UNIT_DEF = '0g'
+
     id = models.AutoField(primary_key=True)
     owner = models.ForeignKey(User, on_delete=models.DO_NOTHING)
     name = models.CharField(max_length=128)
@@ -407,31 +474,37 @@ class CurveSet(models.Model):
     undoProcessing = models.ForeignKey('Processing', null=True, default=None, on_delete=models.DO_NOTHING)
     deleted = models.BooleanField(default=False)
 
-    def removeCurve(self, curveData):
+    def removeCurve(self, curveData: CurveData):
         self.curvesData.remove(curveData)
-        for k,v in self.analytesConc.items():
+        for k, v in self.analytesConc.items():
             v.pop(curveData.id, None)
 
-    def addCurve(self, curveData, curveConcDict={}):
+    def addCurve(self, curveData:CurveData, concDict={}):
+        concValues = concDict.get('values', {})
+        concUnits = concDict.get('units', {})
         if not self.curvesData.filter(id=curveData.id).exists():
             self.curvesData.add(curveData)
-        self.setCurveConcDict(curveData, curveConcDict)
+        self.setCurveConcDict(curveData, concValues, concDict)
 
-    def setCurveConcDict(self, curveData, curveConcDict):
+    def setCurveConcDict(self, curveData: CurveData, curveConcDict: Dict, curveConcUnits: Dict):
         newAnalytes = list(set(curveConcDict.keys()) - set(self.analytesConc.keys()))
         for na in newAnalytes:
             self.analytes.add(Analyte.objects.get(id=na))
             self.analytesConc[na] = self.analytesConc.get(na, {})
+            self.analytesConcUnits[na] = self.analytesConcUnits.get(na, self.CONC_UNIT_DEF)
             for cd in self.curvesData.all():
                 self.analytesConc[na][cd.id] = 0.0
-        for k,v in self.analytesConc.items():
+        for k, v in self.analytesConc.items():
             v[curveData.id] = curveConcDict.get(k, 0.0)
 
-    def getCurveConcDict(self, curveData):
+    def getCurveConcDict(self, curveData: CurveData) -> Dict:
+        """
+        Returns dict of {'values': conc_values<dict>, 'units': conc_units<dict>}
+        """
         ret = {}
         for k, v in self.analytesConc.items():
             ret[k] = v.get(curveData.id, 0.0)
-        return ret
+        return {'values': ret, 'units': self.analytesConcUnits}
 
     def isOwnedBy(self, user):
         return (self.owner == user)
@@ -443,7 +516,7 @@ class CurveSet(models.Model):
         return self.isOwnedBy(user)
 
     def __str__(self):
-        return "%s" % self.name
+        return '%s' % self.name
 
     def prepareUndo(self, processingObject=None):
         self.undoCurvesData.clear()

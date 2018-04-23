@@ -1,6 +1,4 @@
-import io
 import numpy as np
-import json
 import random
 from copy import copy
 from typing import Dict
@@ -43,7 +41,7 @@ class PlotManager:
         self.__line = []
         self.__scatter = []
         self.p = figure(
-            title=self.title, 
+            title=self.title,
             name='voltpy_plot',
             x_axis_label=self.xlabel,
             y_axis_label=self.ylabel,
@@ -346,20 +344,23 @@ class PlotManager:
 
         js_backSub = """
         var coma = window.voltPy1.command;
-        if ( coma == 'set1cursor'
+        if (coma == 'set1cursor'
         || coma == 'set2cursors'
-        || coma == 'set4cursors' ) {
+        || coma == 'set4cursors') {
             for (var i=cursors.length-1; i>=0; i--) {
                 if (cursors[i].location != null) {
+                    var cloc = cursors[i].location;
                     cursors[i].location = null;
                     cursors[i].line_alpha = 0;
                     $('#id_val_cursor_' + i).val('');
-                    if (i == 3) {
-                        hboxes[1].left = null;
-                        hboxes[1].right = null;
-                    } else if (i == 1) {
-                        hboxes[0].left = null;
-                        hboxes[0].right = null;
+                    if (i == 3 || i == 1) {
+                        if (hboxes[1].left == cloc || hboxes[1].right == cloc) {
+                            hboxes[1].left = null;
+                            hboxes[1].right = null;
+                        } else {
+                            hboxes[0].left = null;
+                            hboxes[0].right = null;
+                        }
                     }
                     break;
                 }

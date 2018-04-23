@@ -179,8 +179,7 @@ Chemom. Intell. Lab. Syst., vol. 65, no. 1, pp. 119–137, 2003.
             for i, cd in enumerate(curveSet.curvesData.all()):
                 newcd = cd.getCopy()
                 newcdConc = curveSet.getCurveConcDict(cd)
-                newy = yvecs2[:, i].T
-                newy = newy.tolist()[0]
+                newy = np.array(yvecs2[:, i].T).squeeze()  # change to array to remove dimension
                 newcd.yVector = newy
                 newcd.date = timezone.now()
                 newcd.save()

@@ -1,8 +1,8 @@
 # voltPy - web based platform for voltammetric data analysis and processing
-The idea of the project is to provide the electrochemist with easy tool for storing, processing and analyzing the data with newest procedures and algorithms. The project aims to offer integrated environment similar to native desktop applications for analyzers such as EAQt (https://www.github.com/efce/EAQt) or Autolab NOVA©. The platform is designed to offer easy implementation of algorithms for data scientists and easy use for electrochemists. The web platform is based on Django framework and the interactivity of the plots is achieved by taking advantage of Bokeh plotting framework and custom JavaScripts.
+The idea of the project is to provide the electrochemist with an easy tool for storing, processing and analyzing the data with newest procedures and algorithms. The project aims to offer integrated environment similar to the native desktop applications for analyzers such as EAQt (https://www.github.com/efce/EAQt) or Autolab NOVA©. The web platform is designed to offer easy implementation of algorithms for data scientists and easy use for electrochemists. Service is based on Django framework and the interactivity of the plots is achieved by taking advantage of Bokeh plotting framework and custom JavaScripts.
 
 # Installation
-The project requires following python modules: django, unipath, bokeh, numpy, scipy, pandas, django-picklefield.
+The project requires following python modules: django, unipath, bokeh, numpy, scipy, pandas, django-picklefield, xlrd, ezodf, lxml, overrides
 
 # Usage
-The project start as regular Django service (with 'python manage.py runserver'), and is available under http://127.0.0.1:8000/manager/. The test file is included from 'EAQt - electrochemical analyzer' to upload, and check and possibilities of the service. The file is in the main directory with *.volt extension.
+For developement purpose the project start as a regular Django service (with 'python manage.py runserver'), and is available under http://127.0.0.1:8000/manager/. The different test files are included, vol, volt and voltc are from 'EAQt - electrochemical analyzer', which are located in ./test_files/ directory. These files can be uploaded to check the current capabilities of the web service. 
