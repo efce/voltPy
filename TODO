@@ -7,14 +7,14 @@
 ====  UI/UX =====
 - General improvements in UI (use boost?)
 - More work on UX:
-  - Group main manu items and create dropdown lists
+  - Group main menu items and create dropdown lists
   - Clear selection menu with Analysis methods
   - Clear selection menu with Processing methods
-  - Ability to add method to favorite (star a method like in gmail)
+  - Ability to add method to favorite (ability to add star to the method like in gmail)
   - Menu with favorite and last used methods
   - Separate Copy (instant copy) and add CurveSet to selection in CurveSet creation
 - Ability to share CurveSet/Analysis with other registered user (ro/rw)
-- Sharing of curves/curvesets/analyses via link (ro/rw) -- which instantly displaysthe data without any login screen
+- Sharing of curves/curvesets/analyses via link (ro/rw) -- which instantly displays the data without any login screen
 - Create panel with user settings and privileges
 - Ability to process selected curve as all in the CurveSet (required for calibration method)
 - Dynamic adjustment of plot size based on client resolution/window size (?)
@@ -32,7 +32,8 @@
   - splines - smoothing algorithm
   - wavelets - smoothing, and decomposition/calibration with zero-crossing method
   - Calibration method
-  - ICM - Itegrated Calibration Method
+  - ICM - Integrated Calibration Method
   - OSC - Orthogonal Signal Correction
+  - Estimation of Cell Time Constant (tau) based on ASD (capacitive factor)
   - Genetic algorith for background correction -- Łukasz(?)
   - PLS - Partial Least Squares calibration -- Łukasz(?)
