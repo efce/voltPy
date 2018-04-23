@@ -25,5 +25,9 @@ class MethodStep(ABC):
 
     @abstractmethod
     def getHTML(self, user, request, model) -> Dict:
+        """
+        Should return the page required to completed the step,
+        with any forms necessary included.
+        """
         return {'head': '', 'body': ''}
 

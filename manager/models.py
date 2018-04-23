@@ -218,7 +218,7 @@ class Curve(models.Model):
         gtype = 44   # /* offset of type of generation   */
         maxse = 45   # /* nr of impulse in max. drop */
 
-        param46 = 46   #  not in use
+        param46 = 46   # not in use
 
         inf_smooth = 47   # was curve smoothed
         inf_smooth_no = 0
@@ -479,7 +479,7 @@ class CurveSet(models.Model):
         for k, v in self.analytesConc.items():
             v.pop(curveData.id, None)
 
-    def addCurve(self, curveData:CurveData, concDict={}):
+    def addCurve(self, curveData: CurveData, concDict={}):
         concValues = concDict.get('values', {})
         concUnits = concDict.get('units', {})
         if not self.curvesData.filter(id=curveData.id).exists():

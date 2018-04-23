@@ -46,7 +46,7 @@ https://doi.org/10.1002/elan.201300181"""
     def exportableData(self):
         if not self.model.completed:
             raise VoltPyFailed("Data incomplete")
-        raise ValueError("Not impletented")
+        raise ValueError("Not implemented")
 
     def apply(self, user, curveSet):
         """
@@ -64,7 +64,7 @@ https://doi.org/10.1002/elan.201300181"""
         unitsTrans = dict(mmodels.CurveSet.CONC_UNITS)
         self.model.customData['units'] = unitsTrans[self.model.curveSet.analytesConcUnits[analyte.id]]
         if len(set(self.model.stepsData['TagCurves'].keys())) <= 2:
-            raise VoltPyFailed('Not enaugh sensitivities to analyze the data.')
+            raise VoltPyFailed('Not enough sensitivities to analyze the data.')
         for name, cds in self.model.stepsData['TagCurves'].items():
             for cid in cds:
                 SENS.append(name)

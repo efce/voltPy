@@ -80,8 +80,8 @@ https://doi.org/10.1039/C7AN00185A
         prepare = prepareStructForSSAA(X, Conc, tptw, 3, twvec, ctype)
                 
         result = slopeStandardAdditionAnalysis(prepare, peak, {'forceSamePoints': True})
-        self.model.customData['matrix'] = [ 
-            result['CONC'], 
+        self.model.customData['matrix'] = [
+            result['CONC'],
             [x for x in result['Slopes'].items()]
         ]
         self.model.customData['fitEquation'] = result['Fit']

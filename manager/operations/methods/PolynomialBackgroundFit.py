@@ -30,7 +30,7 @@ class PolynomialBackgroundFit(method.ProcessingMethod):
     description = """
 The polynomial fit is the most wieldy used background correction method,
 where the polynomial of given order (in this case 3rd) is fitted into two
-intevals -- one should be directly in front of the peak of interest and
+intervals -- one should be directly in front of the peak of interest and
 other right after it.
     """
 

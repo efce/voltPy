@@ -14,7 +14,7 @@ class SGSmooth(method.ProcessingMethod):
         {
             'class': Settings,
             'title': 'Confirm settings.',
-            'desc': 'Press Forward to confirm setting or press Back to return to interval selection.',
+            'desc': 'Confirm the settings of Savitzky-Golay smoothing.',
         },
     ]
     degree = 3

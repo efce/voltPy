@@ -1,5 +1,5 @@
 ==== General ====
-- Guidelines on how to add new Anlsysis/Processing methods
+- Guidelines on how to add new Analysis/Processing methods
 - Separation of JavaScripts from py files / code cleanups
 - Separation of HTML from py files / creation of HTML draw only functions
 - Separation of CSS from all files (?)

@@ -11,8 +11,8 @@ class MedianFilter(method.ProcessingMethod):
     _steps = [
         {
             'class': Confirmation,
-            'title': 'Confirm background shape.',
-            'desc': 'Press Forward to confirm background shape or press Back to return to interval selection.',
+            'title': 'Apply median filter',
+            'desc': 'Press forward to apply Median Filter.',
         },
     ]
     degree = 3

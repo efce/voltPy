@@ -10,15 +10,15 @@ class FFTLowPass(method.ProcessingMethod):
         {
             'class': SelectFrequency,
             'title': 'Select frequency threshhold.',
-            'desc': 'Select frequency treshhold on the plot and press Forward.',
+            'desc': 'Select frequency threshold on the plot and press Forward.',
         },
     ]
     description = """
-This is low pass frequency filter used primarly for signal smoothing. The
+This is low pass frequency filter used primarily for signal smoothing. The
 procedure consists of two steps:
 - The signal is transformed to the frequency domain and the power spectrum
   is presented to the user.
-- The user selects the cut off treshold, above which the frequences are
+- The user selects the cut off threshold, above which the frequencies are
   considered noise.
 The procedure automatically removes this frequencies and transforms the
 signal back to the original domain.
