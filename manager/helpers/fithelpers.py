@@ -1,4 +1,5 @@
 import numpy as np
+from scipy.optimize import curve_fit
 
 
 def calc_normal_equation_fit(xvec, yvec):
@@ -60,3 +61,27 @@ def significant_digit(value, sig_num=2):
     if fl + sig_num < 0:
         return int(0)
     return int((fl + sig_num) - 1)
+
+
+def fit_capacitive_eq(tvec, dE=None, Romega_bounds=(0, 10**10), tau_bounds=(0, 10**6), teps_bounds=(0, 10**2)):
+    if dE is None:
+        dE = 1
+
+    def capacitive(x, Rom, eps, tau):
+        dEoR = np.divide(dE, Rom)
+        power_of = np.divide(np.add(x, eps), tau)
+        return np.dot(dEoR, np.exp(-power_of))
+
+    xvec = np.array(range(0, len(tvec)))
+
+    capacitive_bounds = list(zip(Romega_bounds, teps_bounds, tau_bounds))
+    print(capacitive_bounds)
+
+    capac_fit, capac_cov = curve_fit(
+        f=capacitive,
+        xdata=xvec,
+        ydata=tvec,
+        bounds=capacitive_bounds
+    )
+
+    return capac_fit, capac_cov

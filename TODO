@@ -35,5 +35,5 @@
   - ICM - Integrated Calibration Method
   - OSC - Orthogonal Signal Correction
   - Estimation of Cell Time Constant (tau) based on ASD (capacitive factor)
-  - Genetic algorith for background correction -- Łukasz(?)
+  - Genetic algorithm for background correction -- Łukasz(?)
   - PLS - Partial Least Squares calibration -- Łukasz(?)
