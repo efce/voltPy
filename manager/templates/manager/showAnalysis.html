@@ -8,7 +8,7 @@
 
 {% block real_content %}
 <table class="table_no_breaks">
-<tr><td>Analysis method: {{ analysis.method }} </td></tr>
+<tr><td>Analysis method: {{ analysis.methodDisplayName }} </td></tr>
 <tr><td>Analysis ID: {{ analysis.id }} </td></tr>
 <tr><td>{{ disp_name_edit | safe }} </td></tr>
 <tr><td>Date created: {{ analysis.date | date:"c" }} </td></tr>

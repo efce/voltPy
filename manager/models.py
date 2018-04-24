@@ -84,7 +84,7 @@ class CurveFile(models.Model):
     deleted = models.BooleanField(default=False)
 
     def __str__(self):
-        return self.name + ": " + self.fileName
+        return str(self.id) + ": " + self.name
 
     class META:
         ordering = ('uploadDate')
@@ -111,13 +111,13 @@ class FileSet(models.Model):
     deleted = models.BooleanField(default=0)
 
     def __str__(self):
-        return str(self.id) + ' ' + self.name
+        return str(self.id) + ': ' + self.name
 
     class META:
         ordering = ('uploadDate')
 
     def isOwnedBy(self, user):
-        return (self.owner == user)
+        return self.owner == user
 
     def canBeUpdatedBy(self, user):
         return self.isOwnedBy(user)
@@ -271,7 +271,16 @@ class Curve(models.Model):
     deleted = models.BooleanField(default=0)
 
     def __str__(self):
-        return self.curveFile.name + ": " + self.name
+        return ''. join([
+            '<table style="border: 0; margin: 0; padding: 0; display: inline"><tr><td style="border:0; margin:0; padding:0">'
+            '<abbr title="comment: ',
+            self.comment,
+            '">',
+            self.name,
+            '</abbr></td></tr><tr><td style="border:0; margin:0; padding:0; height: 8px"><span style="font-size: xx-small">',
+            self.curveFile.__str__(),
+            '</span></td></tr></table>'
+        ])
 
     class META:
         ordering = ('curveFile', 'orderInFile')
@@ -301,7 +310,7 @@ class CurveIndex(models.Model):
     samplingRate = models.IntegerField()  # in kHz
 
     def isOwnedBy(self, user):
-        return (self.curve.curveFile.owner == user)
+        return self.curve.curveFile.owner == user
 
     def canBeUpdatedBy(self, user):
         return self.isOwnedBy(user)
@@ -519,7 +528,7 @@ class CurveSet(models.Model):
         return {'values': ret, 'units': self.analytesConcUnits}
 
     def isOwnedBy(self, user):
-        return (self.owner == user)
+        return self.owner == user
 
     def canBeUpdatedBy(self, user):
         return self.isOwnedBy(user)  # and not self.locked
@@ -528,7 +537,7 @@ class CurveSet(models.Model):
         return self.isOwnedBy(user)
 
     def __str__(self):
-        return '%s' % self.name
+        return '%s: %s' % (self.id, self.name)
 
     def prepareUndo(self, processingObject=None):
         self.undoCurvesData.clear()
@@ -590,12 +599,13 @@ class Analysis(models.Model):
     analytes = models.ManyToManyField(Analyte)
     name = models.TextField()
     method = models.TextField()
+    methodDisplayName = models.TextField()
     active_step_num = models.IntegerField(default=0, null=True)
     deleted = models.BooleanField(default=False)
     completed = models.BooleanField(default=False)
 
     def __str__(self):
-        return "%s %s: %s" % (self.date, self.method, self.name)
+        return '%s %s: %s' % (self.date, self.methodDisplayName, self.name)
 
     class META:
         ordering = ('date')
@@ -636,12 +646,13 @@ class Processing(models.Model):
     analytes = models.ManyToManyField(Analyte)
     name = models.TextField()
     method = models.TextField()
+    methodDisplayName = models.TextField()
     active_step_num  = models.IntegerField(default=0, null=True)
     deleted = models.BooleanField(default=0)
     completed = models.BooleanField(default=0)
 
     def __str__(self):
-        return "%s: %s" % (self.date, self.method)
+        return '%s: %s' % (self.date, self.methodDisplayName)
 
     class META:
         ordering = ('date')

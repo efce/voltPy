@@ -99,7 +99,7 @@ class MethodManager:
                 self.__model.deleted = True
                 self.__model.save()
                 add_notification(request, """
-                    Procedure failed. The data may be incompatible with the processing method. 
+                    Procedure failed. The data may be incompatible with the processing method.
                     Please verify and try again.
                 """)
                 add_notification(request, 'Fail reason: %s' % e)
@@ -315,12 +315,14 @@ $(function(){{
 
         def process(self, user, curveset):
             if self.type == 'processing':
-                if self.cleaned_data.get('method') in self.methods:
+                mname = self.cleaned_data.get('method', None)
+                if mname in self.methods:
                     a = mmodels.Processing(
                         owner=user,
                         curveSet=curveset,
-                        method=self.cleaned_data.get('method'), 
-                        name="",
+                        method=mname,
+                        methodDisplayName=self.methods[mname].__str__(),
+                        name='',
                         active_step_num=0,
                         deleted=False,
                         completed=False
@@ -330,12 +332,14 @@ $(function(){{
                     return a.id
                 return None
             elif self.type == 'analysis':
-                if self.cleaned_data.get('method') in self.methods:
+                mname = self.cleaned_data.get('method', None)
+                if mname in self.methods:
                     a = mmodels.Analysis(
                         owner=user,
                         curveSet=curveset,
-                        method=self.cleaned_data.get('method'),
-                        name="",
+                        method=mname,
+                        methodDisplayName=self.methods[mname].__str__(),
+                        name='',
                         active_step_num=0,
                         deleted=False,
                         completed=False

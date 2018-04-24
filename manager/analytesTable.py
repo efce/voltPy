@@ -75,7 +75,7 @@ def analytesTable(obj, objType: str) -> str:
         ret.append(
             '<tr class="_voltJS_plotHighlight _voltJS_highlightCurve@{0}"><td> {1} </td>'.format(
                 cd.id,
-                cd.curve.name
+                cd.curve.__str__()
             )
         )
         for a in cs.analytes.all():
