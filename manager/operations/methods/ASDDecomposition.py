@@ -5,7 +5,10 @@ from django.utils import timezone
 from manager.operations.methodsteps.selectanalyte import SelectAnalyte
 import manager.operations.method as method
 import manager.models as mmodels
-from manager.exceptions import VoltPyFailed, VoltPyNotAllowed
+from manager.exceptions import VoltPyNotAllowed
+from manager.exceptions import VoltPyFailed
+from manager.helpers.fithelpers import fit_capacitive_eq
+from manager.helpers.fithelpers import fit_faradaic_eq
 
 
 class ASDDecomposition(method.ProcessingMethod):
@@ -111,29 +114,22 @@ Chemom. Intell. Lab. Syst., vol. 65, no. 1, pp. 119–137, 2003.
 
         dE = cd1.curve.params[Param.dE]
 
-        def capacitive(t, R, eps, tau):
-            return dE/R * np.exp(-(t+eps)/tau)
-        capacitive_bounds = ((0, 0, 0), (10**10, 1000, 10000))
-
-        def faradaic(t, a, eps):
-            return np.dot(a, np.sqrt(np.add(t, eps)))
-        faradaic_bounds = ((-10**7, 0), (10**7, 1000))
-
         def best_fit_factor(SamplingPred, PotentialPred, ConcentrationPred):
             is_farad = []
             for i, sp in enumerate(SamplingPred.T):
                 x = np.array(range(sp.shape[0]-1))
-                farad_fit, farad_cov = curve_fit(
-                    f=faradaic,
-                    xdata=x,
-                    ydata=sp[1:],
-                    bounds=faradaic_bounds
+                if sp[1] > 0:
+                    yvec = sp[1:]
+                else:
+                    yvec = np.dot(sp[1:], -1)
+                farad_fit, farad_cov = fit_faradaic_eq(
+                    xvec=x,
+                    yvec=yvec
                 )
-                capac_fit, capac_cov = curve_fit(
-                    f=capacitive,
-                    xdata=x,
-                    ydata=sp[1:],
-                    bounds=capacitive_bounds
+                capac_fit, capac_cov = fit_capacitive_eq(
+                    xvec=x,
+                    yvec=yvec,
+                    dE=dE
                 )
 
                 if capac_cov[0, 1] > farad_cov[0, 1]:

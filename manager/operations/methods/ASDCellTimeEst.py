@@ -1,11 +1,13 @@
 import numpy as np
-from scipy.optimize import curve_fit
 from django.utils import timezone
 # import matplotlib.pyplot as plt
 from manager.operations.methodsteps.confirmation import Confirmation
 import manager.operations.method as method
 import manager.models as mmodels
-from manager.exceptions import VoltPyFailed, VoltPyNotAllowed
+from manager.exceptions import VoltPyFailed
+from manager.exceptions import VoltPyNotAllowed
+from manager.helpers.fithelpers import fit_capacitive_eq
+from manager.helpers.fithelpers import fit_faradaic_eq
 
 
 class ASDCellTime(method.AnalysisMethod):
@@ -106,32 +108,18 @@ Chemom. Intell. Lab. Syst., vol. 65, no. 1, pp. 119–137, 2003.
 
         dE = cd1.curve.params[Param.dE]
 
-        def capacitive(t, R, eps, tau):
-            return np.dot(np.divide(dE, R), np.exp(-np.divide(np.add(t, eps), tau)))
-        capacitive_bounds = ((0, 0, 0), (10**10, 1000, 10000))
-
-        def faradaic(t, a, eps):
-            return np.dot(a, np.sqrt(np.add(t, eps)))
-        faradaic_bounds = ((-10**7, 0), (10**7, 1000))
-
         def best_fit_factor(SamplingPred, PotentialPred, ConcentrationPred):
             cov_to_beat = 0
             best_factor = None
             import pdb; pdb.set_trace()
             for i, sp in enumerate(SamplingPred.T):
                 x = np.array(range(sp.shape[0]-1))
-                farad_fit, farad_cov = curve_fit(
-                    f=faradaic,
-                    xdata=x,
-                    ydata=sp[1:],
-                    bounds=faradaic_bounds
-                )
-                capac_fit, capac_cov = curve_fit(
-                    f=capacitive,
-                    xdata=x,
-                    ydata=sp[1:],
-                    bounds=capacitive_bounds
-                )
+                if sp[1] > 0:
+                    yvec = sp[1:]
+                else:
+                    yvec = np.dot(sp[1:], -1)
+                farad_fit, farad_cov = fit_faradaic_eq(xvec=x, yvec=yvec)
+                capac_fit, capac_cov = fit_capacitive_eq(xvec=x, yvec=yvec, dE=dE)
 
                 if capac_cov[0, 1] > farad_cov[0, 1]:
                     if capac_cov[0, 1] > cov_to_beat:
@@ -158,15 +146,22 @@ Chemom. Intell. Lab. Syst., vol. 65, no. 1, pp. 119–137, 2003.
             for ri in randnum:
                 for cp in bfd['z']:
                     sampling_recovered = np.dot(bfd['x'], cp).dot(bfd['y'][ri])
-                    capac_fit, capac_cov = curve_fit(
-                        f=capacitive,
-                        xdata=xv,
-                        ydata=sampling_recovered,
-                        bounds=capacitive_bounds
+                    if sampling_recovered[1] > 0:
+                        yvec = sampling_recovered
+                    else:
+                        yvec = np.dot(sampling_recovered, -1)
+                    capac_fit, capac_cov = fit_capacitive_eq(
+                        xvec=xv,
+                        yvec=yvec,
+                        dE=dE
                     )
                     cfits.append(capac_fit)
         import pdb; pdb.set_trace()
-        cfits = np.array(cfits)
+        cfits = np.matrix(cfits)
+        fit_mean = np.mean(cfits, axis=0)
+        fit_std = np.std(cfits, axis=0)
+        print(';;;')
+
 
     def finalize(self, user):
         self.__perform(self.model.curveSet)
