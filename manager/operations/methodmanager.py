@@ -167,8 +167,8 @@ class MethodManager:
             )
 
             context = {
-                'scripts': '\n'.join([ 
-                                        plotScr, 
+                'scripts': '\n'.join([
+                                        plotScr,
                                         stepText.get('head', '')
                                     ]),
                 'mainPlot': plotDiv,
@@ -232,7 +232,7 @@ class MethodManager:
             self.methods['processing'],
             type='processing',
             prefix='processing',
-            *args, 
+            *args,
             **kwargs
         )
 

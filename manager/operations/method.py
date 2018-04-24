@@ -156,9 +156,10 @@ class Method(ABC):
         except VoltPyFailed as e:
             transaction.savepoint_rollback(sid)
             self.model.deleted = True
+            self.model.error = str(e)
             self.model.save()
             add_notification(
-                request=request, 
+                request=request,
                 text='Processing failed with message: %s' % str(e),
                 severity=1
             )
@@ -175,7 +176,7 @@ class Method(ABC):
         if self.step and self.step.get('object', None):
             stepHTML = self.step['object'].getHTML(
                 user=user,
-                request=request, 
+                request=request,
                 model=self.model
             )
             return {

@@ -75,7 +75,7 @@ def exportCDasFile(cds):
 class CurveFile(models.Model):
     id = models.AutoField(primary_key=True)
     owner = models.ForeignKey(User, on_delete=models.DO_NOTHING)
-    name = models.TextField()
+    name = models.CharField(max_length=255)
     comment = models.TextField()
     fileName = models.TextField()
     fileDate = models.DateField(auto_now=False, auto_now_add=False)  # Each file has its curveset 
@@ -105,7 +105,7 @@ class CurveFile(models.Model):
 class FileSet(models.Model):
     id = models.AutoField(primary_key=True)
     owner = models.ForeignKey(User, on_delete=models.DO_NOTHING)
-    name = models.TextField()
+    name = models.CharField(max_length=255)
     files = models.ManyToManyField(CurveFile)
     date = models.DateField(auto_now_add=True)
     deleted = models.BooleanField(default=0)
@@ -469,7 +469,7 @@ class CurveSet(models.Model):
 
     id = models.AutoField(primary_key=True)
     owner = models.ForeignKey(User, on_delete=models.DO_NOTHING)
-    name = models.CharField(max_length=128)
+    name = models.CharField(max_length=255)
     date = models.DateField(auto_now_add=True)
     inUseBy = models.ManyToManyField('Analysis', related_name='locks_curvesets')
     curvesData = models.ManyToManyField(CurveData, related_name="curvesData")
@@ -597,11 +597,12 @@ class Analysis(models.Model):
     customData = PickledObjectField(default={})
     stepsData = PickledObjectField(default={})
     analytes = models.ManyToManyField(Analyte)
-    name = models.TextField()
-    method = models.TextField()
+    name = models.CharField(max_length=255)
+    method = models.CharField(max_length=255)
     methodDisplayName = models.TextField()
     active_step_num = models.IntegerField(default=0, null=True)
     deleted = models.BooleanField(default=False)
+    error = models.CharField(max_length=255)
     completed = models.BooleanField(default=False)
 
     def __str__(self):
@@ -644,11 +645,12 @@ class Processing(models.Model):
     customData = PickledObjectField(default={})
     stepsData = PickledObjectField(default={})
     analytes = models.ManyToManyField(Analyte)
-    name = models.TextField()
-    method = models.TextField()
+    name = models.CharField(max_length=255)
+    method = models.CharField(max_length=255)
     methodDisplayName = models.TextField()
-    active_step_num  = models.IntegerField(default=0, null=True)
+    active_step_num = models.IntegerField(default=0, null=True)
     deleted = models.BooleanField(default=0)
+    error = models.CharField(max_length=255)
     completed = models.BooleanField(default=0)
 
     def __str__(self):
@@ -658,7 +660,7 @@ class Processing(models.Model):
         ordering = ('date')
 
     def isOwnedBy(self, user):
-        return (self.owner == user)
+        return self.owner == user
 
     def canBeUpdatedBy(self, user):
         return self.isOwnedBy(user)
