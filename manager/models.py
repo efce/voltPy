@@ -381,7 +381,8 @@ class CurveData(models.Model):
         steps = []
         c = self
         while True:
-            steps.append(c.processedWith)
+            if c.processedWith.deleted is False:
+                steps.append(c.processedWith)
             if c.basedOn is not None:
                 c = c.basedOn
             else:
