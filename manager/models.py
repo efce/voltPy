@@ -580,7 +580,7 @@ class CurveSet(models.Model):
             return True
 
     def getProcessingHistory(self):
-        return Processing.objects.filter(curveSet=self).order_by('id')
+        return Processing.objects.filter(curveSet=self, deleted=False).order_by('id')
 
     def export(self):
         return exportCDasFile(self.curvesData.all())
