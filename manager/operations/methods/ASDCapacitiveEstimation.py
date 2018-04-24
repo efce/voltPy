@@ -32,7 +32,7 @@ Chemom. Intell. Lab. Syst., vol. 65, no. 1, pp. 119–137, 2003.
 
     @classmethod
     def __str__(cls):
-        return "ASD Cell Time Est."
+        return "ASD capacitive estimators"
 
     def __perform(self, curveSet):
         import manager.helpers.alternatingSlicewiseDiagonalization as asd

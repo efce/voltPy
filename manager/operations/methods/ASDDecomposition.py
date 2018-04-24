@@ -33,7 +33,7 @@ Chemom. Intell. Lab. Syst., vol. 65, no. 1, pp. 119–137, 2003.
 
     @classmethod
     def __str__(cls):
-        return "Alternating Slice-wise Decomposition"
+        return "ASD Decomposition"
 
     def __perform(self, curveSet):
         import manager.helpers.alternatingSlicewiseDiagonalization as asd
