@@ -60,8 +60,6 @@ https://doi.org/10.1039/C7AN00185A
 
         tp = 3
         twvec = self.__chooseTw(tptw)
-        if not twvec:
-            raise VoltPyFailed('Could not select tp and tw, too little samples per point.')
         # TODO:Test if all curves are registered with the same method ?
         # have the same number of points ?
         numM = self.model.curveSet.curvesData.all()[0].curve.params[Param.method]
@@ -161,15 +159,19 @@ https://doi.org/10.1039/C7AN00185A
         return ret
 
     def __chooseTw(self, tptw):
-        if (tptw < 9):
-            return None
-        elif (tptw < 20):
+        if tptw < 10:
+            raise VoltPyFailed('Could not select tp and tw, too little samples per point.')
+        elif tptw < 20:
             return [tptw-3, tptw-6, tptw-9]
-        if (tptw < 40):
-            return [tptw-3, tptw-7, tptw-11]
+        elif tptw < 32:
+            return [tptw-4, tptw-10, tptw-15]
         else:
-            n = np.floor(tptw/12)
-            d = np.floor(np.sqrt(n))
-            return [tptw-((x*d)-3) for x in range(n)]
+            n = int(np.floor(np.log2(tptw))) - 1
+            dist = [(x**1.7 + 2) for x in range(n)]
+            expmax = tptw - 5
+            maxdist = np.max(dist)
+            ok_dist = np.floor(np.multiply(dist, np.divide(expmax, maxdist)))
+            ret_dist = [int(x) for x in ok_dist]
+            return ret_dist
 
 main_class = SlopeStandardAdditionAnalysis
