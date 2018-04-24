@@ -1,26 +1,28 @@
 import numpy as np
-from scipy.optimize import curve_fit
-from django.utils import timezone
 # import matplotlib.pyplot as plt
-from manager.operations.methodsteps.selectanalyte import SelectAnalyte
+from scipy.stats import t
+from manager.operations.methodsteps.confirmation import Confirmation
 import manager.operations.method as method
 import manager.models as mmodels
-from manager.exceptions import VoltPyFailed, VoltPyNotAllowed
+from manager.exceptions import VoltPyFailed
+from manager.exceptions import VoltPyNotAllowed
+from manager.helpers.fithelpers import fit_capacitive_eq
+from manager.helpers.fithelpers import fit_faradaic_eq
 
 
-class ASDDecomposition(method.ProcessingMethod):
+class ASDCapacitiveEstimation(method.AnalysisMethod):
     can_be_applied = False
     _steps = (
         {
-            'class': SelectAnalyte,
-            'title': 'Select analyte',
-            'desc': """Select analyte.""",
+            'class': Confirmation,
+            'title': 'Confirm',
+            'desc': """Confirm start of ASD cell time estimation.""",
         },
     )
     description = """
-Decomposes the data into factor, for which automatically selects,
-the one which is correlated to the selected analyte.
-It uses ASD, which is implemented based on:
+Decomposes the data into factors with ASD, and tries to estimate the cell time costant
+and cell resistance based on the capacitive factor.
+Uses implementation of ASD based on:
 
 N. M. Faber, R. Bro, and P. K. Hopke, 
 “Recent developments in CANDECOMP/PARAFAC algorithms:A critical review,”
@@ -30,7 +32,7 @@ Chemom. Intell. Lab. Syst., vol. 65, no. 1, pp. 119–137, 2003.
 
     @classmethod
     def __str__(cls):
-        return "Alternating Slice-wise Decomposition"
+        return "ASD capacitive estimators"
 
     def __perform(self, curveSet):
         import manager.helpers.alternatingSlicewiseDiagonalization as asd
@@ -60,11 +62,6 @@ Chemom. Intell. Lab. Syst., vol. 65, no. 1, pp. 119–137, 2003.
         self.model.customData['tp'] = cd1.curve.params[Param.tp]
         self.model.customData['tw'] = cd1.curve.params[Param.tw]
         tptw = cd1.curve.params[Param.tp] + cd1.curve.params[Param.tw]
-        analyte = curveSet.analytes.all()[0]
-        concs = []
-        for cd in curveSet.curvesData.all():
-            concs.append(curveSet.analytesConc[analyte.id].get(cd.id, 0))
-        self.model.customData['analyte'] = analyte.name
         main_data_1 = np.zeros((tptw, int(len(cd1.currentSamples)/tptw/2), len(curveSet.curvesData.all())))
         main_data_2 = np.zeros((tptw, int(len(cd1.currentSamples)/tptw/2), len(curveSet.curvesData.all())))
         for cnum, cd in enumerate(curveSet.curvesData.all()):
@@ -111,51 +108,25 @@ Chemom. Intell. Lab. Syst., vol. 65, no. 1, pp. 119–137, 2003.
 
         dE = cd1.curve.params[Param.dE]
 
-        def capacitive(t, R, eps, tau):
-            return dE/R * np.exp(-(t+eps)/tau)
-        capacitive_bounds = ((0, 0, 0), (10**10, 1000, 10000))
-
-        def faradaic(t, a, eps):
-            return np.dot(a, np.sqrt(np.add(t, eps)))
-        faradaic_bounds = ((-10**7, 0), (10**7, 1000))
-
         def best_fit_factor(SamplingPred, PotentialPred, ConcentrationPred):
-            is_farad = []
+            cov_to_beat = 0
+            best_factor = None
             for i, sp in enumerate(SamplingPred.T):
                 x = np.array(range(sp.shape[0]-1))
-                farad_fit, farad_cov = curve_fit(
-                    f=faradaic,
-                    xdata=x,
-                    ydata=sp[1:],
-                    bounds=faradaic_bounds
-                )
-                capac_fit, capac_cov = curve_fit(
-                    f=capacitive,
-                    xdata=x,
-                    ydata=sp[1:],
-                    bounds=capacitive_bounds
-                )
+                if sp[1] > 0:
+                    yvec = sp[1:]
+                else:
+                    yvec = np.dot(sp[1:], -1)
+                farad_fit, farad_cov = fit_faradaic_eq(xvec=x, yvec=yvec)
+                capac_fit, capac_cov = fit_capacitive_eq(xvec=x, yvec=yvec, dE=dE)
 
                 if capac_cov[0, 1] > farad_cov[0, 1]:
-                    is_farad.append(False)
-                else:
-                    is_farad.append(True)
+                    if capac_cov[0, 1] > cov_to_beat:
+                        cov_to_beat = capac_cov[0, 1]
+                        best_factor = i
 
-            tobeat = 0
-            best_factor = -1
-            factor_conc = []
-            for i, cp in enumerate(ConcentrationPred.T):
-                if not is_farad[i]:
-                    continue
-                rr = np.corrcoef(cp, concs)
-                if np.abs(rr[0, 1]) > ((1/1+(1-tobeat)) * tobeat):
-                    # Prefer lower index because it has higher total variance
-                    best_factor = i
-                    tobeat = np.abs(rr[0, 1])
-                    factor_conc = cp
-
-            if best_factor == -1:
-                raise VoltPyFailed
+            if best_factor is None:
+                raise VoltPyFailed('Could not determine the capacitive factor.')
 
             chosen = {}
             chosen['x'] = SamplingPred[:, best_factor]
@@ -163,31 +134,38 @@ Chemom. Intell. Lab. Syst., vol. 65, no. 1, pp. 119–137, 2003.
             chosen['z'] = ConcentrationPred[:, best_factor]
             return chosen
 
-        def recompose(bfd):
-            mult = np.mean(bfd['x'][self.model.customData['tw']:])
-            yvecs = np.dot(np.matrix(bfd['y']).T, np.matrix(bfd['z']))
-            yvecs = np.dot(yvecs, mult)
-            return yvecs
-
         bfd0 = best_fit_factor(SamplingPred1, PotentialPred1, ConcentrationPred1)
         bfd1 = best_fit_factor(SamplingPred2, PotentialPred2, ConcentrationPred2)
-        yv0 = recompose(bfd0)
-        yv1 = recompose(bfd1)
-        yvecs2 = np.subtract(yv1, yv0)
+        randnum = np.random.randint(0, len(bfd0['y']), size=10)
 
-        if yvecs2.shape[1] == len(curveSet.curvesData.all()):
-            for i, cd in enumerate(curveSet.curvesData.all()):
-                newcd = cd.getCopy()
-                newcdConc = curveSet.getCurveConcDict(cd)
-                newy = np.array(yvecs2[:, i].T).squeeze()  # change to array to remove dimension
-                newcd.yVector = newy
-                newcd.date = timezone.now()
-                newcd.save()
-                curveSet.removeCurve(cd)
-                curveSet.addCurve(newcd, newcdConc)
-            curveSet.save()
-        else:
-            raise VoltPyFailed('Computation error.')
+        # Calculate tau in 10 random points for both best factors and all curves:
+        cfits = []
+        for bfd in (bfd0, bfd1):
+            xv = np.array(range(len(bfd['x'])))
+            for ri in randnum:
+                for cp in bfd['z']:
+                    sampling_recovered = np.dot(bfd['x'], cp).dot(bfd['y'][ri])
+                    if sampling_recovered[1] > 0:
+                        yvec = sampling_recovered
+                    else:
+                        yvec = np.dot(sampling_recovered, -1)
+                    capac_fit, capac_cov = fit_capacitive_eq(
+                        xvec=xv,
+                        yvec=yvec,
+                        dE=dE
+                    )
+                    cfits.append(capac_fit)
+        cfits = np.matrix(cfits)
+        fit_mean = np.mean(cfits, axis=0)
+        fit_std = np.std(cfits, axis=0)
+        self.model.customData['Tau'] = fit_mean[0, 2]
+        self.model.customData['TauStdDev'] = fit_std[0, 2]
+        self.model.customData['Romega'] = fit_mean[0, 0]
+        self.model.customData['RomegaStdDev'] = fit_std[0, 0]
+        self.model.customData['BestFitData'] = {}
+        self.model.customData['BestFitData'][0] = bfd0
+        self.model.customData['BestFitData'][1] = bfd1
+        self.model.save()
 
     def finalize(self, user):
         self.__perform(self.model.curveSet)
@@ -199,6 +177,30 @@ Chemom. Intell. Lab. Syst., vol. 65, no. 1, pp. 119–137, 2003.
         if self.model.completed is not True:
             raise VoltPyNotAllowed('Incomplete procedure.')
         self.__perform(curveSet)
+    
+    def exportableData(self):
+        return None
+
+    def getFinalContent(self, request, user):
+        from manager.helpers.fithelpers import significant_digit
+        n = len(self.model.customData['BestFitData'][0]['z'])
+        ta = t.ppf(0.975, n)
+        tau_ci = self.model.customData['TauStdDev'] * ta / np.sqrt(n)
+        rom_ci = self.model.customData['RomegaStdDev'] * ta / np.sqrt(n)
+        sigtau = significant_digit(tau_ci)
+        sigrom = significant_digit(rom_ci)
+        return {
+            'head': '',
+            'body': """<p>Estimates for &alpha;=0.05:<br />
+                        Tau: {tau}&plusmn;{tauci}&nbsp;ms(?)<br />
+                        Romega: {rom}&plusmn;{romci}&nbsp;Ohm</p>
+                    """.format(
+                tau='%.*f' % (sigtau, self.model.customData['Tau']),
+                tauci='%.*f' % (sigtau, tau_ci),
+                rom='%.*f' % (sigrom, self.model.customData['Romega']),
+                romci='%.*f' % (sigrom, rom_ci)
+            )
+        }
 
 
-main_class = ASDDecomposition
+main_class = ASDCapacitiveEstimation

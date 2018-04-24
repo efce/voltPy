@@ -1,8 +1,7 @@
 from django.conf.urls import url
 from django.urls import include, path
-
-from . import views
 from manager.uploads import uploadmanager
+from manager import views
 
 urlpatterns = [
     url(r'^$', 
@@ -19,15 +18,15 @@ urlpatterns = [
         uploadmanager.ajax, name='ajaxUpload'),
     url(r'^ajax/search-curveset/$', 
         views.searchCurveSet, name='searchCurveSetAjax'),
-    url(r'^delete-file-set/(?P<file_id>[0-9]+)/$', 
+    url(r'^delete-file-set/(?P<fileset_id>[0-9]+)/$',
         views.deleteFileSet, name='deleteFileSet'),
-    url(r'^delete-file/(?P<file_id>[0-9]+)/$', 
+    url(r'^delete-file/(?P<file_id>[0-9]+)/$',
         views.deleteCurveFile, name='deleteCurveFile'),
-    url(r'^edit-file/(?P<file_id>[0-9]+)/$', 
+    url(r'^edit-file/(?P<file_id>[0-9]+)/$',
         views.editCurveFile, name='editCurveFile'),
-    url(r'^show-file/(?P<file_id>[0-9]+)/$', 
+    url(r'^show-file/(?P<file_id>[0-9]+)/$',
         views.showCurveFile, name='showCurveFile'),
-    url(r'^show-file-set/(?P<fileset_id>[0-9]+)/$', 
+    url(r'^show-file-set/(?P<fileset_id>[0-9]+)/$',
         views.showFileSet, name='showFileSet'),
     url(r'^delete-curve/(?P<objType>[cf|cs]+)/(?P<objId>[0-9]+)/(?P<delId>[0-9]+)/$',
         views.deleteCurve, name='deleteCurve'),

@@ -444,7 +444,6 @@ class SelectCurvesForCurveSetForm(forms.Form):
                 owner=user,
                 name=self.cleaned_data['name'],
                 date=timezone.now(),
-                locked=False,
                 deleted=False
             )
             newcs.save()

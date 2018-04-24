@@ -1,4 +1,5 @@
 import numpy as np
+from scipy.optimize import curve_fit
 
 
 def calc_normal_equation_fit(xvec, yvec):
@@ -60,3 +61,60 @@ def significant_digit(value, sig_num=2):
     if fl + sig_num < 0:
         return int(0)
     return int((fl + sig_num) - 1)
+
+
+def fit_capacitive_eq(
+        xvec,
+        yvec,
+        dE=1,
+        initialR=100,
+        initialTau=1,
+        initialEps=0.001,
+        Romega_bounds=(0, np.inf),
+        tau_bounds=(0, np.inf),
+        teps_bounds=(-10, 10)):
+
+    def capacitive(x, Rom, eps, tau):
+        dEoR = np.divide(dE, Rom)
+        power_of = np.divide(np.add(-x, eps), tau)
+        ret = np.dot(dEoR, np.exp(power_of))
+        return ret
+
+    p0 = (initialR, initialEps, initialTau)
+
+    capacitive_bounds = list(zip(Romega_bounds, teps_bounds, tau_bounds))
+
+    capac_fit, capac_cov = curve_fit(
+        f=capacitive,
+        xdata=xvec,
+        ydata=yvec,
+        p0=p0,
+        bounds=capacitive_bounds,
+    )
+
+    return capac_fit, capac_cov
+
+
+def fit_faradaic_eq(
+        xvec,
+        yvec,
+        initialA=30,
+        initialEps=0,
+        A_bounds=(-np.inf, np.inf),
+        Eps_bounds=(-2, 2)):
+
+    faradaic_bounds = list(zip(A_bounds, Eps_bounds))
+    p0 = (initialA, initialEps)
+
+    def faradaic(t, a, eps):
+        return np.dot(a, np.sqrt(np.add(t, eps)))
+
+    farad_fit, farad_cov = curve_fit(
+        f=faradaic,
+        xdata=xvec,
+        ydata=yvec,
+        bounds=faradaic_bounds,
+        p0=p0
+    )
+
+    return farad_fit, farad_cov
