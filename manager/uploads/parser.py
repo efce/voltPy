@@ -41,7 +41,6 @@ class Parser(ABC):
         )
         cs = mmodels.CurveSet(
             owner=user,
-            locked=False,
         )
         cs.save()
         cf.curveSet = cs

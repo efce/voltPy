@@ -341,7 +341,7 @@ $(function(){{
                         completed=False
                     )
                     a.save()
-                    curveset.locked = True  # CurveSet cannot be changed when used by Analysis method.
+                    curveset.inUseBy.add(a)  # CurveSet cannot be changed when used by Analysis method.
                     curveset.save()
                     return a.id
             return None

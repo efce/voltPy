@@ -462,7 +462,7 @@ class CurveSet(models.Model):
     owner = models.ForeignKey(User, on_delete=models.DO_NOTHING)
     name = models.CharField(max_length=128)
     date = models.DateField(auto_now_add=True)
-    locked = models.BooleanField(default=False)
+    inUseBy = models.ManyToManyField('Analysis', related_name='locks_curvesets')
     curvesData = models.ManyToManyField(CurveData, related_name="curvesData")
     undoCurvesData = models.ManyToManyField(CurveData, related_name="undoCurvesData")
     analytes = models.ManyToManyField(Analyte, related_name="analytes")
@@ -473,6 +473,18 @@ class CurveSet(models.Model):
     undoAnalytesConcUnits = PickledObjectField(default={})  # dictionary key is analyte id
     undoProcessing = models.ForeignKey('Processing', null=True, default=None, on_delete=models.DO_NOTHING)
     deleted = models.BooleanField(default=False)
+
+    @property
+    def locked(self) -> bool:
+        if len(self.inUseBy.all()) == 0:
+            return False
+        else:
+            in_use = False
+            for a in self.inUseBy.all():
+                if a.deleted == False:
+                    in_use = True
+                    break
+            return in_use
 
     def removeCurve(self, curveData: CurveData):
         self.curvesData.remove(curveData)
