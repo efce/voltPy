@@ -10,6 +10,8 @@ import numpy as np
 from django.db import transaction
 from django.db import DatabaseError
 import manager.models as mmodels
+from manager.exceptions import VoltPyFailed
+from manager.helpers.functions import add_notification
 
 
 class Method(ABC):
@@ -151,6 +153,16 @@ class Method(ABC):
                         cd.processedWith = self.model
                         cd.save()
                 self.step = None
+        except VoltPyFailed as e:
+            transaction.savepoint_rollback(sid)
+            self.model.deleted = True
+            self.model.save()
+            add_notification(
+                request=request, 
+                text='Processing failed with message: %s' % str(e),
+                severity=1
+            )
+            return
         except:
             transaction.savepoint_rollback(sid)
             raise DatabaseError

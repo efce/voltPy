@@ -151,7 +151,7 @@ Chemom. Intell. Lab. Syst., vol. 65, no. 1, pp. 119–137, 2003.
                     factor_conc = cp
 
             if best_factor == -1:
-                raise VoltPyFailed
+                raise VoltPyFailed('Decomposed factors do not meet the requriements.')
 
             chosen = {}
             chosen['x'] = SamplingPred[:, best_factor]
