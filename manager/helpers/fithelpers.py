@@ -63,29 +63,33 @@ def significant_digit(value, sig_num=2):
     return int((fl + sig_num) - 1)
 
 
+def calc_capacitive(x, dE, Rom, teps, tau, yeps):
+    dEoR = np.divide(dE, Rom)
+    power_of = np.divide(-x, np.add(tau, teps))
+    ret = np.add(np.dot(dEoR, np.exp(power_of)), yeps)
+    return ret
+
+
 def fit_capacitive_eq(
         xvec,
         yvec,
         dE=1,
         initialR=100,
         initialTau=1,
-        initialEps=0.001,
+        initialEps=1E-10,
         Romega_bounds=(0, np.inf),
         tau_bounds=(0, np.inf),
-        teps_bounds=(-10, 10)):
+        teps_bounds=(-1, 1)):
 
-    def capacitive(x, Rom, eps, tau):
-        dEoR = np.divide(dE, Rom)
-        power_of = np.divide(np.add(-x, eps), tau)
-        ret = np.dot(dEoR, np.exp(power_of))
-        return ret
+    p0 = (initialR, initialEps, initialTau, np.min(yvec))
 
-    p0 = (initialR, initialEps, initialTau)
+    capacitive_bounds = list(zip(Romega_bounds, teps_bounds, tau_bounds, (np.min(yvec), np.max(yvec))))
 
-    capacitive_bounds = list(zip(Romega_bounds, teps_bounds, tau_bounds))
+    def calc_capacitive_part(x, Rom, teps, tau, yeps, dE=dE):
+        return calc_capacitive(x, dE=dE, Rom=Rom, teps=teps, tau=tau, yeps=yeps)
 
     capac_fit, capac_cov = curve_fit(
-        f=capacitive,
+        f=calc_capacitive_part,
         xdata=xvec,
         ydata=yvec,
         p0=p0,
@@ -95,22 +99,23 @@ def fit_capacitive_eq(
     return capac_fit, capac_cov
 
 
+def calc_faradaic(t, a, eps, eps2):
+    return np.add(np.dot(a, np.power(np.add(t, eps), -0.5)), eps2)
+
+
 def fit_faradaic_eq(
         xvec,
         yvec,
         initialA=30,
-        initialEps=0,
+        initialEps=1E-10,
         A_bounds=(-np.inf, np.inf),
-        Eps_bounds=(-2, 2)):
+        Eps_bounds=(-1, 1)):
 
-    faradaic_bounds = list(zip(A_bounds, Eps_bounds))
-    p0 = (initialA, initialEps)
-
-    def faradaic(t, a, eps):
-        return np.dot(a, np.sqrt(np.add(t, eps)))
+    faradaic_bounds = list(zip(A_bounds, Eps_bounds, (np.min(yvec), np.max(yvec))))
+    p0 = (initialA, initialEps, np.min(yvec))
 
     farad_fit, farad_cov = curve_fit(
-        f=faradaic,
+        f=calc_faradaic,
         xdata=xvec,
         ydata=yvec,
         bounds=faradaic_bounds,

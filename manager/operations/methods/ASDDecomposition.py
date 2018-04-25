@@ -1,14 +1,14 @@
 import numpy as np
 from scipy.optimize import curve_fit
 from django.utils import timezone
-# import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
 from manager.operations.methodsteps.selectanalyte import SelectAnalyte
 import manager.operations.method as method
 import manager.models as mmodels
 from manager.exceptions import VoltPyNotAllowed
 from manager.exceptions import VoltPyFailed
-from manager.helpers.fithelpers import fit_capacitive_eq
-from manager.helpers.fithelpers import fit_faradaic_eq
+from manager.helpers.fithelpers import fit_capacitive_eq, calc_capacitive
+from manager.helpers.fithelpers import fit_faradaic_eq, calc_faradaic
 
 
 class ASDDecomposition(method.ProcessingMethod):
@@ -77,7 +77,8 @@ Chemom. Intell. Lab. Syst., vol. 65, no. 1, pp. 119–137, 2003.
                 main_data_1[:, pos, cnum] = cd.currentSamples[i:(i+tptw)]
                 main_data_2[:, pos, cnum] = cd.currentSamples[(i+tptw):(i+(2*tptw))]
         an_num = len(curveSet.analytes.all())
-        factors = an_num + 2
+
+        factors = an_num + 1
 
         X0 = []
         Y0 = []
@@ -85,6 +86,7 @@ Chemom. Intell. Lab. Syst., vol. 65, no. 1, pp. 119–137, 2003.
             X0.append([x for x in np.random.rand(main_data_1.shape[0], 1)])
             Y0.append([x for x in np.random.rand(main_data_1.shape[1], 1)])
 
+        # TODO: fit one combined array (step and pulse), check correlation for all analytes before selection.
         SamplingPred1, PotentialPred1, ConcentrationPred1, errflag1, iter_num1, cnv1 = asd.asd(
             main_data_1,
             X0,
@@ -115,33 +117,40 @@ Chemom. Intell. Lab. Syst., vol. 65, no. 1, pp. 119–137, 2003.
         dE = cd1.curve.params[Param.dE]
 
         def best_fit_factor(SamplingPred, PotentialPred, ConcentrationPred):
-            is_farad = []
+            capac_index = -1
+            capac_r2 = 0
             for i, sp in enumerate(SamplingPred.T):
-                x = np.array(range(sp.shape[0]-1))
                 if sp[1] > 0:
-                    yvec = sp[1:]
+                    yvec = sp
                 else:
-                    yvec = np.dot(sp[1:], -1)
-                farad_fit, farad_cov = fit_faradaic_eq(
-                    xvec=x,
-                    yvec=yvec
-                )
+                    yvec = np.dot(sp, -1)
+                x = np.arange(0, len(yvec))
+
                 capac_fit, capac_cov = fit_capacitive_eq(
                     xvec=x,
                     yvec=yvec,
                     dE=dE
                 )
+                yc_pred = calc_capacitive(x, dE, *capac_fit)
+                r2c = np.power(np.corrcoef(yc_pred, yvec)[0, 1], 2)
+                """
+                farad_fit, farad_cov = fit_faradaic_eq(
+                    xvec=x,
+                    yvec=yvec
+                )
+                yf_pred = calc_faradaic(x, *farad_fit)
+                r2f = np.power(np.corrcoef(yf_pred, yvec)[0, 1], 2)
+                """
 
-                if capac_cov[0, 1] > farad_cov[0, 1]:
-                    is_farad.append(False)
-                else:
-                    is_farad.append(True)
+                if r2c > capac_r2:
+                    capac_r2 = r2c
+                    capac_index = i
 
             tobeat = 0
             best_factor = -1
             factor_conc = []
             for i, cp in enumerate(ConcentrationPred.T):
-                if not is_farad[i]:
+                if i == capac_index:
                     continue
                 rr = np.corrcoef(cp, concs)
                 if np.abs(rr[0, 1]) > ((1/1+(1-tobeat)) * tobeat):
@@ -151,7 +160,7 @@ Chemom. Intell. Lab. Syst., vol. 65, no. 1, pp. 119–137, 2003.
                     factor_conc = cp
 
             if best_factor == -1:
-                raise VoltPyFailed('Decomposed factors do not meet the requriements.')
+                raise VoltPyFailed('Decomposed factors do not meet the requirements.')
 
             chosen = {}
             chosen['x'] = SamplingPred[:, best_factor]
@@ -169,7 +178,7 @@ Chemom. Intell. Lab. Syst., vol. 65, no. 1, pp. 119–137, 2003.
         bfd1 = best_fit_factor(SamplingPred2, PotentialPred2, ConcentrationPred2)
         yv0 = recompose(bfd0)
         yv1 = recompose(bfd1)
-        yvecs2 = np.subtract(yv1, yv0)
+        yvecs2 = yv0  # np.subtract(yv1, yv0)
 
         if yvecs2.shape[1] == len(curveSet.curvesData.all()):
             for i, cd in enumerate(curveSet.curvesData.all()):
