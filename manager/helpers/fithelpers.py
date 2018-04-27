@@ -57,7 +57,7 @@ def significant_digit(value, sig_num=2):
     """
     Calculates on which decimal place is the sig_num'th significant digit
     """
-    fl = -np.floor(np.log10(value))
+    fl = -np.floor(np.log10(np.abs(value)))
     if fl + sig_num < 0:
         return int(0)
     return int((fl + sig_num) - 1)

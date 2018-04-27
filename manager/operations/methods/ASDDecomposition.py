@@ -1,10 +1,11 @@
 import numpy as np
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 from django.utils import timezone
 import manager.models as mmodels
 import manager.helpers.alternatingSlicewiseDiagonalization as asd
 import manager.operations.method as method
 from manager.operations.methodsteps.selectanalyte import SelectAnalyte
+from manager.operations.methodsteps.selectrange import SelectRange
 from manager.exceptions import VoltPyNotAllowed
 from manager.exceptions import VoltPyFailed
 from manager.helpers.functions import check_curveset_integrity
@@ -20,6 +21,14 @@ class ASDDecomposition(method.ProcessingMethod):
             'title': 'Select analyte',
             'desc': """Select analyte.""",
         },
+        {
+            'class': SelectRange,
+            'title': 'Select range',
+            'desc': """
+Select range for decomposition. 
+Range should extend about two width of the peak either way from it.
+            """,
+        },
     )
     description = """
 Decomposes the data into factor, for which automatically selects,
@@ -32,10 +41,10 @@ Chemom. Intell. Lab. Syst., vol. 65, no. 1, pp. 119–137, 2003.
 
     """
 
-    type_seperate = 0
+    type_separate = 0
     type_together = 1
     type_combined = 2
-    _allowed_types = (type_combined, type_seperate, type_together)
+    _allowed_types = (type_combined, type_separate, type_together)
 
     @classmethod
     def __str__(cls):
@@ -53,6 +62,8 @@ Chemom. Intell. Lab. Syst., vol. 65, no. 1, pp. 119–137, 2003.
         self.model.customData['tw'] = cd1.curve.params[Param.tw]
         tptw = cd1.curve.params[Param.tp] + cd1.curve.params[Param.tw]
         dE = cd1.curve.params[Param.dE]
+        dec_start = cd1.xValue2Index(self.model.customData['DecomposeRange'][0])
+        dec_end = cd1.xValue2Index(self.model.customData['DecomposeRange'][1])
 
         if all([
                 cd1.curve.params[Param.method] != Param.method_dpv,
@@ -71,16 +82,18 @@ Chemom. Intell. Lab. Syst., vol. 65, no. 1, pp. 119–137, 2003.
         ]
         check_curveset_integrity(self.model.curveSet, params_to_check)
 
-        analyte = curveSet.analytes.all()[0]
-        self.model.customData['analyte'] = analyte.name
-        an_num = len(curveSet.analytes.all())
-        factors = an_num + 5  # if interested in faradaic +2 if in capac +1
+        an_selected = self.model.analytes.all()[0]
+        concs_different = curveSet.getUncorrelatedConcs()
+        an_selected_conc = curveSet.getConc(an_selected.id)
+        self.model.customData['analyte'] = an_selected.name
 
-        concs = []
-        for cd in curveSet.curvesData.all():
-            concs.append(curveSet.analytesConc[analyte.id].get(cd.id, 0))
+        if not an_selected_conc:
+            raise VoltPyFailed('Wrong analyte selected.')
 
-        if method_type == self.type_seperate:
+        an_num = len(concs_different)
+        factors = an_num + 2  # if interested in faradaic +2 if in capac +1
+
+        if method_type == self.type_separate:
             main_data_1 = np.zeros(
                 (tptw, int(len(cd1.currentSamples)/tptw/2), len(curveSet.curvesData.all()))
             )
@@ -93,6 +106,8 @@ Chemom. Intell. Lab. Syst., vol. 65, no. 1, pp. 119–137, 2003.
                     pos = int(i/(2*tptw))
                     main_data_1[:, pos, cnum] = cd.currentSamples[i:(i+tptw)]
                     main_data_2[:, pos, cnum] = cd.currentSamples[(i+tptw):(i+(2*tptw))]
+            main_data_1 = main_data_1[:, dec_start:dec_end, :]
+            main_data_2 = main_data_2[:, dec_start:dec_end, :]
 
         elif method_type == self.type_together:
             main_data_1 = np.zeros(
@@ -103,10 +118,8 @@ Chemom. Intell. Lab. Syst., vol. 65, no. 1, pp. 119–137, 2003.
                 for i in np.arange(0, len(cd1.currentSamples), tptw):
                     pos = int(i/tptw)
                     main_data_1[:, pos, cnum] = cd.currentSamples[i:(i+tptw)]
-            plt.plot(main_data_1[-1, :, :])
-            plt.title('przed')
-            plt.show()
-            main_data_1 = self.remove_bkg_current(main_data_1)
+            main_data_1 = main_data_1[:, 2*dec_start:2*dec_end, :]
+            # main_data_1 = self.remove_bkg_current(main_data_1)
 
         elif method_type == self.type_combined:
             main_data_1 = np.zeros(
@@ -117,12 +130,10 @@ Chemom. Intell. Lab. Syst., vol. 65, no. 1, pp. 119–137, 2003.
                 for i in np.arange(0, len(cd1.currentSamples), 2*tptw):
                     pos = int(i/(2*tptw))
                     main_data_1[:, pos, cnum] = cd.currentSamples[i:(i+2*tptw)]
+            main_data_1 = main_data_1[:, dec_start:dec_end, :]
 
         X0 = np.random.rand(factors, main_data_1.shape[0])
         Y0 = np.random.rand(factors, main_data_1.shape[1])
-
-        plt.plot(main_data_1[-1, :, :])
-        plt.show()
 
         # TODO: fit one combined array (step and pulse), check correlation for all analytes before selection.
         SamplingPred1, PotentialPred1, ConcentrationPred1, errflag1, iter_num1, cnv1 = asd.asd(
@@ -137,16 +148,8 @@ Chemom. Intell. Lab. Syst., vol. 65, no. 1, pp. 119–137, 2003.
             0.000001,
             100
         )
-        plt.subplot(131)
-        plt.plot(SamplingPred1)
-        plt.subplot(132)
-        plt.plot(PotentialPred1)
-        plt.subplot(133)
-        plt.plot(ConcentrationPred1)
-        plt.show()
 
-
-        if method_type == self.type_seperate:
+        if method_type == self.type_separate:
             X0 = SamplingPred1.T
             Y0 = PotentialPred1.T
             SamplingPred2, PotentialPred2, ConcentrationPred2, errflag2, iter_num2, cnv2 = asd.asd(
@@ -177,17 +180,17 @@ Chemom. Intell. Lab. Syst., vol. 65, no. 1, pp. 119–137, 2003.
                 yvecs[1::2] = yvecs2
             return yvecs
 
-        if method_type == self.type_seperate:
+        if method_type == self.type_separate:
             bfd0 = self._best_fit_factor(
                 dE=dE,
-                concs=concs,
+                concs=an_selected_conc,
                 SamplingPred=SamplingPred1,
                 PotentialPred=PotentialPred1,
                 ConcentrationPred=ConcentrationPred1
             )
             bfd1 = self._best_fit_factor(
                 dE=dE,
-                concs=concs,
+                concs=an_selected_conc,
                 SamplingPred=SamplingPred2,
                 PotentialPred=PotentialPred2,
                 ConcentrationPred=ConcentrationPred2
@@ -199,7 +202,7 @@ Chemom. Intell. Lab. Syst., vol. 65, no. 1, pp. 119–137, 2003.
         elif method_type == self.type_together:
             bfd0 = self._best_fit_factor(
                 dE=dE,
-                concs=concs,
+                concs=an_selected_conc,
                 SamplingPred=SamplingPred1,
                 PotentialPred=PotentialPred1,
                 ConcentrationPred=ConcentrationPred1
@@ -216,6 +219,7 @@ Chemom. Intell. Lab. Syst., vol. 65, no. 1, pp. 119–137, 2003.
                 newcdConc = curveSet.getCurveConcDict(cd)
                 newy = np.array(yvecs2[:, i].T).squeeze()  # change to array to remove dimension
                 newcd.yVector = newy
+                newcd.xVector = newcd.xVector[dec_start:dec_end]
                 newcd.date = timezone.now()
                 newcd.save()
                 curveSet.removeCurve(cd)
@@ -225,6 +229,7 @@ Chemom. Intell. Lab. Syst., vol. 65, no. 1, pp. 119–137, 2003.
             raise VoltPyFailed('Computation error.')
 
     def finalize(self, user):
+        self.model.customData['DecomposeRange'] = self.model.stepsData['SelectRange']
         self.__perform(self.model.curveSet)
         self.model.step = None
         self.model.completed = True
@@ -280,7 +285,6 @@ Chemom. Intell. Lab. Syst., vol. 65, no. 1, pp. 119–137, 2003.
                 continue
             rr = np.corrcoef(cp, concs)
             if np.abs(rr[0, 1]) > tobeat:
-                # Prefer lower index because it has higher total variance
                 best_factor = i
                 tobeat = np.abs(rr[0, 1])
 
