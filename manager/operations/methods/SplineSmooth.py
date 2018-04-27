@@ -35,7 +35,8 @@ Spline smoothing algorithm.
             newcdConc = curveSet.getCurveConcDict(cd)
             yvec = newcd.yVector
             xvec = newcd.xVector
-            spline_fit = UnivariateSpline(xvec, yvec, s=1)
+            spline_fit = UnivariateSpline(xvec, yvec)
+            spline_fit.set_smoothing_factor(0.001)
             newyvec = spline_fit(xvec)
             newcd.yVector = newyvec
             newcd.save()
