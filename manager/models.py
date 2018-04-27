@@ -2,7 +2,7 @@ import numpy as np
 import io
 from copy import copy
 from enum import IntEnum
-from typing import Dict
+from typing import Dict, List
 from overrides import overrides
 from django.db import models
 from django.urls import reverse
@@ -337,6 +337,14 @@ class CurveData(models.Model):
     __currentSamplesChanged = False
 
     @property
+    def pointsNumber(self):
+        return len(self.potential)
+
+    @property
+    def samplesNumber(self):
+        return len(self._currentSamples.data)
+
+    @property
     def currentSamples(self):
         if self._currentSamples is None:
             sd = SamplingData()
@@ -569,7 +577,9 @@ class CurveSet(models.Model):
         self.undoAnalytesConc.clear()
         self.undoAnalytesConcUnits.clear()
         if self.undoProcessing is not None:
-            self.undoProcessing.delete()
+            self.undoProcessing.error = 'Undone'
+            self.undoProcessing.deleted = True
+            self.undoProcessing.save()
             self.undoProcessing = None
         self.save()
 
@@ -578,9 +588,38 @@ class CurveSet(models.Model):
             return False
         else:
             return True
+        
+    def getConc(self, analyte_id: int) -> List:
+        """
+        Returns list of concentration for given analyte and all current curvesData.
+        """
+        conc = []
+        for cd in self.curvesData.all():
+            conc.append(self.analytesConc.get(analyte_id, {}).get(cd.id, 0))
+        return conc
+        
+    def getUncorrelatedConcs(self) -> List:
+        """
+        Returns list of list of concentrations of analytes which are not correlated.
+        """
+        concs_different = np.empty(0)
+        for an in self.analytes.all():
+            an_conc = []
+            for cd in self.curvesData.all():
+                an_conc.append(self.analytesConc[an.id].get(cd.id, 0))
+            if concs_different.shape[0] == 0:
+                concs_different = np.array([an_conc])
+            else:
+                for conc in concs_different:
+                    rabs = np.abs(np.corrcoef(conc, an_conc)[0, 1])
+                    if rabs > 0.9999:
+                        break
+                else:
+                    concs_different = np.vstack((concs_different, an_conc))
+        return concs_different
 
     def getProcessingHistory(self):
-        return Processing.objects.filter(curveSet=self, deleted=False).order_by('id')
+        return Processing.objects.filter(curveSet=self, deleted=False, completed=True).order_by('id')
 
     def export(self):
         return exportCDasFile(self.curvesData.all())

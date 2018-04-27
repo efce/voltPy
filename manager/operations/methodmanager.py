@@ -327,8 +327,8 @@ $(function(){{
                         deleted=False,
                         completed=False
                     )
-                    curveset.prepareUndo()
                     a.save()
+                    curveset.prepareUndo(processingObject=a)
                     return a.id
                 return None
             elif self.type == 'analysis':

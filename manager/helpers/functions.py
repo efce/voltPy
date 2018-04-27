@@ -1,11 +1,13 @@
 import numpy as np
 import datetime
 import base64 as b64
+from typing import List
 from django.urls import reverse
 from django.http import HttpResponseRedirect
 from django.shortcuts import render
 from django.template import loader
 from manager.exceptions import VoltPyNotAllowed
+from manager.exceptions import VoltPyFailed
 import manager.plotmanager as mpm
 import manager.forms as mforms
 import manager.models as mmodels
@@ -207,6 +209,16 @@ def form_helper(
 def get_redirect_class(redirectUrl):
     ret = '_voltJS_urlChanger _voltJS_url@%s'
     return ret % b64.b64encode(redirectUrl.encode()).decode('UTF-8')
+
+
+def check_curveset_integrity(curveSet, params_to_check: List):
+    if len(curveSet.curvesData.all()) < 2:
+        return
+    cd1 = curveSet.curvesData.all()[0]
+    for cd in curveSet.curvesData.all():
+        for p in params_to_check:
+            if cd.curve.params[p] != cd1.curve.params[p]:
+                raise VoltPyFailed('All curves in curveSet have to be similar.')
 
 
 def getUser():
