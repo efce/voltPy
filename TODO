@@ -10,7 +10,7 @@
   - Group main menu items and create dropdown lists
   - Clear selection menu with Analysis methods
   - Clear selection menu with Processing methods
-  - Ability to add method to favorite (ability to add star to the method like in gmail)
+  - Ability to add method to favorites (ability to add star to the method like in gmail)
   - Menu with favorite and last used methods
   - Separate Copy (instant copy) and add CurveSet to selection in CurveSet creation
 - Ability to share CurveSet/Analysis with other registered user (ro/rw)
@@ -29,11 +29,11 @@
 - Support for additional file formats and additional file/curve information:
   - Implement Autolab files parsing
 - Additional processing/analysis methods:
-  - splines - smoothing algorithm
+  x splines - smoothing algorithm
   - wavelets - smoothing, and decomposition/calibration with zero-crossing method
   - Calibration method
   - ICM - Integrated Calibration Method
-  - OSC - Orthogonal Signal Correction
-  - Estimation of Cell Time Constant (tau) based on ASD (capacitive factor)
+  - OSC - Orthogonal Signal Correction -- wip in branch osc
+  - Estimation of Cell Time Constant (tau) based on ASD (capacitive factor) -- wip in master (kind of works)
   - Genetic algorithm for background correction -- Łukasz(?)
   - PLS - Partial Least Squares calibration -- Łukasz(?)
