@@ -569,7 +569,9 @@ class CurveSet(models.Model):
         self.undoAnalytesConc.clear()
         self.undoAnalytesConcUnits.clear()
         if self.undoProcessing is not None:
-            self.undoProcessing.delete()
+            self.undoProcessing.error = 'Undone'
+            self.undoProcessing.deleted = True
+            self.undoProcessing.save()
             self.undoProcessing = None
         self.save()
 
