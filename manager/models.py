@@ -78,7 +78,7 @@ class CurveFile(models.Model):
     name = models.CharField(max_length=255)
     comment = models.TextField()
     fileName = models.TextField()
-    fileDate = models.DateField(auto_now=False, auto_now_add=False)  # Each file has its curveset 
+    fileDate = models.DateField(auto_now=False, auto_now_add=False)  # Each file has its curveset
     curveSet = models.ForeignKey('CurveSet', on_delete=models.DO_NOTHING)
     uploadDate = models.DateField(auto_now_add=True)
     deleted = models.BooleanField(default=False)

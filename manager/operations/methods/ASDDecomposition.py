@@ -119,7 +119,7 @@ Chemom. Intell. Lab. Syst., vol. 65, no. 1, pp. 119–137, 2003.
                     pos = int(i/tptw)
                     main_data_1[:, pos, cnum] = cd.currentSamples[i:(i+tptw)]
             main_data_1 = main_data_1[:, 2*dec_start:2*dec_end, :]
-            # main_data_1 = self.remove_bkg_current(main_data_1)
+            main_data_1 = self.remove_bkg_current(main_data_1)
 
         elif method_type == self.type_combined:
             main_data_1 = np.zeros(

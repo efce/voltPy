@@ -60,7 +60,7 @@ Savitzky-Golay smoothing algorithm.
                 self.model.customData['WindowSpan'],
                 self.model.customData['Degree']
             )
-            newcd.yVector = newyvec.tolist()
+            newcd.yVector = newyvec
             newcd.save()
             curveSet.removeCurve(cd)
             curveSet.addCurve(newcd, newcdConc)
