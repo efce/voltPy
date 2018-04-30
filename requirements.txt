@@ -1,0 +1,12 @@
+django==2.0.4
+unipath
+scipy
+numpy
+bokeh
+pandas
+django-picklefield
+xlrd
+ezodf
+lxml
+overrides
+django-guardian
