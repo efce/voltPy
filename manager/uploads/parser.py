@@ -2,6 +2,7 @@ import numpy as np
 from abc import ABC
 import manager.models as mmodels
 from manager.models import Curve as mcurve
+from guardian.shortcuts import assign_perm
 Param = mcurve.Param
 
 
@@ -46,6 +47,10 @@ class Parser(ABC):
         cs.save()
         cf.curveSet = cs
         cf.save()
+        assign_perm('rw', user, cf)
+        assign_perm('ro', user, cf)
+        assign_perm('del', user, cf)
+        
 
         order = 0
         for c in self._curves:

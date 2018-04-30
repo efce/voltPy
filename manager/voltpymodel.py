@@ -3,10 +3,11 @@ from manager.exceptions import VoltPyNotAllowed
 import manager
 
 
+#  W HUJ NIE DIZALA
 class VoltPyModel(models.Model):
     id = models.AutoField(primary_key=True)
 
-    class META:
+    class Meta:
         permissions = (
             ('ro', 'Read only'),
             ('rw', 'Read write'),
@@ -40,6 +41,7 @@ class VoltPyModel(models.Model):
     def delete(self):
         user = manager.helpers.functions.getUser()
         if user.has_perm('del', self):
-            super.delete()
+            self.deleted = True
+            super().save()
         else:
             raise VoltPyNotAllowed('Operation not allowed.')

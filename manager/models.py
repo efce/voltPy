@@ -10,6 +10,7 @@ from django.contrib.auth.models import User
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from picklefield.fields import PickledObjectField
+from manager.voltpymodel import VoltPyModel
 import manager
 
 
@@ -72,8 +73,7 @@ def exportCDasFile(cds):
     return memoryFile
 
 
-class CurveFile(models.Model):
-    id = models.AutoField(primary_key=True)
+class CurveFile(VoltPyModel):
     owner = models.ForeignKey(User, on_delete=models.DO_NOTHING)
     name = models.CharField(max_length=255)
     comment = models.TextField()
@@ -88,9 +88,6 @@ class CurveFile(models.Model):
 
     class META:
         ordering = ('uploadDate')
-        permissions = (
-            ('huj', 'zrób w huja'),
-        )
 
     def isOwnedBy(self, user):
         return self.owner == user
