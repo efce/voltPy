@@ -31,6 +31,7 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
+    'guardian',
     'manager.apps.ManagerConfig',
     'django.contrib.admin',
     'django.contrib.auth',
@@ -127,3 +128,8 @@ CMS_PLUGIN_CACHE = False
 
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 LOGIN_REDIRECT_URL = 'index'
+
+AUTHENTICATION_BACKENDS = (
+    'django.contrib.auth.backends.ModelBackend', # this is default
+    'guardian.backends.ObjectPermissionBackend',
+)

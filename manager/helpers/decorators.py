@@ -53,7 +53,7 @@ def with_user(fun):
     """
     Makes sure that user is logged and passes User object to function call.
     """
-    @login_required
+    @login_required(login_url='/manager/login/')
     def wrap(request, *args, **kwargs):
         try:
             user = request.user

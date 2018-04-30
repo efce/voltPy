@@ -66,7 +66,7 @@ def activate(request, uidb64, token):
         user.is_active = True
         user.profile.email_confirmed = True
         user.save()
-        login(request, user)
+        login(request, user, backend='guardian.backends.ObjectPermissionBackend')
         return redirect('index')
     else:
         return render(request, 'registration/account_activation_invalid.html')
