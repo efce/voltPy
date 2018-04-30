@@ -88,6 +88,9 @@ class CurveFile(models.Model):
 
     class META:
         ordering = ('uploadDate')
+        permissions = (
+            ('huj', 'zrób w huja'),
+        )
 
     def isOwnedBy(self, user):
         return self.owner == user
