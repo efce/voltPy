@@ -3,16 +3,12 @@ from manager.exceptions import VoltPyNotAllowed
 import manager
 
 
-#  W HUJ NIE DIZALA
 class VoltPyModel(models.Model):
     id = models.AutoField(primary_key=True)
+    deleted = models.BooleanField(default=False)
 
     class Meta:
-        permissions = (
-            ('ro', 'Read only'),
-            ('rw', 'Read write'),
-            ('del', 'Delete'),
-        )
+        abstract = True
 
     def save(self):
         if self.id is None:
@@ -27,6 +23,7 @@ class VoltPyModel(models.Model):
     def get(self, *args, **kwargs):
         user = manager.helpers.functions.getUser()
         if user.has_perm('ro', self):
+            kwargs['deleted'] = False
             self.objects.get(*args, **kwargs)
         else:
             raise VoltPyNotAllowed('Operation not allowed.')
@@ -34,6 +31,7 @@ class VoltPyModel(models.Model):
     def filter(self, *args, **kwargs):
         user = manager.helpers.functions.getUser()
         if user.has_perm('ro', self):
+            kwargs['deleted'] = False
             self.objects.filter(*args, **kwargs)
         else:
             raise VoltPyNotAllowed('Operation not allowed.')

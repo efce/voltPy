@@ -81,13 +81,16 @@ class CurveFile(VoltPyModel):
     fileDate = models.DateField(auto_now=False, auto_now_add=False)  # Each file has its curveset
     curveSet = models.ForeignKey('CurveSet', on_delete=models.DO_NOTHING)
     uploadDate = models.DateField(auto_now_add=True)
-    deleted = models.BooleanField(default=False)
 
     def __str__(self):
         return str(self.id) + ": " + self.name
 
-    class META:
-        ordering = ('uploadDate')
+    class Meta:
+        permissions = (
+            ('ro', 'Read only'),
+            ('rw', 'Read write'),
+            ('del', 'Delete'),
+        )
 
     def isOwnedBy(self, user):
         return self.owner == user
@@ -102,19 +105,21 @@ class CurveFile(VoltPyModel):
         return self.curveSet.export()
 
 
-class FileSet(models.Model):
-    id = models.AutoField(primary_key=True)
+class FileSet(VoltPyModel):
     owner = models.ForeignKey(User, on_delete=models.DO_NOTHING)
     name = models.CharField(max_length=255)
     files = models.ManyToManyField(CurveFile)
     date = models.DateField(auto_now_add=True)
-    deleted = models.BooleanField(default=0)
+
+    class Meta:
+        permissions = (
+            ('ro', 'Read only'),
+            ('rw', 'Read write'),
+            ('del', 'Delete'),
+        )
 
     def __str__(self):
         return str(self.id) + ': ' + self.name
-
-    class META:
-        ordering = ('uploadDate')
 
     def isOwnedBy(self, user):
         return self.owner == user
@@ -132,7 +137,7 @@ class FileSet(models.Model):
         return exportCDasFile(cds)
 
 
-class Curve(models.Model):
+class Curve(VoltPyModel):
     class Param(IntEnum):
         PARAMNUM = 64
         VOL_CMAX = 50  # maximum number of curves in ".vol" file (not in .volt)
@@ -261,14 +266,19 @@ class Curve(models.Model):
             120, 120, 60, 20, 20, 20, 5, 5, 5, 1, 1, 1, 1, 1
         ]
 
-    id = models.AutoField(primary_key=True)
     curveFile = models.ForeignKey(CurveFile, on_delete=models.CASCADE)
     orderInFile = models.IntegerField()
     name = models.TextField()
     comment = models.TextField()
     params = PickledObjectField()  # JSON List
     date = models.DateField(auto_now=False, auto_now_add=False)
-    deleted = models.BooleanField(default=0)
+
+    class Meta:
+        permissions = (
+            ('ro', 'Read only'),
+            ('rw', 'Read write'),
+            ('del', 'Delete'),
+        )
 
     def __str__(self):
         return ''. join([
@@ -282,9 +292,6 @@ class Curve(models.Model):
             '</span></td></tr></table>'
         ])
 
-    class META:
-        ordering = ('curveFile', 'orderInFile')
-
     def isOwnedBy(self, user):
         return (self.curveFile.owner == user)
 
@@ -295,8 +302,7 @@ class Curve(models.Model):
         return self.isOwnedBy(user)
 
 
-class CurveIndex(models.Model):
-    id = models.AutoField(primary_key=True)
+class CurveIndex(VoltPyModel):
     curve = models.ForeignKey(Curve, on_delete=models.CASCADE)
     potential_min = models.FloatField()  # in mV
     potential_max = models.FloatField()  # in mV
@@ -309,6 +315,13 @@ class CurveIndex(models.Model):
     current_range = models.FloatField()  # in mV
     samplingRate = models.IntegerField()  # in kHz
 
+    class Meta:
+        permissions = (
+            ('ro', 'Read only'),
+            ('rw', 'Read write'),
+            ('del', 'Delete'),
+        )
+
     def isOwnedBy(self, user):
         return self.curve.curveFile.owner == user
 
@@ -320,12 +333,10 @@ class CurveIndex(models.Model):
 
 
 class SamplingData(models.Model):
-    id = models.AutoField(primary_key=True)
     data = SimpleNumpyField(null=True, default=None)
 
 
-class CurveData(models.Model):
-    id = models.AutoField(primary_key=True)
+class CurveData(VoltPyModel):
     curve = models.ForeignKey(Curve, on_delete=models.CASCADE)
     date = models.DateField(auto_now_add=True)
     time = SimpleNumpyField(null=True, default=None)
@@ -335,6 +346,13 @@ class CurveData(models.Model):
     processedWith = models.ForeignKey('Processing', null=True, default=None, on_delete=models.DO_NOTHING)
     _currentSamples = models.ForeignKey(SamplingData, on_delete=models.DO_NOTHING, default=None, null=True)
     __currentSamplesChanged = False
+
+    class Meta:
+        permissions = (
+            ('ro', 'Read only'),
+            ('rw', 'Read write'),
+            ('del', 'Delete'),
+        )
 
     @property
     def pointsNumber(self):
@@ -452,16 +470,22 @@ class CurveData(models.Model):
             self.currentSamples = val
 
 
-class Analyte(models.Model):
-    id = models.AutoField(primary_key=True)
+class Analyte(VoltPyModel):
     name = models.CharField(max_length=125, unique=True)
     atomicMass = models.FloatField(null=True, default=None)  # to calculate between mol and wight
+
+    class Meta:
+        permissions = (
+            ('ro', 'Read only'),
+            ('rw', 'Read write'),
+            ('del', 'Delete'),
+        )
 
     def __str__(self):
         return self.name
 
 
-class CurveSet(models.Model):
+class CurveSet(VoltPyModel):
     minusOneSS = b'\xE2\x81\xBB\xC2\xB9'.decode("utf-8", "replace")
     cdot = b'\xC2\xB7'.decode("utf-8", "replace")
     CONC_UNITS = (
@@ -476,7 +500,6 @@ class CurveSet(models.Model):
     )
     CONC_UNIT_DEF = '0g'
 
-    id = models.AutoField(primary_key=True)
     owner = models.ForeignKey(User, on_delete=models.DO_NOTHING)
     name = models.CharField(max_length=255)
     date = models.DateField(auto_now_add=True)
@@ -490,7 +513,13 @@ class CurveSet(models.Model):
     analytesConcUnits = PickledObjectField(default={})  # dictionary key is analyte id
     undoAnalytesConcUnits = PickledObjectField(default={})  # dictionary key is analyte id
     undoProcessing = models.ForeignKey('Processing', null=True, default=None, on_delete=models.DO_NOTHING)
-    deleted = models.BooleanField(default=False)
+
+    class Meta:
+        permissions = (
+            ('ro', 'Read only'),
+            ('rw', 'Read write'),
+            ('del', 'Delete'),
+        )
 
     @property
     def locked(self) -> bool:
@@ -628,8 +657,7 @@ class CurveSet(models.Model):
         return reverse('showCurveSet', args=[self.id])
 
 
-class Analysis(models.Model):
-    id = models.AutoField(primary_key=True)
+class Analysis(VoltPyModel):
     owner = models.ForeignKey(User, on_delete=models.DO_NOTHING)
     curveSet = models.ForeignKey(CurveSet, on_delete=models.DO_NOTHING)
     date = models.DateField(auto_now_add=True)
@@ -641,15 +669,18 @@ class Analysis(models.Model):
     method = models.CharField(max_length=255)
     methodDisplayName = models.TextField()
     active_step_num = models.IntegerField(default=0, null=True)
-    deleted = models.BooleanField(default=False)
     error = models.CharField(max_length=255)
     completed = models.BooleanField(default=False)
 
+    class Meta:
+        permissions = (
+            ('ro', 'Read only'),
+            ('rw', 'Read write'),
+            ('del', 'Delete'),
+        )
+
     def __str__(self):
         return '%s %s: %s' % (self.date, self.methodDisplayName, self.name)
-
-    class META:
-        ordering = ('date')
 
     def isOwnedBy(self, user):
         return self.owner == user
@@ -676,8 +707,7 @@ class Analysis(models.Model):
         return newan
 
 
-class Processing(models.Model):
-    id = models.AutoField(primary_key=True)
+class Processing(VoltPyModel):
     owner = models.ForeignKey(User, on_delete=models.DO_NOTHING)
     curveSet = models.ForeignKey(CurveSet, on_delete=models.DO_NOTHING)
     date = models.DateField(auto_now_add=True)
@@ -689,15 +719,18 @@ class Processing(models.Model):
     method = models.CharField(max_length=255)
     methodDisplayName = models.TextField()
     active_step_num = models.IntegerField(default=0, null=True)
-    deleted = models.BooleanField(default=0)
     error = models.CharField(max_length=255)
     completed = models.BooleanField(default=0)
 
+    class Meta:
+        permissions = (
+            ('ro', 'Read only'),
+            ('rw', 'Read write'),
+            ('del', 'Delete'),
+        )
+
     def __str__(self):
         return '%s: %s' % (self.date, self.methodDisplayName)
-
-    class META:
-        ordering = ('date')
 
     def isOwnedBy(self, user):
         return self.owner == user

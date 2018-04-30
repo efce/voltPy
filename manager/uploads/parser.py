@@ -45,12 +45,12 @@ class Parser(ABC):
             name=self.cfile.name
         )
         cs.save()
+        assign_perm('rw', user, cs)
+        
         cf.curveSet = cs
+        
         cf.save()
         assign_perm('rw', user, cf)
-        assign_perm('ro', user, cf)
-        assign_perm('del', user, cf)
-        
 
         order = 0
         for c in self._curves:
@@ -63,6 +63,7 @@ class Parser(ABC):
                 date=c.date
             )
             cb.save()
+            assign_perm('rw', user, cb)
 
             cd = mmodels.CurveData(
                 curve=cb,
@@ -73,6 +74,7 @@ class Parser(ABC):
                 currentSamples=c.vec_sampling
             )
             cd.save()
+            assign_perm('rw', user, cd)
             cs.curvesData.add(cd)
 
             ci = mmodels.CurveIndex(
@@ -89,6 +91,7 @@ class Parser(ABC):
                 samplingRate=c.vec_param[Param.nonaveragedsampling],
             )
             ci.save()
+            assign_perm('rw', user, ci)
             order += 1
 
         cs.save()
