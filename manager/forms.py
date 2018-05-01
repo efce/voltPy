@@ -80,7 +80,7 @@ class EditAnalytesForm(forms.Form):
     def __init__(self, user, view_type, object_id, analyte_id, *args, **kwargs):
         super(EditAnalytesForm, self).__init__(*args, **kwargs)
         self.isCal = False
-        self.cs = mmodels.CurveSet.objects.get(id=object_id)
+        self.cs = mmodels.CurveSet.get(id=object_id)
         if not self.cs.canBeReadBy(user):
             raise VoltPyNotAllowed
 
@@ -91,7 +91,7 @@ class EditAnalytesForm(forms.Form):
         analyte = None
         if analyte_id != '-1':
             try:
-                analyte = mmodels.Analyte.objects.get(id=analyte_id)
+                analyte = mmodels.Analyte.get(id=analyte_id)
                 conc = self.cs.analytesConc.get(analyte.id, {})
             except:
                 analyte = None
@@ -103,6 +103,7 @@ class EditAnalytesForm(forms.Form):
         eaDefault = -1
         eaDefaultUnit = '0g'
 
+        # TODO: user analytes or all ?
         analytesFromDb = mmodels.Analyte.objects.all()
         existingAnalytes = [(-1, 'Add new')]
         if analytesFromDb:
@@ -256,9 +257,8 @@ class SelectCurvesForCurveSetForm(forms.Form):
         newName = ''
         try:
             if len(self.toClone) == 1:
-                csToClone = mmodels.CurveSet.objects.get(id=self.toClone[0])
-                if csToClone.canBeReadBy(user):
-                    newName = csToClone.name + '_copy'
+                csToClone = mmodels.CurveSet.get(id=self.toClone[0])
+                newName = csToClone.name + '_copy'
         except:
             newName = ''
             # self.toClone = -1
@@ -272,7 +272,7 @@ class SelectCurvesForCurveSetForm(forms.Form):
         self.fields['name'].maintype = 'name'
         self.fields['name'].mainid = 0
 
-        files = mmodels.CurveFile.objects.filter(
+        files = mmodels.CurveFile.filter(
             owner=user, 
             deleted=False
         ).only("id", "name", "fileName")
@@ -300,7 +300,7 @@ class SelectCurvesForCurveSetForm(forms.Form):
                 self.fields[cname].maintype = 'curvefile'
                 self.fields[cname].cptype = 'child'
 
-        css = mmodels.CurveSet.objects.filter(owner=user, deleted=False).only("id", "name") 
+        css = mmodels.CurveSet.filter(owner=user, deleted=False).only("id", "name") 
         for cs in css:
             if cs.id in csInFiles:
                 continue
@@ -428,7 +428,7 @@ class SelectCurvesForCurveSetForm(forms.Form):
                         selectedCS[id1][id2] = True
         # Get CurveSet from CurveFile at the end to decrease number of operations
         for k, v in selectedCF.items():
-            cf = mmodels.CurveFile.objects.get(id=k)
+            cf = mmodels.CurveFile.get(id=k)
             selectedCS[cf.curveSet.id] = selectedCS.get(cf.curveSet.id, {})
             for vv in v.keys():
                 selectedCS[cf.curveSet.id][vv] = True
@@ -448,7 +448,7 @@ class SelectCurvesForCurveSetForm(forms.Form):
             )
             newcs.save()
             for csid, cdids in selectedCS.items():
-                cs = mmodels.CurveSet.objects.get(id=csid)
+                cs = mmodels.CurveSet.get(id=csid)
                 if not cs.canBeReadBy(user):
                     raise VoltPyNotAllowed()
 
@@ -464,7 +464,7 @@ class SelectCurvesForCurveSetForm(forms.Form):
                         )
                 else:
                     for cdid in cdids.keys():
-                        cd = mmodels.CurveData.objects.get(id=cdid)
+                        cd = mmodels.CurveData.get(id=cdid)
                         newcs.addCurve(
                             curveData=cd,
                             concDict=cs.getCurveConcDict(cd)

@@ -1,4 +1,5 @@
 from django.db import models
+from guardian.shortcuts import get_objects_for_user
 from manager.exceptions import VoltPyNotAllowed
 import manager
 
@@ -20,21 +21,19 @@ class VoltPyModel(models.Model):
         else:
             raise VoltPyNotAllowed('Operation not allowed.')
 
-    def get(self, *args, **kwargs):
+    @classmethod
+    def get(cls, *args, **kwargs):
         user = manager.helpers.functions.getUser()
-        if user.has_perm('ro', self):
-            kwargs['deleted'] = False
-            self.objects.get(*args, **kwargs)
-        else:
-            raise VoltPyNotAllowed('Operation not allowed.')
+        kwargs['deleted'] = False
+        perms = ('rw', 'ro')
+        return get_objects_for_user(user, perms, klass=cls, any_perm=True).get(*args, **kwargs)
 
-    def filter(self, *args, **kwargs):
+    @classmethod
+    def filter(cls, *args, **kwargs):
         user = manager.helpers.functions.getUser()
-        if user.has_perm('ro', self):
-            kwargs['deleted'] = False
-            self.objects.filter(*args, **kwargs)
-        else:
-            raise VoltPyNotAllowed('Operation not allowed.')
+        kwargs['deleted'] = False
+        perms = ('rw', 'ro')
+        return get_objects_for_user(user, perms, klass=cls, any_perm=True).filter(*args, **kwargs)
 
     def delete(self):
         user = manager.helpers.functions.getUser()

@@ -100,19 +100,19 @@ def export(request, user, objType, objId):
         csvFile = ''
         filename = 'export_%s.csv'
         if objType == 'fs':
-            fs = mmodels.FileSet.objects.get(id=int(objId), deleted=False)
+            fs = mmodels.FileSet.get(id=int(objId), deleted=False)
             if not fs.canBeReadBy(user):
                 raise VoltPyNotAllowed()
             csvFile = fs.export()
             filename = filename % fs.name
         elif objType == 'cf':
-            cf = mmodels.CurveFile.objects.get(id=int(objId), deleted=False)
+            cf = mmodels.CurveFile.get(id=int(objId), deleted=False)
             if not cf.canBeReadBy(user):
                 raise VoltPyNotAllowed()
             csvFile = cf.export()
             filename = filename % cf.name
         elif objType == 'cs':
-            cs = mmodels.CurveSet.objects.get(id=int(objId), deleted=False)
+            cs = mmodels.CurveSet.get(id=int(objId), deleted=False)
             if not cs.canBeReadBy(user):
                 raise VoltPyNotAllowed()
             csvFile = cs.export()
@@ -134,7 +134,7 @@ def export(request, user, objType, objId):
 @redirect_on_voltpyexceptions
 @with_user
 def browseFileSet(request, user):
-    files = mmodels.FileSet.objects.filter(owner=user, deleted=False)
+    files = mmodels.FileSet.filter(owner=user, deleted=False)
     context = {
         'user': user,
         'list_header': 'Displaying uploaded files sets:',
@@ -159,7 +159,7 @@ def browseFileSet(request, user):
 @redirect_on_voltpyexceptions
 @with_user
 def browseCurveFile(request, user):
-    files = mmodels.CurveFile.objects.filter(owner=user, deleted=False)
+    files = mmodels.CurveFile.filter(owner=user, deleted=False)
     context = {
         'user': user,
         'list_header': 'Displaying Uploaded files:',
@@ -184,7 +184,7 @@ def browseCurveFile(request, user):
 @redirect_on_voltpyexceptions
 @with_user
 def browseAnalysis(request, user):
-    anals = mmodels.Analysis.objects.filter(owner=user, deleted=False)
+    anals = mmodels.Analysis.filter(owner=user, deleted=False)
     context = {
         'user': user,
         'list_header': 'Displaying Analysis:',
@@ -209,9 +209,9 @@ def browseAnalysis(request, user):
 @redirect_on_voltpyexceptions
 @with_user
 def browseCurveSet(request, user):
-    files = mmodels.CurveFile.objects.filter(owner=user).only('curveSet')
+    files = mmodels.CurveFile.filter(owner=user).only('curveSet')
     csetsFiles = [x['curveSet'] for x in files.all().values('curveSet')]
-    csets = mmodels.CurveSet.objects.filter(owner=user, deleted=False).exclude(id__in=csetsFiles)
+    csets = mmodels.CurveSet.filter(owner=user, deleted=False).exclude(id__in=csetsFiles)
     context = {
         'user': user,
         'list_header': 'Displaying CurveSets:',
@@ -237,7 +237,7 @@ def browseCurveSet(request, user):
 @with_user
 def deleteFileSet(request, user, fileset_id):
     try:
-        fs = mmodels.FileSet.objects.get(id=fileset_id)
+        fs = mmodels.FileSet.get(id=fileset_id)
     except ObjectDoesNotExist:
         fs = None
     return delete_helper(
@@ -251,7 +251,7 @@ def deleteFileSet(request, user, fileset_id):
 @with_user
 def deleteCurveFile(request, user, file_id):
     try:
-        cfile = mmodels.CurveFile.objects.get(id=file_id)
+        cfile = mmodels.CurveFile.get(id=file_id)
     except ObjectDoesNotExist:
         cfile = None
     return delete_helper(
@@ -266,8 +266,8 @@ def deleteCurveFile(request, user, file_id):
 def deleteCurve(request, user, objType, objId, delId):
     if objType == 'cf':
         try:
-            cd = mmodels.CurveData.objects.get(id=delId)
-            deleteFrom = mmodels.CurveFile.objects.get(id=objId).curveSet
+            cd = mmodels.CurveData.get(id=delId)
+            deleteFrom = mmodels.CurveFile.get(id=objId).curveSet
         except ObjectDoesNotExist:
             c = None
         return delete_helper(
@@ -279,8 +279,8 @@ def deleteCurve(request, user, objType, objId, delId):
         )
     else:  # curveset
         try:
-            cd = mmodels.CurveData.objects.get(id=delId)
-            deleteFrom = mmodels.CurveSet.objects.get(id=objId)
+            cd = mmodels.CurveData.get(id=delId)
+            deleteFrom = mmodels.CurveSet.get(id=objId)
         except ObjectDoesNotExist:
             cd = None
         return delete_helper(
@@ -296,7 +296,7 @@ def deleteCurve(request, user, objType, objId, delId):
 @with_user
 def deleteAnalysis(request, user, analysis_id):
     try:
-        a = mmodels.Analysis.objects.get(id=analysis_id)
+        a = mmodels.Analysis.get(id=analysis_id)
     except ObjectDoesNotExist:
         a = None
     return delete_helper(
@@ -310,7 +310,7 @@ def deleteAnalysis(request, user, analysis_id):
 @with_user
 def deleteCurveSet(request, user, curveset_id):
     try:
-        a = mmodels.CurveSet.objects.get(id=curveset_id)
+        a = mmodels.CurveSet.get(id=curveset_id)
     except ObjectDoesNotExist:
         a = None
     return delete_helper(
@@ -361,7 +361,7 @@ def createCurveSet(request, user, toClone=[]):
 @with_user
 def showAnalysis(request, user, analysis_id):
     try:
-        an = mmodels.Analysis.objects.get(id=analysis_id)
+        an = mmodels.Analysis.get(id=analysis_id)
     except ObjectDoesNotExist:
         raise VoltPyNotAllowed(user)
 
@@ -426,12 +426,12 @@ def searchCurveSet(request, user):
     searchStr = request.POST.get('search', '')
     css = []
     if searchStr == '':
-        css = mmodels.CurveSet.objects.filter(deleted=False)
+        css = mmodels.CurveSet.filter(deleted=False)
     else:
         if is_number(searchStr):
             cs_id = float(searchStr)
-            css.extend(mmodels.CurveSet.objects.filter(id=cs_id, deleted=False))
-        css.extend(mmodels.CurveSet.objects.filter(name__icontains=searchStr))
+            css.extend(mmodels.CurveSet.filter(id=cs_id, deleted=False))
+        css.extend(mmodels.CurveSet.filter(name__icontains=searchStr))
 
     ret = {}
     for cs in css:
@@ -443,7 +443,7 @@ def searchCurveSet(request, user):
 @with_user
 def showProcessed(request, user, processing_id):
     try:
-        cf = mmodels.Processing.objects.get(id=processing_id, owner=user)
+        cf = mmodels.Processing.get(id=processing_id, owner=user)
     except ObjectDoesNotExist:
         cf = None
     context = {
@@ -461,7 +461,7 @@ def showProcessed(request, user, processing_id):
 @with_user
 def showFileSet(request, user, fileset_id):
     try:
-        fs = mmodels.FileSet.objects.get(id=fileset_id)
+        fs = mmodels.FileSet.get(id=fileset_id)
     except ObjectDoesNotExist:
         raise VoltPyDoesNotExists()
 
@@ -514,7 +514,7 @@ def showFileSet(request, user, fileset_id):
 @with_user
 def undoCurveSet(request, user, curveset_id):
     try:
-        cs = mmodels.CurveSet.objects.get(id=curveset_id)
+        cs = mmodels.CurveSet.get(id=curveset_id)
     except ObjectDoesNotExist:
         raise VoltPyDoesNotExists()
     if not cs.canBeUpdatedBy(user):
@@ -549,7 +549,7 @@ def undoCurveSet(request, user, curveset_id):
 @with_user
 def showCurveSet(request, user, curveset_id):
     try:
-        cs = mmodels.CurveSet.objects.get(id=curveset_id)
+        cs = mmodels.CurveSet.get(id=curveset_id)
     except ObjectDoesNotExist:
         raise VoltPyDoesNotExists()
 
@@ -656,7 +656,7 @@ def editAnalysis(request, user, analysis_id):
 @with_user
 def editCurveSet(request, user, curveset_id):
     try:
-        cs = mmodels.CurveSet.objects.get(id=curveset_id)
+        cs = mmodels.CurveSet.get(id=curveset_id)
     except ObjectDoesNotExist:
         raise VoltPyDoesNotExists('Cannot be accessed.')
 
@@ -705,7 +705,7 @@ def editCurveSet(request, user, curveset_id):
         formProc = mm.getProcessingSelectionForm(disabled=cs.locked)
 
     try:
-        cs = mmodels.CurveSet.objects.get(id=curveset_id)
+        cs = mmodels.CurveSet.get(id=curveset_id)
         if not cs.canBeReadBy(user):
             raise VoltPyNotAllowed(user)
     except ObjectDoesNotExist:
@@ -786,7 +786,7 @@ def editCurveFile(request, user, file_id,):
 @with_user
 def showCurveFile(request, user, file_id):
     try:
-        cf = mmodels.CurveFile.objects.get(id=file_id, deleted=False)
+        cf = mmodels.CurveFile.get(id=file_id, deleted=False)
     except ObjectDoesNotExist:
         raise VoltPyNotAllowed(user)
 
@@ -883,7 +883,7 @@ def applyModel(request, user, objType, objId, curveset_id):
 def editAnalyte(request, user, objType, objId, analyteId):
     if objType == 'cf':
         try:
-            cf = mmodels.CurveFile.objects.get(id=objId, deleted=False)
+            cf = mmodels.CurveFile.get(id=objId, deleted=False)
         except ObjectDoesNotExist:
             raise VoltPyNotAllowed
         if not cf.canBeUpdatedBy(user):
@@ -892,7 +892,7 @@ def editAnalyte(request, user, objType, objId, analyteId):
 
     elif objType == 'cs':
         try:
-            cs = mmodels.CurveSet.objects.get(id=objId, deleted=False)
+            cs = mmodels.CurveSet.get(id=objId, deleted=False)
         except ObjectDoesNotExist:
             raise VoltPyNotAllowed
         if not cs.canBeUpdatedBy(user):
@@ -933,7 +933,7 @@ def editAnalyte(request, user, objType, objId, analyteId):
         infotext = 'Adding new analyte in '
     else:
         try: 
-            analyte = mmodels.Analyte.objects.get(id=analyteId)
+            analyte = mmodels.Analyte.get(id=analyteId)
         except ObjectDoesNotExist:
             infotext = 'Adding new analyte in '
         infotext = 'Editing {0} in '.format(analyte.name)
