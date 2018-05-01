@@ -11,6 +11,7 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 from picklefield.fields import PickledObjectField
 from manager.voltpymodel import VoltPyModel
+from guardian.shortcuts import assign_perm
 import manager
 
 
@@ -401,6 +402,8 @@ class CurveData(VoltPyModel):
         newcd.pk = None
         newcd.date = None
         newcd.basedOn = self
+        newcd.save()
+        assign_perm('rw', manager.helpers.functions.getUser(), newcd)
         return newcd
 
     def getProcessingHistory(self):
@@ -709,6 +712,8 @@ class Analysis(VoltPyModel):
         newan.date = None
         newan.deleted = False
         newan.curveSet = None
+        newan.save()
+        assign_perm('rw', manager.helpers.functions.getUser(), newan)
         return newan
 
 
@@ -756,4 +761,6 @@ class Processing(VoltPyModel):
         newpr.date = None
         newpr.deleted = False
         newpr.curveSet = None
+        newpr.save()
+        assign_perm('rw', manager.helpers.functions.getUser(), newpr)
         return newpr
