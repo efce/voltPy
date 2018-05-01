@@ -79,7 +79,7 @@ class CurveFile(VoltPyModel):
     comment = models.TextField()
     fileName = models.TextField()
     fileDate = models.DateField(auto_now=False, auto_now_add=False)  # Each file has its curveset
-    curveSet = models.ForeignKey('CurveSet', on_delete=models.DO_NOTHING)
+    curveSet = models.OneToOneField('FileCurveSet', on_delete=models.DO_NOTHING, related_name='file')
     uploadDate = models.DateField(auto_now_add=True)
 
     def __str__(self):
@@ -303,7 +303,7 @@ class Curve(VoltPyModel):
 
 
 class CurveIndex(VoltPyModel):
-    curve = models.ForeignKey(Curve, on_delete=models.CASCADE)
+    curve = models.OneToOneField(Curve, on_delete=models.CASCADE, related_name='index')
     potential_min = models.FloatField()  # in mV
     potential_max = models.FloatField()  # in mV
     potential_step = models.FloatField()  # in mV
@@ -655,6 +655,18 @@ class CurveSet(VoltPyModel):
 
     def getUrl(self):
         return reverse('showCurveSet', args=[self.id])
+
+
+class FileCurveSet(CurveSet):
+    class Meta:
+        permissions = (
+            ('ro', 'Read only'),
+            ('rw', 'Read write'),
+            ('del', 'Delete'),
+        )
+
+    def getUrl(self):
+        return reverse('showFileSet', args=[self.file.id])
 
 
 class Analysis(VoltPyModel):

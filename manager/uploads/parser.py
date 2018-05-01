@@ -40,7 +40,7 @@ class Parser(ABC):
             fileName=self.cfile.name,
             fileDate=self._curves[0].date,
         )
-        cs = mmodels.CurveSet(
+        cs = mmodels.FileCurveSet(
             owner=user,
             name=self.cfile.name
         )

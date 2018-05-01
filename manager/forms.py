@@ -6,6 +6,7 @@ from django.utils import timezone
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
+from guardian.shortcuts import assign_perm
 import manager
 import manager.models as mmodels
 from manager.exceptions import VoltPyNotAllowed
@@ -447,6 +448,7 @@ class SelectCurvesForCurveSetForm(forms.Form):
                 deleted=False
             )
             newcs.save()
+            assign_perm('rw', user, newcs)
             for csid, cdids in selectedCS.items():
                 cs = mmodels.CurveSet.get(id=csid)
                 if not cs.canBeReadBy(user):

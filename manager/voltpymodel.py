@@ -35,6 +35,13 @@ class VoltPyModel(models.Model):
         perms = ('rw', 'ro')
         return get_objects_for_user(user, perms, klass=cls, any_perm=True).filter(*args, **kwargs)
 
+    @classmethod
+    def all(cls, *args, **kwargs):
+        user = manager.helpers.functions.getUser()
+        kwargs['deleted'] = False
+        perms = ('rw', 'ro')
+        return get_objects_for_user(user, perms, klass=cls, any_perm=True)
+
     def delete(self):
         user = manager.helpers.functions.getUser()
         if user.has_perm('del', self):
