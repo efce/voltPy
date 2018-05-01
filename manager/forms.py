@@ -265,10 +265,7 @@ class SelectCurvesForCurveSetForm(forms.Form):
         self.fields['name'].maintype = 'name'
         self.fields['name'].mainid = 0
 
-        files = mmodels.CurveFile.filter(
-            owner=user, 
-            deleted=False
-        ).only("id", "name", "fileName")
+        files = mmodels.CurveFile.all().only("id", "name", "fileName")
         csInFiles = []
         for f in files:
             fname = 'curveFile_{0}'.format(f.id)
@@ -293,7 +290,7 @@ class SelectCurvesForCurveSetForm(forms.Form):
                 self.fields[cname].maintype = 'curvefile'
                 self.fields[cname].cptype = 'child'
 
-        css = mmodels.CurveSet.filter(owner=user, deleted=False).only("id", "name") 
+        css = mmodels.CurveSet.all().only("id", "name") 
         for cs in css:
             if cs.id in csInFiles:
                 continue

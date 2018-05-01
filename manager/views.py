@@ -128,7 +128,7 @@ def export(request, user, objType, objId):
 @redirect_on_voltpyexceptions
 @with_user
 def browseFileSet(request, user):
-    files = mmodels.FileSet.filter(owner=user, deleted=False)
+    files = mmodels.FileSet.all()
     context = {
         'user': user,
         'list_header': 'Displaying uploaded files sets:',
@@ -153,7 +153,7 @@ def browseFileSet(request, user):
 @redirect_on_voltpyexceptions
 @with_user
 def browseCurveFile(request, user):
-    files = mmodels.CurveFile.filter(owner=user, deleted=False)
+    files = mmodels.CurveFile.all()
     context = {
         'user': user,
         'list_header': 'Displaying Uploaded files:',
@@ -178,7 +178,7 @@ def browseCurveFile(request, user):
 @redirect_on_voltpyexceptions
 @with_user
 def browseAnalysis(request, user):
-    anals = mmodels.Analysis.filter(owner=user, deleted=False)
+    anals = mmodels.Analysis.all()
     context = {
         'user': user,
         'list_header': 'Displaying Analysis:',
@@ -203,7 +203,7 @@ def browseAnalysis(request, user):
 @redirect_on_voltpyexceptions
 @with_user
 def browseCurveSet(request, user):
-    files = mmodels.CurveFile.filter(owner=user).only('curveSet')
+    files = mmodels.CurveFile.all().only('curveSet')
     csetsFiles = [x['curveSet'] for x in files.all().values('curveSet')]
     csets = mmodels.CurveSet.filter(owner=user, deleted=False).exclude(id__in=csetsFiles)
     context = {
