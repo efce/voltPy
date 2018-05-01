@@ -7,7 +7,6 @@ from django import forms
 from django.core.exceptions import ObjectDoesNotExist
 from django.urls import reverse
 from django.http import HttpResponseRedirect
-from guardian.shortcuts import assign_perm
 import manager.models as mmodels
 from manager.exceptions import VoltPyDoesNotExists
 from manager.exceptions import VoltPyFailed
@@ -329,7 +328,6 @@ $(function(){{
                         completed=False
                     )
                     a.save()
-                    assign_perm('rw', user, a)
                     curveset.prepareUndo(processingObject=a)
                     return a.id
                 return None
@@ -347,7 +345,6 @@ $(function(){{
                         completed=False
                     )
                     a.save()
-                    assign_perm('rw', user, a)
                     curveset.save()
                     return a.id
             return None

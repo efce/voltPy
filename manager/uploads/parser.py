@@ -2,7 +2,6 @@ import numpy as np
 from abc import ABC
 import manager.models as mmodels
 from manager.models import Curve as mcurve
-from guardian.shortcuts import assign_perm
 Param = mcurve.Param
 
 
@@ -45,12 +44,8 @@ class Parser(ABC):
             name=self.cfile.name
         )
         cs.save()
-        assign_perm('rw', user, cs)
-        
         cf.curveSet = cs
-        
         cf.save()
-        assign_perm('rw', user, cf)
 
         order = 0
         for c in self._curves:
@@ -63,7 +58,6 @@ class Parser(ABC):
                 date=c.date
             )
             cb.save()
-            assign_perm('rw', user, cb)
 
             cd = mmodels.CurveData(
                 curve=cb,
@@ -74,7 +68,6 @@ class Parser(ABC):
                 currentSamples=c.vec_sampling
             )
             cd.save()
-            assign_perm('rw', user, cd)
             cs.curvesData.add(cd)
 
             ci = mmodels.CurveIndex(
@@ -91,7 +84,6 @@ class Parser(ABC):
                 samplingRate=c.vec_param[Param.nonaveragedsampling],
             )
             ci.save()
-            assign_perm('rw', user, ci)
             order += 1
 
         cs.save()

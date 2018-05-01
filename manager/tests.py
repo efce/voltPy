@@ -275,6 +275,8 @@ main_class = TestMethod
         self.assertEqual(mema.methods['processing']['TestMethod'].__name__, 'TestMethod')
 
     def test_methods_usage(self):
+        import manager.helpers.functions
+        manager.helpers.functions.getUser = lambda: self.user 
         p = mmodels.Processing(
             owner=self.user,
             curveSet=self.curveset,
@@ -285,9 +287,7 @@ main_class = TestMethod
             deleted=False,
             completed=False
         )
-        from guardian.shortcuts import assign_perm
         p.save()
-        assign_perm('rw', self.user, p)
         mema = mm.MethodManager(user=self.user, processing_id=p.id)
 
         class req:

@@ -6,7 +6,6 @@ from django.utils import timezone
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
-from guardian.shortcuts import assign_perm
 import manager
 import manager.models as mmodels
 from manager.exceptions import VoltPyNotAllowed
@@ -389,7 +388,7 @@ class SelectCurvesForCurveSetForm(forms.Form):
             ret['end']
         ])
 
-    @transaction.atomic 
+    @transaction.atomic
     def process(self, user):
         sid = transaction.savepoint()
 
@@ -428,7 +427,6 @@ class SelectCurvesForCurveSetForm(forms.Form):
                 deleted=False
             )
             newcs.save()
-            assign_perm('rw', user, newcs)
 
             def fun(selected_data, cf_or_cs):
                 for csid, cdids in selected_data.items():

@@ -11,7 +11,6 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 from picklefield.fields import PickledObjectField
 from manager.voltpymodel import VoltPyModel
-from guardian.shortcuts import assign_perm
 import manager
 
 
@@ -75,7 +74,6 @@ def exportCDasFile(cds):
 
 
 class CurveFile(VoltPyModel):
-    owner = models.ForeignKey(User, on_delete=models.DO_NOTHING)
     name = models.CharField(max_length=255)
     comment = models.TextField()
     fileName = models.TextField()
@@ -98,7 +96,6 @@ class CurveFile(VoltPyModel):
 
 
 class FileSet(VoltPyModel):
-    owner = models.ForeignKey(User, on_delete=models.DO_NOTHING)
     name = models.CharField(max_length=255)
     files = models.ManyToManyField(CurveFile)
     date = models.DateField(auto_now_add=True)
@@ -367,7 +364,6 @@ class CurveData(VoltPyModel):
         newcd.date = None
         newcd.basedOn = self
         newcd.save()
-        assign_perm('rw', manager.helpers.functions.getUser(), newcd)
         return newcd
 
     def getProcessingHistory(self):
@@ -429,7 +425,6 @@ class CurveData(VoltPyModel):
 
 
 class Analyte(VoltPyModel):
-    owner = models.ForeignKey(User, on_delete=models.DO_NOTHING)
     name = models.CharField(max_length=125, unique=True)
     atomicMass = models.FloatField(null=True, default=None)  # to calculate between mol and wight
 
@@ -459,7 +454,6 @@ class CurveSet(VoltPyModel):
     )
     CONC_UNIT_DEF = '0g'
 
-    owner = models.ForeignKey(User, on_delete=models.DO_NOTHING)
     name = models.CharField(max_length=255)
     date = models.DateField(auto_now_add=True)
     curvesData = models.ManyToManyField(CurveData, related_name="curvesData")
@@ -610,10 +604,16 @@ class FileCurveSet(CurveSet):
 
     def getUrl(self):
         return reverse('showFile', args=[self.file.id])
+    
+    def __str__(self):
+        return '%s: %s' % (self.id, self.file.name)
+
+    @property
+    def name(self):
+        return self.file.name
 
 
 class Analysis(VoltPyModel):
-    owner = models.ForeignKey(User, on_delete=models.DO_NOTHING)
     curveSet = models.ForeignKey(CurveSet, on_delete=models.DO_NOTHING)
     date = models.DateField(auto_now_add=True)
     appliesModel = models.ForeignKey('Analysis', default=None, null=True, on_delete=models.DO_NOTHING)
@@ -651,12 +651,10 @@ class Analysis(VoltPyModel):
         newan.deleted = False
         newan.curveSet = None
         newan.save()
-        assign_perm('rw', manager.helpers.functions.getUser(), newan)
         return newan
 
 
 class Processing(VoltPyModel):
-    owner = models.ForeignKey(User, on_delete=models.DO_NOTHING)
     curveSet = models.ForeignKey(CurveSet, on_delete=models.DO_NOTHING)
     date = models.DateField(auto_now_add=True)
     appliesModel = models.ForeignKey('Processing', default=None, null=True, on_delete=models.DO_NOTHING)
@@ -691,5 +689,4 @@ class Processing(VoltPyModel):
         newpr.deleted = False
         newpr.curveSet = None
         newpr.save()
-        assign_perm('rw', manager.helpers.functions.getUser(), newpr)
         return newpr

@@ -4,7 +4,6 @@ from django.db import transaction
 from django.urls import reverse
 from django.http import JsonResponse
 from django.db import DatabaseError
-from guardian.shortcuts import assign_perm
 import manager.models as mmodels
 from manager.helpers.decorators import with_user
 from manager.exceptions import VoltPyFailed
@@ -245,7 +244,6 @@ def _saveFileSet(cf_ids, user, details):
         name=details.get('fileset_name', ''),
     )
     fs.save()
-    assign_perm('rw', user, fs)
     for i in cf_ids:
         cf = mmodels.CurveFile.objects.get(id=i)
         fs.files.add(cf)
