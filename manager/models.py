@@ -503,7 +503,6 @@ class CurveSet(VoltPyModel):
     owner = models.ForeignKey(User, on_delete=models.DO_NOTHING)
     name = models.CharField(max_length=255)
     date = models.DateField(auto_now_add=True)
-    inUseBy = models.ManyToManyField('Analysis', related_name='locks_curvesets')
     curvesData = models.ManyToManyField(CurveData, related_name="curvesData")
     undoCurvesData = models.ManyToManyField(CurveData, related_name="undoCurvesData")
     analytes = models.ManyToManyField(Analyte, related_name="analytes")
@@ -523,15 +522,9 @@ class CurveSet(VoltPyModel):
 
     @property
     def locked(self) -> bool:
-        if len(self.inUseBy.all()) == 0:
-            return False
-        else:
-            in_use = False
-            for a in self.inUseBy.all():
-                if a.deleted == False:
-                    in_use = True
-                    break
-            return in_use
+        if Analysis.objects.filter(curveSet=self, deleted=False).exists():
+            return True
+        return False
 
     def removeCurve(self, curveData: CurveData):
         self.curvesData.remove(curveData)

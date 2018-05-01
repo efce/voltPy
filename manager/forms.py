@@ -400,7 +400,6 @@ class SelectCurvesForCurveSetForm(forms.Form):
             ret['end']
         ])
 
-
     @transaction.atomic 
     def process(self, user):
         sid = transaction.savepoint()
@@ -427,16 +426,8 @@ class SelectCurvesForCurveSetForm(forms.Form):
                     elif 'curveSet' == nameSplit[0]:
                         selectedCS[id1] = selectedCS.get(id1, {})
                         selectedCS[id1][id2] = True
-        # Get CurveSet from CurveFile at the end to decrease number of operations
-        for k, v in selectedCF.items():
-            cf = mmodels.CurveFile.get(id=k)
-            selectedCS[cf.curveSet.id] = selectedCS.get(cf.curveSet.id, {})
-            for vv in v.keys():
-                selectedCS[cf.curveSet.id][vv] = True
 
-        print('CSs:', selectedCS)
-
-        if len(selectedCS) == 0:
+        if len(selectedCS) == 0 and len(selectedCF) == 0:
             return False
 
         # Create new CurveSet:
@@ -449,29 +440,37 @@ class SelectCurvesForCurveSetForm(forms.Form):
             )
             newcs.save()
             assign_perm('rw', user, newcs)
-            for csid, cdids in selectedCS.items():
-                cs = mmodels.CurveSet.get(id=csid)
-                if not cs.canBeReadBy(user):
-                    raise VoltPyNotAllowed()
 
-                for a in cs.analytes.all():
-                    if not newcs.analytes.filter(id=a.id).exists():
-                        newcs.analytes.add(a)
-                        newcs.analytesConcUnits[a.id] = cs.analytesConcUnits.get(a.id, '0g')
-                if 'all' in cdids.keys():
-                    for cd in cs.curvesData.all():
-                        newcs.addCurve(
-                            curveData=cd,
-                            concDict=cs.getCurveConcDict(cd)
-                        )
-                else:
-                    for cdid in cdids.keys():
-                        cd = mmodels.CurveData.get(id=cdid)
-                        newcs.addCurve(
-                            curveData=cd,
-                            concDict=cs.getCurveConcDict(cd)
-                        )
-            newcs.save()
+            def fun(selected_data, cf_or_cs):
+                for csid, cdids in selected_data.items():
+                    if cf_or_cs == 'cs':
+                        cs = mmodels.CurveSet.get(id=csid)
+                    else:
+                        cs = mmodels.CurveFile.get(id=csid).curveSet
+
+                    if not cs.canBeReadBy(user):
+                        raise VoltPyNotAllowed()
+
+                    for a in cs.analytes.all():
+                        if not newcs.analytes.filter(id=a.id).exists():
+                            newcs.analytes.add(a)
+                            newcs.analytesConcUnits[a.id] = cs.analytesConcUnits.get(a.id, '0g')
+                    if 'all' in cdids.keys():
+                        for cd in cs.curvesData.all():
+                            newcs.addCurve(
+                                curveData=cd,
+                                concDict=cs.getCurveConcDict(cd)
+                            )
+                    else:
+                        for cdid in cdids.keys():
+                            cd = mmodels.CurveData.get(id=cdid)
+                            newcs.addCurve(
+                                curveData=cd,
+                                concDict=cs.getCurveConcDict(cd)
+                            )
+                newcs.save()
+            fun(selectedCF, 'cf')
+            fun(selectedCS, 'cs')
         except DatabaseError:
             transaction.savepoint_rollback(sid)
             raise

@@ -348,7 +348,6 @@ $(function(){{
                     )
                     a.save()
                     assign_perm('rw', user, a)
-                    curveset.inUseBy.add(a)  # CurveSet cannot be changed when used by Analysis method.
                     curveset.save()
                     return a.id
             return None
