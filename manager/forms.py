@@ -62,8 +62,6 @@ class EditName(forms.Form):
         self.fields['e_id'].widget = forms.HiddenInput()
 
     def process(self, user, request):
-        if not self.model.canBeUpdatedBy(user):
-            raise VoltPyNotAllowed
         try:
             if self.model.id != int(self.cleaned_data['e_id']):
                 raise VoltPyNotAllowed
@@ -78,13 +76,10 @@ class EditAnalytesForm(forms.Form):
     # TODO: draw plot of file, provide fields for settings analytes
     isCal = False
 
-    def __init__(self, user, view_type, object_id, analyte_id, *args, **kwargs):
+    def __init__(self, user, curveSet, analyte_id, *args, **kwargs):
         super(EditAnalytesForm, self).__init__(*args, **kwargs)
         self.isCal = False
-        self.cs = mmodels.CurveSet.get(id=object_id)
-        if not self.cs.canBeReadBy(user):
-            raise VoltPyNotAllowed
-
+        self.cs = curveSet
         self.generateFields(analyte_id)
         self.original_id = analyte_id
 
@@ -186,7 +181,7 @@ class EditAnalytesForm(forms.Form):
             try:
                 a = mmodels.Analyte.objects.get(name=analyteName)
             except mmodels.Analyte.DoesNotExist:
-                a = mmodels.Analyte(name=analyteName)
+                a = mmodels.Analyte(name=analyteName, owner=user)
                 a.save()
         else:
             a = mmodels.Analyte.objects.get(id=self.cleaned_data['existingAnalyte'])
@@ -202,9 +197,6 @@ class EditAnalytesForm(forms.Form):
                     self.cs.curvesData.get(id=curve_id)
                 except ObjectDoesNotExist:
                     raise VoltPyDoesNotExists('Curve id %d does not exists.' % curve_id)
-
-                if not self.cs.canBeUpdatedBy(user):
-                    raise VoltPyNotAllowed('Operation not allowed')
 
                 conc[curve_id] = float(val)
 
@@ -448,9 +440,6 @@ class SelectCurvesForCurveSetForm(forms.Form):
                     else:
                         cs = mmodels.CurveFile.get(id=csid).curveSet
 
-                    if not cs.canBeReadBy(user):
-                        raise VoltPyNotAllowed()
-
                     for a in cs.analytes.all():
                         if not newcs.analytes.filter(id=a.id).exists():
                             newcs.analytes.add(a)
@@ -495,17 +484,14 @@ class DeleteForm(forms.Form):
                 form_item_id = int(self.cleaned_data['item_id'])
                 if (form_item_id != int(item.id)):
                     return False
-                if item.canBeUpdatedBy(user):
-                    if any([
-                        deleteFrom is None,
-                        deleteFrom.__class__.__name__ != 'CurveSet'
-                    ]):
-                        item.deleted = True
-                        item.save()
-                        return True
-                    else:
-                        deleteFrom.curvesData.remove(item)
-                        deleteFrom.save()
-                        return True
+                if any([
+                    deleteFrom is None,
+                    deleteFrom.__class__.__name__ != 'CurveSet'
+                ]):
+                    item.deleted = True
+                    item.save()
+                    return True
                 else:
-                    return False
+                    deleteFrom.curvesData.remove(item)
+                    deleteFrom.save()
+                    return True

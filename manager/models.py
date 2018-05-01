@@ -93,15 +93,6 @@ class CurveFile(VoltPyModel):
             ('del', 'Delete'),
         )
 
-    def isOwnedBy(self, user):
-        return self.owner == user
-
-    def canBeUpdatedBy(self, user):
-        return self.isOwnedBy(user)
-
-    def canBeReadBy(self, user):
-        return self.isOwnedBy(user)
-
     def export(self):
         return self.curveSet.export()
 
@@ -121,15 +112,6 @@ class FileSet(VoltPyModel):
 
     def __str__(self):
         return str(self.id) + ': ' + self.name
-
-    def isOwnedBy(self, user):
-        return self.owner == user
-
-    def canBeUpdatedBy(self, user):
-        return self.isOwnedBy(user)
-
-    def canBeReadBy(self, user):
-        return self.isOwnedBy(user)
 
     def export(self):
         cds = []
@@ -293,15 +275,6 @@ class Curve(VoltPyModel):
             '</span></td></tr></table>'
         ])
 
-    def isOwnedBy(self, user):
-        return (self.curveFile.owner == user)
-
-    def canBeUpdatedBy(self, user):
-        return self.isOwnedBy(user)
-
-    def canBeReadBy(self, user):
-        return self.isOwnedBy(user)
-
 
 class CurveIndex(VoltPyModel):
     curve = models.OneToOneField(Curve, on_delete=models.CASCADE, related_name='index')
@@ -322,15 +295,6 @@ class CurveIndex(VoltPyModel):
             ('rw', 'Read write'),
             ('del', 'Delete'),
         )
-
-    def isOwnedBy(self, user):
-        return self.curve.curveFile.owner == user
-
-    def canBeUpdatedBy(self, user):
-        return self.isOwnedBy(user)
-
-    def canBeReadBy(self, user):
-        return self.isOwnedBy(user)
 
 
 class SamplingData(models.Model):
@@ -418,15 +382,6 @@ class CurveData(VoltPyModel):
                 break
         return steps
 
-    def isOwnedBy(self, user):
-        return self.curve.curveFile.owner == user
-
-    def canBeUpdatedBy(self, user):
-        return self.isOwnedBy(user)
-
-    def canBeReadBy(self, user):
-        return self.isOwnedBy(user)
-
     def xValue2Index(self, value):
         diffvec = np.abs(np.subtract(self.xVector, value))
         index = np.argmin(diffvec)
@@ -474,6 +429,7 @@ class CurveData(VoltPyModel):
 
 
 class Analyte(VoltPyModel):
+    owner = models.ForeignKey(User, on_delete=models.DO_NOTHING)
     name = models.CharField(max_length=125, unique=True)
     atomicMass = models.FloatField(null=True, default=None)  # to calculate between mol and wight
 
@@ -560,15 +516,6 @@ class CurveSet(VoltPyModel):
         for k, v in self.analytesConc.items():
             ret[k] = v.get(curveData.id, 0.0)
         return {'values': ret, 'units': self.analytesConcUnits}
-
-    def isOwnedBy(self, user):
-        return self.owner == user
-
-    def canBeUpdatedBy(self, user):
-        return self.isOwnedBy(user)  # and not self.locked
-
-    def canBeReadBy(self, user):
-        return self.isOwnedBy(user)
 
     def __str__(self):
         return '%s: %s' % (self.id, self.name)
@@ -662,7 +609,7 @@ class FileCurveSet(CurveSet):
         )
 
     def getUrl(self):
-        return reverse('showFileSet', args=[self.file.id])
+        return reverse('showFile', args=[self.file.id])
 
 
 class Analysis(VoltPyModel):
@@ -689,15 +636,6 @@ class Analysis(VoltPyModel):
 
     def __str__(self):
         return '%s %s: %s' % (self.date, self.methodDisplayName, self.name)
-
-    def isOwnedBy(self, user):
-        return self.owner == user
-
-    def canBeUpdatedBy(self, user):
-        return self.isOwnedBy(user)
-
-    def canBeReadBy(self, user):
-        return self.isOwnedBy(user)
 
     def getUrl(self):
         if self.completed:
@@ -741,15 +679,6 @@ class Processing(VoltPyModel):
 
     def __str__(self):
         return '%s: %s' % (self.date, self.methodDisplayName)
-
-    def isOwnedBy(self, user):
-        return self.owner == user
-
-    def canBeUpdatedBy(self, user):
-        return self.isOwnedBy(user)
-
-    def canBeReadBy(self, user):
-        return self.isOwnedBy(user)
 
     def getUrl(self):
         return reverse('showCurveSet', args=[self.curveSet.id])

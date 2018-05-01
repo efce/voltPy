@@ -78,7 +78,11 @@ def delete_helper(request, user, item, deleteFrom=None, onSuccessRedirect=None):
         if form.is_valid():
             a = form.process(user, item, deleteFrom)
             if a:
-                if deleteFrom is not None:
+                if onSuccessRedirect is not None:
+                    return HttpResponseRedirect(
+                        onSuccessRedirect
+                    )
+                elif deleteFrom is not None:
                     fromclass = str(deleteFrom.__class__.__name__)
                     onSuccessRedirect = reverse('show'+fromclass, args=[deleteFrom.id])
                     return HttpResponseRedirect(
@@ -87,9 +91,6 @@ def delete_helper(request, user, item, deleteFrom=None, onSuccessRedirect=None):
                 else:
                     if onSuccessRedirect is None:
                         onSuccessRedirect = reverse('browse'+itemclass)
-                    return HttpResponseRedirect(
-                        onSuccessRedirect
-                    )
 
     else:
         form = mforms.DeleteForm(item)

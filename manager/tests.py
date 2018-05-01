@@ -81,7 +81,7 @@ class TestUser(TestCase):
 
     def test_user(self):
         us = User.objects.all()
-        self.assertEqual(us[0].username, uname)
+        self.assertEqual(us[1].username, uname)
         user = authenticate(username=uname, password=upass)
         self.assertIsNotNone(user)
 
@@ -212,12 +212,8 @@ class TestFileUpload(TestCase):
                 float(cd.current[3])  # Test random element - selected by a dice roll
                 float(cd.potential[3])
                 float(cd.time[3])
-                self.assertTrue(cd.canBeReadBy(self.user))
-                self.assertTrue(cd.canBeUpdatedBy(self.user))
-                self.assertTrue(cd.isOwnedBy(self.user))
-                self.assertFalse(cd.canBeReadBy(self.user2))
-                self.assertFalse(cd.canBeUpdatedBy(self.user2))
-                self.assertFalse(cd.isOwnedBy(self.user2))
+                self.assertTrue(self.user.has_perm('rw', cd))
+                self.assertFalse(self.user2.has_perm('rw', cd))
         # TODO: more tests
 
         # Negative tests:
@@ -289,7 +285,9 @@ main_class = TestMethod
             deleted=False,
             completed=False
         )
+        from guardian.shortcuts import assign_perm
         p.save()
+        assign_perm('rw', self.user, p)
         mema = mm.MethodManager(user=self.user, processing_id=p.id)
 
         class req:
