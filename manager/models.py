@@ -96,6 +96,11 @@ class CurveFile(VoltPyModel):
     def name(self):
         return self.curveSet.name
 
+    @name.setter
+    def name(self, newname):
+        self.curveSet.name = newname
+        self.curveSet.save()
+
 
 class FileSet(VoltPyModel):
     name = models.CharField(max_length=255)
