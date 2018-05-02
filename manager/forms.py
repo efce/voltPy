@@ -61,8 +61,6 @@ class EditName(forms.Form):
         self.fields['e_id'].widget = forms.HiddenInput()
 
     def process(self, user, request):
-        if not self.model.canBeUpdatedBy(user):
-            raise VoltPyNotAllowed
         try:
             if self.model.id != int(self.cleaned_data['e_id']):
                 raise VoltPyNotAllowed
@@ -77,13 +75,10 @@ class EditAnalytesForm(forms.Form):
     # TODO: draw plot of file, provide fields for settings analytes
     isCal = False
 
-    def __init__(self, user, view_type, object_id, analyte_id, *args, **kwargs):
+    def __init__(self, user, curveSet, analyte_id, *args, **kwargs):
         super(EditAnalytesForm, self).__init__(*args, **kwargs)
         self.isCal = False
-        self.cs = mmodels.CurveSet.objects.get(id=object_id)
-        if not self.cs.canBeReadBy(user):
-            raise VoltPyNotAllowed
-
+        self.cs = curveSet
         self.generateFields(analyte_id)
         self.original_id = analyte_id
 
@@ -91,7 +86,7 @@ class EditAnalytesForm(forms.Form):
         analyte = None
         if analyte_id != '-1':
             try:
-                analyte = mmodels.Analyte.objects.get(id=analyte_id)
+                analyte = mmodels.Analyte.get(id=analyte_id)
                 conc = self.cs.analytesConc.get(analyte.id, {})
             except:
                 analyte = None
@@ -103,6 +98,7 @@ class EditAnalytesForm(forms.Form):
         eaDefault = -1
         eaDefaultUnit = '0g'
 
+        # TODO: user analytes or all ?
         analytesFromDb = mmodels.Analyte.objects.all()
         existingAnalytes = [(-1, 'Add new')]
         if analytesFromDb:
@@ -184,7 +180,7 @@ class EditAnalytesForm(forms.Form):
             try:
                 a = mmodels.Analyte.objects.get(name=analyteName)
             except mmodels.Analyte.DoesNotExist:
-                a = mmodels.Analyte(name=analyteName)
+                a = mmodels.Analyte(name=analyteName, owner=user)
                 a.save()
         else:
             a = mmodels.Analyte.objects.get(id=self.cleaned_data['existingAnalyte'])
@@ -200,9 +196,6 @@ class EditAnalytesForm(forms.Form):
                     self.cs.curvesData.get(id=curve_id)
                 except ObjectDoesNotExist:
                     raise VoltPyDoesNotExists('Curve id %d does not exists.' % curve_id)
-
-                if not self.cs.canBeUpdatedBy(user):
-                    raise VoltPyNotAllowed('Operation not allowed')
 
                 conc[curve_id] = float(val)
 
@@ -252,13 +245,18 @@ class SelectCurvesForCurveSetForm(forms.Form):
     curvesetid = -1
 
     def __init__(self, user,  *args, **kwargs):
-        self.toClone = kwargs.pop('toClone', [])
+        self.toCloneCS = kwargs.pop('toCloneCS', [])
+        self.toCloneCF = kwargs.pop('toCloneCF', [])
+        if len(self.toCloneCF) > 0 and len(self.toCloneCS) > 0:
+            raise VoltPyNotAllowed('Can only clone one type of data.')
         newName = ''
         try:
-            if len(self.toClone) == 1:
-                csToClone = mmodels.CurveSet.objects.get(id=self.toClone[0])
-                if csToClone.canBeReadBy(user):
-                    newName = csToClone.name + '_copy'
+            if len(self.toCloneCS) == 1:
+                csToClone = mmodels.CurveSet.get(id=self.toCloneCS[0])
+                newName = csToClone.name + '_copy'
+            if len(self.toCloneCF) == 1:
+                csToClone = mmodels.CurveFile.get(id=self.toCloneCF[0]).curveSet
+                newName = csToClone.name + '_copy'
         except:
             newName = ''
             # self.toClone = -1
@@ -272,15 +270,12 @@ class SelectCurvesForCurveSetForm(forms.Form):
         self.fields['name'].maintype = 'name'
         self.fields['name'].mainid = 0
 
-        files = mmodels.CurveFile.objects.filter(
-            owner=user, 
-            deleted=False
-        ).only("id", "name", "fileName")
+        files = mmodels.CurveFile.all()
         csInFiles = []
         for f in files:
             fname = 'curveFile_{0}'.format(f.id)
             initial = False
-            if f.curveSet.id in self.toClone:
+            if f.id in self.toCloneCF:
                 initial = True
             self.fields[fname] = forms.BooleanField(
                 label=f,
@@ -300,13 +295,13 @@ class SelectCurvesForCurveSetForm(forms.Form):
                 self.fields[cname].maintype = 'curvefile'
                 self.fields[cname].cptype = 'child'
 
-        css = mmodels.CurveSet.objects.filter(owner=user, deleted=False).only("id", "name") 
+        css = mmodels.CurveSet.all().only("id", "name") 
         for cs in css:
             if cs.id in csInFiles:
                 continue
             csname = 'curveSet_{0}'.format(cs.id)
             initial = False
-            if cs.id in self.toClone:
+            if cs.id in self.toCloneCS:
                 initial = True
             self.fields[csname] = forms.BooleanField(
                 label=cs,
@@ -399,8 +394,7 @@ class SelectCurvesForCurveSetForm(forms.Form):
             ret['end']
         ])
 
-
-    @transaction.atomic 
+    @transaction.atomic
     def process(self, user):
         sid = transaction.savepoint()
 
@@ -426,16 +420,8 @@ class SelectCurvesForCurveSetForm(forms.Form):
                     elif 'curveSet' == nameSplit[0]:
                         selectedCS[id1] = selectedCS.get(id1, {})
                         selectedCS[id1][id2] = True
-        # Get CurveSet from CurveFile at the end to decrease number of operations
-        for k, v in selectedCF.items():
-            cf = mmodels.CurveFile.objects.get(id=k)
-            selectedCS[cf.curveSet.id] = selectedCS.get(cf.curveSet.id, {})
-            for vv in v.keys():
-                selectedCS[cf.curveSet.id][vv] = True
 
-        print('CSs:', selectedCS)
-
-        if len(selectedCS) == 0:
+        if len(selectedCS) == 0 and len(selectedCF) == 0:
             return False
 
         # Create new CurveSet:
@@ -447,29 +433,34 @@ class SelectCurvesForCurveSetForm(forms.Form):
                 deleted=False
             )
             newcs.save()
-            for csid, cdids in selectedCS.items():
-                cs = mmodels.CurveSet.objects.get(id=csid)
-                if not cs.canBeReadBy(user):
-                    raise VoltPyNotAllowed()
 
-                for a in cs.analytes.all():
-                    if not newcs.analytes.filter(id=a.id).exists():
-                        newcs.analytes.add(a)
-                        newcs.analytesConcUnits[a.id] = cs.analytesConcUnits.get(a.id, '0g')
-                if 'all' in cdids.keys():
-                    for cd in cs.curvesData.all():
-                        newcs.addCurve(
-                            curveData=cd,
-                            concDict=cs.getCurveConcDict(cd)
-                        )
-                else:
-                    for cdid in cdids.keys():
-                        cd = mmodels.CurveData.objects.get(id=cdid)
-                        newcs.addCurve(
-                            curveData=cd,
-                            concDict=cs.getCurveConcDict(cd)
-                        )
-            newcs.save()
+            def fun(selected_data, cf_or_cs):
+                for csid, cdids in selected_data.items():
+                    if cf_or_cs == 'cs':
+                        cs = mmodels.CurveSet.get(id=csid)
+                    else:
+                        cs = mmodels.CurveFile.get(id=csid).curveSet
+
+                    for a in cs.analytes.all():
+                        if not newcs.analytes.filter(id=a.id).exists():
+                            newcs.analytes.add(a)
+                            newcs.analytesConcUnits[a.id] = cs.analytesConcUnits.get(a.id, '0g')
+                    if 'all' in cdids.keys():
+                        for cd in cs.curvesData.all():
+                            newcs.addCurve(
+                                curveData=cd,
+                                concDict=cs.getCurveConcDict(cd)
+                            )
+                    else:
+                        for cdid in cdids.keys():
+                            cd = mmodels.CurveData.get(id=cdid)
+                            newcs.addCurve(
+                                curveData=cd,
+                                concDict=cs.getCurveConcDict(cd)
+                            )
+                newcs.save()
+            fun(selectedCF, 'cf')
+            fun(selectedCS, 'cs')
         except DatabaseError:
             transaction.savepoint_rollback(sid)
             raise
@@ -488,23 +479,15 @@ class DeleteForm(forms.Form):
             initial=item.id
         )
 
-    def process(self, user, item, deleteFrom=None):
+    def process(self, item, delete_fun=None):
         if self.cleaned_data['areyousure']:
             if self.cleaned_data['areyousure'] is True:
                 form_item_id = int(self.cleaned_data['item_id'])
                 if (form_item_id != int(item.id)):
                     return False
-                if item.canBeUpdatedBy(user):
-                    if any([
-                        deleteFrom is None,
-                        deleteFrom.__class__.__name__ != 'CurveSet'
-                    ]):
-                        item.deleted = True
-                        item.save()
-                        return True
-                    else:
-                        deleteFrom.curvesData.remove(item)
-                        deleteFrom.save()
-                        return True
+                if delete_fun is None:
+                    item.delete()
+                    return True
                 else:
-                    return False
+                    delete_fun(item)
+                    return True

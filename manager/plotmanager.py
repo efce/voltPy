@@ -50,9 +50,6 @@ class PlotManager:
         )
 
     def curveSetHelper(self, user, cs):
-        if not cs.canBeReadBy(user):
-            raise VoltPyNotAllowed
-
         ret = []
         for cd in cs.curvesData.all():
             ret.append({
@@ -76,8 +73,6 @@ class PlotManager:
     def analysisHelper(self, user, value_id: int):
         # TODO: makeover :)
         analysis = mmodels.Analysis.objects.get(id=value_id)
-        if not analysis.canBeReadBy(user):
-            raise VoltPyNotAllowed('Operation not allowed')
         if not analysis.completed:
             return
         # prepare data points

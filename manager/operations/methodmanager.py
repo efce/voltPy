@@ -345,7 +345,6 @@ $(function(){{
                         completed=False
                     )
                     a.save()
-                    curveset.inUseBy.add(a)  # CurveSet cannot be changed when used by Analysis method.
                     curveset.save()
                     return a.id
             return None

@@ -100,21 +100,15 @@ def export(request, user, objType, objId):
         csvFile = ''
         filename = 'export_%s.csv'
         if objType == 'fs':
-            fs = mmodels.FileSet.objects.get(id=int(objId), deleted=False)
-            if not fs.canBeReadBy(user):
-                raise VoltPyNotAllowed()
+            fs = mmodels.FileSet.get(id=int(objId), deleted=False)
             csvFile = fs.export()
             filename = filename % fs.name
         elif objType == 'cf':
-            cf = mmodels.CurveFile.objects.get(id=int(objId), deleted=False)
-            if not cf.canBeReadBy(user):
-                raise VoltPyNotAllowed()
+            cf = mmodels.CurveFile.get(id=int(objId), deleted=False)
             csvFile = cf.export()
             filename = filename % cf.name
         elif objType == 'cs':
-            cs = mmodels.CurveSet.objects.get(id=int(objId), deleted=False)
-            if not cs.canBeReadBy(user):
-                raise VoltPyNotAllowed()
+            cs = mmodels.CurveSet.get(id=int(objId), deleted=False)
             csvFile = cs.export()
             filename = filename % cs.name
         elif objType == 'an':
@@ -134,7 +128,7 @@ def export(request, user, objType, objId):
 @redirect_on_voltpyexceptions
 @with_user
 def browseFileSet(request, user):
-    files = mmodels.FileSet.objects.filter(owner=user, deleted=False)
+    files = mmodels.FileSet.all()
     context = {
         'user': user,
         'list_header': 'Displaying uploaded files sets:',
@@ -159,7 +153,7 @@ def browseFileSet(request, user):
 @redirect_on_voltpyexceptions
 @with_user
 def browseCurveFile(request, user):
-    files = mmodels.CurveFile.objects.filter(owner=user, deleted=False)
+    files = mmodels.CurveFile.all()
     context = {
         'user': user,
         'list_header': 'Displaying Uploaded files:',
@@ -184,7 +178,7 @@ def browseCurveFile(request, user):
 @redirect_on_voltpyexceptions
 @with_user
 def browseAnalysis(request, user):
-    anals = mmodels.Analysis.objects.filter(owner=user, deleted=False)
+    anals = mmodels.Analysis.all()
     context = {
         'user': user,
         'list_header': 'Displaying Analysis:',
@@ -195,7 +189,7 @@ def browseAnalysis(request, user):
         'whenEmpty': ''.join([
             "Analysis can only be performed on the CurveSet. ",
             "<a href='{url}'>Choose one</a>.".format(
-                url=reverse('browseCurveSet')
+                url=reverse('browseCurveSets')
             ),
         ])
     }
@@ -209,9 +203,7 @@ def browseAnalysis(request, user):
 @redirect_on_voltpyexceptions
 @with_user
 def browseCurveSet(request, user):
-    files = mmodels.CurveFile.objects.filter(owner=user).only('curveSet')
-    csetsFiles = [x['curveSet'] for x in files.all().values('curveSet')]
-    csets = mmodels.CurveSet.objects.filter(owner=user, deleted=False).exclude(id__in=csetsFiles)
+    csets = mmodels.CurveSet.all()
     context = {
         'user': user,
         'list_header': 'Displaying CurveSets:',
@@ -237,13 +229,15 @@ def browseCurveSet(request, user):
 @with_user
 def deleteFileSet(request, user, fileset_id):
     try:
-        fs = mmodels.FileSet.objects.get(id=fileset_id)
+        fs = mmodels.FileSet.get(id=fileset_id)
     except ObjectDoesNotExist:
         fs = None
+    onSuccess = reverse('browseFileSets')
     return delete_helper(
         request=request,
         user=user,
-        item=fs
+        item=fs,
+        onSuccessRedirect=onSuccess
     )
 
 
@@ -251,13 +245,15 @@ def deleteFileSet(request, user, fileset_id):
 @with_user
 def deleteCurveFile(request, user, file_id):
     try:
-        cfile = mmodels.CurveFile.objects.get(id=file_id)
+        cfile = mmodels.CurveFile.get(id=file_id)
     except ObjectDoesNotExist:
         cfile = None
+    onSuccess = reverse('browseCurveFiles')
     return delete_helper(
         request=request,
         user=user,
-        item=cfile
+        item=cfile,
+        onSuccessRedirect=onSuccess
     )
 
 
@@ -266,29 +262,32 @@ def deleteCurveFile(request, user, file_id):
 def deleteCurve(request, user, objType, objId, delId):
     if objType == 'cf':
         try:
-            cd = mmodels.CurveData.objects.get(id=delId)
-            deleteFrom = mmodels.CurveFile.objects.get(id=objId).curveSet
+            cd = mmodels.CurveData.get(id=delId)
+            delete_fun = mmodels.CurveFile.get(id=objId).curveSet.curvesData.remove
         except ObjectDoesNotExist:
-            c = None
+            print('CF: obj does not exists')
+            raise
+        redirect_to = reverse('showCurveFile', args=[objId])
         return delete_helper(
             request=request,
             user=user,
             item=cd,
-            deleteFrom=deleteFrom,
-            onSuccessRedirect=reverse('showCurveFile', args=[deleteFrom.id])
+            delete_fun=delete_fun,
+            onSuccessRedirect=redirect_to
         )
     else:  # curveset
         try:
-            cd = mmodels.CurveData.objects.get(id=delId)
-            deleteFrom = mmodels.CurveSet.objects.get(id=objId)
+            cd = mmodels.CurveData.get(id=delId)
+            delete_fun = mmodels.CurveSet.get(id=objId).curvesData.remove
         except ObjectDoesNotExist:
-            cd = None
+            print('CS: obj does not exists')
+            raise
         return delete_helper(
             request=request,
             user=user,
             item=cd,
-            deleteFrom=deleteFrom,
-            onSuccessRedirect=reverse('showCurveSet', args=[deleteFrom.id])
+            delete_fun=delete_fun,
+            onSuccessRedirect=reverse('showCurveSet', args=[objId])
         )
 
 
@@ -296,13 +295,15 @@ def deleteCurve(request, user, objType, objId, delId):
 @with_user
 def deleteAnalysis(request, user, analysis_id):
     try:
-        a = mmodels.Analysis.objects.get(id=analysis_id)
+        a = mmodels.Analysis.get(id=analysis_id)
     except ObjectDoesNotExist:
         a = None
+    onSuccess = reverse('browseAnalysis')
     return delete_helper(
         request=request,
         user=user,
-        item=a
+        item=a,
+        onSuccessRedirect=onSuccess
     )
 
 
@@ -310,19 +311,21 @@ def deleteAnalysis(request, user, analysis_id):
 @with_user
 def deleteCurveSet(request, user, curveset_id):
     try:
-        a = mmodels.CurveSet.objects.get(id=curveset_id)
+        a = mmodels.CurveSet.get(id=curveset_id)
     except ObjectDoesNotExist:
         a = None
+    onSuccess = reverse('browseCurveSets')
     return delete_helper(
         request=request,
         user=user,
-        item=a
+        item=a,
+        onSuccessRedirect=onSuccess
     )
 
 
 @redirect_on_voltpyexceptions
 @with_user
-def createCurveSet(request, user, toClone=[]):
+def createCurveSet(request, user, toCloneCF=[], toCloneCS=[]):
     """
     from pyinstrument import Profiler
     profiler = Profiler(use_signal=False)
@@ -339,7 +342,7 @@ def createCurveSet(request, user, toClone=[]):
                         reverse('showCurveSet', args=[cs_id])
                     )
     else:
-        form = mforms.SelectCurvesForCurveSetForm(user, toClone=toClone)
+        form = mforms.SelectCurvesForCurveSetForm(user, toCloneCS=toCloneCS, toCloneCF=toCloneCF)
 
     context = {
         'formHTML': form.drawByHand(request),
@@ -361,11 +364,8 @@ def createCurveSet(request, user, toClone=[]):
 @with_user
 def showAnalysis(request, user, analysis_id):
     try:
-        an = mmodels.Analysis.objects.get(id=analysis_id)
+        an = mmodels.Analysis.get(id=analysis_id)
     except ObjectDoesNotExist:
-        raise VoltPyNotAllowed(user)
-
-    if not an.canBeReadBy(user):
         raise VoltPyNotAllowed(user)
 
     if an.completed is False:
@@ -420,18 +420,17 @@ def showAnalysis(request, user, analysis_id):
 @redirect_on_voltpyexceptions
 @with_user
 def searchCurveSet(request, user):
-    # TODO: zabezpieczyć user
     if request.method != 'POST':
         return JsonResponse({})
     searchStr = request.POST.get('search', '')
     css = []
     if searchStr == '':
-        css = mmodels.CurveSet.objects.filter(deleted=False)
+        css = mmodels.CurveSet.all()
     else:
         if is_number(searchStr):
             cs_id = float(searchStr)
-            css.extend(mmodels.CurveSet.objects.filter(id=cs_id, deleted=False))
-        css.extend(mmodels.CurveSet.objects.filter(name__icontains=searchStr))
+            css.extend(mmodels.CurveSet.filter(id=cs_id))
+        css.extend(mmodels.CurveSet.filter(name__icontains=searchStr))
 
     ret = {}
     for cs in css:
@@ -443,7 +442,7 @@ def searchCurveSet(request, user):
 @with_user
 def showProcessed(request, user, processing_id):
     try:
-        cf = mmodels.Processing.objects.get(id=processing_id, owner=user)
+        cf = mmodels.Processing.get(id=processing_id)
     except ObjectDoesNotExist:
         cf = None
     context = {
@@ -461,12 +460,9 @@ def showProcessed(request, user, processing_id):
 @with_user
 def showFileSet(request, user, fileset_id):
     try:
-        fs = mmodels.FileSet.objects.get(id=fileset_id)
+        fs = mmodels.FileSet.get(id=fileset_id)
     except ObjectDoesNotExist:
         raise VoltPyDoesNotExists()
-
-    if not fs.canBeReadBy(user):
-        raise VoltPyNotAllowed(user)
 
     form_data = {'model': fs, 'label_name': 'FileSet name'}
     edit_name_form = form_helper(
@@ -514,11 +510,9 @@ def showFileSet(request, user, fileset_id):
 @with_user
 def undoCurveSet(request, user, curveset_id):
     try:
-        cs = mmodels.CurveSet.objects.get(id=curveset_id)
+        cs = mmodels.CurveSet.get(id=curveset_id)
     except ObjectDoesNotExist:
         raise VoltPyDoesNotExists()
-    if not cs.canBeUpdatedBy(user):
-        raise VoltPyNotAllowed(user)
 
     if request.method == "POST" and request.POST.get('confirm', False):
         confForm = mforms.GenericConfirmForm(request.POST)
@@ -549,12 +543,9 @@ def undoCurveSet(request, user, curveset_id):
 @with_user
 def showCurveSet(request, user, curveset_id):
     try:
-        cs = mmodels.CurveSet.objects.get(id=curveset_id)
+        cs = mmodels.CurveSet.get(id=curveset_id)
     except ObjectDoesNotExist:
         raise VoltPyDoesNotExists()
-
-    if not cs.canBeReadBy(user):
-        raise VoltPyNotAllowed(user)
 
     form_data = {'model': cs, 'label_name': 'CurveSet name'}
     edit_name_form = form_helper(
@@ -643,7 +634,14 @@ def showCurveSet(request, user, curveset_id):
 @with_user
 def cloneCurveSet(request, user, toClone_txt):
     toClone_ids = [int(x) for x in toClone_txt.split(',')]
-    return createCurveSet(request, toClone=toClone_ids)
+    return createCurveSet(request, toCloneCS=toClone_ids)
+
+
+@redirect_on_voltpyexceptions
+@with_user
+def cloneCurveFile(request, user, toClone_txt):
+    toClone_ids = [int(x) for x in toClone_txt.split(',')]
+    return createCurveSet(request, toCloneCF=toClone_ids)
 
 
 @redirect_on_voltpyexceptions
@@ -656,12 +654,9 @@ def editAnalysis(request, user, analysis_id):
 @with_user
 def editCurveSet(request, user, curveset_id):
     try:
-        cs = mmodels.CurveSet.objects.get(id=curveset_id)
+        cs = mmodels.CurveSet.get(id=curveset_id)
     except ObjectDoesNotExist:
         raise VoltPyDoesNotExists('Cannot be accessed.')
-
-    if not cs.canBeUpdatedBy(user):
-        raise VoltPyNotAllowed(user)
 
     txt = ''
     if cs.locked:
@@ -705,9 +700,7 @@ def editCurveSet(request, user, curveset_id):
         formProc = mm.getProcessingSelectionForm(disabled=cs.locked)
 
     try:
-        cs = mmodels.CurveSet.objects.get(id=curveset_id)
-        if not cs.canBeReadBy(user):
-            raise VoltPyNotAllowed(user)
+        cs = mmodels.CurveSet.get(id=curveset_id)
     except ObjectDoesNotExist:
         raise VoltPyNotAllowed(user)
 
@@ -758,7 +751,7 @@ def editCurveFile(request, user, file_id,):
         if form.is_valid():
             if form.process(user) is True:
                 return HttpResponseRedirect(
-                    reverse('browseCurveFile')
+                    reverse('browseCurveFiles')
                 )
     else:
         form = mforms.EditAnalytesForm(user, "File", file_id)
@@ -786,11 +779,8 @@ def editCurveFile(request, user, file_id,):
 @with_user
 def showCurveFile(request, user, file_id):
     try:
-        cf = mmodels.CurveFile.objects.get(id=file_id, deleted=False)
+        cf = mmodels.CurveFile.get(id=file_id, deleted=False)
     except ObjectDoesNotExist:
-        raise VoltPyNotAllowed(user)
-
-    if not cf.canBeReadBy(user):
         raise VoltPyNotAllowed(user)
 
     form_data = {'model': cf, 'label_name': 'System name'}
@@ -883,26 +873,22 @@ def applyModel(request, user, objType, objId, curveset_id):
 def editAnalyte(request, user, objType, objId, analyteId):
     if objType == 'cf':
         try:
-            cf = mmodels.CurveFile.objects.get(id=objId, deleted=False)
+            cf = mmodels.CurveFile.get(id=objId)
         except ObjectDoesNotExist:
-            raise VoltPyNotAllowed
-        if not cf.canBeUpdatedBy(user):
             raise VoltPyNotAllowed
         cs = cf.curveSet
 
     elif objType == 'cs':
         try:
-            cs = mmodels.CurveSet.objects.get(id=objId, deleted=False)
+            cs = mmodels.CurveSet.get(id=objId)
         except ObjectDoesNotExist:
-            raise VoltPyNotAllowed
-        if not cs.canBeUpdatedBy(user):
             raise VoltPyNotAllowed
 
     else:
         raise VoltPyNotAllowed
 
     if request.method == 'POST':
-        form = mforms.EditAnalytesForm(user, 'cs', cs.id, analyteId, request.POST)
+        form = mforms.EditAnalytesForm(user, cs, analyteId, request.POST)
         if form.is_valid():
             if form.process(user) is True:
                 if objType == 'cf':
@@ -914,7 +900,7 @@ def editAnalyte(request, user, objType, objId, analyteId):
                         reverse('showCurveSet', args=[objId])
                     )
     else:
-        form = mforms.EditAnalytesForm(user, 'cs', cs.id, analyteId)
+        form = mforms.EditAnalytesForm(user, cs, analyteId)
 
     if objType == 'cf':
         plotType = 'file'
@@ -923,8 +909,8 @@ def editAnalyte(request, user, objType, objId, analyteId):
         plotType = 'curveset'
         dispType = 'CurveSet'
     plotScr, plotDiv = generate_plot(
-        request=request, 
-        user=user, 
+        request=request,
+        user=user,
         plot_type=plotType,
         value_id=objId
     )
@@ -933,7 +919,7 @@ def editAnalyte(request, user, objType, objId, analyteId):
         infotext = 'Adding new analyte in '
     else:
         try: 
-            analyte = mmodels.Analyte.objects.get(id=analyteId)
+            analyte = mmodels.Analyte.get(id=analyteId)
         except ObjectDoesNotExist:
             infotext = 'Adding new analyte in '
         infotext = 'Editing {0} in '.format(analyte.name)
