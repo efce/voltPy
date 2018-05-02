@@ -659,92 +659,7 @@ def cloneCurveFile(request, user, toCloneId):
 
 @redirect_on_voltpyexceptions
 @with_user
-def editAnalysis(request, user, analysis_id):
-    pass
-
-
-@redirect_on_voltpyexceptions
-@with_user
-def editCurveSet(request, user, curveset_id):
-    try:
-        cs = mmodels.CurveSet.get(id=curveset_id)
-    except ObjectDoesNotExist:
-        raise VoltPyDoesNotExists('Cannot be accessed.')
-
-    txt = ''
-    if cs.locked:
-        txt = "This curveset is used by analysis method and cannot be modified."
-
-    mm = mmm.MethodManager(user=user, curveset_id=curveset_id)
-
-    if request.method == 'POST':
-        if 'startAnalyze' in request.POST:
-            formGenerate = mm.getAnalysisSelectionForm(request.POST)
-            if formGenerate.is_valid():
-                analyzeid = formGenerate.process(user, cs)
-                return HttpResponseRedirect(reverse('analyze', args=[analyzeid]))
-        else:
-            formGenerate = mm.getAnalysisSelectionForm()
-
-        if all([
-            not cs.locked,
-            'startProcessing' in request.POST
-        ]):
-            formProc = mm.getProcessingSelectionForm(request.POST)
-            if formProc.is_valid():
-                procid = formProc.process(user, cs)
-                return HttpResponseRedirect(reverse('process', args=[procid]))
-        else:
-            formProc = mm.getProcessingSelectionForm(disabled=cs.locked)
-
-        if 'submitFormAnalyte' in request.POST:
-            formAnalyte = mforms.EditAnalytesForm(user, "CurveSet", curveset_id, request.POST)
-            if formAnalyte.is_valid():
-                if formAnalyte.process(user) is True:
-                    return HttpResponseRedirect(
-                        reverse('editCurveSet', args=[curveset_id])
-                    )
-        else:
-            formAnalyte = mforms.EditAnalytesForm(user, "CurveSet", curveset_id)
-
-    else:
-        formAnalyte = mforms.EditAnalytesForm(user, "CurveSet", curveset_id)
-        formGenerate = mm.getAnalysisSelectionForm()
-        formProc = mm.getProcessingSelectionForm(disabled=cs.locked)
-
-    try:
-        cs = mmodels.CurveSet.get(id=curveset_id)
-    except ObjectDoesNotExist:
-        raise VoltPyNotAllowed(user)
-
-    cal_disp = ""
-    plotScr, plotDiv = generate_plot(
-        request=request,
-        user=user,
-        plot_type='curveset',
-        value_id=cs.id
-    )
-    context = {
-        'scripts': plotScr + formProc.getJS(request) + formGenerate.getJS(request),
-        'mainPlot': plotDiv,
-        'formAnalyte': formAnalyte,
-        'startAnalyze': formGenerate,
-        'startProcessing': formProc,
-        'user': user,
-        'curveset_id': curveset_id,
-        'cal_disp': cal_disp
-    }
-    return voltpy_render(
-        request=request,
-        template_name='manager/editCurveSet.html',
-        context=context
-    )
-
-
-@redirect_on_voltpyexceptions
-@with_user
 def upload(request, user):
-
     context = {
         'user': user,
         'allowedExt': umanager.allowedExt,
@@ -752,38 +667,6 @@ def upload(request, user):
     return voltpy_render(
         request=request,
         template_name='manager/uploadFile.html',
-        context=context
-    )
-
-
-@redirect_on_voltpyexceptions
-@with_user
-def editCurveFile(request, user, file_id,):
-    if request.method == 'POST':
-        form = mforms.EditAnalytesForm(user, "File", file_id, request.POST)
-        if form.is_valid():
-            if form.process(user) is True:
-                return HttpResponseRedirect(
-                    reverse('browseCurveFiles')
-                )
-    else:
-        form = mforms.EditAnalytesForm(user, "File", file_id)
-    plotScr, plotDiv = generate_plot(
-        request=request,
-        user=user,
-        plot_type='file',
-        value_id=file_id
-    )
-    context = {
-        'scripts': plotScr,
-        'mainPlot': plotDiv,
-        'user': user,
-        'file_id': file_id,
-        'form': form,
-    }
-    return voltpy_render(
-        request=request,
-        template_name='manager/editFile.html',
         context=context
     )
 
@@ -931,7 +814,7 @@ def editAnalyte(request, user, objType, objId, analyteId):
     if analyteId == 'new':
         infotext = 'Adding new analyte in '
     else:
-        try: 
+        try:
             analyte = mmodels.Analyte.get(id=analyteId)
         except ObjectDoesNotExist:
             infotext = 'Adding new analyte in '
@@ -975,27 +858,4 @@ def process(request, user, processing_id):
 
 @with_user
 def plotInteraction(request, user):
-    if any([
-        request.method != 'POST',
-        not request.POST.get('query', None)
-    ]):
-        return HttpResponse('Error')
-
-    ret = ''
-    if request.POST.get('query') == 'methodmanager':
-        vtype = request.POST.get('vtype', '')
-        vid = int(request.POST.get('vid', -1))
-        kwrg = {
-            vtype: vid
-        }
-        mm = mmm.MethodManager(user=user, **kwrg)
-        mm.process(request=request, user=user)
-        ret = mm.ajax(user=user)
-    elif request.POST.get('query') == 'plotmanager': 
-        import manager.plotmanager as mpm
-        pm = mpm.PlotManager()
-        ret = pm.plotInteraction(request=request, user=user)
-    else:
-        raise NameError('Unknown query type')
-
-    return JsonResponse(ret)
+    return
