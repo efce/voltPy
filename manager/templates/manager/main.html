@@ -51,26 +51,43 @@
   </div>
   {% endblock %}
 
+<table>
   {% if notifications %}
+  <tr><td colspan=2>
   <div id="notifications">
     <a class="closeX"></a>
     {% for n in notifications %}
       <p class="{{ n.severity }}">{{ n.text }}</p>
     {% endfor %}
   </div>
+  </td></tr>
   {% endif %}
-
+<tr>
   {% if mainPlot %}
-  <div style="float:left; width: 55%;">
-    {{ mainPlot | safe }}
-  </div>
+  <td>
+    <div class="_voltPy_bokehSize">
+      {{ mainPlot | safe }}
+    </div>
+  </td>
+  <td colspan="2">
+  {% else %}
+  <td>
   {% endif %}
-
-  <div style="float:left; width: 44%;">
-    {% block real_content %} {% endblock %}
-  </div>
-
-</div> <!-- end content -->
+    <div>
+      {% block real_content %} {% endblock %}
+    </div>
+  </td>
+</tr>
+  {%if mainPlot %}
+<tr>
+  <td>
+    <div class="_voltPy_bokehButtonsSize">
+      <table><tr><td><span class="bokehButtonsText">On x axis:</span></td><td>{{ mainPlotButtons | safe}}</td></tr></table>
+    </div>
+  </td>
+</tr>
+  {% endif %}
+</table>
 {% endblock %} 
 
 {% block footer %}

@@ -188,8 +188,8 @@ $( function() {
             if (name.startsWith(iclass)) {
                 var number = name.substring(iclass.length);
                 var cname = 'curve_' + number;
-                Bokeh.documents[0]._all_models_by_name._dict[cname].glyph.line_width = 8;
-                Bokeh.documents[0]._all_models_by_name._dict[cname].glyph.line_color = 'red';
+                Bokeh.documents[0].get_model_by_name(cname).glyph.line_width = 8;
+                Bokeh.documents[0].get_model_by_name(cname).glyph.line_color = 'red';
             }
         }); 
     };
@@ -202,8 +202,8 @@ $( function() {
             if (name.startsWith(iclass)) {
                 var number = name.substring(iclass.length);
                 var cname = 'curve_' + number;
-                Bokeh.documents[0]._all_models_by_name._dict[cname].glyph.line_width = 2;
-                Bokeh.documents[0]._all_models_by_name._dict[cname].glyph.line_color = 'blue';
+                Bokeh.documents[0].get_model_by_name(cname).glyph.line_width = 2;
+                Bokeh.documents[0].get_model_by_name(cname).glyph.line_color = 'blue';
             }
         }); 
     }

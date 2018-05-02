@@ -46,7 +46,8 @@ class PlotManager:
             x_axis_label=self.xlabel,
             y_axis_label=self.ylabel,
             height=self.plot_height-10,
-            width=self.plot_width-20
+            width=self.plot_width-20,
+            sizing_mode='stretch_both'
         )
 
     def curveSetHelper(self, user, cs):
@@ -440,20 +441,22 @@ class PlotManager:
             width=250, 
             callback=CustomJS(args=args, code=js_back)
         )
-        px = Paragraph(text="""X axis:""", width=50)
         if not self.interaction or self.interaction == 'none':
-            w = widgetbox(radio_button_group)
-            actionbar = row([px, w], width=self.plot_width)
+            w = widgetbox(radio_button_group, height=150)
+            actionbar = row([w], sizing_mode='scale_width', height=150)
         else:
-            w = widgetbox(radio_button_group)
+            w = widgetbox(radio_button_group, height=150)
             # actionbar = row([px, w, bback, bforward], width=self.plot_width)
-            actionbar = row([px, w, bunselect], width=self.plot_width-50)
+            actionbar = row([w, bunselect], sizing_mode='scale_width', height=150)
 
+        return (self.p, actionbar)
+        """
         if self.include_x_switch:
-            layout = column([self.p, actionbar])
+            layout = column([self.p, actionbar], sizing_mode='stretch_both', width=self.plot_width)
         else:
-            layout = column([self.p])
+            layout = column([self.p], sizing_mode='stretch_both', width=self.plot_width)
         return layout
+        """
 
     def plotInteraction(self, request, user):
         self.request = request
@@ -515,11 +518,11 @@ class PlotManager:
 
     def getEmbeded(self, request, user, vtype, vid):
         layout = self._prepareFigure(request, user, vtype, vid)
-        src, div = components(layout) 
+        src, (div_plot, div_buttons) = components(layout) 
         src = '\n'.join([
             src,
             """<script type='text/javascript'>
             $(function(){window.voltPy1 = { 'command': '%s' };});
             </script>""" % self.interaction
         ])
-        return src, div
+        return src, div_plot, div_buttons

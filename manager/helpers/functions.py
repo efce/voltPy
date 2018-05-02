@@ -27,8 +27,8 @@ def voltpy_render(*args, **kwargs):
         con_scr,
     ])
     context['bokeh_scripts'] = scr
-    context['plot_width'] = mpm.PlotManager.plot_width
-    context['plot_height'] = mpm.PlotManager.plot_height
+    #context['plot_width'] = mpm.PlotManager.plot_width
+    #context['plot_height'] = mpm.PlotManager.plot_height
     notifications = request.session.pop('VOLTPY_notification', [])
     if len(notifications) > 0:
         con_note = context.get('notifications', [])

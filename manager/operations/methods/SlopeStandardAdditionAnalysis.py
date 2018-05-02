@@ -142,7 +142,7 @@ https://doi.org/10.1039/C7AN00185A
             )
             col_cnt += 1
 
-        scripts, div = p.getEmbeded(request, user, 'analysis', self.model.id)
+        scripts, div, buttons = p.getEmbeded(request, user, 'analysis', self.model.id)
         unitsTrans = dict(mmodels.CurveSet.CONC_UNITS)
         ret = {
             'head': scripts,

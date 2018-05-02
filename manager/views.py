@@ -383,7 +383,7 @@ def showAnalysis(request, user, analysis_id):
 
     mm = mmm.MethodManager(user=user, analysis_id=analysis_id)
     info = mm.getFinalContent(request=request, user=user)
-    plotScr, plotDiv = generate_plot(
+    plotScr, plotDiv, butDiv = generate_plot(
         request=request,
         user=user,
         plot_type='curveset',
@@ -397,6 +397,7 @@ def showAnalysis(request, user, analysis_id):
     context = {
         'scripts': plotScr,
         'mainPlot': plotDiv,
+        'mainPlotButtons': butDiv,
         'head': info.get('head', ''),
         'user': user,
         'analysis': an,
@@ -474,7 +475,7 @@ def showFileSet(request, user, fileset_id):
         formExtraData=form_data
     )
 
-    plotScr, plotDiv = generate_plot(
+    plotScr, plotDiv, butDiv = generate_plot(
         request=request,
         user=user,
         plot_type='fileset',
@@ -484,6 +485,7 @@ def showFileSet(request, user, fileset_id):
     context = {
         'scripts': plotScr,  # + formAnalyze.getJS(request) + formProcess.getJS(request),
         'mainPlot': plotDiv,
+        'mainPlotButtons': butDiv,
         'user': user,
         'disp_name_edit': edit_name_form['html'],
         'fileset': fs,
@@ -557,7 +559,7 @@ def showCurveSet(request, user, curveset_id):
         formExtraData=form_data
     )
 
-    plotScr, plotDiv = generate_plot(
+    plotScr, plotDiv, butDiv = generate_plot(
         request=request,
         user=user,
         plot_type='curveset',
@@ -599,6 +601,7 @@ def showCurveSet(request, user, curveset_id):
     context = {
         'scripts': plotScr + formAnalyze.getJS(request) + formProcess.getJS(request),
         'mainPlot': plotDiv,
+        'mainPlotButtons': butDiv,
         'user': user,
         'disp_name_edit': edit_name_form['html'],
         'curveset': cs,
@@ -690,7 +693,7 @@ def showCurveFile(request, user, file_id):
     )
 
     import manager.analytesTable as at
-    plotScr, plotDiv = generate_plot(
+    plotScr, plotDiv, butDiv = generate_plot(
         request=request,
         user=user,
         plot_type='file',
@@ -702,6 +705,7 @@ def showCurveFile(request, user, file_id):
     context = {
         'scripts': plotScr,
         'mainPlot': plotDiv,
+        'mainPlotButtons': butDiv,
         'user': user,
         'curvefile': cf,
         'disp_name_edit': edit_name_form['html'],
@@ -804,7 +808,7 @@ def editAnalyte(request, user, objType, objId, analyteId):
     else:
         plotType = 'curveset'
         dispType = 'CurveSet'
-    plotScr, plotDiv = generate_plot(
+    plotScr, plotDiv, butDiv = generate_plot(
         request=request,
         user=user,
         plot_type=plotType,
@@ -823,6 +827,7 @@ def editAnalyte(request, user, objType, objId, analyteId):
     context = {
         'scripts': plotScr,
         'mainPlot': plotDiv,
+        'mainPlotButtons': butDiv,
         'user': user,
         'obj_name': dispType,
         'obj_id': objId,
@@ -858,4 +863,26 @@ def process(request, user, processing_id):
 
 @with_user
 def plotInteraction(request, user):
-    return
+    if any([
+        request.method != 'POST',
+        not request.POST.get('query', None)
+    ]):
+        return HttpResponse('Error')
+
+    ret = ''
+    if request.POST.get('query') == 'methodmanager':
+        vtype = request.POST.get('vtype', '')
+        vid = int(request.POST.get('vid', -1))
+        kwrg = {
+            vtype: vid
+        }
+        mm = mmm.MethodManager(user=user, **kwrg)
+        mm.process(request=request, user=user)
+        ret = mm.ajax(user=user)
+    elif request.POST.get('query') == 'plotmanager':
+        import manager.plotmanager as mpm
+        pm = mpm.PlotManager()
+        ret = pm.plotInteraction(request=request, user=user)
+    else:
+        raise NameError('Unknown query type')
+    return JsonResponse(ret)

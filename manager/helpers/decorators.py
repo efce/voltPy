@@ -57,8 +57,9 @@ def with_user(fun):
     def wrap(request, *args, **kwargs):
         try:
             user = request.user
-        except (AttributeError, TypeError, ValueError, ObjectDoesNotExist):
-            raise VoltPyNotAllowed("Z with usera")
+        except (AttributeError, TypeError, ValueError, ObjectDoesNotExist) as e:
+            print("Got user errro! ", repr(e))
+            raise VoltPyNotAllowed("General permission error.")
         kwargs['user'] = user
         with_user._user = user
         return fun(request, *args, **kwargs)

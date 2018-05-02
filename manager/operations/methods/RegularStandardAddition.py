@@ -104,7 +104,7 @@ calculated as a difference between max and min signal in the given range.
             units=self.model.customData['units']
         )
         p.ylabel = 'i / µA'
-        scr, div = p.getEmbeded(request, user, 'analysis', self.model.id)
+        scr, div, buttons = p.getEmbeded(request, user, 'analysis', self.model.id)
         n = len(self.model.customData['matrix'][0])
         talpha = t.ppf(0.975, n-2)
         conf_interval = np.multiply(self.model.customData['resultStdDev'], talpha)
