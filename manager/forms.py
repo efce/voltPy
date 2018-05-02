@@ -48,7 +48,7 @@ class EditName(forms.Form):
         super(EditName, self).__init__(*args, **kwargs)
         assert self.model is not None
         self.fields['e_name'] = forms.CharField(
-            max_length=64,
+            max_length=128,
             initial=self.model.name,
             required=False,
             label=label_name
