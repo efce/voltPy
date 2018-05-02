@@ -37,4 +37,4 @@
   - Estimation of Cell Time Constant (tau) based on ASD (capacitive factor) -- wip in master (kind of works)
   - Genetic algorithm for background correction -- Łukasz(?)
   - PLS - Partial Least Squares calibration -- Łukasz(?)
-- Add comments section below, which can be used by all users with at least ro priviledge
+- Add comments section below, which can be used by all users with at least ro privilege
