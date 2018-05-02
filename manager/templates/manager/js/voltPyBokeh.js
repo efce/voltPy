@@ -6,7 +6,7 @@ function setMainPlotSize() {
   var w = Math.floor(winWidth/2.1);
   var h = Math.floor(w/proportion);
   if (h>(winHeight*0.85)) {
-    w = Math.floor(h*0.85*proportion);
+    w = Math.floor(winHeight*0.85);
     h = Math.floor(w/proportion);
   }
   $('._voltPy_bokehSize').css('width', w);
