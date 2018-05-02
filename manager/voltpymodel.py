@@ -23,6 +23,7 @@ class VoltPyModel(models.Model):
             super().save()
             if user is not None:
                 assign_perm('rw', user, self)
+                assign_perm('del', user, self)
             return
         if user.has_perm('rw', self):
             super().save()
@@ -53,9 +54,8 @@ class VoltPyModel(models.Model):
     @classmethod
     def all(cls, *args, **kwargs):
         user = manager.helpers.functions.getUser()
-        kwargs['deleted'] = False
         perms = ('rw', 'ro')
-        return get_objects_for_user(user, perms, klass=cls, any_perm=True)
+        return get_objects_for_user(user, perms, klass=cls, any_perm=True).filter(deleted=False)
 
     def delete(self):
         user = manager.helpers.functions.getUser()

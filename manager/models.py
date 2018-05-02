@@ -74,8 +74,6 @@ def exportCDasFile(cds):
 
 
 class CurveFile(VoltPyModel):
-    name = models.CharField(max_length=255)
-    comment = models.TextField()
     fileName = models.TextField()
     fileDate = models.DateField(auto_now=False, auto_now_add=False)  # Each file has its curveset
     curveSet = models.OneToOneField('FileCurveSet', on_delete=models.DO_NOTHING, related_name='file')
@@ -93,6 +91,10 @@ class CurveFile(VoltPyModel):
 
     def export(self):
         return self.curveSet.export()
+
+    @property
+    def name(self):
+        return self.curveSet.name
 
 
 class FileSet(VoltPyModel):
@@ -607,10 +609,6 @@ class FileCurveSet(CurveSet):
     
     def __str__(self):
         return '%s: %s' % (self.id, self.file.name)
-
-    @property
-    def name(self):
-        return self.file.name
 
 
 class Analysis(VoltPyModel):

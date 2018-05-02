@@ -189,7 +189,7 @@ def browseAnalysis(request, user):
         'whenEmpty': ''.join([
             "Analysis can only be performed on the CurveSet. ",
             "<a href='{url}'>Choose one</a>.".format(
-                url=reverse('browseCurveSet')
+                url=reverse('browseCurveSets')
             ),
         ])
     }
@@ -203,9 +203,7 @@ def browseAnalysis(request, user):
 @redirect_on_voltpyexceptions
 @with_user
 def browseCurveSet(request, user):
-    files = mmodels.CurveFile.all().only('curveSet')
-    csetsFiles = [x['curveSet'] for x in files.all().values('curveSet')]
-    csets = mmodels.CurveSet.filter(owner=user, deleted=False).exclude(id__in=csetsFiles)
+    csets = mmodels.CurveSet.all()
     context = {
         'user': user,
         'list_header': 'Displaying CurveSets:',
@@ -234,10 +232,12 @@ def deleteFileSet(request, user, fileset_id):
         fs = mmodels.FileSet.get(id=fileset_id)
     except ObjectDoesNotExist:
         fs = None
+    onSuccess = reverse('browseFileSets')
     return delete_helper(
         request=request,
         user=user,
-        item=fs
+        item=fs,
+        onSuccessRedirect=onSuccess
     )
 
 
@@ -248,10 +248,12 @@ def deleteCurveFile(request, user, file_id):
         cfile = mmodels.CurveFile.get(id=file_id)
     except ObjectDoesNotExist:
         cfile = None
+    onSuccess = reverse('browseCurveFiles')
     return delete_helper(
         request=request,
         user=user,
-        item=cfile
+        item=cfile,
+        onSuccessRedirect=onSuccess
     )
 
 
@@ -261,22 +263,22 @@ def deleteCurve(request, user, objType, objId, delId):
     if objType == 'cf':
         try:
             cd = mmodels.CurveData.get(id=delId)
-            deleteFrom = mmodels.CurveFile.get(id=objId).curveSet
+            delete_fun = mmodels.CurveFile.get(id=objId).curveSet.curvesData.remove
         except ObjectDoesNotExist:
             print('CF: obj does not exists')
             raise
-        redirect_to = reverse('showCurveFile', args=[deleteFrom.id])
+        redirect_to = reverse('showCurveFile', args=[objId])
         return delete_helper(
             request=request,
             user=user,
             item=cd,
-            deleteFrom=deleteFrom,
+            delete_fun=delete_fun,
             onSuccessRedirect=redirect_to
         )
     else:  # curveset
         try:
             cd = mmodels.CurveData.get(id=delId)
-            deleteFrom = mmodels.CurveSet.get(id=objId)
+            delete_fun = mmodels.CurveSet.get(id=objId).curvesData.remove
         except ObjectDoesNotExist:
             print('CS: obj does not exists')
             raise
@@ -284,8 +286,8 @@ def deleteCurve(request, user, objType, objId, delId):
             request=request,
             user=user,
             item=cd,
-            deleteFrom=deleteFrom,
-            onSuccessRedirect=reverse('showCurveSet', args=[deleteFrom.id])
+            delete_fun=delete_fun,
+            onSuccessRedirect=reverse('showCurveSet', args=[objId])
         )
 
 
@@ -296,10 +298,12 @@ def deleteAnalysis(request, user, analysis_id):
         a = mmodels.Analysis.get(id=analysis_id)
     except ObjectDoesNotExist:
         a = None
+    onSuccess = reverse('browseAnalysis')
     return delete_helper(
         request=request,
         user=user,
-        item=a
+        item=a,
+        onSuccessRedirect=onSuccess
     )
 
 
@@ -310,16 +314,18 @@ def deleteCurveSet(request, user, curveset_id):
         a = mmodels.CurveSet.get(id=curveset_id)
     except ObjectDoesNotExist:
         a = None
+    onSuccess = reverse('browseCurveSets')
     return delete_helper(
         request=request,
         user=user,
-        item=a
+        item=a,
+        onSuccessRedirect=onSuccess
     )
 
 
 @redirect_on_voltpyexceptions
 @with_user
-def createCurveSet(request, user, toClone=[]):
+def createCurveSet(request, user, toCloneCF=[], toCloneCS=[]):
     """
     from pyinstrument import Profiler
     profiler = Profiler(use_signal=False)
@@ -336,7 +342,7 @@ def createCurveSet(request, user, toClone=[]):
                         reverse('showCurveSet', args=[cs_id])
                     )
     else:
-        form = mforms.SelectCurvesForCurveSetForm(user, toClone=toClone)
+        form = mforms.SelectCurvesForCurveSetForm(user, toCloneCS=toCloneCS, toCloneCF=toCloneCF)
 
     context = {
         'formHTML': form.drawByHand(request),
@@ -414,17 +420,16 @@ def showAnalysis(request, user, analysis_id):
 @redirect_on_voltpyexceptions
 @with_user
 def searchCurveSet(request, user):
-    # TODO: zabezpieczyć user
     if request.method != 'POST':
         return JsonResponse({})
     searchStr = request.POST.get('search', '')
     css = []
     if searchStr == '':
-        css = mmodels.CurveSet.filter(deleted=False)
+        css = mmodels.CurveSet.all()
     else:
         if is_number(searchStr):
             cs_id = float(searchStr)
-            css.extend(mmodels.CurveSet.filter(id=cs_id, deleted=False))
+            css.extend(mmodels.CurveSet.filter(id=cs_id))
         css.extend(mmodels.CurveSet.filter(name__icontains=searchStr))
 
     ret = {}
@@ -437,7 +442,7 @@ def searchCurveSet(request, user):
 @with_user
 def showProcessed(request, user, processing_id):
     try:
-        cf = mmodels.Processing.get(id=processing_id, owner=user)
+        cf = mmodels.Processing.get(id=processing_id)
     except ObjectDoesNotExist:
         cf = None
     context = {
@@ -629,7 +634,14 @@ def showCurveSet(request, user, curveset_id):
 @with_user
 def cloneCurveSet(request, user, toClone_txt):
     toClone_ids = [int(x) for x in toClone_txt.split(',')]
-    return createCurveSet(request, toClone=toClone_ids)
+    return createCurveSet(request, toCloneCS=toClone_ids)
+
+
+@redirect_on_voltpyexceptions
+@with_user
+def cloneCurveFile(request, user, toClone_txt):
+    toClone_ids = [int(x) for x in toClone_txt.split(',')]
+    return createCurveSet(request, toCloneCF=toClone_ids)
 
 
 @redirect_on_voltpyexceptions
@@ -739,7 +751,7 @@ def editCurveFile(request, user, file_id,):
         if form.is_valid():
             if form.process(user) is True:
                 return HttpResponseRedirect(
-                    reverse('browseCurveFile')
+                    reverse('browseCurveFiles')
                 )
     else:
         form = mforms.EditAnalytesForm(user, "File", file_id)

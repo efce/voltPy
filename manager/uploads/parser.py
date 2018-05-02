@@ -34,13 +34,10 @@ class Parser(ABC):
 
     def saveModels(self, user):
         cf = mmodels.CurveFile(
-            owner=user,
-            name=self.cfile.name,
             fileName=self.cfile.name,
             fileDate=self._curves[0].date,
         )
         cs = mmodels.FileCurveSet(
-            owner=user,
             name=self.cfile.name
         )
         cs.save()

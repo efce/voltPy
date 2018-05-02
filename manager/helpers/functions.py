@@ -60,51 +60,38 @@ def add_notification(request, text, severity=0):
     request.session['VOLTPY_notification'] = notifications
 
 
-def delete_helper(request, user, item, deleteFrom=None, onSuccessRedirect=None):
+def delete_helper(request, user, item, delete_fun=None, onSuccessRedirect=None):
     """
     The generic function to which offers ability to delete
-    model istance with user confirmation.
+    model instance with user confirmation.
     """
     if item is None:
         return HttpResponseRedirect(
             reverse('index')
         )
 
-    itemclass = str(item.__class__.__name__)
-    if not item.canBeUpdatedBy(user):
-        raise VoltPyNotAllowed(user)
     if request.method == 'POST':
         form = mforms.DeleteForm(item, request.POST)
         if form.is_valid():
-            a = form.process(user, item, deleteFrom)
+            a = form.process(item, delete_fun)
             if a:
                 if onSuccessRedirect is not None:
                     return HttpResponseRedirect(
                         onSuccessRedirect
                     )
-                elif deleteFrom is not None:
-                    fromclass = str(deleteFrom.__class__.__name__)
-                    onSuccessRedirect = reverse('show'+fromclass, args=[deleteFrom.id])
-                    return HttpResponseRedirect(
-                        onSuccessRedirect
-                    )
-                else:
-                    if onSuccessRedirect is None:
-                        onSuccessRedirect = reverse('browse'+itemclass)
-
+                return HttpResponseRedirect(
+                    reverse('index')
+                )
     else:
         form = mforms.DeleteForm(item)
 
-    if deleteFrom.__class__.__name__ == 'CurveSet':
-        item = item.curve
-
-    context = { 
+    context = {
         'form': form,
         'item': item,
         'user': user
     }
     return voltpy_render(
-        request=request, 
+        request=request,
         template_name='manager/deleteGeneric.html',
         context=context
     )

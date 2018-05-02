@@ -245,11 +245,17 @@ class SelectCurvesForCurveSetForm(forms.Form):
     curvesetid = -1
 
     def __init__(self, user,  *args, **kwargs):
-        self.toClone = kwargs.pop('toClone', [])
+        self.toCloneCS = kwargs.pop('toCloneCS', [])
+        self.toCloneCF = kwargs.pop('toCloneCF', [])
+        if len(self.toCloneCF) > 0 and len(self.toCloneCS) > 0:
+            raise VoltPyNotAllowed('Can only clone one type of data.')
         newName = ''
         try:
-            if len(self.toClone) == 1:
-                csToClone = mmodels.CurveSet.get(id=self.toClone[0])
+            if len(self.toCloneCS) == 1:
+                csToClone = mmodels.CurveSet.get(id=self.toCloneCS[0])
+                newName = csToClone.name + '_copy'
+            if len(self.toCloneCF) == 1:
+                csToClone = mmodels.CurveFile.get(id=self.toCloneCF[0]).curveSet
                 newName = csToClone.name + '_copy'
         except:
             newName = ''
@@ -264,12 +270,12 @@ class SelectCurvesForCurveSetForm(forms.Form):
         self.fields['name'].maintype = 'name'
         self.fields['name'].mainid = 0
 
-        files = mmodels.CurveFile.all().only("id", "name", "fileName")
+        files = mmodels.CurveFile.all()
         csInFiles = []
         for f in files:
             fname = 'curveFile_{0}'.format(f.id)
             initial = False
-            if f.curveSet.id in self.toClone:
+            if f.id in self.toCloneCF:
                 initial = True
             self.fields[fname] = forms.BooleanField(
                 label=f,
@@ -295,7 +301,7 @@ class SelectCurvesForCurveSetForm(forms.Form):
                 continue
             csname = 'curveSet_{0}'.format(cs.id)
             initial = False
-            if cs.id in self.toClone:
+            if cs.id in self.toCloneCS:
                 initial = True
             self.fields[csname] = forms.BooleanField(
                 label=cs,
@@ -473,20 +479,15 @@ class DeleteForm(forms.Form):
             initial=item.id
         )
 
-    def process(self, user, item, deleteFrom=None):
+    def process(self, item, delete_fun=None):
         if self.cleaned_data['areyousure']:
             if self.cleaned_data['areyousure'] is True:
                 form_item_id = int(self.cleaned_data['item_id'])
                 if (form_item_id != int(item.id)):
                     return False
-                if any([
-                    deleteFrom is None,
-                    deleteFrom.__class__.__name__ != 'CurveSet'
-                ]):
-                    item.deleted = True
-                    item.save()
+                if delete_fun is None:
+                    item.delete()
                     return True
                 else:
-                    deleteFrom.curvesData.remove(item)
-                    deleteFrom.save()
+                    delete_fun(item)
                     return True
