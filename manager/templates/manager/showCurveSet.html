@@ -5,7 +5,7 @@
 {% block real_content %}
 <table class="table_no_breaks">
 <tr>
-    <td>CurveSet ID: {{ curveset.id }}</td>
+    <td>CurveSet ID: {{ curveset.id }}&nbsp;<a href="{% url 'browseCurveSets' %}">Back to browse</a></td>
     <td style="border-left: 1px black solid;" rowspan=3>
         &nbsp;<button class="{{ cloneCS }}"> Copy </button>
         <br /><br />
