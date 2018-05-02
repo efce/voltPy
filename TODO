@@ -24,6 +24,7 @@
 - Own form superclass (?), with notifications after processing and automatic handling of bound/unboud forms
 ?- Classes instead of functions for views
 - Protect JSON form NANs and INFs -- handle all values gracefully in python (override JsonResponse function?)
+- User database space used, and quota limitations
 
 ==== Functionalities ====
 - Support for additional file formats and additional file/curve information:
