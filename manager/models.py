@@ -109,6 +109,28 @@ class FileSet(VoltPyModel):
             ('del', 'Delete'),
         )
 
+    def getNewCurveSet(self):
+        newcs = CurveSet(
+            name=self.name,
+        )
+        newcs.save()
+        for file_ in self.files.all():
+            newcs.curvesData.add(*file_.curveSet.curvesData.all())
+        for file_ in self.files.all():
+            for an in file_.curveSet.analytes.all():
+                newcs.analytes.add(an)
+                newcs.analytesConc[an.id] = {}
+                newcs.analytesConcUnits[an.id] = file_.curveSet.analytesConcUnits[an.id]
+                for cdid, concvalue in file_.curveSet.analytesConc[an.id].items():
+                    newcs.analytesConc[an.id][cdid] = concvalue
+        for an in newcs.analytes.all():
+            anconc = newcs.analytesConc[an.id]
+            for cd in newcs.curvesData.all():
+                anconc[cd.id] = anconc.get(cd.id, 0)
+            newcs.analytesConc[an.id] = anconc
+        newcs.save()
+        return newcs
+
     def __str__(self):
         return str(self.id) + ': ' + self.name
 
@@ -468,6 +490,21 @@ class CurveSet(VoltPyModel):
     undoAnalytesConcUnits = PickledObjectField(default={})  # dictionary key is analyte id
     undoProcessing = models.ForeignKey('Processing', null=True, default=None, on_delete=models.DO_NOTHING)
 
+    def getCopy(self):
+        newcs = CurveSet(
+            name=self.name+'_copy',
+            analytesConc=self.analytesConc,
+            analytesConcUnits=self.analytesConcUnits
+        )
+        newcs.save()
+        newcs.analytes.set(self.analytes.all())
+        newcs.curvesData.set(self.curvesData.all())
+        newcs.save()
+        for pr in Processing.objects.filter(curveSet=self, deleted=False, completed=True):
+            newpr = pr.getCopy(curveSet=newcs)
+            newpr.save()
+        return newcs
+
     class Meta:
         permissions = (
             ('ro', 'Read only'),
@@ -604,6 +641,18 @@ class FileCurveSet(CurveSet):
             ('del', 'Delete'),
         )
 
+    def getNewCurveSet(self):
+        newcs = CurveSet(
+            name=self.name,
+            analytesConc=self.analytesConc,
+            analytesConcUnits=self.analytesConcUnits
+        )
+        newcs.save()
+        newcs.analytes.set(self.analytes.all())
+        newcs.curvesData.set(self.curvesData.all())
+        newcs.save()
+        return newcs
+
     def getUrl(self):
         return reverse('showFile', args=[self.file.id])
     
@@ -666,6 +715,15 @@ class Processing(VoltPyModel):
     error = models.CharField(max_length=255)
     completed = models.BooleanField(default=0)
 
+    def getCopy(self, curveSet):
+        newp = copy(self)
+        newp.id = None
+        newp.pk = None
+        newp.curveSet = curveSet
+        newp.appliesModel = None
+        newp.save()
+        return newp
+
     class Meta:
         permissions = (
             ('ro', 'Read only'),
@@ -678,13 +736,3 @@ class Processing(VoltPyModel):
 
     def getUrl(self):
         return reverse('showCurveSet', args=[self.curveSet.id])
-
-    def getCopy(self):
-        newpr = copy(self)
-        newpr.id = None
-        newpr.pk = None
-        newpr.date = None
-        newpr.deleted = False
-        newpr.curveSet = None
-        newpr.save()
-        return newpr

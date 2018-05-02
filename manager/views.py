@@ -494,8 +494,8 @@ def showFileSet(request, user, fileset_id):
             })
         ),
         'cloneCS': get_redirect_class(
-            reverse('cloneCurveSet', kwargs={
-                'toClone_txt': ','.join([str(f.curveSet.id) for f in fs.files.all()])
+            reverse('cloneFileSet', kwargs={
+                'toCloneId': fs.id
             })
         ),
     }
@@ -619,7 +619,7 @@ def showCurveSet(request, user, curveset_id):
         ),
         'cloneCS': get_redirect_class(
             reverse('cloneCurveSet', kwargs={
-                'toClone_txt': cs.id,
+                'toCloneId': cs.id,
             })
         ),
     }
@@ -632,16 +632,29 @@ def showCurveSet(request, user, curveset_id):
 
 @redirect_on_voltpyexceptions
 @with_user
-def cloneCurveSet(request, user, toClone_txt):
-    toClone_ids = [int(x) for x in toClone_txt.split(',')]
-    return createCurveSet(request, toCloneCS=toClone_ids)
+def cloneCurveSet(request, user, toCloneId):
+    toCloneCS = mmodels.CurveSet.get(id=int(toCloneId))
+    newcs = toCloneCS.getCopy()
+    add_notification(request, 'CurveSet cloned. Redirecting to the new CurveSet.')
+    return HttpResponseRedirect(newcs.getUrl())
 
 
 @redirect_on_voltpyexceptions
 @with_user
-def cloneCurveFile(request, user, toClone_txt):
-    toClone_ids = [int(x) for x in toClone_txt.split(',')]
-    return createCurveSet(request, toCloneCF=toClone_ids)
+def cloneFileSet(request, user, toCloneId):
+    toCloneCS = mmodels.FileSet.get(id=int(toCloneId))
+    newcs = toCloneCS.getNewCurveSet()
+    add_notification(request, 'FileSet copied as a new CurveSet. Redirecting to the new CurveSet.')
+    return HttpResponseRedirect(newcs.getUrl())
+
+
+@redirect_on_voltpyexceptions
+@with_user
+def cloneCurveFile(request, user, toCloneId):
+    toCloneCS = mmodels.CurveFile.get(id=int(toCloneId)).curveSet
+    newcs = toCloneCS.getNewCurveSet()
+    add_notification(request, 'File copied as a new CurveSet. Redirecting to the new CurveSet.')
+    return HttpResponseRedirect(newcs.getUrl())
 
 
 @redirect_on_voltpyexceptions
@@ -817,8 +830,8 @@ def showCurveFile(request, user, file_id):
             })
         ),
         'cloneCS': get_redirect_class(
-            reverse('cloneCurveSet', kwargs={
-                'toClone_txt': cf.curveSet.id,
+            reverse('cloneCurveFile', kwargs={
+                'toCloneId': cf.curveSet.id,
             })
         ),
     }
