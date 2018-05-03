@@ -47,7 +47,7 @@ class PlotManager:
             y_axis_label=self.ylabel,
             height=self.plot_height-10,
             width=self.plot_width-20,
-            sizing_mode='stretch_both'
+            sizing_mode='scale_both'
         )
 
     def curveSetHelper(self, user, cs):
@@ -438,16 +438,16 @@ class PlotManager:
         #)
         bunselect = Button(
             label="Unselect", 
-            width=250, 
+            width=250,
             callback=CustomJS(args=args, code=js_back)
         )
         if not self.interaction or self.interaction == 'none':
-            w = widgetbox(radio_button_group, height=150)
-            actionbar = row([w], sizing_mode='scale_width', height=150)
+            w = widgetbox(radio_button_group, height=50)
+            actionbar = row([w], sizing_mode='fixed', height=50)
         else:
-            w = widgetbox(radio_button_group, height=150)
+            w = widgetbox(radio_button_group, height=50)
             # actionbar = row([px, w, bback, bforward], width=self.plot_width)
-            actionbar = row([w, bunselect], sizing_mode='scale_width', height=150)
+            actionbar = row([w, bunselect], sizing_mode='fixed', height=150)
 
         return (self.p, actionbar)
         """

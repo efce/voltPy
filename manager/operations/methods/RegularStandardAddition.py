@@ -57,7 +57,10 @@ calculated as a difference between max and min signal in the given range.
         xvalues = []
         yvalues = []
         selRange = self.model.stepsData['SelectRange']
-        analyte = self.model.curveSet.analytes.all()[0]
+        try:
+            analyte = self.model.analytes.get(id=int(self.model.stepsData['SelectAnalyte']))
+        except:
+            VoltPyFailed('Wrong analyte selected.')
         self.model.customData['analyte'] = analyte.name
         unitsTrans = dict(mmodels.CurveSet.CONC_UNITS)
         self.model.customData['units'] = unitsTrans[self.model.curveSet.analytesConcUnits[analyte.id]]
@@ -99,6 +102,7 @@ calculated as a difference between max and min signal in the given range.
             p.add(**d)
         p.plot_width = 500
         p.plot_height = 400
+        p.sizing_mode = 'fixed'
         p.xlabel = 'c_({analyte}) / {units}'.format(
             analyte=self.model.customData['analyte'],
             units=self.model.customData['units']
@@ -116,12 +120,15 @@ calculated as a difference between max and min signal in the given range.
         return {
             'head': scr,
             'body': ''.join([
+                '<table><tr><td style="width: 500px; height: 400px">',
                 div,
                 """
+                </td></tr><tr><td>
                     Analyte: {an}<br />
                     Equation: y = {slope}(&plusmn;{sci}) &middot; x + {int}(&plusmn;{ici})<br />
                     r = {corrcoef}<br />
                     Result: {res}&plusmn;{ci} {anu}
+                    </td></tr></table>
                 """.format(
                     res='%.*f' % (sd, self.model.customData['result']),
                     ci='%.*f' % (sd, conf_interval),

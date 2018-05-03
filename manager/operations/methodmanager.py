@@ -155,7 +155,7 @@ class MethodManager:
                 len(self.__method._steps)
             )
 
-            plotScr, plotDiv = generate_plot(
+            plotScr, plotDiv, butDiv = generate_plot(
                 request=request,
                 user=user,
                 plot_type='curveset',
@@ -172,6 +172,7 @@ class MethodManager:
                                         stepText.get('head', '')
                                     ]),
                 'mainPlot': plotDiv,
+                'mainPlotButtons': butDiv,
                 'method_content': ''.join([
                                         step_numInfo,
                                         stepText.get('desc', ''),
