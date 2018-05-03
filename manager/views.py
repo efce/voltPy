@@ -885,3 +885,37 @@ def plotInteraction(request, user):
     else:
         raise NameError('Unknown query type')
     return JsonResponse(ret)
+
+@redirect_on_voltpyexceptions
+def shareLink(reqeust, link_hash):
+    import random
+    import string
+    from guardian.shortcuts import assign_perm
+    try:
+        shared_link=mmodels.SharedLink.objects.get(link=link_hash)
+    except ObjectDoesNotExist as e:
+        raise VoltPyDoesNotExists
+
+    obj_class = __import__('manager.models.' + shared_link.object_type)
+    try:
+        obj = obj_class.objects.get(id=shared_link.object_id)
+    except ObjectDoesNotExist as e:
+        raise VoltPyDoesNotExists
+
+    user = request.User
+    if user is None:
+        random = ''.join([
+            random.choice(string.ascii_letters + string.digits) for n in xrange(32)
+        ])
+        while User.objects.filter(name='temp_' + random).exists():
+            random = ''.join([
+                random.choice(string.ascii_letters + string.digits) for n in xrange(32)
+            ])
+        user = User(name='temp_' + random, password=None)
+        user.save()
+    
+    assign_perm(shared_link.permissions, user, obj)
+    
+    return HttpResponseRedirect(obj.getUrl())
+
+

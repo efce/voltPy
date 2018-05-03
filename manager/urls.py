@@ -62,6 +62,8 @@ urlpatterns = [
         views.browseAnalysis, name='browseAnalysis'),
     url(r'^delete-analysis/(?P<analysis_id>[0-9]+)/$',
         views.deleteAnalysis, name='deleteAnalysis'),
+    url(r'^share/(?P<link_hash>[0-9a-zA-Z]+)/$',
+        views.shareLink, name='shareLink'),
     url(r'^show-processed/(?P<processing_id>[0-9]+)/$',
         views.showProcessed, name='showProcessed'),
     url(r'^account_activation_sent/$',

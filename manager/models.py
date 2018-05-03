@@ -716,3 +716,28 @@ class Processing(VoltPyModel):
 
     def getUrl(self):
         return reverse('showCurveSet', args=[self.curveSet.id])
+
+
+class SharedLink(VoltPyModel):
+    PERMISSIONS = (('rw','Read Write'),('ro','Read Only'))
+    creation_date = models.DateField(auto_now_add=True)
+    users = models.ManyToManyField(User)
+    object_type = models.CharField(max_length=32)
+    object_id = models.IntegerField()
+    link = models.CharField(max_length=255,unique=True)
+    permissions = models.CharField(choice=SharedLink.PERMISSIONS)
+    name = models.CharField(max_length=255,default=None)
+
+    class Meta:
+        permissions = (
+            ('ro', 'Read only'),
+            ('rw', 'Read write'),
+            ('del', 'Delete'),
+        )
+
+    def __str__(self):
+        return '%s: %s' % (self.link, self.users.all())
+
+    def getLink(self):
+        #TODO: https://docs.djangoproject.com/en/2.0/ref/contrib/sites/ , defining domain
+        return 'http://localhost:8000/' + reverse('shareLink',args=[self.link])

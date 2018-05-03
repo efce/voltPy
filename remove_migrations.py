@@ -1,4 +1,4 @@
-#!/bin/env python
+#!/usr/bin/python
 #remove_migrations.py
 """
 Run this file from a Django =1.7 project root. 
