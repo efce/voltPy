@@ -33,15 +33,11 @@ class Parser(ABC):
     }
 
     def saveModels(self, user):
-        cf = mmodels.CurveFile(
+        cf = mmodels.FileCurveSet(
+            name=self.cfile.name,
             fileName=self.cfile.name,
             fileDate=self._curves[0].date,
         )
-        cs = mmodels.FileCurveSet(
-            name=self.cfile.name
-        )
-        cs.save()
-        cf.curveSet = cs
         cf.save()
 
         order = 0
@@ -65,7 +61,7 @@ class Parser(ABC):
                 currentSamples=c.vec_sampling
             )
             cd.save()
-            cs.curvesData.add(cd)
+            cf.curvesData.add(cd)
 
             ci = mmodels.CurveIndex(
                 curve=cb,
@@ -82,8 +78,7 @@ class Parser(ABC):
             )
             ci.save()
             order += 1
-
-        cs.save()
+        cf.save()
         return cf.id
 
     @staticmethod

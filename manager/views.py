@@ -104,11 +104,11 @@ def export(request, user, objType, objId):
             csvFile = fs.export()
             filename = filename % fs.name
         elif objType == 'cf':
-            cf = mmodels.CurveFile.get(id=int(objId), deleted=False)
+            cf = mmodels.FileCurveSet.get(id=int(objId))
             csvFile = cf.export()
             filename = filename % cf.name
         elif objType == 'cs':
-            cs = mmodels.CurveSet.get(id=int(objId), deleted=False)
+            cs = mmodels.CurveSet.get(id=int(objId))
             csvFile = cs.export()
             filename = filename % cs.name
         elif objType == 'an':
@@ -153,7 +153,7 @@ def browseFileSet(request, user):
 @redirect_on_voltpyexceptions
 @with_user
 def browseCurveFile(request, user):
-    files = mmodels.CurveFile.all()
+    files = mmodels.FileCurveSet.all()
     context = {
         'user': user,
         'list_header': 'Displaying Uploaded files:',
@@ -245,7 +245,7 @@ def deleteFileSet(request, user, fileset_id):
 @with_user
 def deleteCurveFile(request, user, file_id):
     try:
-        cfile = mmodels.CurveFile.get(id=file_id)
+        cfile = mmodels.FileCurveSet.get(id=file_id)
     except ObjectDoesNotExist:
         cfile = None
     onSuccess = reverse('browseCurveFiles')
@@ -263,7 +263,7 @@ def deleteCurve(request, user, objType, objId, delId):
     if objType == 'cf':
         try:
             cd = mmodels.CurveData.get(id=delId)
-            delete_fun = mmodels.CurveFile.get(id=objId).curveSet.curvesData.remove
+            delete_fun = mmodels.FileCurveSet.get(id=int(objId)).curvesData.remove
         except ObjectDoesNotExist:
             print('CF: obj does not exists')
             raise
@@ -654,7 +654,7 @@ def cloneFileSet(request, user, toCloneId):
 @redirect_on_voltpyexceptions
 @with_user
 def cloneCurveFile(request, user, toCloneId):
-    toCloneCS = mmodels.CurveFile.get(id=int(toCloneId)).curveSet
+    toCloneCS = mmodels.FileCurveSet.get(id=int(toCloneId))
     newcs = toCloneCS.getNewCurveSet()
     add_notification(request, 'File copied as a new CurveSet. Redirecting to the new CurveSet.')
     return HttpResponseRedirect(newcs.getUrl())
@@ -678,7 +678,7 @@ def upload(request, user):
 @with_user
 def showCurveFile(request, user, file_id):
     try:
-        cf = mmodels.CurveFile.get(id=file_id, deleted=False)
+        cf = mmodels.FileCurveSet.get(id=int(file_id))
     except ObjectDoesNotExist:
         raise VoltPyNotAllowed(user)
 
@@ -718,7 +718,7 @@ def showCurveFile(request, user, file_id):
         ),
         'cloneCS': get_redirect_class(
             reverse('cloneCurveFile', kwargs={
-                'toCloneId': cf.curveSet.id,
+                'toCloneId': cf.id,
             })
         ),
     }
@@ -773,10 +773,9 @@ def applyModel(request, user, objType, objId, curveset_id):
 def editAnalyte(request, user, objType, objId, analyteId):
     if objType == 'cf':
         try:
-            cf = mmodels.CurveFile.get(id=objId)
+            cs = mmodels.FileCurveSet.get(id=objId)
         except ObjectDoesNotExist:
             raise VoltPyNotAllowed
-        cs = cf.curveSet
 
     elif objType == 'cs':
         try:

@@ -16,8 +16,8 @@
 - Ability to share CurveSet/Analysis with other registered user (ro/rw)
 - Sharing of curves/curvesets/analyses via link (ro/rw) -- which instantly displays the data without any login screen
 - Create panel with user settings and privileges
-- Ability to process selected curve as all in the CurveSet (required for calibration method)
-- Dynamic adjustment of plot size based on client resolution/window size (?)
+o Ability to process selected curve as all in the CurveSet (required for calibration method) - branch calibration
+o Dynamic adjustment of plot size based on client resolution/window size (?) - WIP
 
 ==== Programming =====
 ?- Debugging of Bokeh plot switching -- why the plot stay on screen after reload ?
@@ -32,10 +32,10 @@
 - Additional processing/analysis methods:
   x splines - smoothing algorithm
   - wavelets - smoothing, and decomposition/calibration with zero-crossing method
-  - Calibration method
+  o Calibration method - WIP in branch calibration
   - ICM - Integrated Calibration Method
-  - OSC - Orthogonal Signal Correction -- wip in branch osc
-  - Estimation of Cell Time Constant (tau) based on ASD (capacitive factor) -- wip in master (kind of works)
-  - Genetic algorithm for background correction -- Łukasz(?)
+  o OSC - Orthogonal Signal Correction -- wip in branch osc
+  o Estimation of Cell Time Constant (tau) based on ASD (capacitive factor) -- wip in master (kind of works)
+  o Genetic algorithm for background correction -- Łukasz(?)
   - PLS - Partial Least Squares calibration -- Łukasz(?)
 - Add comments section below, which can be used by all users with at least ro privilege

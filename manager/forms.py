@@ -255,7 +255,7 @@ class SelectCurvesForCurveSetForm(forms.Form):
                 csToClone = mmodels.CurveSet.get(id=self.toCloneCS[0])
                 newName = csToClone.name + '_copy'
             if len(self.toCloneCF) == 1:
-                csToClone = mmodels.CurveFile.get(id=self.toCloneCF[0]).curveSet
+                csToClone = mmodels.FileCurveSet.get(id=self.toCloneCF[0])
                 newName = csToClone.name + '_copy'
         except:
             newName = ''
@@ -270,7 +270,7 @@ class SelectCurvesForCurveSetForm(forms.Form):
         self.fields['name'].maintype = 'name'
         self.fields['name'].mainid = 0
 
-        files = mmodels.CurveFile.all()
+        files = mmodels.FileCurveSet.all()
         csInFiles = []
         for f in files:
             fname = 'curveFile_{0}'.format(f.id)
@@ -285,8 +285,8 @@ class SelectCurvesForCurveSetForm(forms.Form):
             self.fields[fname].widget.attrs['class'] = 'parent'
             self.fields[fname].maintype = 'curvefile'
             self.fields[fname].cptype = 'parent'
-            csInFiles.append(f.curveSet.id)
-            for cd in f.curveSet.curvesData.all().only("id", "curve").prefetch_related(
+            csInFiles.append(f.id)
+            for cd in f.curvesData.all().only("id", "curve").prefetch_related(
                     Prefetch('curve', queryset=mmodels.Curve.objects.only('id', 'name'))
             ):
                 cname = "curveFile_{1}_curveData_{0}".format(cd.id, f.id)
@@ -439,7 +439,7 @@ class SelectCurvesForCurveSetForm(forms.Form):
                     if cf_or_cs == 'cs':
                         cs = mmodels.CurveSet.get(id=csid)
                     else:
-                        cs = mmodels.CurveFile.get(id=csid).curveSet
+                        cs = mmodels.FileCurveSet.get(id=csid)
 
                     for a in cs.analytes.all():
                         if not newcs.analytes.filter(id=a.id).exists():

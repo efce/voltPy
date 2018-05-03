@@ -7,12 +7,7 @@ def analytesTable(obj, objType: str) -> str:
     """
     cs - is CurveFile or CurveSet for which the table will be prepared.
     """
-    if objType == 'cf':
-        assert isinstance(obj, mmodels.CurveFile)
-        cs = obj.curveSet
-    else:
-        assert isinstance(obj, mmodels.CurveSet)
-        cs = obj
+    cs = obj
 
     htmlButton = '<button class="{goTo}">{bname}</button>'
     if not cs.locked:

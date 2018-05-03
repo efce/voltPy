@@ -105,7 +105,7 @@ def generate_plot(request, user, plot_type, value_id, **kwargs):
         'fileset',
     ]
     if plot_type not in allowedTypes:
-        return
+        raise VoltPyNotAllowed('Operation not allowed.')
     vtype = kwargs.get('vtype', plot_type)
     vid = kwargs.get('vid', value_id)
     addTo = kwargs.get('add', None)
@@ -113,12 +113,12 @@ def generate_plot(request, user, plot_type, value_id, **kwargs):
     pm = mpm.PlotManager()
     data = []
     if plot_type == 'file':
-        cf = mmodels.CurveFile.objects.get(id=value_id)
-        data = pm.curveSetHelper(user, cf.curveSet)
+        cf = mmodels.FileCurveSet.get(id=value_id)
+        data = pm.curveSetHelper(user, cf)
         pm.xlabel = pm.xLabelHelper(user)
         pm.include_x_switch = True
     elif (plot_type == 'curveset'):
-        cs = mmodels.CurveSet.objects.get(id=value_id)
+        cs = mmodels.CurveSet.get(id=value_id)
         data = pm.curveSetHelper(user, cs)
         pm.xlabel = pm.xLabelHelper(user)
         pm.include_x_switch = True
@@ -127,10 +127,10 @@ def generate_plot(request, user, plot_type, value_id, **kwargs):
         pm.xlabel = pm.xLabelHelper(user)
         pm.include_x_switch = False
     elif (plot_type == 'fileset'):
-        fs = mmodels.FileSet.objects.get(id=value_id)
+        fs = mmodels.FileSet.get(id=value_id)
         data = []
         for f in fs.files.all():
-            data.extend(pm.curveSetHelper(user, f.curveSet))
+            data.extend(pm.curveSetHelper(user, f))
         pm.xlabel = pm.xLabelHelper(user)
         pm.include_x_switch = True
 
