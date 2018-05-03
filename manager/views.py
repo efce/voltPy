@@ -67,6 +67,9 @@ def activate(request, uidb64, token):
         user.is_active = True
         user.profile.email_confirmed = True
         user.save()
+        group = Group.objects.get(name='registered_users')
+        group.user_set.add(user)
+        group.save()
         login(request, user, backend='django.contrib.auth.backends.ModelBackend')
         return redirect('index')
     else:
