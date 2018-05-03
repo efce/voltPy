@@ -73,38 +73,9 @@ def exportCDasFile(cds):
     return memoryFile
 
 
-class CurveFile(VoltPyModel):
-    fileName = models.TextField()
-    fileDate = models.DateField(auto_now=False, auto_now_add=False)  # Each file has its curveset
-    curveSet = models.OneToOneField('FileCurveSet', on_delete=models.DO_NOTHING, related_name='file')
-    uploadDate = models.DateField(auto_now_add=True)
-
-    def __str__(self):
-        return str(self.id) + ": " + self.name
-
-    class Meta:
-        permissions = (
-            ('ro', 'Read only'),
-            ('rw', 'Read write'),
-            ('del', 'Delete'),
-        )
-
-    def export(self):
-        return self.curveSet.export()
-
-    @property
-    def name(self):
-        return self.curveSet.name
-
-    @name.setter
-    def name(self, newname):
-        self.curveSet.name = newname
-        self.curveSet.save()
-
-
 class FileSet(VoltPyModel):
     name = models.CharField(max_length=255)
-    files = models.ManyToManyField(CurveFile)
+    files = models.ManyToManyField('FileCurveSet')
     date = models.DateField(auto_now_add=True)
 
     class Meta:
@@ -275,7 +246,7 @@ class Curve(VoltPyModel):
             120, 120, 60, 20, 20, 20, 5, 5, 5, 1, 1, 1, 1, 1
         ]
 
-    curveFile = models.ForeignKey(CurveFile, on_delete=models.CASCADE)
+    curveFile = models.ForeignKey('FileCurveSet', on_delete=models.CASCADE)
     orderInFile = models.IntegerField()
     name = models.TextField()
     comment = models.TextField()
@@ -639,6 +610,10 @@ class CurveSet(VoltPyModel):
 
 
 class FileCurveSet(CurveSet):
+    fileName = models.TextField()
+    fileDate = models.DateField(auto_now=False, auto_now_add=False)  # Each file has its curveset
+    uploadDate = models.DateField(auto_now_add=True)
+
     class Meta:
         permissions = (
             ('ro', 'Read only'),
@@ -659,10 +634,10 @@ class FileCurveSet(CurveSet):
         return newcs
 
     def getUrl(self):
-        return reverse('showFile', args=[self.file.id])
+        return reverse('showFile', args=[self.id])
     
     def __str__(self):
-        return '%s: %s' % (self.id, self.file.name)
+        return '%s: %s' % (self.id, self.name)
 
 
 class Analysis(VoltPyModel):

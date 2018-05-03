@@ -245,7 +245,7 @@ def _saveFileSet(cf_ids, user, details):
     )
     fs.save()
     for i in cf_ids:
-        cf = mmodels.CurveFile.objects.get(id=i)
+        cf = mmodels.FileCurveSet.objects.get(id=i)
         fs.files.add(cf)
     fs.save()
     return fs.id
