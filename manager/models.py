@@ -719,14 +719,14 @@ class Processing(VoltPyModel):
 
 
 class SharedLink(VoltPyModel):
-    PERMISSIONS = (('rw','Read Write'),('ro','Read Only'))
+    PERMISSIONS = (('rw', 'Read Write'), ('ro', 'Read Only'))
     creation_date = models.DateField(auto_now_add=True)
-    users = models.ManyToManyField(User)
+    users = models.ManyToManyField(User, related_name='shared_link')
     object_type = models.CharField(max_length=32)
     object_id = models.IntegerField()
-    link = models.CharField(max_length=255,unique=True)
-    permissions = models.CharField(choice=SharedLink.PERMISSIONS)
-    name = models.CharField(max_length=255,default=None)
+    link = models.CharField(max_length=255, unique=True)
+    permissions = models.CharField(choices=PERMISSIONS, max_length=6)
+    name = models.CharField(max_length=255, default=None)
 
     class Meta:
         permissions = (
