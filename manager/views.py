@@ -1,7 +1,7 @@
 import json
 from django.contrib.auth import login, authenticate
 from django.contrib.auth.forms import UserCreationForm
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, Group
 from django.contrib.sites.shortcuts import get_current_site
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpResponseRedirect
@@ -913,8 +913,11 @@ def shareLink(reqeust, link_hash):
             ])
         user = User(name='temp_' + random, password=None)
         user.save()
+        group = Group.objects.get(name='temp_users') 
+        group.user_set.add(user)
     
     assign_perm(shared_link.permissions, user, obj)
+    shared_link.addUser(user)
     
     return HttpResponseRedirect(obj.getUrl())
 

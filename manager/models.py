@@ -726,7 +726,7 @@ class SharedLink(VoltPyModel):
     object_id = models.IntegerField()
     link = models.CharField(max_length=255, unique=True)
     permissions = models.CharField(choices=PERMISSIONS, max_length=6)
-    name = models.CharField(max_length=255, default=None)
+    name = models.CharField(max_length=255, default=None, null=True)
 
     class Meta:
         permissions = (
@@ -741,3 +741,7 @@ class SharedLink(VoltPyModel):
     def getLink(self):
         #TODO: https://docs.djangoproject.com/en/2.0/ref/contrib/sites/ , defining domain
         return 'http://localhost:8000/' + reverse('shareLink',args=[self.link])
+
+    def addUser(self, user):
+        self.users.add(user)
+        self.save
