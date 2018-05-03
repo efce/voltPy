@@ -28,6 +28,7 @@ from manager.helpers.functions import voltpy_render
 from manager.helpers.functions import voltpy_serve_csv
 from manager.helpers.functions import is_number
 from manager.helpers.functions import get_redirect_class
+from manager.helpers.functions import generate_share_link
 from manager.helpers.decorators import with_user
 from manager.helpers.decorators import redirect_on_voltpyexceptions
 
@@ -598,10 +599,15 @@ def showCurveSet(request, user, curveset_id):
         formAnalyze = mm.getAnalysisSelectionForm()
         formProcess = mm.getProcessingSelectionForm(disabled=cs.locked)
 
+    try:
+        link = generate_share_link(user, 'rw', cs)
+    except:
+        link = 'Cannot share'
     context = {
         'scripts': plotScr + formAnalyze.getJS(request) + formProcess.getJS(request),
         'mainPlot': plotDiv,
         'mainPlotButtons': butDiv,
+        'shareLink': link,
         'user': user,
         'disp_name_edit': edit_name_form['html'],
         'curveset': cs,
@@ -886,39 +892,46 @@ def plotInteraction(request, user):
         raise NameError('Unknown query type')
     return JsonResponse(ret)
 
+
 @redirect_on_voltpyexceptions
-def shareLink(reqeust, link_hash):
+def shareLink(request, link_hash):
     import random
     import string
     from guardian.shortcuts import assign_perm
     try:
-        shared_link=mmodels.SharedLink.objects.get(link=link_hash)
+        shared_link = mmodels.SharedLink.objects.get(link=link_hash)
     except ObjectDoesNotExist as e:
         raise VoltPyDoesNotExists
 
-    obj_class = __import__('manager.models.' + shared_link.object_type)
+    importlib = __import__('importlib')
+    load_models = importlib.import_module('manager.models')
+    obj_class = getattr(load_models, shared_link.object_type)
     try:
         obj = obj_class.objects.get(id=shared_link.object_id)
     except ObjectDoesNotExist as e:
         raise VoltPyDoesNotExists
 
-    user = request.User
+    try:
+        user = request.User
+    except:
+        user = None
     if user is None:
         random = ''.join([
-            random.choice(string.ascii_letters + string.digits) for n in xrange(32)
+            random.choice(string.ascii_letters + string.digits) for n in range(32)
         ])
-        while User.objects.filter(name='temp_' + random).exists():
+        while User.objects.filter(username='temp_' + random).exists():
             random = ''.join([
-                random.choice(string.ascii_letters + string.digits) for n in xrange(32)
+                random.choice(string.ascii_letters + string.digits) for n in range(32)
             ])
-        user = User(name='temp_' + random, password=None)
+        user = User.objects.create_user('temp_' + random, 'temp@voltammetry.center', 'xxx')
+        user.is_active = True
         user.save()
-        group = Group.objects.get(name='temp_users') 
+        group = Group.objects.get(name='temp_users')
         group.user_set.add(user)
+        group.save()
+        login(request, user, backend='django.contrib.auth.backends.ModelBackend')
     
     assign_perm(shared_link.permissions, user, obj)
     shared_link.addUser(user)
     
     return HttpResponseRedirect(obj.getUrl())
-
-

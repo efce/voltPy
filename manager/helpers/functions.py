@@ -209,5 +209,29 @@ def check_curveset_integrity(curveSet, params_to_check: List):
                 raise VoltPyFailed('All curves in curveSet have to be similar.')
 
 
+def generate_share_link(user, perm, obj):
+    import manager.models
+    import random
+    import string
+    if obj.owner != user:
+        raise VoltPyNotAllowed()
+    gen_string = ''.join([
+        random.choice(string.ascii_letters + string.digits) for _ in range(32)
+    ])
+    while manager.models.SharedLink.objects.filter(link=gen_string).exists():
+        gen_string = ''.join([
+            random.choice(string.ascii_letters + string.digits) for _ in range(32)
+        ])
+
+    sl = manager.models.SharedLink(
+        object_type=obj.__class__.__name__,
+        object_id=obj.id,
+        permissions=perm,
+        link=gen_string
+    )
+    sl.save()
+    return sl.getLink()
+
+
 def getUser():
     return with_user._user

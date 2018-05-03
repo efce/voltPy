@@ -91,13 +91,13 @@ class FileSet(VoltPyModel):
         )
         newcs.save()
         for file_ in self.files.all():
-            newcs.curvesData.add(*file_.curveSet.curvesData.all())
+            newcs.curvesData.add(*file_.curvesData.all())
         for file_ in self.files.all():
-            for an in file_.curveSet.analytes.all():
+            for an in file_.analytes.all():
                 newcs.analytes.add(an)
                 newcs.analytesConc[an.id] = {}
-                newcs.analytesConcUnits[an.id] = file_.curveSet.analytesConcUnits[an.id]
-                for cdid, concvalue in file_.curveSet.analytesConc[an.id].items():
+                newcs.analytesConcUnits[an.id] = file_.analytesConcUnits[an.id]
+                for cdid, concvalue in file_.analytesConc[an.id].items():
                     newcs.analytesConc[an.id][cdid] = concvalue
         for an in newcs.analytes.all():
             anconc = newcs.analytesConc[an.id]
