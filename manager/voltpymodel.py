@@ -39,7 +39,6 @@ class VoltPyModel(models.Model):
             return get_objects_for_user(user, perms, klass=cls, any_perm=True).get(*args, **kwargs)
         except:
             raise VoltPyDoesNotExists('Object does not exists.')
-            
 
     @classmethod
     def filter(cls, *args, **kwargs):
