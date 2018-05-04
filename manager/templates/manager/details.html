@@ -1,0 +1,51 @@
+<div class="details">
+    <div class="mt_name">
+        Showing {{ showing.disp_type }}: {{ disp_name_edit }}
+    </div>
+    <div class="mt_name">
+        Actions:&nbsp;&nbsp;&nbsp;
+        <button class="{{ back_to_browse_button }}">Browse {{ showing.disp_type }}</button>&nbsp;&nbsp;&nbsp;
+        <button class="{{ make_curve_set_button }}">Make curve set</button>
+    </div>
+    <div class="mt_name">
+        Extra:&nbsp;&nbsp;&nbsp;
+        <div class="dropdown" style="display: inline-block;"><button>Show details</button>
+            <div class="mt_name mt_dropdown dropdown_content">
+                <ul style="margin-left: -1em; margin-top: -2px; padding-right: 1em">
+                <li>Object {{ showing.disp_type }} id: {{ showing.id }}</li>
+                <li>Date: {{ showing.date |date:"c" }} {{ showing.date | time }}</li>
+                {% if showing.disp_type == 'file' %}
+                <li>File name: {{ showing.fileName }}</li>
+                <li>File date: {{ showing.fileDate | date:"c" }}</li>
+                {% endif %}
+                {% if showing.disp_type == 'curve set' %}
+                <li>
+                Uses curves from:
+                    <ul>
+                        {% for f in filesUsed %}
+                        <li><a style="color: white" href="{% url 'showCurveFile' f.id %}">{{ f }}</a></li>
+                        {% endfor %}
+                    </ul>
+                </li>
+                <li>
+                Processed with:
+                    <ul>
+                        {% for p in showing.getProcessingHistory %}
+                        <li>{{ p }}</li>
+                        {% endfor %}
+                    </ul>
+                </li>
+                {% endif %}
+                </ul>
+            </div>
+        </div>&nbsp;&nbsp;&nbsp;
+        <div class="dropdown" style="display: inline-block"><button>More actions</button>
+            <div class="mt_name mt_dropdown dropdown_content">
+            <button class="{{ undo_button }}">Undo</button>
+            <button class="{{ export_data_button }}">Export data</button>
+            <button class="{{ share_button }}">Share</button>
+            <button class="{{ delete_button }}">Delete</button>
+            </div>
+        </div>
+    </div>
+</div>

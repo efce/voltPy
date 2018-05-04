@@ -1,0 +1,70 @@
+form label { 
+	max-width: 400px; 
+	word-wrap: break-word; 
+	display: inline;
+	white-space: pre-line; 
+}
+
+form table th {
+    width: 140px;
+}
+
+.form_submit {
+    height: 30px;
+    width: 150px;
+    margin: auto;
+    margin-left: 50px;
+}
+
+.form_inline {
+    display: inline !important;
+}
+
+.analytes_table {
+    min-width: 400px;
+    table-layout: fixed;
+    border-collapse: collapse;
+    border: 1px solid black;
+}
+.analytes_table th,td {
+    padding: 5px;
+    margin: 2px;
+    text-align: left;
+    border: 1px black solid;
+}
+.analytes_table td {
+    min-width: 150px;
+    height: 2.2em;
+}
+.analytes_table thead {
+    background-color: #333;
+    color: white;
+}
+.analytes_table thead tr {
+    display: block;
+    position: relative;
+}
+.analytes_table tbody {
+    display: block;
+    overflow-y: auto;
+    overflow-x: hidden;
+    width: 100%;
+    height: 400px;
+}
+.analytes_table tbody tr {
+    height: 2em;
+}
+
+.method_list {
+    min-width: 300px;
+}
+
+.method_element {
+    border: 1px solid black;
+    margin: 3px;
+}
+
+.method_element:hover {
+    background-color: #BBB;
+    cursor: pointer;
+}

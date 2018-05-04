@@ -33,7 +33,7 @@ from manager.helpers.decorators import with_user
 from manager.helpers.decorators import redirect_on_voltpyexceptions
 
 
-def signin(request):
+def register(request):
     if request.method == 'POST':
         form = SignInForm(request.POST)
         if form.is_valid():
@@ -137,7 +137,7 @@ def browseFileSet(request, user):
         'action1': "showFileSet",
         'action2': "deleteFileSet",
         'action2_text': ' (delete) ',
-        'whenEmpty': ''.join([
+        'when_empty': ''.join([
             "You have no files uploaded. ",
             "<a href='{url}'>Upload one</a>.".format(
                 url=reverse('upload')
@@ -157,12 +157,12 @@ def browseCurveFile(request, user):
     files = mmodels.FileCurveSet.all()
     context = {
         'user': user,
-        'list_header': 'Displaying Uploaded files:',
+        'list_header': 'Uploaded files:',
         'list_to_disp': files,
         'action1': "showCurveFile",
         'action2': "deleteCurveFile",
         'action2_text': ' (delete) ',
-        'whenEmpty': ''.join([
+        'when_empty': ''.join([
             "You have no files uploaded. ",
             "<a href='{url}'>Upload one</a>.".format(
                 url=reverse('upload')
@@ -187,7 +187,7 @@ def browseAnalysis(request, user):
         'action1': "showAnalysis",
         'action2': "deleteAnalysis",
         'action2_text': ' (delete) ',
-        'whenEmpty': ''.join([
+        'when_empty': ''.join([
             "Analysis can only be performed on the CurveSet. ",
             "<a href='{url}'>Choose one</a>.".format(
                 url=reverse('browseCurveSets')
@@ -212,7 +212,7 @@ def browseCurveSet(request, user):
         'action1': 'showCurveSet',
         'action2': 'deleteCurveSet',
         'action2_text': ' (delete) ',
-        'whenEmpty': ''.join([
+        'when_empty': ''.join([
             "You have no CurveSets. ",
             "<a href='{url}'>Prepare one</a>.".format(
                 url=reverse('createCurveSet')
@@ -396,21 +396,21 @@ def showAnalysis(request, user, analysis_id):
         applyClass = '_disabled'
 
     context = {
-        'scripts': plotScr,
-        'mainPlot': plotDiv,
-        'mainPlotButtons': butDiv,
-        'head': info.get('head', ''),
         'user': user,
-        'analysis': an,
+        'scripts': plotScr,
+        'head': info.get('head', ''),
+        'main_plot': plotDiv,
+        'main_plot_buttons': butDiv,
+        'showing': an,
         'disp_name_edit': form_ret['html'],
         'text': info.get('body', ''),
-        'exportData': get_redirect_class(
+        'export_data': get_redirect_class(
             reverse('export', kwargs={
                 'objType': 'an',
                 'objId': an.id,
             })
         ),
-        'applyModel': applyClass
+        'apply_model_to': applyClass
     }
     return voltpy_render(
         request=request,
@@ -485,11 +485,11 @@ def showFileSet(request, user, fileset_id):
 
     context = {
         'scripts': plotScr,  # + formAnalyze.getJS(request) + formProcess.getJS(request),
-        'mainPlot': plotDiv,
-        'mainPlotButtons': butDiv,
+        'main_plot': plotDiv,
+        'main_plot_buttons': butDiv,
         'user': user,
         'disp_name_edit': edit_name_form['html'],
-        'fileset': fs,
+        'showing': fs,
         'exportFS': get_redirect_class(
             reverse('export', kwargs={
                 'objType': 'fs',
@@ -550,7 +550,7 @@ def showCurveSet(request, user, curveset_id):
     except ObjectDoesNotExist:
         raise VoltPyDoesNotExists()
 
-    form_data = {'model': cs, 'label_name': 'CurveSet name'}
+    form_data = {'model': cs, 'label_name': ''}
     edit_name_form = form_helper(
         user=user,
         request=request,
@@ -599,34 +599,46 @@ def showCurveSet(request, user, curveset_id):
         formAnalyze = mm.getAnalysisSelectionForm()
         formProcess = mm.getProcessingSelectionForm(disabled=cs.locked)
 
-    try:
-        link = generate_share_link(user, 'rw', cs)
-    except:
-        link = 'Cannot share'
+    if cs.owner == user:
+        share_button = '_voltPy_requestLink'
+    else:
+        share_button = '_disabled'
+    if cs.hasUndo:
+        undo_button = get_redirect_class(
+            reverse('undoCurveSet', kwargs={
+                'curveset_id': cs.id,
+            })
+        )
+    else:
+        undo_button = '_disabled'
     context = {
         'scripts': plotScr + formAnalyze.getJS(request) + formProcess.getJS(request),
-        'mainPlot': plotDiv,
-        'mainPlotButtons': butDiv,
-        'shareLink': link,
+        'main_plot': plotDiv,
+        'main_plot_buttons': butDiv,
         'user': user,
         'disp_name_edit': edit_name_form['html'],
-        'curveset': cs,
         'filesUsed': filesUsed,
         'at': at_disp,
         'formProcess': formProcess,
         'formAnalyze': formAnalyze,
-        'exportCS': get_redirect_class(
+        'showing': cs,
+        'back_to_browse_button': get_redirect_class(
+            reverse('browseCurveSets')
+        ),
+        'delete_button': get_redirect_class(
+            reverse('deleteCurveSet', args=[
+                cs.id
+            ])
+        ),
+        'share_button': share_button,
+        'export_data_button': get_redirect_class(
             reverse('export', kwargs={
                 'objType': 'cs',
                 'objId': cs.id,
             })
         ),
-        'undoCS': get_redirect_class(
-            reverse('undoCurveSet', kwargs={
-                'curveset_id': cs.id,
-            })
-        ),
-        'cloneCS': get_redirect_class(
+        'undo_button': undo_button,
+        'make_curve_set_button': get_redirect_class(
             reverse('cloneCurveSet', kwargs={
                 'toCloneId': cs.id,
             })
@@ -669,8 +681,10 @@ def cloneCurveFile(request, user, toCloneId):
 @redirect_on_voltpyexceptions
 @with_user
 def upload(request, user):
+    can_upload = user.groups.filter(name='registered_user').exists()
     context = {
         'user': user,
+        'can_upload': can_upload,
         'allowedExt': umanager.allowedExt,
     }
     return voltpy_render(
@@ -710,8 +724,8 @@ def showCurveFile(request, user, file_id):
 
     context = {
         'scripts': plotScr,
-        'mainPlot': plotDiv,
-        'mainPlotButtons': butDiv,
+        'main_plot': plotDiv,
+        'main_plot_buttons': butDiv,
         'user': user,
         'curvefile': cf,
         'disp_name_edit': edit_name_form['html'],
@@ -831,8 +845,8 @@ def editAnalyte(request, user, objType, objId, analyteId):
 
     context = {
         'scripts': plotScr,
-        'mainPlot': plotDiv,
-        'mainPlotButtons': butDiv,
+        'main_plot': plotDiv,
+        'main_plot_buttons': butDiv,
         'user': user,
         'obj_name': dispType,
         'obj_id': objId,
@@ -933,5 +947,31 @@ def shareLink(request, link_hash):
     
     assign_perm(shared_link.permissions, user, obj)
     shared_link.addUser(user)
-    
     return HttpResponseRedirect(obj.getUrl())
+
+
+@redirect_on_voltpyexceptions
+@with_user
+def getShareable(request, user):
+    try:
+        if request.method != 'POST':
+            return
+        to_share = request.POST['to_share']
+        to_share = to_share.split('/')
+        objId = int(to_share[-2])
+        objType = to_share[-3]
+        if objType == 'show-curveset':
+            obj = mmodels.CurveSet.get(id=objId)
+        elif objType == 'show-file':
+            obj = mmodels.FileCurveSet.get(id=objId)
+        elif objType == 'show-fileset':
+            obj = mmodels.FileSet.get(id=objId)
+        elif objType == 'show-analysis':
+            obj = mmodels.Analysis.get(id=objId)
+        else:
+            raise VoltPyNotAllowed('Unknown origin url.')
+        link_rw = generate_share_link(user, 'rw', obj)
+        link_ro = generate_share_link(user, 'ro', obj)
+        return JsonResponse({'link_ro': link_ro, 'link_rw': link_rw})
+    except:
+        return JsonResponse({'link_ro': 'Cannot share', 'link_rw': 'Cannot share'})

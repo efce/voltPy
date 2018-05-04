@@ -17,6 +17,16 @@ function searchCurveSet(txt, funcResults) {
     $.post(url, object).done(funcResults);
 }
 
+function getShareable(txt, funcResults) {
+    url = '/manager/ajax/get-shareable/';
+    csfr = $("{% csrf_token %}").val();
+    object = {
+        'to_share': txt,
+        'csrfmiddlewaretoken': csfr,
+    };
+    $.post(url, object).done(funcResults);
+}
+
 function voltpy_loading_start(text) {
     //window.scrollTo(0, 0);
     $('#voltpy-loading').text(text);
@@ -94,7 +104,7 @@ function processJSONReply(data, plot='', lineData='', cursors='') {
 
 $( function() {
     $(".closeX").on('click', function(e) {
-        $(e.target).parent('div').css('display', 'none');
+        $(e.target).parent('div').toggleClass('invisible');
     });
 });
 
@@ -237,6 +247,32 @@ $( function() {
 });
 
 $( function() {
+    $('._voltPy_requestLink').click( function() {
+        to_send = window.location.href;
+        getShareable(to_send, displayLinks);
+    });
+});
+
+function displayLinks(data) {
+    // TODO: ...
+    var amd = $('#id_links');
+    if (amd.length) {
+        if (amd.css('display') == 'none') {
+            amd.css('display', 'block');
+        } else {
+            amd.css('display', 'none');
+        }
+        return;
+    }
+    form = '<div class="floatMenu" id="id_links">';
+    form += '<a class="closeX" onclick="$(this).parent(\'div\').hide();"></a>';
+    form += '<p>Read only: ' + data['link_ro'] + '</p>';
+    form += '<p>Editable: ' + data['link_rw'] + '</p>';
+    form += '</div>';
+    $('body').append($(form));
+}
+
+$( function() {
     imodel = '_voltJS_model@';
     $('._voltJS_applyModel').click( function() {
         var classes = this.className.split(' ');
@@ -293,3 +329,21 @@ $( function() {
         e.preventDefault();
     });
 });
+
+function toggleMethod(type) {
+    class_name = '.' + type + '_methods';
+    $(class_name).toggleClass('invisible');
+}
+
+function selectMethod(mtype, mname, mdisp) {
+    $('#' + mtype + '_selected').text('Selected: ' + mdisp + " ")
+    input = $('<input type="hidden" name="' + mtype + '-method" value="' + mname + '" />');
+    if (mtype == 'analysis') {
+        but = $('<input type="submit" name="startAnalyze" value="Start Analysis" class="formSubmit" />');
+    } else {
+        but = $('<input type="submit" name="startProcessing" value="Start Processing" class="formSubmit" />');
+    }
+    $('#' + mtype + '_selected').append(input);
+    $('#' + mtype + '_selected').append(but);
+    toggleMethod(mtype);
+}

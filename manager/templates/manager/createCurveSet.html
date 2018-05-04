@@ -3,12 +3,9 @@
 {% block title %} Create {% endblock %}
 
 {% block head %}
-<script type="text/javascript">
-</script>
 {% endblock %}
 
 {% block style %}
-
 form li {
     list-style-type: none;
 }
@@ -49,26 +46,15 @@ form li {
   background-color: #111;
 }
 
-.invisible {
-  height: 0px !important;
-  overflow: hidden !important;
-  padding: 0px !important;
-}
-
-.visible {
-  height: auto;
-  min-height: 1.7em;
-}
-
 .upsidedown {
   transform: rotate(180deg);
 }
+
 .upsideup {
   transform: rotate(0deg);
 }
-
 {% endblock %}
 
 {% block real_content %}
-    {{ formHTML|safe }}
+    {{ form_html | safe }}
 {% endblock %}

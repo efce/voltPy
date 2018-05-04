@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html>
 <head>
   <title>
@@ -7,12 +6,12 @@
     {% endblock %}
   </title> 
   <meta charset="utf-8" />
-  {% include "manager/js/main.inc" %}
+  {% include "./js/main.inc" %}
   {{ bokeh_scripts | safe }}
   {% block head %} 
   {% endblock %}
   <style>
-    {% include "manager/css/main.css" %}
+    {% include "./css/main.css" %}
     {% block style %} 
     {% endblock %}
   </style>
@@ -29,32 +28,32 @@
   <div id="topmenu">
     <ul>
     {% if user.is_authenticated %}
-      <li><a href="{% url 'index' %}">Index</a></li>
-      <li><a href="{% url 'upload' %}">Upload Files</a></li>
-      <li><a href="{% url 'createCurveSet' %}">Create Curve Set</a></li>
-      <li class='dropdown'><span>&nbsp;Browse&nbsp;</span>
-        <div class='dropdown-content'>
-          <p><a href="{% url 'browseFileSets' %}">File Sets</a></p>
-          <p><a href="{% url 'browseCurveFiles' %}">Files</a></p>
-          <p><a href="{% url 'browseCurveSets' %}">Curve Sets</a></p>
-          <p><a href="{% url 'browseAnalysis' %}">Analysis</a></p>
+      <li class="topmenu_bkg"><a href="{% url 'index' %}">Index</a></li>
+      <li class="topmenu_bkg"><a href="{% url 'upload' %}">Upload Files</a></li>
+      <li class="topmenu_bkg"><a href="{% url 'createCurveSet' %}">Create Curve Set</a></li>
+      <li class='dropdown topmenu_bkg'><span>&nbsp;Browse&nbsp;</span>
+        <div class='dropdown_content topmenu_bkg'>
+          <a href="{% url 'browseFileSets' %}">File Sets</a><br />
+          <a href="{% url 'browseCurveFiles' %}">Files</a><br />
+          <a href="{% url 'browseCurveSets' %}">Curve Sets</a><br />
+          <a href="{% url 'browseAnalysis' %}">Analysis</a>
         </div>
       </li>
-      <li class="wht">Logged in as:</li><li class="wht">{{ user }}(UserID: {{ user.id }})</li>
-      <li><a href="{% url 'logout' %}">Logout</a></li>
+      <li class="topmenu_wht">Logged in as:</li><li class="topmenu_wht">{{ user }}(UserID: {{ user.id }})</li>
+      <li class="topmenu_bkg"><a href="{% url 'logout' %}">Logout</a></li>
     {% else %}
-      <li><a href="{% url 'index' %}">Index</a></li>
-      <li><a href="{% url 'login' %}">Login</a></li>
-      <li><a href="{% url 'signin' %}">Sign In</a></li>
+      <li class="topmenu_bkg"><a href="{% url 'index' %}">Index</a></li>
+      <li class="topmenu_bkg"><a href="{% url 'login' %}">Login</a></li>
+      <li class="topmenu_bkg"><a href="{% url 'register' %}">Register</a></li>
     {% endif%}
     </ul>
   </div>
   {% endblock %}
 
-  <table>
+  <table class="main_table">
     {% if notifications %}
     <tr>
-      {% if mainPlot %}
+      {% if main_plot %}
       <td colspan=2>
       {% else %}
       <td>
@@ -69,32 +68,15 @@
     </tr>
     {% endif %}
     <tr>
-      {% if mainPlot %}
-      <td style="vertical-align: top">
-        <table>
-          <tr>
-            <td class="_voltPy_bokehSize">
-                {{ mainPlot | safe }}
-            </td>
-          </tr>
-          <tr>
-            <td>
-              <table>
-                <tr>
-                  <td>
-                    On x axis:
-                  </td>
-                  <td>
-                    {{ mainPlotButtons | safe }}
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
-        </table>
+      {% if main_plot %}
+      <td class="align_top main_plot">
+        {% include "./main_plot.html" %}
       </td>
       {% endif %}
-      <td style="vertical-align: top">
+      <td class="align_top mt_content" style="width: 50%">
+        {% if showing %}
+        {% include "./details.html" %}
+        {% endif %}
         {% block real_content %} {% endblock %}
       </td>
     </tr>

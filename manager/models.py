@@ -77,6 +77,7 @@ class FileSet(VoltPyModel):
     name = models.CharField(max_length=255)
     files = models.ManyToManyField('FileCurveSet')
     date = models.DateField(auto_now_add=True)
+    disp_type = 'file set'
 
     class Meta:
         permissions = (
@@ -252,6 +253,7 @@ class Curve(VoltPyModel):
     comment = models.TextField()
     params = PickledObjectField()  # JSON List
     date = models.DateField(auto_now=False, auto_now_add=False)
+    disp_type = 'curve'
 
     class Meta:
         permissions = (
@@ -262,14 +264,14 @@ class Curve(VoltPyModel):
 
     def __str__(self):
         return ''. join([
-            '<table style="border: 0; margin: 0; padding: 0; display: inline"><tr><td style="border:0; margin:0; padding:0">'
-            '<abbr title="comment: ',
+            '<div style="display: inline">'
+            '<abbr title="Comment: ',
             self.comment,
             '">',
             self.name,
-            '</abbr></td></tr><tr><td style="border:0; margin:0; padding:0; height: 8px"><span style="font-size: xx-small">',
+            '</abbr><br /><a style="font-size: xx-small">',
             self.curveFile.__str__(),
-            '</span></td></tr></table>'
+            '</a></div>'
         ])
 
 
@@ -308,6 +310,7 @@ class CurveData(VoltPyModel):
     processedWith = models.ForeignKey('Processing', null=True, default=None, on_delete=models.DO_NOTHING)
     _currentSamples = models.ForeignKey(SamplingData, on_delete=models.DO_NOTHING, default=None, null=True)
     __currentSamplesChanged = False
+    disp_type = 'data'
 
     class Meta:
         permissions = (
@@ -465,6 +468,7 @@ class CurveSet(VoltPyModel):
     analytesConcUnits = PickledObjectField(default={})  # dictionary key is analyte id
     undoAnalytesConcUnits = PickledObjectField(default={})  # dictionary key is analyte id
     undoProcessing = models.ForeignKey('Processing', null=True, default=None, on_delete=models.DO_NOTHING)
+    disp_type = 'curve set'
 
     def getCopy(self):
         newcs = CurveSet(
@@ -613,6 +617,7 @@ class FileCurveSet(CurveSet):
     fileName = models.TextField()
     fileDate = models.DateField(auto_now=False, auto_now_add=False)  # Each file has its curveset
     uploadDate = models.DateField(auto_now_add=True)
+    disp_type = 'file'
 
     class Meta:
         permissions = (
@@ -653,6 +658,7 @@ class Analysis(VoltPyModel):
     active_step_num = models.IntegerField(default=0, null=True)
     error = models.CharField(max_length=255)
     completed = models.BooleanField(default=False)
+    disp_type = "analysis"
 
     class Meta:
         permissions = (
@@ -740,7 +746,7 @@ class SharedLink(VoltPyModel):
 
     def getLink(self):
         #TODO: https://docs.djangoproject.com/en/2.0/ref/contrib/sites/ , defining domain
-        return 'http://localhost:8000/' + reverse('shareLink',args=[self.link])
+        return 'http://localhost:8000' + reverse('shareLink',args=[self.link])
 
     def addUser(self, user):
         self.users.add(user)

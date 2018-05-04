@@ -7,6 +7,7 @@ from django import forms
 from django.core.exceptions import ObjectDoesNotExist
 from django.urls import reverse
 from django.http import HttpResponseRedirect
+from django.template import loader
 import manager.models as mmodels
 from manager.exceptions import VoltPyDoesNotExists
 from manager.exceptions import VoltPyFailed
@@ -171,8 +172,8 @@ class MethodManager:
                                         plotScr,
                                         stepText.get('head', '')
                                     ]),
-                'mainPlot': plotDiv,
-                'mainPlotButtons': butDiv,
+                'main_plot': plotDiv,
+                'main_plot_buttons': butDiv,
                 'method_content': ''.join([
                                         step_numInfo,
                                         stepText.get('desc', ''),
@@ -215,7 +216,7 @@ class MethodManager:
         """
         Returns form instance with selection of analysis methods.
         """
-        return MethodManager._SelectionForm(
+        return MethodManager._AltSelectionForm(
             self,
             self.methods['analysis'],
             type='analysis',
@@ -228,7 +229,7 @@ class MethodManager:
         """
         Returns form instance with selection of processing methods.
         """
-        return MethodManager._SelectionForm(
+        return MethodManager._AltSelectionForm(
             self,
             self.methods['processing'],
             type='processing',
@@ -248,6 +249,83 @@ class MethodManager:
 
     def isMethodSelected(self) -> bool:
         return (self.__method is not None)
+
+    class _AltSelectionForm(forms.Form):
+        def __init__(self,  parent, methods: Dict, *args, **kwargs):
+            self.type = kwargs.pop('type', 'processing')
+            if self.type == 'processing':
+                label = 'Processing method'
+            elif self.type == 'analysis':
+                label = 'Analysis method'
+            else:
+                raise ValueError('Wrong value %s as type in %s' % (self.type, self.__str__()))
+            self.disabled = kwargs.pop('disabled', False)
+            super(MethodManager._AltSelectionForm, self).__init__(*args, **kwargs)
+            self.methods = methods
+            self.parent = parent
+            choices = list(
+                zip(
+                    [str(k) for k, v in methods.items()],
+                    [v.__str__() for k, v in methods.items()]
+                )
+            )
+            defKey = list(self.methods)[0]
+            defMethod = self.methods[defKey]
+            self.fields['method'] = forms.ChoiceField(
+                choices=choices,
+                required=True,
+                label=label,
+                initial=defKey
+            )
+        
+        def draw(self):
+            to_disp = [ (k, v.__str__(), v.description or '', v.video) for k, v in self.methods.items() ]
+            context = {
+                'disabled': self.disabled,
+                'methods': to_disp,
+                'type': self.type,
+            }
+            tt = loader.get_template('manager/method_selection.html')
+            return tt.render(context=context)
+
+        def process(self, user, curveset):
+            if self.type == 'processing':
+                mname = self.cleaned_data.get('method', None)
+                if mname in self.methods:
+                    a = mmodels.Processing(
+                        owner=user,
+                        curveSet=curveset,
+                        method=mname,
+                        methodDisplayName=self.methods[mname].__str__(),
+                        name='',
+                        active_step_num=0,
+                        deleted=False,
+                        completed=False
+                    )
+                    a.save()
+                    curveset.prepareUndo(processingObject=a)
+                    return a.id
+                return None
+            elif self.type == 'analysis':
+                mname = self.cleaned_data.get('method', None)
+                if mname in self.methods:
+                    a = mmodels.Analysis(
+                        owner=user,
+                        curveSet=curveset,
+                        method=mname,
+                        methodDisplayName=self.methods[mname].__str__(),
+                        name='',
+                        active_step_num=0,
+                        deleted=False,
+                        completed=False
+                    )
+                    a.save()
+                    curveset.save()
+                    return a.id
+            return None
+
+        def getJS(self, request) -> str:
+            return ''
 
     class _SelectionForm(forms.Form):
         """
