@@ -265,7 +265,10 @@ def paginate(queryset, current_page: int, path: str):
     ])
     for i in range(ret['number_of_pages']):
         p = str(i+1)
-        ret['paginator'] += '<a href="{path}{num}/">[{num}]</a>&nbsp;'.format(path=path, num=p)
+        if int(p) == current_page:
+            ret['paginator'] += '[{num}]&nbsp;'.format(num=p)
+        else: 
+            ret['paginator'] += '<a href="{path}{num}/">[{num}]</a>&nbsp;'.format(path=path, num=p)
     ret['paginator'] += ''.join([
         '<a href="%s%s/">[&gt;]</a>&nbsp;' % (path, str(current_page+1) if (current_page < ret['number_of_pages']) else str(ret['number_of_pages'])),
         '<a href="%s%s/">[&gt;&gt;]</a>' % (path, str(ret['number_of_pages'])),
