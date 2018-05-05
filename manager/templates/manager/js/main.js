@@ -247,29 +247,24 @@ $( function() {
 });
 
 $( function() {
-    $('._voltPy_requestLink').click( function() {
+    $('._voltJS_requestLink').click( function() {
         to_send = window.location.href;
         getShareable(to_send, displayLinks);
     });
 });
 
 function displayLinks(data) {
-    // TODO: ...
-    var amd = $('#id_links');
-    if (amd.length) {
-        if (amd.css('display') == 'none') {
-            amd.css('display', 'block');
-        } else {
-            amd.css('display', 'none');
-        }
-        return;
-    }
-    form = '<div class="floatMenu" id="id_links">';
-    form += '<a class="closeX" onclick="$(this).parent(\'div\').hide();"></a>';
+    var amd = $('#share_link');
+    amd.removeClass('invisible');
+    var form = '<a class="closeX" onclick="closeShare();"></a><br /><br />';
     form += '<p>Read only: ' + data['link_ro'] + '</p>';
     form += '<p>Editable: ' + data['link_rw'] + '</p>';
-    form += '</div>';
-    $('body').append($(form));
+    amd.text('');
+    amd.append($(form));
+}
+
+function closeShare() {
+    $('#share_link').addClass('invisible');
 }
 
 $( function() {
@@ -296,7 +291,7 @@ function addApplyToCurveSetChooser(model_num) {
         return;
     }
     form = '<div class="floatMenu" id="id_ApplyModel">';
-    form += '<a class="closeX" onclick="$(this).parent(\'div\').hide();"></a>';
+    form += '<a class="closeX" onclick=""></a>';
     form += 'Search: <input type="text" onkeyup="setCurveList(' + model_num + ', \'curve_list\');" id="curveSearch" /><br />';
     form += 'Apply to:<div id="curve_list"></div></div>';
     $('body').append($(form));

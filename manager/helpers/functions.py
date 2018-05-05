@@ -215,6 +215,15 @@ def generate_share_link(user, perm, obj):
     import string
     if obj.owner != user:
         raise VoltPyNotAllowed()
+    try:
+        old = manager.models.SharedLink.get(
+            object_type=obj.__class__.__name__,
+            object_id=obj.id,
+            permissions=perm
+        )
+        return old.getLink()
+    except:
+        pass
     gen_string = ''.join([
         random.choice(string.ascii_letters + string.digits) for _ in range(32)
     ])

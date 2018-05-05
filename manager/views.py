@@ -755,6 +755,7 @@ def showCurveFile(request, user, file_id):
             ])
         ),
         'undo_button': '_disabled',
+        'share_button': '_voltJS_requestLink',
         'back_to_browse_button': get_redirect_class(
             reverse('browseCurveFiles')
         )
