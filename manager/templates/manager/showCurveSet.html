@@ -8,21 +8,22 @@
 {{ at | safe }}
 
 <br />
-<hr />
-<form method="post" action="" enctype="multipart/form-data" id="concform">
+<fieldset class="mt_name"><legend class="mt_name">Analysis</legend>
+<form method="post" action="" enctype="multipart/form-data">
 	{% csrf_token %}
 	{{ formAnalyze.draw }}
 </form>
-<hr />
+</fieldset>
+<fieldset class="mt_name"><legend class="mt_name">Processing</legend>
 {% if showing.locked %}
-<p>Processing of this curveset is not allowed, because it was already used in
+Processing of this curveset is not allowed, because it was already used in
 analysis.<br /> To process the data further please create a copy of it.<br />
 <button class="_voltJS_urlChanger _voltJS_url@{{ cloneCSUrl }}"> Copy </button>
 {% else %}
-<form method="post" action="" enctype="multipart/form-data" id="concform">
+<form method="post" action="" enctype="multipart/form-data">
 	{% csrf_token %}
 	{{ formProcess.draw }}
 </form>
 {% endif %}
-<hr />
+</fieldset>
 {% endblock %}

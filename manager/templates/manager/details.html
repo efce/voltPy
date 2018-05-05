@@ -3,13 +3,7 @@
         Showing {{ showing.disp_type }}: {{ disp_name_edit }}
     </div>
     <div class="mt_name">
-        Actions:&nbsp;&nbsp;&nbsp;
-        <button class="{{ back_to_browse_button }}">Browse {{ showing.disp_type }}</button>&nbsp;&nbsp;&nbsp;
-        <button class="{{ make_curve_set_button }}">Make curve set</button>
-    </div>
-    <div class="mt_name">
-        Extra:&nbsp;&nbsp;&nbsp;
-        <div class="dropdown" style="display: inline-block;"><button>Show details</button>
+        <div class="dropdown" style="display: inline-block; width: 100%">Show details
             <div class="mt_name mt_dropdown dropdown_content">
                 <ul style="margin-left: -1em; margin-top: -2px; padding-right: 1em">
                 <li>Object {{ showing.disp_type }} id: {{ showing.id }}</li>
@@ -38,13 +32,32 @@
                 {% endif %}
                 </ul>
             </div>
-        </div>&nbsp;&nbsp;&nbsp;
-        <div class="dropdown" style="display: inline-block"><button>More actions</button>
+        </div>
+    </div>
+    <div class="mt_name">
+        Actions:
+        <button class="{{ back_to_browse_button }}" style="margin-left: 2em;">Browse {{ showing.disp_type }}</button>
+        <button class="{{ make_curve_set_button }}" style="margin-left: 2em;">Make curve set</button>
+        <div class="dropdown" style="display: inline-block; margin-left: 2em;"><button>More actions</button>
             <div class="mt_name mt_dropdown dropdown_content">
-            <button class="{{ undo_button }}">Undo</button>
-            <button class="{{ export_data_button }}">Export data</button>
-            <button class="{{ share_button }}">Share</button>
-            <button class="{{ delete_button }}">Delete</button>
+                <table>
+                    <tr>
+                        <td>
+                            <button class="{{ undo_button }}">Undo</button>
+                        </td>
+                        <td>
+                            <button class="{{ export_data_button }}">Export data</button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <button class="{{ share_button }}">Share</button>
+                        </td>
+                        <td>
+                            <button class="{{ delete_button }}">Delete</button>
+                        </td>
+                    </tr>
+                </table>
             </div>
         </div>
     </div>

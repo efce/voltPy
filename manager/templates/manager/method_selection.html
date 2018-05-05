@@ -3,6 +3,7 @@
 <div class="{{ type }}_methods float_menu invisible">
 <a class="closeX"></a>
 <ul class="metehod_list" style="margin-top: 90px;">
+    Browsing {{ type }} methods:
     {% for method in methods %}
     <div class="method_element" onclick="selectMethod('{{ type }}', '{{ method.0 }}', '{{ method.1 }}');">
         <div class="align_top" style="display: inline-block; width: 59%">
