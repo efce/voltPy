@@ -6,30 +6,7 @@
         <div class="dropdown" style="display: inline-block; width: 100%">Show details
             <div class="mt_name mt_dropdown dropdown_content">
                 <ul style="margin-left: -1em; margin-top: -2px; padding-right: 1em">
-                <li>Object {{ showing.disp_type }} id: {{ showing.id }}</li>
-                <li>Date: {{ showing.date |date:"c" }} {{ showing.date | time }}</li>
-                {% if showing.disp_type == 'file' %}
-                <li>File name: {{ showing.fileName }}</li>
-                <li>File date: {{ showing.fileDate | date:"c" }}</li>
-                {% endif %}
-                {% if showing.disp_type == 'curve set' %}
-                <li>
-                Uses curves from:
-                    <ul>
-                        {% for f in filesUsed %}
-                        <li><a style="color: white" href="{% url 'showCurveFile' f.id %}">{{ f }}</a></li>
-                        {% endfor %}
-                    </ul>
-                </li>
-                <li>
-                Processed with:
-                    <ul>
-                        {% for p in showing.getProcessingHistory %}
-                        <li>{{ p }}</li>
-                        {% endfor %}
-                    </ul>
-                </li>
-                {% endif %}
+                {{ showing.getHtmlDetails | safe }}
                 </ul>
             </div>
         </div>
@@ -37,24 +14,28 @@
     <div class="mt_name">
         Actions:
         <button class="{{ back_to_browse_button }}" style="margin-left: 2em;">Browse {{ showing.disp_type }}</button>
-        <button class="{{ make_curve_set_button }}" style="margin-left: 2em;">Make curve set</button>
+        {% if showing.disp_type == 'analysis' %}
+        <button class="{{ curve_set_button }}" style="margin-left: 2em;">Goto curve set</button>
+        {% else %}
+        <button class="{{ curve_set_button }}" style="margin-left: 2em;">New curve set</button>
+        {% endif %}
         <div class="dropdown" style="display: inline-block; margin-left: 2em;"><button>More actions</button>
             <div class="mt_name mt_dropdown dropdown_content">
                 <table>
                     <tr>
                         <td>
-                            <button class="{{ undo_button }}">Undo</button>
+                            <button class="{{ undo_button }}" style="margin: 0.5em;">Undo</button>
                         </td>
                         <td>
-                            <button class="{{ export_data_button }}">Export data</button>
+                            <button class="{{ export_data_button }}" style="margin: 0.5em;">Export data</button>
                         </td>
                     </tr>
                     <tr>
                         <td>
-                            <button class="{{ share_button }}">Share</button>
+                            <button class="{{ share_button }}" style="margin: 0.5em;">Share</button>
                         </td>
                         <td>
-                            <button class="{{ delete_button }}">Delete</button>
+                            <button class="{{ delete_button }}" style="margin: 0.5em;">Delete</button>
                         </td>
                     </tr>
                 </table>

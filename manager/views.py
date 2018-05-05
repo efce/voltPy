@@ -372,7 +372,7 @@ def showAnalysis(request, user, analysis_id):
     if an.completed is False:
         return HttpResponseRedirect(reverse('analyze', args=[an.id]))
 
-    form_data = {'model': an, 'label_name': 'Analysis name'}
+    form_data = {'model': an, 'label_name': ''}
     form_ret = form_helper(
         user=user,
         request=request,
@@ -404,12 +404,21 @@ def showAnalysis(request, user, analysis_id):
         'showing': an,
         'disp_name_edit': form_ret['html'],
         'text': info.get('body', ''),
+        'back_to_browse_button': get_redirect_class(
+            reverse('browseAnalysis')
+        ),
+        'curve_set_button': get_redirect_class(
+            reverse('showCurveSet', args=[
+                an.curveSet.id
+            ])
+        ),
         'export_data': get_redirect_class(
             reverse('export', kwargs={
                 'objType': 'an',
                 'objId': an.id,
             })
         ),
+        'undo_button': '_disabled',
         'apply_model_to': applyClass
     }
     return voltpy_render(
@@ -466,7 +475,7 @@ def showFileSet(request, user, fileset_id):
     except ObjectDoesNotExist:
         raise VoltPyDoesNotExists()
 
-    form_data = {'model': fs, 'label_name': 'FileSet name'}
+    form_data = {'model': fs, 'label_name': ''}
     edit_name_form = form_helper(
         user=user,
         request=request,
@@ -490,17 +499,21 @@ def showFileSet(request, user, fileset_id):
         'user': user,
         'disp_name_edit': edit_name_form['html'],
         'showing': fs,
-        'exportFS': get_redirect_class(
+        'export_data_button': get_redirect_class(
             reverse('export', kwargs={
                 'objType': 'fs',
                 'objId': fs.id,
             })
         ),
-        'cloneCS': get_redirect_class(
+        'curve_set_button': get_redirect_class(
             reverse('cloneFileSet', kwargs={
                 'toCloneId': fs.id
             })
         ),
+        'undo_button': '_disabled',
+        'back_to_browse_button': get_redirect_class(
+            reverse('browseFileSets')
+        )
     }
     return voltpy_render(
         request=request,
@@ -567,10 +580,6 @@ def showCurveSet(request, user, curveset_id):
         value_id=cs.id
     )
 
-    filesUsed = set()
-    for cd in cs.curvesData.all():
-        filesUsed.add(cd.curve.curveFile)
-
     import manager.analytesTable as at
     at_disp = at.analytesTable(cs, objType='cs')
 
@@ -603,7 +612,7 @@ def showCurveSet(request, user, curveset_id):
         share_button = '_voltPy_requestLink'
     else:
         share_button = '_disabled'
-    if cs.hasUndo:
+    if cs.hasUndo():
         undo_button = get_redirect_class(
             reverse('undoCurveSet', kwargs={
                 'curveset_id': cs.id,
@@ -617,7 +626,6 @@ def showCurveSet(request, user, curveset_id):
         'main_plot_buttons': butDiv,
         'user': user,
         'disp_name_edit': edit_name_form['html'],
-        'filesUsed': filesUsed,
         'at': at_disp,
         'formProcess': formProcess,
         'formAnalyze': formAnalyze,
@@ -638,7 +646,7 @@ def showCurveSet(request, user, curveset_id):
             })
         ),
         'undo_button': undo_button,
-        'make_curve_set_button': get_redirect_class(
+        'curve_set_button': get_redirect_class(
             reverse('cloneCurveSet', kwargs={
                 'toCloneId': cs.id,
             })
@@ -702,7 +710,7 @@ def showCurveFile(request, user, file_id):
     except ObjectDoesNotExist:
         raise VoltPyNotAllowed(user)
 
-    form_data = {'model': cf, 'label_name': 'System name'}
+    form_data = {'model': cf, 'label_name': ''}
     edit_name_form = form_helper(
         user=user,
         request=request,
@@ -727,20 +735,29 @@ def showCurveFile(request, user, file_id):
         'main_plot': plotDiv,
         'main_plot_buttons': butDiv,
         'user': user,
-        'curvefile': cf,
+        'showing': cf,
         'disp_name_edit': edit_name_form['html'],
         'at': at_disp,
-        'exportCF': get_redirect_class(
+        'export_data_button': get_redirect_class(
             reverse('export', kwargs={
                 'objType': 'cf',
                 'objId': cf.id,
             })
         ),
-        'cloneCS': get_redirect_class(
+        'curve_set_button': get_redirect_class(
             reverse('cloneCurveFile', kwargs={
                 'toCloneId': cf.id,
             })
         ),
+        'delete_button': get_redirect_class(
+            reverse('deleteCurveFile', args=[
+                cf.id
+            ])
+        ),
+        'undo_button': '_disabled',
+        'back_to_browse_button': get_redirect_class(
+            reverse('browseCurveFiles')
+        )
     }
     return voltpy_render(
         request=request,

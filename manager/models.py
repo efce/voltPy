@@ -117,6 +117,13 @@ class FileSet(VoltPyModel):
             cds.extend(f.curveSet.curvesData.all())
         return exportCDasFile(cds)
 
+    def getHtmlDetails(self):
+        ret = ''.join([
+            '<li>Object ID: %d</li>' % self.id,
+            '<li>Date: %s</li>' % self.date.strftime("%Y-%m-%d"),
+        ])
+        return ret
+
 
 class Curve(VoltPyModel):
     class Param(IntEnum):
@@ -569,7 +576,10 @@ class CurveSet(VoltPyModel):
         self.save()
 
     def hasUndo(self):
-        if len(self.undoCurvesData.all()) == 0 or self.locked == True:
+        if any([
+            len(self.undoCurvesData.all()) == 0,
+            self.locked is True
+        ]):
             return False
         else:
             return True
@@ -612,6 +622,26 @@ class CurveSet(VoltPyModel):
     def getUrl(self):
         return reverse('showCurveSet', args=[self.id])
 
+    def getHtmlDetails(self):
+        proc_hist = ''
+        for p in self.getProcessingHistory():
+            proc_hist += ''.join(['<li>', str(p), '</li>']) 
+
+        filesUsed = set()
+        for cd in self.curvesData.all():
+            filesUsed.add(cd.curve.curveFile)
+        uses_files = ''
+        for f in filesUsed:
+            uses_files += '<li><a href="%s">%s</a></li>' % (f.getUrl(), str(f))
+
+        ret = ''.join([
+            '<li>Object ID: %d</li>' % self.id,
+            '<li>Date: %s</li>' % self.date.strftime("%Y-%m-%d"),
+            '<li>Processed with:<ul>%s</ul></li>' % proc_hist,
+            '<li>Uses curves from:<ul>%s</ul></li>' % uses_files,
+        ])
+        return ret
+
 
 class FileCurveSet(CurveSet):
     fileName = models.TextField()
@@ -639,7 +669,16 @@ class FileCurveSet(CurveSet):
         return newcs
 
     def getUrl(self):
-        return reverse('showFile', args=[self.id])
+        return reverse('showCurveFile', args=[self.id])
+
+    def getHtmlDetails(self):
+        ret = ''.join([
+            '<li>Object ID: %d</li>' % self.id,
+            '<li>Date: %s</li>' % self.date.strftime("%Y-%m-%d"),
+            '<li>File name: %s</li>' % self.fileName,
+            '<li>File date: %s</li>' % self.fileDate,
+        ])
+        return ret
     
     def __str__(self):
         return '%s: %s' % (self.id, self.name)
@@ -675,6 +714,15 @@ class Analysis(VoltPyModel):
             return reverse('showAnalysis', args=[self.id])
         else:
             return reverse('analyze', args=[self.id])
+
+    def getHtmlDetails(self):
+        ret = ''.join([
+            '<li>Object ID: %d</li>' % self.id,
+            '<li>Date: %s</li>' % self.date.strftime("%Y-%m-%d %H:%M"),
+            '<li>Method: %s</li>' % self.methodDisplayName,
+            '<li>Curve Set: <a href="%s">%s</a></li>' % (self.curveSet.getUrl(), self.curveSet),
+        ])
+        return ret
 
     def getCopy(self):
         newan = copy(self)
