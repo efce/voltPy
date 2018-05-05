@@ -168,7 +168,7 @@ def browseCurveFiles(request, user, page_number=1):
     sortable_by = (
         'id',
         'name',
-        'filename',
+        'fileName',
         'date'
     )
     all_files = mmodels.FileCurveSet.all()
