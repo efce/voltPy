@@ -108,6 +108,9 @@ class FileSet(VoltPyModel):
         newcs.save()
         return newcs
 
+    def getUrl(self):
+        return reverse('showFileSet', args=[self.id])
+
     def __str__(self):
         return str(self.id) + ': ' + self.name
 
