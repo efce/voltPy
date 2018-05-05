@@ -55,7 +55,7 @@
                 {{ el.date | date:"c" }}
             </td>
             <td>
-                <button>Delete</button>
+                <a href="{{ el.getDelUrl }}">(delete)</a>
             </td>
         </tr>
         {% endfor %}

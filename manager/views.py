@@ -148,9 +148,6 @@ def browseFileSets(request, user, page_number=1):
         'list_header': 'Displaying uploaded files sets:',
         'list_to_disp': files,
         'paginator': paginated['paginator'],
-        'action1': 'showFileSet',
-        'action2': 'deleteFileSet',
-        'action2_text': ' (delete) ',
         'when_empty': ''.join([
             "You have no files uploaded. ",
             "<a href='{url}'>Upload one</a>.".format(
@@ -186,9 +183,6 @@ def browseCurveFiles(request, user, page_number=1):
         'list_header': 'Uploaded files:',
         'list_to_disp': paginated['current_page_content'],
         'paginator': paginated['paginator'],
-        'action1': "showCurveFile",
-        'action2': "deleteCurveFile",
-        'action2_text': ' (delete) ',
         'when_empty': ''.join([
             "You have no files uploaded. ",
             "<a href='{url}'>Upload one</a>.".format(
@@ -224,9 +218,6 @@ def browseAnalysis(request, user, page_number=1):
         'list_header': 'Displaying Analysis:',
         'list_to_disp': paginated['current_page_content'],
         'paginator': paginated['paginator'],
-        'action1': "showAnalysis",
-        'action2': "deleteAnalysis",
-        'action2_text': ' (delete) ',
         'when_empty': ''.join([
             "Analysis can only be performed on the CurveSet. ",
             "<a href='{url}'>Choose one</a>.".format(
@@ -261,9 +252,6 @@ def browseCurveSet(request, user, page_number=1):
         'list_header': 'Displaying CurveSets:',
         'list_to_disp': paginated['current_page_content'],
         'paginator': paginated['paginator'],
-        'action1': 'showCurveSet',
-        'action2': 'deleteCurveSet',
-        'action2_text': ' (delete) ',
         'when_empty': ''.join([
             "You have no CurveSets. ",
             "<a href='{url}'>Prepare one</a>.".format(

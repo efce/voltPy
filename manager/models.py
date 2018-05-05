@@ -111,6 +111,9 @@ class FileSet(VoltPyModel):
     def getUrl(self):
         return reverse('showFileSet', args=[self.id])
 
+    def getDelUrl(self):
+        return reverse('deleteFileSet', args=[self.id])
+
     def __str__(self):
         return str(self.id) + ': ' + self.name
 
@@ -625,6 +628,9 @@ class CurveSet(VoltPyModel):
     def getUrl(self):
         return reverse('showCurveSet', args=[self.id])
 
+    def getDelUrl(self):
+        return reverse('deleteCurveSet', args=[self.id])
+
     def getHtmlDetails(self):
         proc_hist = ''
         for p in self.getProcessingHistory():
@@ -674,6 +680,9 @@ class FileCurveSet(CurveSet):
     def getUrl(self):
         return reverse('showCurveFile', args=[self.id])
 
+    def getDelUrl(self):
+        return reverse('deleteCurveFile', args=[self.id])
+
     def getHtmlDetails(self):
         ret = ''.join([
             '<li>Object ID: %d</li>' % self.id,
@@ -717,6 +726,9 @@ class Analysis(VoltPyModel):
             return reverse('showAnalysis', args=[self.id])
         else:
             return reverse('analyze', args=[self.id])
+
+    def getDelUrl(self):
+        return reverse('deleteAnalysis', args=[self.id])
 
     def getHtmlDetails(self):
         ret = ''.join([
