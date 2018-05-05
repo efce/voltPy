@@ -251,7 +251,7 @@ def paginate(queryset, current_page: int, path: str):
     page_size = 30
     elements = len(queryset)
     ret['number_of_pages'] = int(np.ceil(elements/page_size))
-    if current_page > 0 or current_page <= ret['number_of_pages']:
+    if current_page <= 0 or current_page > ret['number_of_pages']:
         # TODO: Log wrong page number
         current_page = 1
     start = (current_page - 1) * page_size
@@ -272,6 +272,7 @@ def paginate(queryset, current_page: int, path: str):
     ret['paginator'] += ''.join([
         '<a href="%s%s/">[&gt;]</a>&nbsp;' % (path, str(current_page+1) if (current_page < ret['number_of_pages']) else str(ret['number_of_pages'])),
         '<a href="%s%s/">[&gt;&gt;]</a>' % (path, str(ret['number_of_pages'])),
+        '&nbsp; %d items per page' % page_size,
         '</div>'
     ])
     return ret
