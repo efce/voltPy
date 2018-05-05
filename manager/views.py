@@ -29,6 +29,7 @@ from manager.helpers.functions import voltpy_serve_csv
 from manager.helpers.functions import is_number
 from manager.helpers.functions import get_redirect_class
 from manager.helpers.functions import generate_share_link
+from manager.helpers.functions import paginate
 from manager.helpers.decorators import with_user
 from manager.helpers.decorators import redirect_on_voltpyexceptions
 
@@ -128,14 +129,17 @@ def export(request, user, objType, objId):
 
 @redirect_on_voltpyexceptions
 @with_user
-def browseFileSet(request, user):
-    files = mmodels.FileSet.all()
+def browseFileSets(request, user, page_number=1):
+    all_files = mmodels.FileSet.all()
+    paginated = paginate(all_files, int(page_number), request.path)
+    files = paginated['current_page_content']
     context = {
         'user': user,
         'list_header': 'Displaying uploaded files sets:',
         'list_to_disp': files,
-        'action1': "showFileSet",
-        'action2': "deleteFileSet",
+        'paginator': paginated['paginator'],
+        'action1': 'showFileSet',
+        'action2': 'deleteFileSet',
         'action2_text': ' (delete) ',
         'when_empty': ''.join([
             "You have no files uploaded. ",
@@ -153,12 +157,14 @@ def browseFileSet(request, user):
 
 @redirect_on_voltpyexceptions
 @with_user
-def browseCurveFile(request, user):
-    files = mmodels.FileCurveSet.all()
+def browseCurveFiles(request, user, page_number=1):
+    all_files = mmodels.FileCurveSet.all()
+    paginated = paginate(all_files, int(page_number), request.path)
     context = {
         'user': user,
         'list_header': 'Uploaded files:',
-        'list_to_disp': files,
+        'list_to_disp': paginated['current_page_content'],
+        'paginator': paginated['paginator'],
         'action1': "showCurveFile",
         'action2': "deleteCurveFile",
         'action2_text': ' (delete) ',
@@ -178,12 +184,14 @@ def browseCurveFile(request, user):
 
 @redirect_on_voltpyexceptions
 @with_user
-def browseAnalysis(request, user):
-    anals = mmodels.Analysis.all()
+def browseAnalysis(request, user, page_number=1):
+    all_anals = mmodels.Analysis.all()
+    paginated = paginate(all_anals, int(page_number), request.path)
     context = {
         'user': user,
         'list_header': 'Displaying Analysis:',
-        'list_to_disp': anals,
+        'list_to_disp': paginated['current_page_content'],
+        'paginator': paginated['paginator'],
         'action1': "showAnalysis",
         'action2': "deleteAnalysis",
         'action2_text': ' (delete) ',
@@ -203,12 +211,14 @@ def browseAnalysis(request, user):
 
 @redirect_on_voltpyexceptions
 @with_user
-def browseCurveSet(request, user):
-    csets = mmodels.CurveSet.all()
+def browseCurveSet(request, user, page_number=1):
+    all_csets = mmodels.CurveSet.all()
+    paginated = paginate(all_csets, int(page_number), request.path)
     context = {
         'user': user,
         'list_header': 'Displaying CurveSets:',
-        'list_to_disp': csets,
+        'list_to_disp': paginated['current_page_content'],
+        'paginator': paginated['paginator'],
         'action1': 'showCurveSet',
         'action2': 'deleteCurveSet',
         'action2_text': ' (delete) ',

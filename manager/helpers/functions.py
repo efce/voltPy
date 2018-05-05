@@ -242,5 +242,37 @@ def generate_share_link(user, perm, obj):
     return sl.getLink()
 
 
+def paginate(queryset, current_page: int, path: str):
+    splpath = path.split('/')
+    if is_number(splpath[-2]):
+        path = '/'.join(splpath[:-2])
+        path += '/'
+    ret = {}
+    page_size = 30
+    elements = len(queryset)
+    ret['number_of_pages'] = int(np.ceil(elements/page_size))
+    if current_page > 0 or current_page <= ret['number_of_pages']:
+        # TODO: Log wrong page number
+        current_page = 1
+    start = (current_page - 1) * page_size
+    end = start + page_size
+    ret['current_page_content'] = queryset[start:end:1]
+    ret['paginator'] = ''
+    ret['paginator'] = ''.join([
+        '<div class="paginator">',
+        '<a href="%s1/">[&lt;&lt;]</a>&nbsp' % path,
+        '<a href="%s%s/">[&lt;]</a>&nbsp;' % (path, str(current_page - 1) if (current_page > 1) else "1"),
+    ])
+    for i in range(ret['number_of_pages']):
+        p = str(i+1)
+        ret['paginator'] += '<a href="{path}{num}/">[{num}]</a>&nbsp;'.format(path=path, num=p)
+    ret['paginator'] += ''.join([
+        '<a href="%s%s/">[&gt;]</a>&nbsp;' % (path, str(current_page+1) if (current_page < ret['number_of_pages']) else str(ret['number_of_pages'])),
+        '<a href="%s%s/">[&gt;&gt;]</a>' % (path, str(ret['number_of_pages'])),
+        '</div>'
+    ])
+    return ret
+
+
 def getUser():
     return with_user._user
