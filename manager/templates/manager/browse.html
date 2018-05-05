@@ -9,23 +9,23 @@
     <thead>
         <tr>
             <th>
-                Id
+                <a href="./?sort=id">Id</a>
             </th>
             <th>
-                Name
+                <a href="./?sort=name">Name</a>
             </th>
             {% if list_to_disp.0.disp_type == 'analysis' %}
             <th>
-                Method
+                <a href="./?sort=method">Method</a>
             </th>
             {% endif %}
             {% if list_to_disp.0.disp_type == 'file' %}
             <th>
-                File name
+                <a href="./?sort=filename">File name</a>
             </th>
             {% endif %}
             <th>
-                Date
+                <a href="./?sort=date">Date</a>
             </th>
             <th>
                 Action
@@ -34,7 +34,7 @@
     </thead>
     <tbody>
         {% for el in list_to_disp %}
-        <tr>
+        <tr style="cursor: pointer;" onclick="document.location.href='{{ el.getUrl }}';">
             <td>
                 {{ el.id }}
             </td>

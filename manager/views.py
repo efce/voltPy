@@ -130,8 +130,18 @@ def export(request, user, objType, objId):
 @redirect_on_voltpyexceptions
 @with_user
 def browseFileSets(request, user, page_number=1):
+    sortableBy = (
+        'id',
+        'name',
+        'date',
+    )
     all_files = mmodels.FileSet.all()
-    paginated = paginate(all_files, int(page_number), request.path)
+    paginated = paginate(
+        request=request,
+        queryset=all_files,
+        sortable_by=sortableBy,
+        current_page=int(page_number)
+    )
     files = paginated['current_page_content']
     context = {
         'user': user,
@@ -158,8 +168,19 @@ def browseFileSets(request, user, page_number=1):
 @redirect_on_voltpyexceptions
 @with_user
 def browseCurveFiles(request, user, page_number=1):
+    sortable_by = (
+        'id',
+        'name',
+        'filename',
+        'date'
+    )
     all_files = mmodels.FileCurveSet.all()
-    paginated = paginate(all_files, int(page_number), request.path)
+    paginated = paginate(
+        request=request,
+        queryset=all_files,
+        sortable_by=sortable_by,
+        current_page=int(page_number)
+    )
     context = {
         'user': user,
         'list_header': 'Uploaded files:',
@@ -186,7 +207,18 @@ def browseCurveFiles(request, user, page_number=1):
 @with_user
 def browseAnalysis(request, user, page_number=1):
     all_anals = mmodels.Analysis.all()
-    paginated = paginate(all_anals, int(page_number), request.path)
+    sortable_by = (
+        'id',
+        'name',
+        'method',
+        'date'
+    )
+    paginated = paginate(
+        request=request,
+        queryset=all_anals,
+        sortable_by=sortable_by,
+        current_page=int(page_number)
+    )
     context = {
         'user': user,
         'list_header': 'Displaying Analysis:',
@@ -212,8 +244,18 @@ def browseAnalysis(request, user, page_number=1):
 @redirect_on_voltpyexceptions
 @with_user
 def browseCurveSet(request, user, page_number=1):
+    sortable_by = (
+        'id',
+        'name',
+        'date'
+    )
     all_csets = mmodels.CurveSet.all()
-    paginated = paginate(all_csets, int(page_number), request.path)
+    paginated = paginate(
+        request=request,
+        queryset=all_csets,
+        sortable_by=sortable_by,
+        current_page=int(page_number)
+    )
     context = {
         'user': user,
         'list_header': 'Displaying CurveSets:',
