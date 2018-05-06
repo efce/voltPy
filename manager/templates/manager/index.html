@@ -3,6 +3,12 @@
 {% block title %} INDEX {% endblock %}
 
 {% block real_content %}
+<fieldset class="mt_rest" style="width: 40%"><legend class="mt_name">Welcome</legend>
+Welcome to the voltammetry signal processing web service!<br />
+Here you can upload, store, search, process and analyze your voltammograms. At the moment the service is in alpha state, so many new changes and feature will arrive on regular basis, however, there is wide selection of tools available already! 
+We hope you'll enjoy during your time here. Please report any errors, bugs, feature requests etc. at <a href="mailto:voltammetry.center@gmail.com">voltammetry.center@gmail.com</a> or directly to our <a href="https://github.com/efce/voltPy/issues">GitHub</a> page.
+<!--
+</fieldset>
 Welcome to the index page!<br />
 Search for CurveSets: <input onkeyup="search()" id='ss' />
 <div id="curve_list"></div>
@@ -18,5 +24,5 @@ Search for CurveSets: <input onkeyup="search()" id='ss' />
             $('#curve_list').append($('<a href="/manager/show-curveset/' + key + '/">id' + key + ': ' + kdata[key] + '</a> <br />'));
         }
     }
-</script>
+</script>-->
 {% endblock %}

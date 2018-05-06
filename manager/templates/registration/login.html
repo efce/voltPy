@@ -1,45 +1,45 @@
 {% extends "manager/main.html" %}
 
-{% block content %}
-
+{% block real_content %}
+<fieldset class="mt_rest"><legend class="mt_name">Login</legend>
 {% if user.is_authenticated %}
-      Hi {{ user.username }},<br /> You are aleady login!<br /><br />
-      <a href="{% url 'logout' %}">logout</a>
-    {% else %}
+  Hi {{ user.username }},<br /> You are aleady login!<br /><br />
+  <a href="{% url 'logout' %}">logout</a>
+{% else %}
+  {% if form.errors %}
+  <p>Your username and password didn't match. Please try again.</p>
+  {% endif %}
+  {% if next %}
+      {% if user.is_authenticated %}
+      <p>Your account doesn't have access to this page. To proceed,
+      please login with an account that has access.</p>
+      {% else %}
+      <p>Please login to see this page.</p>
+      {% endif %}
+  {% endif %}
 
-{% if form.errors %}
-<p>Your username and password didn't match. Please try again.</p>
+  <form method="post" action="{% url 'login' %}">
+  {% csrf_token %}
+  <table>
+    <tr>
+    <td>{{ form.username.label_tag }}</td>
+    <td>{{ form.username }}</td>
+  </tr>
+  <tr>
+    <td>{{ form.password.label_tag }}</td>
+    <td>{{ form.password }}</td>
+  </tr>
+
+  <tr>
+    <td colspan=2 style="text-align: center"><input type="submit" value="Login" />
+    <input type="hidden" name="next" value="{{ next }}" /></td>
+  </tr>
+  </table>
+  </form>
+
+  {# Assumes you setup the password_reset view in your URLconf #}
+  <p><a href="{% url 'password_reset' %}">Lost password?</a></p>
+
 {% endif %}
-
-{% if next %}
-    {% if user.is_authenticated %}
-    <p>Your account doesn't have access to this page. To proceed,
-    please login with an account that has access.</p>
-    {% else %}
-    <p>Please login to see this page.</p>
-    {% endif %}
-{% endif %}
-
-<form method="post" action="{% url 'login' %}">
-{% csrf_token %}
-
-<div>
-  <td>{{ form.username.label_tag }}</td>
-  <td>{{ form.username }}</td>
-</div>
-<div>
-  <td>{{ form.password.label_tag }}</td>
-  <td>{{ form.password }}</td>
-</div>
-
-<div>
-  <input type="submit" value="login" />
-  <input type="hidden" name="next" value="{{ next }}" />
-</div>
-</form>
-
-{# Assumes you setup the password_reset view in your URLconf #}
-<p><a href="{% url 'password_reset' %}">Lost password?</a></p>
-
-{% endif %}
+</fieldset>
 {% endblock %}

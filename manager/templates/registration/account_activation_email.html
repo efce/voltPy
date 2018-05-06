@@ -1,7 +1,12 @@
 {% autoescape off %}
-Hi {{ user.username }},
+Dear {{ user.username }},
 
-Please don't give a fuck and click on the link below to confirm your registration:
-
+you have received this email, because you are trying to register at {{ domain }}.
+To complete the registration please follow the link below:<br />
 http://{{ domain }}{% url 'activate' uid token %}
+
+If you have received this email by mistake, it's contents can be safely ignored.
+
+Sincerely,
+Voltammetry Team
 {% endautoescape %}

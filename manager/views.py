@@ -13,6 +13,7 @@ from django.utils.encoding import force_bytes
 from django.utils.encoding import force_text
 from django.utils.http import urlsafe_base64_encode
 from django.utils.http import urlsafe_base64_decode
+from django.contrib.sites.models import Site
 from manager.forms import SignInForm
 from manager.tokens import account_activation_token
 import manager.models as mmodels
@@ -45,7 +46,7 @@ def register(request):
             subject = 'Activate Your VoltPy Account'
             message = loader.render_to_string('registration/account_activation_email.html', {
                 'user': user,
-                'domain': current_site.domain,
+                'domain': Site.objects.get_current(),
                 'uid': urlsafe_base64_encode(force_bytes(user.pk)).decode(),
                 'token': account_activation_token.make_token(user),
             })
