@@ -133,6 +133,7 @@ def browseFileSets(request, user, page_number=1):
     sortableBy = (
         'id',
         'name',
+        'owner',
         'date',
     )
     all_files = mmodels.FileSet.all()
@@ -145,7 +146,7 @@ def browseFileSets(request, user, page_number=1):
     files = paginated['current_page_content']
     context = {
         'user': user,
-        'list_header': 'Displaying uploaded files sets:',
+        'list_header': 'Files Sets:',
         'list_to_disp': files,
         'paginator': paginated['paginator'],
         'when_empty': ''.join([
@@ -169,6 +170,7 @@ def browseCurveFiles(request, user, page_number=1):
         'id',
         'name',
         'fileName',
+        'owner',
         'date'
     )
     all_files = mmodels.FileCurveSet.all()
@@ -180,7 +182,7 @@ def browseCurveFiles(request, user, page_number=1):
     )
     context = {
         'user': user,
-        'list_header': 'Uploaded files:',
+        'list_header': 'Files:',
         'list_to_disp': paginated['current_page_content'],
         'paginator': paginated['paginator'],
         'when_empty': ''.join([
@@ -205,6 +207,7 @@ def browseAnalysis(request, user, page_number=1):
         'id',
         'name',
         'method',
+        'owner',
         'date'
     )
     paginated = paginate(
@@ -215,7 +218,7 @@ def browseAnalysis(request, user, page_number=1):
     )
     context = {
         'user': user,
-        'list_header': 'Displaying Analysis:',
+        'list_header': 'Analysis:',
         'list_to_disp': paginated['current_page_content'],
         'paginator': paginated['paginator'],
         'when_empty': ''.join([
@@ -238,6 +241,7 @@ def browseCurveSet(request, user, page_number=1):
     sortable_by = (
         'id',
         'name',
+        'owner',
         'date'
     )
     all_csets = mmodels.CurveSet.all()
@@ -249,7 +253,7 @@ def browseCurveSet(request, user, page_number=1):
     )
     context = {
         'user': user,
-        'list_header': 'Displaying CurveSets:',
+        'list_header': 'Curve Sets:',
         'list_to_disp': paginated['current_page_content'],
         'paginator': paginated['paginator'],
         'when_empty': ''.join([

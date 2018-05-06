@@ -126,6 +126,7 @@ class FileSet(VoltPyModel):
     def getHtmlDetails(self):
         ret = ''.join([
             '<li>Object ID: %d</li>' % self.id,
+            '<li>Owner: %s</li>' % self.owner,
             '<li>Date: %s</li>' % self.date.strftime("%Y-%m-%d"),
         ])
         return ret
@@ -645,6 +646,7 @@ class CurveSet(VoltPyModel):
 
         ret = ''.join([
             '<li>Object ID: %d</li>' % self.id,
+            '<li>Owner: %s</li>' % self.owner,
             '<li>Date: %s</li>' % self.date.strftime("%Y-%m-%d"),
             '<li>Processed with:<ul>%s</ul></li>' % proc_hist,
             '<li>Uses curves from:<ul>%s</ul></li>' % uses_files,
@@ -686,6 +688,7 @@ class FileCurveSet(CurveSet):
     def getHtmlDetails(self):
         ret = ''.join([
             '<li>Object ID: %d</li>' % self.id,
+            '<li>Owner: %s</li>' % self.owner,
             '<li>Date: %s</li>' % self.date.strftime("%Y-%m-%d"),
             '<li>File name: %s</li>' % self.fileName,
             '<li>File date: %s</li>' % self.fileDate,
@@ -733,6 +736,7 @@ class Analysis(VoltPyModel):
     def getHtmlDetails(self):
         ret = ''.join([
             '<li>Object ID: %d</li>' % self.id,
+            '<li>Owner: %s</li>' % self.owner,
             '<li>Date: %s</li>' % self.date.strftime("%Y-%m-%d %H:%M"),
             '<li>Method: %s</li>' % self.methodDisplayName,
             '<li>Curve Set: <a href="%s">%s</a></li>' % (self.curveSet.getUrl(), self.curveSet),

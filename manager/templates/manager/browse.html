@@ -3,7 +3,8 @@
 {% block title %} Browse {% endblock %}
 
 {% block real_content %}
-<h4>{{ list_header }}</h4>
+<fieldset class="mt_rest">
+<legend class="mt_name">{{ list_header }}</legend>
 {% if list_to_disp %}
 <table class="browse_table">
     <thead>
@@ -26,6 +27,9 @@
             {% endif %}
             <th>
                 <a href="./?sort=date">Date</a>
+            </th>
+            <th>
+                <a href="./?sort=owner">Owner</a>
             </th>
             <th>
                 Action
@@ -55,6 +59,9 @@
                 {{ el.date | date:"c" }}
             </td>
             <td>
+                {{ el.owner }}
+            </td>
+            <td>
                 <a href="{{ el.getDelUrl }}">(delete)</a>
             </td>
         </tr>
@@ -65,4 +72,5 @@
 {% else %}
     <p>{{ when_empty | safe }}</p>
 {% endif %}
+</fieldset>
 {% endblock %}

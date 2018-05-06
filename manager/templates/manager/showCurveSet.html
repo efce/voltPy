@@ -8,13 +8,13 @@
 {{ at | safe }}
 
 <br />
-<fieldset class="mt_name"><legend class="mt_name">Analysis</legend>
+<fieldset class="mt_rest"><legend class="mt_name">Analysis</legend>
 <form method="post" action="" enctype="multipart/form-data">
 	{% csrf_token %}
 	{{ formAnalyze.draw }}
 </form>
 </fieldset>
-<fieldset class="mt_name"><legend class="mt_name">Processing</legend>
+<fieldset class="mt_rest"><legend class="mt_name">Processing</legend>
 {% if showing.locked %}
 Processing of this curveset is not allowed, because it was already used in
 analysis.<br /> To process the data further please create a copy of it.<br />

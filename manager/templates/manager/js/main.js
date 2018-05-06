@@ -242,6 +242,16 @@ function toggleShow(e) {
     $(e.target).next('._voltJS_toShow' ).toggleClass('invisible visible');
 }
 
+function toggleDetails(src, field_id) {
+    clicked = $(src);
+    if ($(field_id).hasClass('invisible')) {
+        clicked.text(clicked.text().replace('↧', '↥'));
+    } else {
+        clicked.text(clicked.text().replace('↥', '↧'));
+    }
+    $(field_id).toggleClass('invisible');
+}
+
 $( function() {
     $('._disabled').attr('disabled', 'disabled');
 });

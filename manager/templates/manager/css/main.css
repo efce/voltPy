@@ -29,12 +29,22 @@ body {
 
 .mt_name {
     background-color: #55F;
-    padding: 10px;
+    padding: 4px 10px;
     color: white;
     font-weight: bold;
     margin: 3px;
-    border-radius: 6px;
+    border-radius: 3px;
     border: 1px #AAF solid;
+}
+
+.mt_rest {
+    background-color:azure;
+    padding: 10px;
+    color: black;
+    font-weight: normal;
+    margin: 3px;
+    border-radius: 3px;
+    border: 1px #88F solid;
 }
 
 .main_plot_buttons {
@@ -120,4 +130,5 @@ body {
 button {
     width: 10em;
     height: 2em;
+    margin: 3px 5px;
 }
