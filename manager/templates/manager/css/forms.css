@@ -1,0 +1,89 @@
+form label { 
+	max-width: 400px; 
+	word-wrap: break-word; 
+	display: inline;
+	white-space: pre-line; 
+}
+
+form table th {
+    width: 140px;
+}
+
+.form_submit {
+    height: 30px;
+    width: 150px;
+    margin: auto;
+    margin-left: 50px;
+}
+
+.form_inline {
+    display: inline !important;
+}
+.analytes_table_container {
+    width: 100%;
+    margin: 0px;
+    padding: 0px;
+    border: 0px;
+    height: 440px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    background-color: white;
+}
+.analytes_table {
+    border: 0px;
+    margin-top: -10px;
+    padding: 0px;
+    border-spacing: 0px;
+}
+.analytes_table th,td {
+    padding: 1px 3px;
+    width: 150px;
+    margin: 2px;
+    text-align: left;
+    border: 1px #55F;
+    border-radius: 0px !important;
+}
+.analytes_table td {
+    padding: 1px 5px;
+    border-right: 1px #55F solid;
+    border-bottom: 1px #55F solid;
+}
+.analytes_table th {
+    background-color:#55F;
+    color: white;
+    border-right: 1px white solid;
+}
+.analytes_table tbody {
+    overflow-y: auto;
+    overflow-x: hidden;
+    width: 100%;
+    height: 370px;
+}
+
+.method_list {
+    min-width: 300px;
+}
+
+.method_element {
+    border: 1px solid black;
+    margin: 3px;
+}
+
+.method_element:hover {
+    background-color: #BBB;
+    cursor: pointer;
+}
+
+.browse_table {
+    border: 1px solid darkgrey;
+}
+.browse_table th {
+    background-color: #55F;
+    color: white;
+}
+.browse_table th a {
+    color: white;
+}
+.browse_table tbody tr:nth-child(even) {
+    background-color: #CCF;
+}

@@ -1,8 +1,9 @@
-<form method="post" action="" enctype="multipart/form-data" class="form_regular">
+<form method="post" action="./" enctype="multipart/form-data" class="form_regular">
 	{% csrf_token %}
 	<table>
 	<input type='hidden' name='query' value='methodmanager' />
 	{{ form.as_table|safe }}
-    <tr><td><button class="_voltJS_backButton" name="backButton" value="1">Back</button>&nbsp;<input name="{{ submit }}" type="submit" value="Forward" /></td></tr>
+    <tr><td>
 	</table>
+	<button class="_voltJS_backButton" name="backButton" value="1">Back</button>&nbsp;<input name="{{ submit }}" type="submit" value="Forward" />
 </form>

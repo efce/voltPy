@@ -4,6 +4,7 @@
 
 {% block real_content %}
 <p> Allowed file types: {% for ft in allowedExt %} {{ ft }} {% endfor %}</p>
+{%if can_upload %}
 <form method="post" action="./" enctype="multipart/form-data" id="file_form">
 	{% csrf_token %}
 	<table>
@@ -195,7 +196,7 @@ $("form#file_form").submit(function(e) {
     $(this).append('<input type="hidden" name="command" value="upload" />');
     var formData = new FormData(this);
     $.ajax({
-        url: "{% url "ajaxUpload" %}",
+        url: "{% url 'ajaxUpload' %}",
         type: 'POST',
         data: formData,
         success: function (data) {
@@ -208,6 +209,9 @@ $("form#file_form").submit(function(e) {
     });
     voltpy_loading_done();
 });
-
 </script>
+{% else %}
+<p>Only fully registered users can upload files.<br />
+Please go to <a href="{% url 'register' %}">registration</a> and create an account.</p>
+{% endif %}
 {% endblock %}

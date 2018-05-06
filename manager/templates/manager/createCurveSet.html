@@ -3,72 +3,59 @@
 {% block title %} Create {% endblock %}
 
 {% block head %}
-<script type="text/javascript">
-</script>
 {% endblock %}
 
 {% block style %}
-
 form li {
     list-style-type: none;
 }
 
 .main_list {
   color: #fff;
-  background-color: #333;
+  background-color: #55F;
+  color: white;
+  font-weight: 600;
   font-size: 15px;
   padding: 7px 10px;
 }
 
 .main_list ul {
-    background-color: #888;
+    background-color: #55F;
+    color: white;
 }
 
 .cs_list {
   color: #fff;
-  background-color: #333;
+  background-color: #66F;
   font-size: 15px;
   padding: 7px 10px;
 }
 .cs_list:hover {
-  background-color: #000;
+  background-color: #FFF;
+  color: #55F;
 }
 .cs_list  ul {
-  background-color: #222;
+  background-color: #77F;
   color: #EEE;
   border: 1px solid #888;
 }
 
 .curve_list {
-  background-color: #333;
+  background-color: #88F;
   font-size: 13px;
   padding: 0px !important;
 }
 
 .curve_list:hover {
-  background-color: #111;
-}
-
-.invisible {
-  height: 0px !important;
-  overflow: hidden !important;
-  padding: 0px !important;
-}
-
-.visible {
-  height: auto;
-  min-height: 1.7em;
-}
-
-.upsidedown {
-  transform: rotate(180deg);
-}
-.upsideup {
-  transform: rotate(0deg);
+  background-color: #FFF;
+  color: #55F;
 }
 
 {% endblock %}
 
 {% block real_content %}
-    {{ formHTML|safe }}
+<fieldset class="mt_rest"><legend class="mt_name">Create New Curve Set</legend>
+  Select Curves, CurveSets, or Files which should be included in the new CurveSet.
+    {{ form_html | safe }}
+</fieldset>
 {% endblock %}

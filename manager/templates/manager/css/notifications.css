@@ -1,0 +1,9 @@
+
+#notifications { 
+  border: 1px #ACF solid;
+  margin: 10px;
+  padding: 10px;
+  border-radius: 10px;
+  background-color: #AAA; 
+  color: #000;
+}

@@ -7,11 +7,25 @@ function sleep (time) {
     return new Promise((resolve) => setTimeout(resolve, time))
 };
 
+$( function() {
+    $('#fixed_header').floatThead();
+});
+
 function searchCurveSet(txt, funcResults) {
     url = '/manager/ajax/search-curveset/';
     csfr = $("{% csrf_token %}").val();
     object = {
         'search': txt,
+        'csrfmiddlewaretoken': csfr,
+    };
+    $.post(url, object).done(funcResults);
+}
+
+function getShareable(txt, funcResults) {
+    url = '/manager/ajax/get-shareable/';
+    csfr = $("{% csrf_token %}").val();
+    object = {
+        'to_share': txt,
         'csrfmiddlewaretoken': csfr,
     };
     $.post(url, object).done(funcResults);
@@ -94,7 +108,7 @@ function processJSONReply(data, plot='', lineData='', cursors='') {
 
 $( function() {
     $(".closeX").on('click', function(e) {
-        $(e.target).parent('div').css('display', 'none');
+        $(e.target).parent('div').toggleClass('invisible');
     });
 });
 
@@ -232,9 +246,40 @@ function toggleShow(e) {
     $(e.target).next('._voltJS_toShow' ).toggleClass('invisible visible');
 }
 
+function toggleDetails(src, field_id) {
+    clicked = $(src);
+    if ($(field_id).hasClass('invisible')) {
+        clicked.text(clicked.text().replace('↧', '↥'));
+    } else {
+        clicked.text(clicked.text().replace('↥', '↧'));
+    }
+    $(field_id).toggleClass('invisible');
+}
+
 $( function() {
     $('._disabled').attr('disabled', 'disabled');
 });
+
+$( function() {
+    $('._voltJS_requestLink').click( function() {
+        to_send = window.location.href;
+        getShareable(to_send, displayLinks);
+    });
+});
+
+function displayLinks(data) {
+    var amd = $('#share_link');
+    amd.removeClass('invisible');
+    var form = '<a class="closeX" onclick="closeShare();"></a><br /><br />';
+    form += '<p>Read only: ' + data['link_ro'] + '</p>';
+    form += '<p>Editable: ' + data['link_rw'] + '</p>';
+    amd.text('');
+    amd.append($(form));
+}
+
+function closeShare() {
+    $('#share_link').addClass('invisible');
+}
 
 $( function() {
     imodel = '_voltJS_model@';
@@ -260,7 +305,7 @@ function addApplyToCurveSetChooser(model_num) {
         return;
     }
     form = '<div class="floatMenu" id="id_ApplyModel">';
-    form += '<a class="closeX" onclick="$(this).parent(\'div\').hide();"></a>';
+    form += '<a class="closeX" onclick=""></a>';
     form += 'Search: <input type="text" onkeyup="setCurveList(' + model_num + ', \'curve_list\');" id="curveSearch" /><br />';
     form += 'Apply to:<div id="curve_list"></div></div>';
     $('body').append($(form));
@@ -293,3 +338,21 @@ $( function() {
         e.preventDefault();
     });
 });
+
+function toggleMethod(type) {
+    class_name = '.' + type + '_methods';
+    $(class_name).toggleClass('invisible');
+}
+
+function selectMethod(mtype, mname, mdisp) {
+    $('#' + mtype + '_selected').text('Selected: ' + mdisp + " ")
+    input = $('<input type="hidden" name="' + mtype + '-method" value="' + mname + '" />');
+    if (mtype == 'analysis') {
+        but = $('<input type="submit" name="startAnalyze" value="Start Analysis" class="formSubmit" />');
+    } else {
+        but = $('<input type="submit" name="startProcessing" value="Start Processing" class="formSubmit" />');
+    }
+    $('#' + mtype + '_selected').append(input);
+    $('#' + mtype + '_selected').append(but);
+    toggleMethod(mtype);
+}

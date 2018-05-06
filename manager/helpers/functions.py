@@ -215,6 +215,15 @@ def generate_share_link(user, perm, obj):
     import string
     if obj.owner != user:
         raise VoltPyNotAllowed()
+    try:
+        old = manager.models.SharedLink.get(
+            object_type=obj.__class__.__name__,
+            object_id=obj.id,
+            permissions=perm
+        )
+        return old.getLink()
+    except:
+        pass
     gen_string = ''.join([
         random.choice(string.ascii_letters + string.digits) for _ in range(32)
     ])
@@ -231,6 +240,51 @@ def generate_share_link(user, perm, obj):
     )
     sl.save()
     return sl.getLink()
+
+
+def paginate(request, queryset, sortable_by: List, current_page: int):
+    path = request.path
+    txt_sort = ''
+    if request.method == 'GET':
+        if request.GET.get('sort', False):
+            sort_by = request.GET.get('sort')
+            if sort_by in sortable_by:
+                order_by = sort_by
+                txt_sort = '?sort=%s' % sort_by
+                queryset = queryset.order_by(order_by)
+    splpath = path.split('/')
+    if is_number(splpath[-2]):
+        path = '/'.join(splpath[:-2])
+        path += '/'
+    ret = {}
+    page_size = 30
+    elements = len(queryset)
+    ret['number_of_pages'] = int(np.ceil(elements/page_size))
+    if current_page <= 0 or current_page > ret['number_of_pages']:
+        # TODO: Log wrong page number
+        current_page = 1
+    start = (current_page - 1) * page_size
+    end = start + page_size
+    ret['current_page_content'] = queryset[start:end:1]
+    ret['paginator'] = ''
+    ret['paginator'] = ''.join([
+        '<div class="paginator">',
+        '<a href="%s1/%s">[&lt;&lt;]</a>&nbsp' % (path, txt_sort),
+        '<a href="%s%s/%s">[&lt;]</a>&nbsp;' % (path, str(current_page - 1) if (current_page > 1) else "1", txt_sort),
+    ])
+    for i in range(ret['number_of_pages']):
+        p = str(i+1)
+        if int(p) == current_page:
+            ret['paginator'] += '[{num}]&nbsp;'.format(num=p)
+        else: 
+            ret['paginator'] += '<a href="{path}{num}/{sort}">[{num}]</a>&nbsp;'.format(path=path, num=p, sort=txt_sort)
+    ret['paginator'] += ''.join([
+        '<a href="%s%s/%s">[&gt;]</a>&nbsp;' % (path, str(current_page+1) if (current_page < ret['number_of_pages']) else str(ret['number_of_pages']), txt_sort),
+        '<a href="%s%s/%s">[&gt;&gt;]</a>' % (path, str(ret['number_of_pages']), txt_sort),
+        '&nbsp; %d items per page' % page_size,
+        '</div>'
+    ])
+    return ret
 
 
 def getUser():

@@ -14,3 +14,16 @@ def migration_db_upgrade( **kwargs):
     if not Group.objects.filter(name='registered_users').exists():
         group = Group(name='registered_users')
         group.save()
+    from django.contrib.sites.models import Site
+    one = Site.objects.all()
+    if one.exists():
+        one = one[0]
+        one.domain = 'voltammetry.center'
+        one.name = 'Voltammetry Center'
+        one.save()
+    else:
+        one = Site(
+            domain='voltammetry.center',
+            name='Voltammetry Center',
+        )
+        one.save()

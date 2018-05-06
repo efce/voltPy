@@ -3,24 +3,12 @@
 {% block title %} Show {% endblock %}
 
 {% block real_content %}
-<table class="table_no_breaks">
-<tr>
-    <td>FileSet ID: {{ fileset.id }}&nbsp;<a href="{% url 'browseFileSets' %}">Back to browse</a></td>
-    <td style="border-left: 1px black solid;" rowspan=3>
-        &nbsp;<button class="{{ cloneCS }}"> Prepare CurveSet </button>
-        <br /><br />
-        &nbsp;<button class="{{ exportFS }}"> Export </button> 
-    </td>
-</tr>
-<tr><td>{{ disp_name_edit | safe }} &nbsp;</td></tr>
-<tr><td>Date created: {{ fileset.date | date:"c" }} </td></tr>
-</table>
-<br />
-FileSet consists of:
+<fieldset class="mt_rest">
+<legend class="mt_name">Files in the File Set:</legend>
 <ul>
-    {% for f in fileset.files.all %}
+    {% for f in showing.files.all %}
     <li><a href="{% url 'showCurveFile' f.id %}">{{ f }}</a></li>
     {% endfor %}
 </ul>
-
+</fieldset>
 {% endblock %}

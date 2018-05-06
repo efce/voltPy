@@ -3,17 +3,74 @@
 {% block title %} Browse {% endblock %}
 
 {% block real_content %}
-<h4>{{ list_header }}</h4>
-<p>
+<fieldset class="mt_rest">
+<legend class="mt_name">{{ list_header }}</legend>
 {% if list_to_disp %}
-    <ul>
-    {% for d in list_to_disp %}
-    <li><a href="{% url action1 d.id %}">{{ d }}</a>
-    <a href="{% url action2 d.id %}">{{ action2_text }}</a></li>
-    {% endfor %}
-    </ul>
+<table class="browse_table">
+    <thead>
+        <tr>
+            <th>
+                <a href="./?sort=id">Id</a>
+            </th>
+            <th>
+                <a href="./?sort=name">Name</a>
+            </th>
+            {% if list_to_disp.0.disp_type == 'analysis' %}
+            <th>
+                <a href="./?sort=method">Method</a>
+            </th>
+            {% endif %}
+            {% if list_to_disp.0.disp_type == 'file' %}
+            <th>
+                <a href="./?sort=fileName">File name</a>
+            </th>
+            {% endif %}
+            <th>
+                <a href="./?sort=date">Date</a>
+            </th>
+            <th>
+                <a href="./?sort=owner">Owner</a>
+            </th>
+            <th>
+                Action
+            </th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for el in list_to_disp %}
+        <tr style="cursor: pointer;" onclick="document.location.href='{{ el.getUrl }}';">
+            <td>
+                {{ el.id }}
+            </td>
+            <td>
+                {{ el.name }}
+            </td>
+            {% if list_to_disp.0.disp_type == 'analysis' %}
+            <td>
+                {{ el.methodDisplayName }}
+            </td>
+            {% endif %}
+            {% if list_to_disp.0.disp_type == 'file' %}
+            <td>
+                {{ el.fileName }}
+            </td>
+            {% endif %}
+            <td>
+                {{ el.date | date:"c" }}
+            </td>
+            <td>
+                {{ el.owner }}
+            </td>
+            <td>
+                <a href="{{ el.getDelUrl }}">(delete)</a>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{{ paginator | safe }}
 {% else %}
-    <p>{{ whenEmpty|safe }}</p>
+    <p>{{ when_empty | safe }}</p>
 {% endif %}
-</p>
+</fieldset>
 {% endblock %}

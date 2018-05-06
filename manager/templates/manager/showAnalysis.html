@@ -7,16 +7,8 @@
 {% endblock %}
 
 {% block real_content %}
-<table class="table_no_breaks">
-<tr><td>Analysis ID: {{ analysis.id }}&nbsp;<a href="{% url 'browseAnalysis' %}">Back to browse</a></td></tr>
-<tr><td>Analysis method: {{ analysis.methodDisplayName }} </td></tr>
-<tr><td>{{ disp_name_edit | safe }} </td></tr>
-<tr><td>Date created: {{ analysis.date | date:"c" }} </td></tr>
-<tr><td>CurveSet used: <a href="{% url 'showCurveSet' analysis.curveSet.id %}">{{ analysis.curveSet.name }}</a> </td></tr>
-<tr><td><button class="{{ exportData }}"> Export Data </button></td></tr>
-<tr><td><button class="{{ applyModel }}"> Apply Model </button></td></tr>
-        
-</table>
+<fieldset class="mt_rest">
+<legend class="mt_name">Analysis</legend>
 {{ text | safe }}
-
+</fieldset>
 {% endblock %}

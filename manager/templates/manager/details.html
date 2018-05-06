@@ -1,0 +1,31 @@
+<div class="details">
+    <div class="mt_name">
+        Showing {{ showing.disp_type }}: {{ disp_name_edit }}
+    </div>
+    <div class="mt_name">
+        <a class="expandable" onclick="toggleDetails(this, '#show_details');">Show details ↧</a>
+        <div id="show_details" class="mt_rest invisible">
+            <ul style="margin-left: -1em; margin-top: -2px; padding-right: 1em">
+            {{ showing.getHtmlDetails | safe }}
+            </ul>
+        </div>
+    </div>
+    <div class="mt_name">
+        Actions:
+        <button class="{{ back_to_browse_button }}">Browse {{ showing.disp_type }}</button>
+        {% if showing.disp_type == 'analysis' %}
+        <button class="{{ curve_set_button }}">Goto curve set</button>
+        {% else %}
+        <button class="{{ curve_set_button }}">New curve set</button>
+        {% endif %}
+        <a class="expandable" onclick="toggleDetails(this, '#more_actions');">More actions ↧</a>
+        <div id="more_actions" class="mt_rest invisible">
+            <button class="{{ undo_button }}">Undo</button>
+            <button class="{{ export_data_button }}">Export data</button>
+            <button class="{{ share_button }}">Share</button>
+            <button class="{{ delete_button }}">Delete</button>
+        </div>
+    </div>
+</div>
+<div id="share_link" class="float_menu invisible">
+</div>

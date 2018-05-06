@@ -4,6 +4,7 @@ from copy import copy
 from enum import IntEnum
 from typing import Dict, List
 from overrides import overrides
+from guardian.shortcuts import get_user_perms
 from django.db import models
 from django.urls import reverse
 from django.contrib.auth.models import User
@@ -77,6 +78,7 @@ class FileSet(VoltPyModel):
     name = models.CharField(max_length=255)
     files = models.ManyToManyField('FileCurveSet')
     date = models.DateField(auto_now_add=True)
+    disp_type = 'file set'
 
     class Meta:
         permissions = (
@@ -107,14 +109,30 @@ class FileSet(VoltPyModel):
         newcs.save()
         return newcs
 
+    def getUrl(self):
+        return reverse('showFileSet', args=[self.id])
+
+    def getDelUrl(self):
+        return reverse('deleteFileSet', args=[self.id])
+
     def __str__(self):
         return str(self.id) + ': ' + self.name
 
     def export(self):
         cds = []
         for f in self.files.all():
-            cds.extend(f.curveSet.curvesData.all())
+            cds.extend(f.curvesData.all())
         return exportCDasFile(cds)
+
+    def getHtmlDetails(self):
+        user = manager.helpers.functions.getUser()
+        ret = ''.join([
+            '<li>Object ID: %d</li>' % self.id,
+            '<li>Owner: %s</li>' % self.owner,
+            '<li>Permissions: %s</li>' % ', '.join([x for x in get_user_perms(user, self)]),
+            '<li>Date: %s</li>' % self.date.strftime("%Y-%m-%d"),
+        ])
+        return ret
 
 
 class Curve(VoltPyModel):
@@ -252,6 +270,7 @@ class Curve(VoltPyModel):
     comment = models.TextField()
     params = PickledObjectField()  # JSON List
     date = models.DateField(auto_now=False, auto_now_add=False)
+    disp_type = 'curve'
 
     class Meta:
         permissions = (
@@ -262,14 +281,14 @@ class Curve(VoltPyModel):
 
     def __str__(self):
         return ''. join([
-            '<table style="border: 0; margin: 0; padding: 0; display: inline"><tr><td style="border:0; margin:0; padding:0">'
-            '<abbr title="comment: ',
+            '<div style="display: inline">'
+            '<abbr title="Comment: ',
             self.comment,
             '">',
             self.name,
-            '</abbr></td></tr><tr><td style="border:0; margin:0; padding:0; height: 8px"><span style="font-size: xx-small">',
+            '</abbr><br /><a style="font-size: xx-small">',
             self.curveFile.__str__(),
-            '</span></td></tr></table>'
+            '</a></div>'
         ])
 
 
@@ -308,6 +327,7 @@ class CurveData(VoltPyModel):
     processedWith = models.ForeignKey('Processing', null=True, default=None, on_delete=models.DO_NOTHING)
     _currentSamples = models.ForeignKey(SamplingData, on_delete=models.DO_NOTHING, default=None, null=True)
     __currentSamplesChanged = False
+    disp_type = 'data'
 
     class Meta:
         permissions = (
@@ -465,6 +485,7 @@ class CurveSet(VoltPyModel):
     analytesConcUnits = PickledObjectField(default={})  # dictionary key is analyte id
     undoAnalytesConcUnits = PickledObjectField(default={})  # dictionary key is analyte id
     undoProcessing = models.ForeignKey('Processing', null=True, default=None, on_delete=models.DO_NOTHING)
+    disp_type = 'curve set'
 
     def getCopy(self):
         newcs = CurveSet(
@@ -565,7 +586,10 @@ class CurveSet(VoltPyModel):
         self.save()
 
     def hasUndo(self):
-        if len(self.undoCurvesData.all()) == 0 or self.locked == True:
+        if any([
+            len(self.undoCurvesData.all()) == 0,
+            self.locked is True
+        ]):
             return False
         else:
             return True
@@ -608,11 +632,38 @@ class CurveSet(VoltPyModel):
     def getUrl(self):
         return reverse('showCurveSet', args=[self.id])
 
+    def getDelUrl(self):
+        return reverse('deleteCurveSet', args=[self.id])
+
+    def getHtmlDetails(self):
+        proc_hist = ''
+        for p in self.getProcessingHistory():
+            proc_hist += ''.join(['<li>', str(p), '</li>']) 
+
+        filesUsed = set()
+        for cd in self.curvesData.all():
+            filesUsed.add(cd.curve.curveFile)
+        uses_files = ''
+        for f in filesUsed:
+            uses_files += '<li><a href="%s">%s</a></li>' % (f.getUrl(), str(f))
+
+        user = manager.helpers.functions.getUser()
+        ret = ''.join([
+            '<li>Object ID: %d</li>' % self.id,
+            '<li>Permissions: %s</li>' % ', '.join([x for x in get_user_perms(user, self)]),
+            '<li>Owner: %s</li>' % self.owner,
+            '<li>Date: %s</li>' % self.date.strftime("%Y-%m-%d"),
+            '<li>Processed with:<ul>%s</ul></li>' % proc_hist,
+            '<li>Uses curves from:<ul>%s</ul></li>' % uses_files,
+        ])
+        return ret
+
 
 class FileCurveSet(CurveSet):
     fileName = models.TextField()
     fileDate = models.DateField(auto_now=False, auto_now_add=False)  # Each file has its curveset
     uploadDate = models.DateField(auto_now_add=True)
+    disp_type = 'file'
 
     class Meta:
         permissions = (
@@ -634,7 +685,22 @@ class FileCurveSet(CurveSet):
         return newcs
 
     def getUrl(self):
-        return reverse('showFile', args=[self.id])
+        return reverse('showCurveFile', args=[self.id])
+
+    def getDelUrl(self):
+        return reverse('deleteCurveFile', args=[self.id])
+
+    def getHtmlDetails(self):
+        user = manager.helpers.functions.getUser()
+        ret = ''.join([
+            '<li>Object ID: %d</li>' % self.id,
+            '<li>Permissions: %s</li>' % ', '.join([x for x in get_user_perms(user, self)]),
+            '<li>Owner: %s</li>' % self.owner,
+            '<li>Date: %s</li>' % self.date.strftime("%Y-%m-%d"),
+            '<li>File name: %s</li>' % self.fileName,
+            '<li>File date: %s</li>' % self.fileDate,
+        ])
+        return ret
     
     def __str__(self):
         return '%s: %s' % (self.id, self.name)
@@ -653,6 +719,7 @@ class Analysis(VoltPyModel):
     active_step_num = models.IntegerField(default=0, null=True)
     error = models.CharField(max_length=255)
     completed = models.BooleanField(default=False)
+    disp_type = "analysis"
 
     class Meta:
         permissions = (
@@ -669,6 +736,21 @@ class Analysis(VoltPyModel):
             return reverse('showAnalysis', args=[self.id])
         else:
             return reverse('analyze', args=[self.id])
+
+    def getDelUrl(self):
+        return reverse('deleteAnalysis', args=[self.id])
+
+    def getHtmlDetails(self):
+        user = manager.helpers.functions.getUser()
+        ret = ''.join([
+            '<li>Object ID: %d</li>' % self.id,
+            '<li>Permissions: %s</li>' % ', '.join([x for x in get_user_perms(user, self)]),
+            '<li>Owner: %s</li>' % self.owner,
+            '<li>Date: %s</li>' % self.date.strftime("%Y-%m-%d %H:%M"),
+            '<li>Method: %s</li>' % self.methodDisplayName,
+            '<li>Curve Set: <a href="%s">%s</a></li>' % (self.curveSet.getUrl(), self.curveSet),
+        ])
+        return ret
 
     def getCopy(self):
         newan = copy(self)
@@ -739,8 +821,8 @@ class SharedLink(VoltPyModel):
         return '%s: %s' % (self.link, self.users.all())
 
     def getLink(self):
-        #TODO: https://docs.djangoproject.com/en/2.0/ref/contrib/sites/ , defining domain
-        return 'http://localhost:8000/' + reverse('shareLink',args=[self.link])
+        from django.contrib.sites.models import Site
+        return 'https://' + Site.objects.get_current() + reverse('shareLink',args=[self.link])
 
     def addUser(self, user):
         self.users.add(user)

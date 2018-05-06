@@ -3,50 +3,32 @@
 {% block title %} Show {% endblock %}
 
 {% block real_content %}
-<table class="table_no_breaks">
-<tr>
-    <td>CurveSet ID: {{ curveset.id }}&nbsp;<a href="{% url 'browseCurveSets' %}">Back to browse</a></td>
-    <td style="border-left: 1px black solid;" rowspan=3>
-        &nbsp;<button class="{{ cloneCS }}"> Copy </button>
-        <br /><br />
-        &nbsp;<button class="{{ undoCS }}"{% if not curveset.hasUndo %} disabled{% endif %}> Undo </button>
-        <br /><br />
-        &nbsp;<button class="{{ exportCS }}"> Export </button>
-    </td></tr>
-<tr><td>{{ disp_name_edit | safe }} &nbsp;</td></tr>
-<tr><td>Date created: {{ curveset.date | date:"c" }} </td></tr>
-<tr><td>Share: {{ shareLink }}</td></tr>
-<tr><td>Uses curves from:<ul>
-    {% for f in filesUsed %}
-    <li><a href="{% url 'showCurveFile' f.id %}">{{ f }}</a></li>
-    {% endfor %}
-    </td></tr>
-    <td>Processed with:<ul>{% for p in curveset.getProcessingHistory %}<li>{{ p }}</li>{% endfor %}</ul></td>
-</table>
-<br />
-
-{{ at | safe }}
-
-<br />
-<form method="post" action="" enctype="multipart/form-data" id="concform">
-	<table>
-	{% csrf_token %}
-	{{ formAnalyze.as_table }}
-	<tr><td colspan=2><input type="submit" name="startAnalyze" value="Start Analysis" class="formSubmit"/></td></tr>
-	</table>
-</form>
-<hr />
-{% if curveset.locked %}
-<p>Processing of this curveset is not allowed, because it was already used in
-analysis.<br /> To process the data further please create a copy of it.<br />
-<button class="_voltJS_urlChanger _voltJS_url@{{ cloneCSUrl }}"> Copy </button>
-{% else %}
-<form method="post" action="" enctype="multipart/form-data" id="concform">
-	<table>
-	{% csrf_token %}
-	{{ formProcess.as_table }}
-	<tr><td colspan=2><input type="submit" name="startProcessing" value="Start Processing" class="formSubmit" ></td></tr>
-	</table>
-</form>
-{% endif %}
+<fieldset class="mt_rest">
+	<legend class="mt_name">Curves:</legend>
+	{{ at | safe }}
+</fieldset>
+<div class="mt_name">
+<a class="expandable" onclick="toggleDetails(this, '#select_analysis');">Analysis ↧</a>
+	<div id="select_analysis" class="mt_rest invisible">
+		<form method="post" action="" enctype="multipart/form-data">
+			{% csrf_token %}
+			{{ formAnalyze.draw }}
+		</form>
+	</div>
+</div>
+<div class="mt_name">
+	<a class="expandable" onclick="toggleDetails(this, '#select_processing');">Processing ↧</a>
+	<div id="select_processing" class="mt_rest invisible">
+		{% if showing.locked %}
+		Processing of this curveset is not allowed, because it was already used in
+		analysis.<br /> To process the data further please create a copy of it.<br />
+		<button class="_voltJS_urlChanger _voltJS_url@{{ cloneCSUrl }}"> Copy </button>
+		{% else %}
+		<form method="post" action="" enctype="multipart/form-data">
+			{% csrf_token %}
+			{{ formProcess.draw }}
+		</form>
+		{% endif %}
+	</div>
+</div>
 {% endblock %}

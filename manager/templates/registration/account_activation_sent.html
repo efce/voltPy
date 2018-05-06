@@ -1,6 +1,8 @@
 {% extends "manager/main.html" %}
 
-{% block content %}
+{% block real_content %}
+<fieldset class="mt_rest"><legend class="mt_name">Success</legend>
 <p>Email has been sent!</p>  
-<p>Check your email and <a href="{% url 'login'%}">Click here to login.</a> </p>
+<p>Please, check your email and <a href="{% url 'login'%}">Click here to login.</a> </p>
+</fieldset>
 {% endblock %}

@@ -3,21 +3,9 @@
 {% block title %} Show {% endblock %}
 
 {% block real_content %}
-<table class="table_no_breaks">
-<tr>
-        <td>File ID: {{ curvefile.id }}&nbsp;<a href="{% url 'browseCurveFiles' %}">Back to browse</a></td>
-        <td style="border-left: 1px black solid;" rowspan=5>
-                &nbsp;<button class="{{ cloneCS }}"> Create CurveSet </button>
-                <br /><br />
-                &nbsp;<button class="{{ exportCF }}"> Export </button> 
-        </td>
-</tr>
-<tr><td>{{ disp_name_edit | safe }} &nbsp;</td></tr>
-<tr><td>Filename: {{ curvefile.fileName }}</td></tr>
-<tr><td>Uploaded: {{ curvefile.uploadDate|date:"c" }}</td></tr>
-</table>
-<br />
-
-{{ at | safe }}
+<fieldset class="mt_rest">
+	<legend class="mt_name">Curves:</legend>
+    {{ at | safe }}
+</fieldset>
 
 {% endblock %}

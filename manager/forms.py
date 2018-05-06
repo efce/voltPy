@@ -6,6 +6,7 @@ from django.utils import timezone
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
+from django.utils.safestring import mark_safe
 import manager
 import manager.models as mmodels
 from manager.exceptions import VoltPyNotAllowed
@@ -140,7 +141,7 @@ class EditAnalytesForm(forms.Form):
             else:
                 val = ''
             self.fields['curve_%d' % cd.id] = forms.FloatField(
-                label=cd.curve.name + ": " + cd.curve.comment,
+                label=mark_safe(cd.curve.name + "<br /><small>" + cd.curve.comment + '</small>'),
                 required=True,
                 initial=val
             )
@@ -325,7 +326,7 @@ class SelectCurvesForCurveSetForm(forms.Form):
         # TODO: Django template is order of magnitude too slow for this, so do it by hand ...
         token = django.middleware.csrf.get_token(request)
         ret = {}
-        ret['start'] = """<form action="#" method="post" id="SelectCurvesForCurveSetForm">
+        ret['start'] = """<form action="./" method="POST" id="SelectCurvesForCurveSetForm">
         <input type='hidden' name='csrfmiddlewaretoken' value='{token}' />
         <ul>""".format(token=token)
         ret['curveset'] = []
@@ -381,13 +382,13 @@ class SelectCurvesForCurveSetForm(forms.Form):
                 )
         if prev_parent:
             ret[prev_parent].append('</ul></li>')
-        ret['end'] = '<li><input type="submit" name="Submit" value="submit" /></li></ul></form>'
+        ret['end'] = '<hr /><li><input type="submit" name="Submit" value="Create New" /></li></ul></form>'
         self.fields['name'] = namefield
         return ''.join([
             ret['start'], 
-            '<li class="main_list"> Files <button class="_voltJS_Expand"> Expand </button><ul class="_voltJS_expandContainer">',
+            '<hr /><li class="main_list"> Files <button class="_voltJS_Expand"> Expand </button><ul class="_voltJS_expandContainer">',
             '\n'.join(ret['curvefile']),
-            '</ul></li>',
+            '</ul></li><hr />',
             '<li class="main_list"> CurveSets <button class="_voltJS_Expand"> Expand </button><ul class="_voltJS_expandContainer">',
             '\n'.join(ret['curveset']), 
             '</ul></li>',

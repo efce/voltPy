@@ -3,7 +3,7 @@
 {% block title %} Analyze {% endblock %}
 
 {% block real_content %}
-<p>Type: {{ model.method }}</p>
+<fieldset class="mt_rest"><legend class="mt_name">Method: {{ model.methodDisplayName }}</legend>
 {{ method_content|safe}}
-
+</fieldset>
 {% endblock %}

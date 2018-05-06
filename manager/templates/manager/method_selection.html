@@ -1,0 +1,19 @@
+<button type="button" style="width: 300px" onclick="toggleMethod('{{ type }}');">Select {{ type }} method</button>
+<div id="{{ type }}_selected">No method selected.</div>
+<div class="{{ type }}_methods float_menu invisible">
+<a class="closeX"></a>
+<ul class="metehod_list" style="margin-top: 90px;">
+    Browsing {{ type }} methods:
+    {% for method in methods %}
+    <div class="method_element" onclick="selectMethod('{{ type }}', '{{ method.0 }}', '{{ method.1 }}');">
+        <div class="align_top" style="display: inline-block; width: 59%">
+            <t2>{{ method.1 | safe }}</t2>
+            <p>{{ method.2 | safe }}</p>
+        </div>
+        <div style="display: inline-block; width: 40%">
+            {{ method.3 | safe }}
+        </div>
+    </div>
+    {% endfor %}
+</ul>
+</div>

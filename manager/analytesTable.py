@@ -26,29 +26,19 @@ def analytesTable(obj, objType: str) -> str:
 
     lenana = len(cs.analytes.only('id'))
 
-    ret = ['<table  cellspacing="0" cellpadding="0" border="0" class="analytesTable"><tr><td><table class="atHeader">']
-    if lenana == 0:
-        ret.append('<tr><th colspan=1>No analytes</th></tr><tr><th>Curve name</th>')
-    else:
-        ret.append(
-            """
-                <tr>
-                    <td>&nbsp;</td>
-                    <th colspan={:d} class="atOther">Analyte</th>
-                    <th class="atOther">Action</th>
-                </tr>
-                <tr>
-                    <th>Curve name</th>
-            """.format(lenana)
-        )
+    ret = [
+        '<div class="analytes_table_container">'
+        '<table id="fixed_header" class="analytes_table">',
+        '<thead>'
+    ]
+    ret.append('<tr><th>Name</th>')
 
     unitsTrans = dict(mmodels.CurveSet.CONC_UNITS)
 
     for a in cs.analytes.all():
         ret.append("""
-            <th class="atOther _voltJS_changeValue_{an_id}">&nbsp;
-                {an_name} [{an_unit}]&nbsp;<br />
-                <button class="{goTo} atOther"> Edit </button>
+            <th class="at_other _voltJS_changeValue_{an_id}">&nbsp;
+                <button class="{goTo} at_other"{disabled}> {an_name} [{an_unit}] </button>
             </th>""".format(
                 an_name=a.name,
                 an_id=a.id,
@@ -59,12 +49,13 @@ def analytesTable(obj, objType: str) -> str:
                         'objId': obj.id, 
                         'analyteId': a.id
                     })
-                )
+                ),
+                disabled=' disabled' if cs.locked else ''
             )
         )
 
-    ret.append('<th class="atOther">{0}</th>'.format(addAnalyteBtn))
-    ret.append('</tr></table></td></tr><tr><td><div class="atContentsContainer"><table class="atContents">')
+    ret.append('<th class="at_other">{0}</th>'.format(addAnalyteBtn))
+    ret.append('</tr></thead><tbody>')
 
     for cd in cs.curvesData.only('id', 'curve'):
         ret.append(
@@ -75,8 +66,8 @@ def analytesTable(obj, objType: str) -> str:
         )
         for a in cs.analytes.all():
             conc = cs.analytesConc.get(a.id, {}).get(cd.id, 0)
-            ret.append('<td class="atOther _voltJS_changeValue_%s"> %f </td>' % (a.id, conc))
-        ret.append('<td class="atOther">')
+            ret.append('<td class="at_other _voltJS_changeValue_%s"> %f </td>' % (a.id, conc))
+        ret.append('<td class="at_other">')
         if not cs.locked:
             ret.append(
                 htmlButton.format(
@@ -94,5 +85,5 @@ def analytesTable(obj, objType: str) -> str:
             ret.append('<button disabled>Delete</button>')
         ret.append('</td>')
         ret.append('</tr>')
-    ret.append('</table></div></td></tr></table>')
+    ret.append('</tbody></table></div>')
     return ''.join(ret)

@@ -52,5 +52,5 @@ class SelectFrequency(MethodStep):
         
         p.setInteraction('set1cursor')
         p.include_x_switch = True
-        src, div = p.getEmbeded(request, user, 'processing', model.id)
-        return {'head': src, 'body': ' '.join((div, cf_txt))}
+        src, divPlot, divBut = p.getEmbeded(request, user, 'processing', model.id)
+        return {'head': src, 'body': ' '.join([divPlot, cf_txt])}
