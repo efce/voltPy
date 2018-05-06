@@ -26,16 +26,19 @@ def analytesTable(obj, objType: str) -> str:
 
     lenana = len(cs.analytes.only('id'))
 
-    ret = ['<table  cellspacing="0" cellpadding="0" border="0" class="analytes_table"><thead>']
-    ret.append('<tr><th>Curve name</th>')
+    ret = [
+        '<div class="analytes_table_container">'
+        '<table id="fixed_header" class="analytes_table">',
+        '<thead>'
+    ]
+    ret.append('<tr><th>Name</th>')
 
     unitsTrans = dict(mmodels.CurveSet.CONC_UNITS)
 
     for a in cs.analytes.all():
         ret.append("""
             <th class="at_other _voltJS_changeValue_{an_id}">&nbsp;
-                {an_name} [{an_unit}]&nbsp;<br />
-                <button class="{goTo} at_other"> Edit </button>
+                <button class="{goTo} at_other"{disabled}> {an_name} [{an_unit}] </button>
             </th>""".format(
                 an_name=a.name,
                 an_id=a.id,
@@ -46,7 +49,8 @@ def analytesTable(obj, objType: str) -> str:
                         'objId': obj.id, 
                         'analyteId': a.id
                     })
-                )
+                ),
+                disabled=' disabled' if cs.locked else ''
             )
         )
 
@@ -81,5 +85,5 @@ def analytesTable(obj, objType: str) -> str:
             ret.append('<button disabled>Delete</button>')
         ret.append('</td>')
         ret.append('</tr>')
-    ret.append('</tbody></table>')
+    ret.append('</tbody></table></div>')
     return ''.join(ret)
