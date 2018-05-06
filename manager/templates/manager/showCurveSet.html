@@ -4,13 +4,13 @@
 
 {% block real_content %}
 <div class="mt_name">
-	<a style="cursor: pointer; margin: 5px" onclick="toggleDetails(this, '#display_curves');">Display curves ↧</a>
+	<a class="expandable" onclick="toggleDetails(this, '#display_curves');">Display curves ↧</a>
 	<div id="display_curves" class="mt_rest invisible">
 		{{ at | safe }}
 	</div>
 </div>
 <div class="mt_name">
-<a style="cursor: pointer;" onclick="toggleDetails(this, '#select_analysis');">Analysis ↧</a>
+<a class="expandable" onclick="toggleDetails(this, '#select_analysis');">Analysis ↧</a>
 	<div id="select_analysis" class="mt_rest invisible">
 		<form method="post" action="" enctype="multipart/form-data">
 			{% csrf_token %}
@@ -19,7 +19,7 @@
 	</div>
 </div>
 <div class="mt_name">
-	<a style="cursor: pointer" onclick="toggleDetails(this, '#select_processing');">Processing ↧</a>
+	<a class="expandable" onclick="toggleDetails(this, '#select_processing');">Processing ↧</a>
 	<div id="select_processing" class="mt_rest invisible">
 		{% if showing.locked %}
 		Processing of this curveset is not allowed, because it was already used in
