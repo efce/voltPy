@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/1.11/ref/settings/
 """
 
 import os
+import configparser
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -130,14 +131,31 @@ CMS_PLACEHOLDER_CACHE = False
 CMS_PLUGIN_CACHE = False
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_USE_TLS = True
-EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_PORT = 587
-EMAIL_HOST_USER = 'voltammetry.center@gmail.com'
-EMAIL_HOST_PASSWORD = 'Woltamogram'
 LOGIN_REDIRECT_URL = 'index'
 
 AUTHENTICATION_BACKENDS = (
     'django.contrib.auth.backends.ModelBackend', # this is default
     'guardian.backends.ObjectPermissionBackend',
 )
+
+config = configparser.ConfigParser()
+config.read('../voltpy.settings')
+
+DATABASE_USER = config.get('database', 'DATABASE_USER')
+DATABASE_PASSWORD = config.get('database', 'DATABASE_PASSWORD')
+DATABASE_HOST = config.get('database', 'DATABASE_HOST')
+DATABASE_PORT = config.get('database', 'DATABASE_PORT')
+DATABASE_ENGINE = config.get('database', 'DATABASE_ENGINE')
+DATABASE_NAME = config.get('database', 'DATABASE_NAME')
+TEST_DATABASE_NAME = config.get('database', 'TESTSUITE_DATABASE_NAME')
+
+SECRET_KEY = config.get('secrets', 'SECRET_KEY')
+CSRF_MIDDLEWARE_SECRET = config.get('secrets', 'CSRF_MIDDLEWARE_SECRET')
+
+SESSION_COOKIE_DOMAIN = config.get('cookies', 'SESSION_COOKIE_DOMAIN')
+
+EMAIL_USE_TLS = config.getboolean('email', 'EMAIL_USE_TLS')
+EMAIL_HOST = config.get('email', 'EMAIL_HOST')
+EMAIL_PORT = config.get('email', 'EMAIL_PORT')
+EMAIL_HOST_USER = config.get('email', 'EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = config.get('email', 'EMAIL_HOST_PASSWORD')

@@ -10,3 +10,4 @@ ezodf
 lxml
 overrides
 django-guardian
+configparser
