@@ -382,7 +382,7 @@ class SelectCurvesForCurveSetForm(forms.Form):
                 )
         if prev_parent:
             ret[prev_parent].append('</ul></li>')
-        ret['end'] = '<li><input type="submit" name="Submit" value="submit" /></li></ul></form>'
+        ret['end'] = '<hr /><li><input type="submit" name="Submit" value="Create New" /></li></ul></form>'
         self.fields['name'] = namefield
         return ''.join([
             ret['start'], 
