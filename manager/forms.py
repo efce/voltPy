@@ -326,7 +326,7 @@ class SelectCurvesForCurveSetForm(forms.Form):
         # TODO: Django template is order of magnitude too slow for this, so do it by hand ...
         token = django.middleware.csrf.get_token(request)
         ret = {}
-        ret['start'] = """<form action="#" method="post" id="SelectCurvesForCurveSetForm">
+        ret['start'] = """<form action="./" method="POST" id="SelectCurvesForCurveSetForm">
         <input type='hidden' name='csrfmiddlewaretoken' value='{token}' />
         <ul>""".format(token=token)
         ret['curveset'] = []
@@ -386,9 +386,9 @@ class SelectCurvesForCurveSetForm(forms.Form):
         self.fields['name'] = namefield
         return ''.join([
             ret['start'], 
-            '<li class="main_list"> Files <button class="_voltJS_Expand"> Expand </button><ul class="_voltJS_expandContainer">',
+            '<hr /><li class="main_list"> Files <button class="_voltJS_Expand"> Expand </button><ul class="_voltJS_expandContainer">',
             '\n'.join(ret['curvefile']),
-            '</ul></li>',
+            '</ul></li><hr />',
             '<li class="main_list"> CurveSets <button class="_voltJS_Expand"> Expand </button><ul class="_voltJS_expandContainer">',
             '\n'.join(ret['curveset']), 
             '</ul></li>',

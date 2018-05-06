@@ -390,7 +390,7 @@ def createCurveSet(request, user, toCloneCF=[], toCloneCS=[]):
         form = mforms.SelectCurvesForCurveSetForm(user, toCloneCS=toCloneCS, toCloneCF=toCloneCF)
 
     context = {
-        'formHTML': form.drawByHand(request),
+        'form_html': form.drawByHand(request),
         'user': user
     }
     ret = voltpy_render(
