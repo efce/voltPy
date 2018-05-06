@@ -15,12 +15,13 @@
 {% endblock %}
 
 {% block real_content %}
-<p>{{ infotext }}</p>
+<fieldset class="mt_rest"><legend class="mt_name">{{ infotext }}</legend>
+	<div class="analytes_table_container">
 <form method="post" action="" enctype="multipart/form-data" id="concform"  autocomplete="off">
 	<table>
 	{% csrf_token %}
 	{{ form.as_table }}
 	<tr><td><input type="submit" value="Save" /></td></tr>
 	</table>
-</form>
+</form></div>
 {% endblock %}

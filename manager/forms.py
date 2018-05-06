@@ -6,6 +6,7 @@ from django.utils import timezone
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
+from django.utils.safestring import mark_safe
 import manager
 import manager.models as mmodels
 from manager.exceptions import VoltPyNotAllowed
@@ -140,7 +141,7 @@ class EditAnalytesForm(forms.Form):
             else:
                 val = ''
             self.fields['curve_%d' % cd.id] = forms.FloatField(
-                label=cd.curve.name + ": " + cd.curve.comment,
+                label=mark_safe(cd.curve.name + "<br /><small>" + cd.curve.comment + '</small>'),
                 required=True,
                 initial=val
             )
