@@ -4,6 +4,7 @@ from copy import copy
 from enum import IntEnum
 from typing import Dict, List
 from overrides import overrides
+from guardian.shortcuts import get_user_perms
 from django.db import models
 from django.urls import reverse
 from django.contrib.auth.models import User
@@ -120,13 +121,15 @@ class FileSet(VoltPyModel):
     def export(self):
         cds = []
         for f in self.files.all():
-            cds.extend(f.curveSet.curvesData.all())
+            cds.extend(f.curvesData.all())
         return exportCDasFile(cds)
 
     def getHtmlDetails(self):
+        user = manager.helpers.functions.getUser()
         ret = ''.join([
             '<li>Object ID: %d</li>' % self.id,
             '<li>Owner: %s</li>' % self.owner,
+            '<li>Permissions: %s</li>' % ', '.join([x for x in get_user_perms(user, self)]),
             '<li>Date: %s</li>' % self.date.strftime("%Y-%m-%d"),
         ])
         return ret
@@ -644,8 +647,10 @@ class CurveSet(VoltPyModel):
         for f in filesUsed:
             uses_files += '<li><a href="%s">%s</a></li>' % (f.getUrl(), str(f))
 
+        user = manager.helpers.functions.getUser()
         ret = ''.join([
             '<li>Object ID: %d</li>' % self.id,
+            '<li>Permissions: %s</li>' % ', '.join([x for x in get_user_perms(user, self)]),
             '<li>Owner: %s</li>' % self.owner,
             '<li>Date: %s</li>' % self.date.strftime("%Y-%m-%d"),
             '<li>Processed with:<ul>%s</ul></li>' % proc_hist,
@@ -686,8 +691,10 @@ class FileCurveSet(CurveSet):
         return reverse('deleteCurveFile', args=[self.id])
 
     def getHtmlDetails(self):
+        user = manager.helpers.functions.getUser()
         ret = ''.join([
             '<li>Object ID: %d</li>' % self.id,
+            '<li>Permissions: %s</li>' % ', '.join([x for x in get_user_perms(user, self)]),
             '<li>Owner: %s</li>' % self.owner,
             '<li>Date: %s</li>' % self.date.strftime("%Y-%m-%d"),
             '<li>File name: %s</li>' % self.fileName,
@@ -734,8 +741,10 @@ class Analysis(VoltPyModel):
         return reverse('deleteAnalysis', args=[self.id])
 
     def getHtmlDetails(self):
+        user = manager.helpers.functions.getUser()
         ret = ''.join([
             '<li>Object ID: %d</li>' % self.id,
+            '<li>Permissions: %s</li>' % ', '.join([x for x in get_user_perms(user, self)]),
             '<li>Owner: %s</li>' % self.owner,
             '<li>Date: %s</li>' % self.date.strftime("%Y-%m-%d %H:%M"),
             '<li>Method: %s</li>' % self.methodDisplayName,

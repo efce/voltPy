@@ -2,10 +2,16 @@
 {% include "./topmenu.css" %}
 {% include "./notifications.css" %}
 {% include "./forms.css" %}
+{% load static %}
 
+@font-face {
+    font-family: regular;
+    src: url({% static 'manager/OpenSans-Regular.ttf' %});
+    font-weight: 400;
+}
 body {
     background-color: #EEE;
-    font-family: sans-serif;
+    font-family: regular;
     min-width: 820px;
 }
 .main_table {
