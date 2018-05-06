@@ -57,7 +57,7 @@ class TagCurves(ms.MethodStep):
             form.is_valid()
         else:
             form = self.TagCurvesForm(model=model, initial=self.initial)
-        template = loader.get_template('manager/form.html')
+        template = loader.get_template('manager/form_large.html')
         context = {'form': form, 'submit': 'tagcurvesform'}
         return {
             'head': '',

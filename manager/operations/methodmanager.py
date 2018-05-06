@@ -151,7 +151,7 @@ class MethodManager:
                 request=request
             )
 
-            step_numInfo = '<p>Step: {0} out of {1}</p>'.format(
+            step_numInfo = '{0} out of {1}'.format(
                 self.__model.active_step_num+1,
                 len(self.__method._steps)
             )
@@ -175,9 +175,9 @@ class MethodManager:
                 'main_plot': plotDiv,
                 'main_plot_buttons': butDiv,
                 'method_content': ''.join([
-                                        step_numInfo,
-                                        stepText.get('desc', ''),
-                                        stepText.get('body', ''),
+                                        '<fieldset class="mt_rest"><legend class="mt_name">Step</legend>%s</fieldset>' % step_numInfo,
+                                        '<fieldset class="mt_rest"><legend class="mt_name">Description</legend>%s</fieldset>' % stepText.get('desc', ''),
+                                        '<div class="mt_rest">%s</div>' % stepText.get('body', ''),
                                     ]),
                 'user': user,
                 'model': self.__model,

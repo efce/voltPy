@@ -74,3 +74,17 @@ form table th {
     background-color: #BBB;
     cursor: pointer;
 }
+
+.browse_table {
+    border: 1px solid darkgrey;
+}
+.browse_table th {
+    background-color: #55F;
+    color: white;
+}
+.browse_table th a {
+    color: white;
+}
+.browse_table tbody tr:nth-child(even) {
+    background-color: #CCF;
+}

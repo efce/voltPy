@@ -25,7 +25,7 @@ class SelectAnalyte(MethodStep):
     def getHTML(self, user, request, model):
         cs = model.curveSet
 
-        style = "<style>.atOther { display: none; };</style>"
+        style = "<style>.at_other { display: none; };</style>"
         import manager.analytesTable as at
         at_disp = at.analytesTable(cs, objType='cs')
 
@@ -39,8 +39,7 @@ class SelectAnalyte(MethodStep):
         )
         txt = """
         {0}
-        <br />
-        Data preview:<br />
+        <p style="margin-bottom: 10px;">Data preview:</p>
         {1}
         """.format(analyte_sel_disp, at_disp)
         return {'head': style, 'desc': '', 'body': txt}

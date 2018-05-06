@@ -58,7 +58,7 @@
       {% else %}
       <td>
       {% endif %}
-        <div id="notifications">
+        <div id="notifications" class="float_menu">
           <a class="closeX"></a>
           {% for n in notifications %}
           <p class="{{ n.severity }}">{{ n.text }}</p>
