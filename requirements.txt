@@ -2,7 +2,7 @@ django==2.0.4
 unipath
 scipy
 numpy
-bokeh
+bokeh==0.12.13
 pandas
 django-picklefield
 xlrd
