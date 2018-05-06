@@ -3,8 +3,9 @@
 {% block title %} Show {% endblock %}
 
 {% block real_content %}
-<br />
-
-{{ at | safe }}
+<fieldset class="mt_rest">
+	<legend class="mt_name">Curves:</legend>
+    {{ at | safe }}
+</fieldset>
 
 {% endblock %}

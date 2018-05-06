@@ -3,12 +3,10 @@
 {% block title %} Show {% endblock %}
 
 {% block real_content %}
-<div class="mt_name">
-	<a class="expandable" onclick="toggleDetails(this, '#display_curves');">Display curves ↧</a>
-	<div id="display_curves" class="mt_rest invisible">
-		{{ at | safe }}
-	</div>
-</div>
+<fieldset class="mt_rest">
+	<legend class="mt_name">Curves:</legend>
+	{{ at | safe }}
+</fieldset>
 <div class="mt_name">
 <a class="expandable" onclick="toggleDetails(this, '#select_analysis');">Analysis ↧</a>
 	<div id="select_analysis" class="mt_rest invisible">
