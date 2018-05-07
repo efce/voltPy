@@ -136,7 +136,7 @@ body {
     vertical-align: top;
 }
 
-button {
+button, input[type="submit"] {
     width: auto;
     height: 2em;
     margin: 3px 5px;
