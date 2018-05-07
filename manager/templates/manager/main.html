@@ -61,6 +61,7 @@
       {% endif %}
         <div id="notifications" class="float_menu">
           <a class="closeX"></a>
+          <br />
           {% for n in notifications %}
           <p class="{{ n.severity }}">{{ n.text }}</p>
           {% endfor %}

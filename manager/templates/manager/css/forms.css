@@ -98,7 +98,7 @@ form table th {
     width:100%;
 }
 #fixed_header tbody td, #fixed_header thead th {
-      width: 19.2%;
+      width: 150px;
       float: left;
 }
 #fixed_header tr:after {
@@ -108,5 +108,12 @@ form table th {
             clear: both;
 }
 #fixed_header th, #fixed_header td {
-	height:40px;
+	height:35px;
+}
+
+#fixed_header tbody {
+    overflow-y: auto;
+    overflow-x: hidden;
+    width: 100%;
+    height: 390px;
 }

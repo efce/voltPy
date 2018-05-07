@@ -281,14 +281,14 @@ class Curve(VoltPyModel):
 
     def __str__(self):
         return ''. join([
-            '<div style="display: inline">'
+            '<div style="display: inline; margin: 0px; padding: 0px">',
             '<abbr title="Comment: ',
             self.comment,
             '">',
             self.name,
-            '</abbr><br /><a style="font-size: xx-small">',
+            '</abbr><br /><sup style="font-size: x-small">',
             self.curveFile.__str__(),
-            '</a></div>'
+            '</sup></div>'
         ])
 
 
