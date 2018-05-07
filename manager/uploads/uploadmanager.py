@@ -84,7 +84,7 @@ def ajax(request, user):
     """
     if not request.method == 'POST':
         return JsonResponse({})
-    if not user.groups.filter(name='registered_user').exists():
+    if not user.groups.filter(name='registered_users').exists():
         return JsonResponse({})
     command = request.POST.get('command', '')
     jsonData = {}
