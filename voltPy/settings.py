@@ -151,3 +151,27 @@ EMAIL_HOST = config.get('email', 'EMAIL_HOST')
 EMAIL_PORT = config.get('email', 'EMAIL_PORT')
 EMAIL_HOST_USER = config.get('email', 'EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = config.get('email', 'EMAIL_HOST_PASSWORD')
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': True,
+    'handlers': {
+        'logstash': {
+            'level': 'INFO',
+            'class': 'logstash.TCPLogstashHandler',
+            'host': 'localhost',
+            'port': 55555, 
+            'version': 1,
+            'message_type': 'django',
+            'fqdn': False,
+            'tags': ['django.request'],
+        },
+    },
+    'loggers': {
+        'django.request': {
+            'handlers': ['logstash'],
+            'level': 'INFO',
+            'propagate': True,
+        },
+    }
+}
