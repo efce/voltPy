@@ -1,7 +1,7 @@
 import numpy as np 
 from scipy.interpolate import CubicSpline
 from scipy.interpolate import InterpolatedUnivariateSpline
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 
 def bestResult(bestChrom,signals,Pmax):
     [m,n] = signals.shape
@@ -30,6 +30,7 @@ def bestResult(bestChrom,signals,Pmax):
         bkg[j,:] = f2(xx)
         signalsWithoutBkg[j,:] = signals[j,:] - bkg[j,:]
     
+    """
     plt.subplot(121)
     plt.plot(xx,signals.T,'-b')
     plt.plot(xx,bkg.T,'-r')
@@ -37,5 +38,6 @@ def bestResult(bestChrom,signals,Pmax):
     plt.subplot(122)
     plt.plot(xx,signalsWithoutBkg.T)
     plt.show()
+    """
 
     return (signalsWithoutBkg,bkg)
