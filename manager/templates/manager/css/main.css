@@ -153,3 +153,11 @@ button, input[type="submit"] {
 .expandable:hover {
     box-shadow: inset 0 0 100px 100px rgba(255, 255, 255, 0.1);
 }
+
+.analysis_methods, .processing_methods {
+    position: absolute;
+    top: 100px;
+    left: 250px;
+    width: 60%;
+    height: 70%;
+}

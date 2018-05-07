@@ -27,7 +27,7 @@ def analytesTable(obj, objType: str) -> str:
     lenana = len(cs.analytes.only('id'))
 
     ret = [
-        '<div class="analytes_table_container">'
+        '<div class="analytes_table_container">',
         '<table id="fixed_header" class="analytes_table">',
         '<thead>'
     ]

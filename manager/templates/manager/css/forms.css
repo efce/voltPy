@@ -33,7 +33,7 @@ form table th {
 }
 .analytes_table {
     border: 0px;
-    margin-top: -10px;
+    margin-top: 0px;
     padding: 0px;
     border-spacing: 0px;
 }
@@ -63,7 +63,7 @@ form table th {
 }
 
 .method_element {
-    border: 1px solid {% color1 %};
+    border: 1px solid {% color3 %};
     margin: 3px;
 }
 
@@ -89,4 +89,24 @@ form table th {
 }
 .browse_table tbody tr:nth-child(even) {
     background-color: {% color3even %};
+}
+
+#fixed_header thead, #fixed_header tbody, #fixed_header tr, #fixed_header td, #fixed_header th { 
+    display: block; 
+}  
+#fixed_header {
+    width:100%;
+}
+#fixed_header tbody td, #fixed_header thead th {
+      width: 19.2%;
+      float: left;
+}
+#fixed_header tr:after {
+            content: ' ';
+            display: block;
+            visibility: hidden;
+            clear: both;
+}
+#fixed_header th, #fixed_header td {
+	height:40px;
 }

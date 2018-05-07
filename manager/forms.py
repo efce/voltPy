@@ -357,7 +357,7 @@ class SelectCurvesForCurveSetForm(forms.Form):
 <li class="_voltJS_toExpand cs_list {startingClass}">
     <input class="_voltJS_Disable" id="id_{name}" type="checkbox" name="{name}"{checkedText} />
     <label for="id_{name}">{label} </label>
-    <button class="_voltJS_Expand"> Expand </button>
+    <button class="_voltJS_Expand"> Show curves </button>
     <ul class="_voltJS_expandContainer _voltJS_disableContainer">
                     """.format(
                         name=key,
@@ -382,14 +382,14 @@ class SelectCurvesForCurveSetForm(forms.Form):
                 )
         if prev_parent:
             ret[prev_parent].append('</ul></li>')
-        ret['end'] = '<hr /><li><input type="submit" name="Submit" value="Create New" /></li></ul></form>'
+        ret['end'] = '<hr /><li><input type="submit" name="Submit" value="Create New Curve Set" /></li></ul></form>'
         self.fields['name'] = namefield
         return ''.join([
             ret['start'], 
-            '<hr /><li class="main_list"> Files <button class="_voltJS_Expand"> Expand </button><ul class="_voltJS_expandContainer">',
+            '<hr /><li class="main_list"><button class="_voltJS_Expand"> Toggle files view </button><ul class="_voltJS_expandContainer">',
             '\n'.join(ret['curvefile']),
             '</ul></li><hr />',
-            '<li class="main_list"> CurveSets <button class="_voltJS_Expand"> Expand </button><ul class="_voltJS_expandContainer">',
+            '<li class="main_list"><button class="_voltJS_Expand"> Toggle curve sets view </button><ul class="_voltJS_expandContainer">',
             '\n'.join(ret['curveset']), 
             '</ul></li>',
             ret['end']

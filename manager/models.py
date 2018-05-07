@@ -548,7 +548,7 @@ class CurveSet(VoltPyModel):
         return {'values': ret, 'units': self.analytesConcUnits}
 
     def __str__(self):
-        return '%s: %s' % (self.id, self.name)
+        return '%s' % self.name
 
     def prepareUndo(self, processingObject=None):
         self.undoCurvesData.clear()
@@ -705,7 +705,8 @@ class FileCurveSet(CurveSet):
         return ret
     
     def __str__(self):
-        return '%s: %s' % (self.id, self.name)
+        fs = self.fileset_set.all()[0]
+        return '%s: %s' % (fs.name, self.name)
 
 
 class Analysis(VoltPyModel):

@@ -1,4 +1,5 @@
 {% extends "manager/main.html" %}
+{% load colors %}
 
 {% block title %} Create Curve Set{% endblock %}
 
@@ -12,43 +13,42 @@ form li {
 
 .main_list {
   color: #fff;
-  background-color: #55F;
-  color: white;
+  background-color: {% color1 %};
+  color: {% color1font %};
   font-weight: 600;
   font-size: 15px;
   padding: 7px 10px;
 }
 
 .main_list ul {
-    background-color: #55F;
-    color: white;
+    background-color: {% color1 %};
+    color: {% color1font %};
 }
 
 .cs_list {
   color: #fff;
-  background-color: #66F;
+  background-color: darken({% color3 %}, 30%);
   font-size: 15px;
   padding: 7px 10px;
 }
 .cs_list:hover {
-  background-color: #FFF;
-  color: #55F;
+  background-color: white;
+  color: {% color2 %};
 }
 .cs_list  ul {
-  background-color: #77F;
-  color: #EEE;
-  border: 1px solid #888;
+  color: {% color3font %};
+  border: 1px solid {% color2 %};
 }
 
 .curve_list {
-  background-color: #88F;
+  background-color: {% color3 %};
   font-size: 13px;
   padding: 0px !important;
 }
 
 .curve_list:hover {
-  background-color: #FFF;
-  color: #55F;
+  background-color: white;
+  color: {% color2 %};
 }
 
 {% endblock %}

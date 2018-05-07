@@ -7,10 +7,6 @@ function sleep (time) {
     return new Promise((resolve) => setTimeout(resolve, time))
 };
 
-$( function() {
-    $('#fixed_header').floatThead();
-});
-
 function searchCurveSet(txt, funcResults) {
     url = '/manager/ajax/search-curveset/';
     csfr = $("{% csrf_token %}").val();

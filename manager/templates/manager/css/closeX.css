@@ -1,25 +1,26 @@
 .closeX {
   position: absolute;
-  right: 40px;
-  top: 30px;
+  right: 10px;
+  top: 10px;
   width: 32px;
   height: 32px;
-  opacity: 0.5;
+  opacity: 0.7;
 }
 .closeX:hover {
   opacity: 1;
 }
 .closeX:before, .closeX:after {
   position: absolute;
-  left: 15px;
-  content: ' ';
-  height: 33px;
-  width: 2px;
-  background-color: #333;
+  background-color: black;
+  border-radius: 10px;
+  content: 'x';
+  font-weight: 900;
+  color: white;
+  padding: 2px 10px 4px 10px;
 }
-.closeX:before {
+/*.closeX:before {
   transform: rotate(45deg);
 }
 .closeX:after {
   transform: rotate(-45deg);
-}
+}*/
