@@ -76,6 +76,9 @@ form table th {
 .browse_table {
     border: 1px solid {% color2 %};
 }
+.browse_table tbody tr:hover {
+    background-color:  white !important;
+}
 
 .browse_table th {
     background-color: {% color1 %};
