@@ -52,7 +52,7 @@ body {
     font-weight: normal;
     margin: 3px;
     border-radius: 3px;
-    border: 1px {{ color1 }} solid;
+    border: 1px {% color1 %} solid;
 }
 
 .main_plot_buttons {

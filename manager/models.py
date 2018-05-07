@@ -692,6 +692,7 @@ class FileCurveSet(CurveSet):
 
     def getHtmlDetails(self):
         user = manager.helpers.functions.getUser()
+        fs = self.fileset_set.all()[0]
         ret = ''.join([
             '<li>Object ID: %d</li>' % self.id,
             '<li>Permissions: %s</li>' % ', '.join([x for x in get_user_perms(user, self)]),
@@ -699,6 +700,7 @@ class FileCurveSet(CurveSet):
             '<li>Date: %s</li>' % self.date.strftime("%Y-%m-%d"),
             '<li>File name: %s</li>' % self.fileName,
             '<li>File date: %s</li>' % self.fileDate,
+            '<li>File set: <a href="%s">%s</a></li>' % (fs.getUrl(), fs.name)
         ])
         return ret
     
