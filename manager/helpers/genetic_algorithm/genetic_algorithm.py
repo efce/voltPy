@@ -40,7 +40,7 @@ def geneticAlgorithm(x, Pmax: int, Pb: int, Pe: int, Popsize=128, GenNb=15, Cros
             # mutacja (rand)
             pop = mutationRand(parents,pop,MutP)
 
-        print('Gen = ' + str(gen+1))
+        #print('Gen = ' + str(gen+1))
 
     # wybór nalepszego rozwiazania z ostatniej generacji
     bestChromosome = np.argmax(expectation)

@@ -46,7 +46,6 @@ class GeneticAlgorithmBkg(method.ProcessingMethod):
             peak_end_index, peak_start_index = peak_start_index, peak_end_index
         yvecs = np.stack([cd.yVector.T for cd in curveSet.curvesData.all()])
         yvecs = yvecs.T
-        print(yvecs.shape)
         (no_bkg, bkg) = geneticAlgorithm(yvecs, peak_max_index, peak_start_index, peak_end_index)
         for i, cd in enumerate(curveSet.curvesData.all()):
             newcd = cd.getCopy()
