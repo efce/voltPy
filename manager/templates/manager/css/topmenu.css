@@ -1,3 +1,5 @@
+{% load colors %}
+
 #topmenu div { 
   margin: auto; 
 }
@@ -7,8 +9,8 @@
   margin: 0; 
   padding: 0; 
   overflow: hidden; 
-  background-color: #55F; 
-  border: 1px #339 solid;
+  background-color: {% color1 %}; 
+  border: 1px {% color2 %} solid;
 }
 #topmenu li { 
   float: left; 
@@ -19,17 +21,18 @@
   text-align: center; 
   padding: 12px 14px; 
   text-decoration: none; 
-  color: white;
+  color: {% color1font %};
   font-weight: 800;
 }
 
 .topmenu_bkg {
-    background-color: #55F;
-    color: white;
+    background-color: {% color1 %};
+    color: {% color1font %};
 }
 
 .topmenu_bkg a:hover,span:hover {
-    background-color: #339;
+    background-color: {% color2 %};
+    color: {% color2font %}
 }
 
 .dropdown_content {
@@ -40,7 +43,7 @@
     padding: 5px 5px;
     z-index: 1;
     margin-top: 0px !important;
-    border: 1px #339 solid;
+    border: 1px {% color2 %} solid;
 }
 
 .dropdown:hover .dropdown_content {
@@ -48,8 +51,8 @@
 }
 
 .topmenu_wht { 
-  background: white; 
-  color: black ;  
+  background: {% color3 %}; 
+  color: {% color3font %} ;  
   text-align: center; 
   padding: 12px 14px; 
   text-decoration: none; 

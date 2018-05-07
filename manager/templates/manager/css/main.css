@@ -1,3 +1,5 @@
+{% load colors %}
+
 {% include "./closeX.css" %}
 {% include "./topmenu.css" %}
 {% include "./notifications.css" %}
@@ -34,9 +36,9 @@ body {
 }
 
 .mt_name {
-    background-color: #55F;
+    background-color: {% color1 %};
     padding: 4px 10px;
-    color: white;
+    color: {% color1font %};
     font-weight: bold;
     margin: 3px;
     border-radius: 3px;
@@ -44,13 +46,13 @@ body {
 }
 
 .mt_rest {
-    background-color:azure;
+    background-color: {% color3 %};
     padding: 10px;
-    color: black;
+    color: {% color3font %};
     font-weight: normal;
     margin: 3px;
     border-radius: 3px;
-    border: 1px #88F solid;
+    border: 1px {{ color1 }} solid;
 }
 
 .main_plot_buttons {
@@ -71,7 +73,8 @@ body {
 }
 
 .float_menu {
-    background:white;
+    background-color: {% color1 %};
+    color: {% color1font %};
     padding: 5px;
     min-width: 500px;
     max-height: 800px;
@@ -79,8 +82,8 @@ body {
     z-index: 1000;
     position: fixed;
     top: 100px;
-    right: 100px;
-    border: gray 2px solid;
+    right: auto;
+    border: {% color3 %} 2px solid;
 }
 
 .loading_cover {
@@ -134,7 +137,7 @@ body {
 }
 
 button {
-    width: 10em;
+    width: auto;
     height: 2em;
     margin: 3px 5px;
 }

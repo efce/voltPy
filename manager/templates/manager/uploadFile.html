@@ -3,11 +3,11 @@
 {% block title %} Browse {% endblock %}
 
 {% block real_content %}
-<p> Allowed file types: {% for ft in allowedExt %} {{ ft }} {% endfor %}</p>
 {%if can_upload %}
 <form method="post" action="./" enctype="multipart/form-data" id="file_form">
+<fieldset class="mt_rest"><legend class="mt_name">Upload files</legend>
 	{% csrf_token %}
-	<table>
+	<table style="min-width: 700px">
         <tr>
             <td>
                 <label for="fileset_name">Fileset name: </label><input id="fileset_name" type="text" name="fileset_name"  autocomplete="off"/><br />
@@ -18,16 +18,17 @@
             <input id="file_selector" type="file" name="files[]" multiple />
             </td>
         </tr>
+        <tr><td>Allowed file types: {% for ft in allowedExt %} {{ ft }} {% endfor %}</td></tr>
         <tr>
             <td>
             <input id="file_sender" type="submit" value="Upload" disabled/>
             </td>
         </tr>
-	</table>
-    <hr />
-    <div>Selected files:
+    </table>
+</fieldset>
+    <fieldset class="mt_rest"><legend class="mt_name">Selected files</legend>
         <div id="file_list" style="width: 700px;"></div>
-    </div>
+    </fieldset>
 </form>
 <script>
 function firstColumnChanged(fid) {

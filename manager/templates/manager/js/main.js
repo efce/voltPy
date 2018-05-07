@@ -33,17 +33,17 @@ function getShareable(txt, funcResults) {
 
 function voltpy_loading_start(text) {
     //window.scrollTo(0, 0);
-    $('#voltpy-loading').text(text);
+    $('#voltpy_loading').text(text);
     $('body').css('overflow','hidden');
-    $('#voltpy-loading').addClass('loading-cover');
-    $('#voltpy-loading').removeClass('loading-uncover');
-    $('#voltpy-loading').css('line-height', $('#voltpy-loading').css('height'));
+    $('#voltpy_loading').addClass('loading_cover');
+    $('#voltpy_loading').removeClass('loading_uncover');
+    $('#voltpy_loading').css('line-height', $('#voltpy_loading').css('height'));
 };
 
 function voltpy_loading_done()
 {
-    $('#voltpy-loading').addClass('loading-uncover');
-    $('#voltpy-loading').removeClass('loading-cover');
+    $('#voltpy_loading').addClass('loading_uncover');
+    $('#voltpy_loading').removeClass('loading_cover');
     $('body').css('overflow','scroll');
 };
 
@@ -207,11 +207,11 @@ $( function() {
             }
         }); 
     };
-
+{% load colors %}
     function highlightOff(element) { // on hover out
         var classes = element.className.split(' ');
-        $(element).css('background-color', 'white');
-        $(element).css('color', 'black');
+        $(element).css('background-color', '{% color3 %}');
+        $(element).css('color', '{% color3font %}');
         classes.forEach( function(name) {
             if (name.startsWith(iclass)) {
                 var number = name.substring(iclass.length);

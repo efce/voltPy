@@ -1,3 +1,5 @@
+{% load colors %}
+
 form label { 
 	max-width: 400px; 
 	word-wrap: break-word; 
@@ -27,7 +29,7 @@ form table th {
     height: 440px;
     overflow-y: auto;
     overflow-x: hidden;
-    background-color: white;
+    background-color: {% color3 %};
 }
 .analytes_table {
     border: 0px;
@@ -40,24 +42,20 @@ form table th {
     width: 150px;
     margin: 2px;
     text-align: left;
-    border: 1px #55F;
+    border: 1px {% color2 %};
+    color: {% color3font %};
     border-radius: 0px !important;
 }
 .analytes_table td {
     padding: 1px 5px;
-    border-right: 1px #55F solid;
-    border-bottom: 1px #55F solid;
+    border-right: 1px {% color1 %} solid;
+    border-bottom: 1px {% color1 %} solid;
 }
+
 .analytes_table th {
-    background-color:#55F;
-    color: white;
-    border-right: 1px white solid;
-}
-.analytes_table tbody {
-    overflow-y: auto;
-    overflow-x: hidden;
-    width: 100%;
-    height: 370px;
+    background-color: {% color1 %};
+    color: {% color1font %};
+    border-right: 1px {% color2 %} solid;
 }
 
 .method_list {
@@ -65,25 +63,27 @@ form table th {
 }
 
 .method_element {
-    border: 1px solid black;
+    border: 1px solid {% color1 %};
     margin: 3px;
 }
 
 .method_element:hover {
-    background-color: #BBB;
+    background-color: {% color2 %};
+    color: {% color2font %};
     cursor: pointer;
 }
 
 .browse_table {
-    border: 1px solid darkgrey;
+    border: 1px solid {% color2 %};
 }
+
 .browse_table th {
-    background-color: #55F;
-    color: white;
+    background-color: {% color1 %};
+    color: {% color1font %};
 }
 .browse_table th a {
-    color: white;
+    color: {% color1font %};
 }
 .browse_table tbody tr:nth-child(even) {
-    background-color: #CCF;
+    background-color: {% color3even %};
 }
