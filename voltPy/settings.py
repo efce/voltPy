@@ -145,7 +145,7 @@ CSRF_MIDDLEWARE_SECRET = config.get('secrets', 'CSRF_MIDDLEWARE_SECRET')
 
 SESSION_COOKIE_DOMAIN = config.get('cookies', 'SESSION_COOKIE_DOMAIN')
 
-EMAIL_BACKEND = config.getboolean('email', 'EMAIL_BACKEND')
+EMAIL_BACKEND = config.get('email', 'EMAIL_BACKEND')
 EMAIL_USE_TLS = config.getboolean('email', 'EMAIL_USE_TLS')
 EMAIL_HOST = config.get('email', 'EMAIL_HOST')
 EMAIL_PORT = config.get('email', 'EMAIL_PORT')
