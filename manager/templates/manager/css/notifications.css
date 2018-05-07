@@ -1,9 +1,9 @@
-
+{% load colors %}
 #notifications { 
-  border: 1px #ACF solid;
-  margin: 10px;
-  padding: 10px;
-  border-radius: 10px;
-  background-color: #AAA; 
-  color: #000;
+  border: 1px {% color2 %} solid;
+  margin: auto;
+  padding: 5px;
+  border-radius: 3px;
+  background-color: {% color1 %}; 
+  color: {% color1font %};
 }

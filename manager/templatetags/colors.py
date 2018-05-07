@@ -4,7 +4,7 @@ register = template.Library()
 
 @register.simple_tag
 def color1():
-    return '#555'
+    return '#0070BB'
 
 
 @register.simple_tag
@@ -14,12 +14,12 @@ def color1font():
 
 @register.simple_tag
 def color2():
-    return '#779'
+    return '#012b87'
 
 
 @register.simple_tag
 def color2even():
-    return '#667'
+    return '#011577'
 
 
 @register.simple_tag
@@ -29,12 +29,12 @@ def color2font():
 
 @register.simple_tag
 def color3():
-    return '#EEF'
+    return '#c6e8ff'
 
 
 @register.simple_tag
 def color3even():
-    return '#CCE'
+    return '#aac9dd'
 
 
 @register.simple_tag
