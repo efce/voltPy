@@ -12,6 +12,8 @@ https://docs.djangoproject.com/en/1.11/ref/settings/
 
 import os
 import configparser
+config = configparser.ConfigParser()
+config.read('../voltpy.settings')
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -80,9 +82,12 @@ WSGI_APPLICATION = 'voltPy.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'OPTIONS': {
-            'read_default_file': './my.cnf',
-        },
+        'USER': config.get('database', 'DATABASE_USER'),
+        'PASSWORD': config.get('database', 'DATABASE_PASSWORD'),
+        'HOST': config.get('database', 'DATABASE_HOST'),
+        'PORT': config.get('database', 'DATABASE_PORT'),
+        'NAME': config.get('database', 'DATABASE_NAME'),
+        'TEST_DATABASE_NAME': config.get('database', 'TESTSUITE_DATABASE_NAME'),
     }
 }
 
@@ -129,6 +134,7 @@ STATIC_URL = '/static/'
 CMS_PAGE_CACHE = False
 CMS_PLACEHOLDER_CACHE = False
 CMS_PLUGIN_CACHE = False
+SITE_ID = 1
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 LOGIN_REDIRECT_URL = 'index'
@@ -138,16 +144,6 @@ AUTHENTICATION_BACKENDS = (
     'guardian.backends.ObjectPermissionBackend',
 )
 
-config = configparser.ConfigParser()
-config.read('../voltpy.settings')
-
-DATABASE_USER = config.get('database', 'DATABASE_USER')
-DATABASE_PASSWORD = config.get('database', 'DATABASE_PASSWORD')
-DATABASE_HOST = config.get('database', 'DATABASE_HOST')
-DATABASE_PORT = config.get('database', 'DATABASE_PORT')
-DATABASE_ENGINE = config.get('database', 'DATABASE_ENGINE')
-DATABASE_NAME = config.get('database', 'DATABASE_NAME')
-TEST_DATABASE_NAME = config.get('database', 'TESTSUITE_DATABASE_NAME')
 
 SECRET_KEY = config.get('secrets', 'SECRET_KEY')
 CSRF_MIDDLEWARE_SECRET = config.get('secrets', 'CSRF_MIDDLEWARE_SECRET')

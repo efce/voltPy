@@ -737,7 +737,7 @@ def cloneCurveFile(request, user, toCloneId):
 @redirect_on_voltpyexceptions
 @with_user
 def upload(request, user):
-    can_upload = user.groups.filter(name='registered_user').exists()
+    can_upload = user.groups.filter(name='registered_users').exists()
     context = {
         'user': user,
         'can_upload': can_upload,
