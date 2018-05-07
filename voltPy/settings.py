@@ -22,13 +22,9 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/1.11/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'aaab+6w+7&pqxt*ld#3axs(2pre#z0y#j$eXX8#@e0-(0&=qs'
-
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
 
-ALLOWED_HOSTS = ['voltammetry.center', '127.0.0.1', 'localhost']
+ALLOWED_HOSTS = ['www.voltammetry.center', 'voltammetry.center', '127.0.0.1', 'localhost']
 
 
 # Application definition
@@ -81,7 +77,7 @@ WSGI_APPLICATION = 'voltPy.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.mysql',
+        'ENGINE': config.get('database', 'DATABASE_ENGINE'),
         'USER': config.get('database', 'DATABASE_USER'),
         'PASSWORD': config.get('database', 'DATABASE_PASSWORD'),
         'HOST': config.get('database', 'DATABASE_HOST'),
@@ -90,7 +86,6 @@ DATABASES = {
         'TEST_DATABASE_NAME': config.get('database', 'TESTSUITE_DATABASE_NAME'),
     }
 }
-
 
 # Password validation
 # https://docs.djangoproject.com/en/1.11/ref/settings/#auth-password-validators
@@ -110,7 +105,6 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
 # Internationalization
 # https://docs.djangoproject.com/en/1.11/topics/i18n/
 
@@ -128,15 +122,11 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.11/howto/static-files/
 
-STATIC_URL = '/static/'
-
 
 CMS_PAGE_CACHE = False
 CMS_PLACEHOLDER_CACHE = False
 CMS_PLUGIN_CACHE = False
-SITE_ID = 1
 
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 LOGIN_REDIRECT_URL = 'index'
 
 AUTHENTICATION_BACKENDS = (
@@ -144,12 +134,18 @@ AUTHENTICATION_BACKENDS = (
     'guardian.backends.ObjectPermissionBackend',
 )
 
+SITE_ID = 1
+STATIC_URL = '/static/'
+STATIC_ROOT = config.get('files', 'STATIC_ROOT')
+
+DEBUG = config.getboolean('debug', 'DEBUG')
 
 SECRET_KEY = config.get('secrets', 'SECRET_KEY')
 CSRF_MIDDLEWARE_SECRET = config.get('secrets', 'CSRF_MIDDLEWARE_SECRET')
 
 SESSION_COOKIE_DOMAIN = config.get('cookies', 'SESSION_COOKIE_DOMAIN')
 
+EMAIL_BACKEND = config.getboolean('email', 'EMAIL_BACKEND')
 EMAIL_USE_TLS = config.getboolean('email', 'EMAIL_USE_TLS')
 EMAIL_HOST = config.get('email', 'EMAIL_HOST')
 EMAIL_PORT = config.get('email', 'EMAIL_PORT')
