@@ -64,6 +64,8 @@ Chemom. Intell. Lab. Syst., vol. 65, no. 1, pp. 119–137, 2003.
         dE = cd1.curve.params[Param.dE]
         dec_start = cd1.xValue2Index(self.model.customData['DecomposeRange'][0])
         dec_end = cd1.xValue2Index(self.model.customData['DecomposeRange'][1])
+        if dec_start > dec_end:
+            dec_start, dec_end = dec_end, dec_start
 
         if all([
                 cd1.curve.params[Param.method] != Param.method_dpv,
@@ -131,6 +133,7 @@ Chemom. Intell. Lab. Syst., vol. 65, no. 1, pp. 119–137, 2003.
                     pos = int(i/(2*tptw))
                     main_data_1[:, pos, cnum] = cd.currentSamples[i:(i+2*tptw)]
             main_data_1 = main_data_1[:, dec_start:dec_end, :]
+        
 
         X0 = np.random.rand(factors, main_data_1.shape[0])
         Y0 = np.random.rand(factors, main_data_1.shape[1])
