@@ -168,7 +168,7 @@ function uploadmanagerProcessReply(data) {
 }
 
 function uploadmanagerUploadInfo(data) {
-    if ( data['command'] == 'success' ) {
+    if (data['command'] == 'success') {
         alert('Upload sucessfull, redirectirng');
         window.location.href = data['location'];
     } else {
@@ -204,6 +204,10 @@ $("form#file_form").submit(function(e) {
         success: function (data) {
             voltpy_loading_done();
             uploadmanagerUploadInfo(data);
+        },
+        error: function (xhr, ajaxOptions, thrownError) {
+            voltpy_loading_done();
+            uploadmanagerUploadInfo('');
         },
         cache: false,
         contentType: false,
