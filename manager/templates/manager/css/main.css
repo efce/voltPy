@@ -90,26 +90,15 @@ body {
   position: absolute;
   top: 0px;
   left: 0px;
-  width: 100%;
+  right: 0px;
+  bottom: 0px;
   font-size: large;
-  height: 100%;
   z-index: 999;
   background-color: white;
   color: black;
   display: block;
   text-align: center;
-  vertical-align: middle;
   opacity: 0.9;
-}
-
-.loading_uncover {
-    position: absolute;
-    top: -1px;
-    left: -1px;
-    width: 1px;
-    height: 1px;
-    z-index: 0;
-    display: none;
 }
 
 .table_no_breaks {

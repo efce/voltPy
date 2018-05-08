@@ -28,19 +28,16 @@ function getShareable(txt, funcResults) {
 }
 
 function voltpy_loading_start(text) {
-    //window.scrollTo(0, 0);
-    $('#voltpy_loading').text(text);
     $('body').css('overflow','hidden');
-    $('#voltpy_loading').addClass('loading_cover');
-    $('#voltpy_loading').removeClass('loading_uncover');
-    $('#voltpy_loading').css('line-height', $('#voltpy_loading').css('height'));
+    cover = $('<div id="COVER" class="loading_cover">' + text + '</div>');
+    $('body').append(cover);
+    $('#COVER').css('line-height', $('#COVER').css('height'));
 };
 
 function voltpy_loading_done()
 {
-    $('#voltpy_loading').addClass('loading_uncover');
-    $('#voltpy_loading').removeClass('loading_cover');
-    $('body').css('overflow','scroll');
+    cover = $('#COVER');
+    cover.remove();
 };
 
 // Function used for communication between the page and server, with loading text.

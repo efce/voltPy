@@ -171,8 +171,8 @@ function uploadmanagerUploadInfo(data) {
     if ( data['command'] == 'success' ) {
         alert('Upload sucessfull, redirectirng');
         window.location.href = data['location'];
-    } else if ( data['command'] == 'failed' ) {
-        alert('Upload failed, please try again.');
+    } else {
+        alert('Upload failed, please check files and try again.');
     }
 }
 
@@ -194,6 +194,7 @@ $("#file_selector").change(function() {
 $("form#file_form").submit(function(e) {
     e.preventDefault();
     voltpy_loading_start('Uploading, please wait ...');
+    sleep(100);
     $(this).append('<input type="hidden" name="command" value="upload" />');
     var formData = new FormData(this);
     $.ajax({
@@ -208,7 +209,6 @@ $("form#file_form").submit(function(e) {
         contentType: false,
         processData: false
     });
-    voltpy_loading_done();
 });
 </script>
 {% else %}
