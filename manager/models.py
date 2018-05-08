@@ -706,7 +706,10 @@ class FileCurveSet(CurveSet):
     
     def __str__(self):
         fs = self.fileset_set.all()[0]
-        return '%s: %s' % (fs.name, self.name)
+        if fs.name != '':
+            return '%s: %s' % (fs.name, self.name)
+        else:
+            return '%s' % self.name
 
 
 class Analysis(VoltPyModel):
