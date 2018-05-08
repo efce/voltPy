@@ -828,7 +828,7 @@ class SharedLink(VoltPyModel):
 
     def getLink(self):
         from django.contrib.sites.models import Site
-        return 'https://' + Site.objects.get_current() + reverse('shareLink',args=[self.link])
+        return 'https://' + Site.objects.get_current().domain + reverse('shareLink',args=[self.link])
 
     def addUser(self, user):
         self.users.add(user)

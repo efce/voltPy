@@ -442,6 +442,10 @@ def showAnalysis(request, user, analysis_id):
         applyClass = '_voltJS_applyModel _voltJS_model@' + str(an.id)
     else:
         applyClass = '_disabled'
+    if an.owner == user:
+        share_button = '_voltJS_requestLink'
+    else:
+        share_button = '_disabled'
 
     context = {
         'user': user,
@@ -466,6 +470,7 @@ def showAnalysis(request, user, analysis_id):
                 'objId': an.id,
             })
         ),
+        'share_button': share_button,
         'undo_button': '_disabled',
         'apply_model_to': applyClass
     }
@@ -539,6 +544,10 @@ def showFileSet(request, user, fileset_id):
         plot_type='fileset',
         value_id=fs.id
     )
+    if fs.owner == user:
+        share_button = '_voltJS_requestLink'
+    else:
+        share_button = '_disabled'
 
     context = {
         'scripts': plotScr,  # + formAnalyze.getJS(request) + formProcess.getJS(request),
@@ -559,6 +568,7 @@ def showFileSet(request, user, fileset_id):
             })
         ),
         'undo_button': '_disabled',
+        'share_button': share_button,
         'back_to_browse_button': get_redirect_class(
             reverse('browseFileSets')
         )
@@ -657,7 +667,7 @@ def showCurveSet(request, user, curveset_id):
         formProcess = mm.getProcessingSelectionForm(disabled=cs.locked)
 
     if cs.owner == user:
-        share_button = '_voltPy_requestLink'
+        share_button = '_voltJS_requestLink'
     else:
         share_button = '_disabled'
     if cs.hasUndo():
@@ -777,6 +787,10 @@ def showCurveFile(request, user, file_id):
     )
 
     at_disp = at.analytesTable(cf, objType='cf')
+    if cf.owner == user:
+        share_button = '_voltJS_requestLink'
+    else:
+        share_button = '_disabled'
 
     context = {
         'scripts': plotScr,
@@ -803,7 +817,7 @@ def showCurveFile(request, user, file_id):
             ])
         ),
         'undo_button': '_disabled',
-        'share_button': '_voltJS_requestLink',
+        'share_button': share_button,
         'back_to_browse_button': get_redirect_class(
             reverse('browseCurveFiles')
         )
@@ -1039,5 +1053,6 @@ def getShareable(request, user):
         link_rw = generate_share_link(user, 'rw', obj)
         link_ro = generate_share_link(user, 'ro', obj)
         return JsonResponse({'link_ro': link_ro, 'link_rw': link_rw})
-    except:
+    except Exception as e:
+        print(e)
         return JsonResponse({'link_ro': 'Cannot share', 'link_rw': 'Cannot share'})

@@ -264,10 +264,14 @@ function displayLinks(data) {
     var amd = $('#share_link');
     amd.removeClass('invisible');
     var form = '<a class="closeX" onclick="closeShare();"></a><br /><br />';
+    form += 'The following urls will allow to acces the data without logging in:';
     form += '<p>Read only: ' + data['link_ro'] + '</p>';
     form += '<p>Editable: ' + data['link_rw'] + '</p>';
+
     amd.text('');
     amd.append($(form));
+    amd.css('width', '50em');
+    amd.css('right', '10px');
 }
 
 function closeShare() {
