@@ -435,8 +435,7 @@ def showAnalysis(request, user, analysis_id):
     plotScr, plotDiv, butDiv = generate_plot(
         request=request,
         user=user,
-        plot_type='curveset',
-        value_id=an.curveSet.id
+        to_plot=an.curveSet
     )
     if mm.methodCanBeApplied():
         applyClass = '_voltJS_applyModel _voltJS_model@' + str(an.id)
@@ -541,8 +540,7 @@ def showFileSet(request, user, fileset_id):
     plotScr, plotDiv, butDiv = generate_plot(
         request=request,
         user=user,
-        plot_type='fileset',
-        value_id=fs.id
+        to_plot=fs
     )
     if fs.owner == user:
         share_button = '_voltJS_requestLink'
@@ -634,8 +632,7 @@ def showCurveSet(request, user, curveset_id):
     plotScr, plotDiv, butDiv = generate_plot(
         request=request,
         user=user,
-        plot_type='curveset',
-        value_id=cs.id
+        to_plot=cs
     )
 
     import manager.analytesTable as at
@@ -782,8 +779,7 @@ def showCurveFile(request, user, file_id):
     plotScr, plotDiv, butDiv = generate_plot(
         request=request,
         user=user,
-        plot_type='file',
-        value_id=cf.id
+        to_plot=cf
     )
 
     at_disp = at.analytesTable(cf, objType='cf')

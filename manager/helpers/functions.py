@@ -97,7 +97,20 @@ def delete_helper(request, user, item, delete_fun=None, onSuccessRedirect=None):
     )
 
 
-def generate_plot(request, user, plot_type, value_id, **kwargs):
+def generate_plot(request, user, to_plot=None, plot_type=None, value_id=None, **kwargs):
+    assert (to_plot is not None and plot_type is None) or (to_plot is None and plot_type is not None)
+    if to_plot is not None:
+        if isinstance(to_plot, mmodels.FileCurveSet):
+            plot_type = 'file'
+        elif isinstance(to_plot, mmodels.CurveSet):
+            plot_type = 'curveset'
+        elif isinstance(to_plot, mmodels.FileSet):
+            plot_type = 'fileset'
+        elif isinstance(to_plot, mmodels.Analysis):
+            plot_type = 'analysis'
+        else:
+            raise VoltPyFailed('Could not plot')
+        
     allowedTypes = [
         'file',
         'analysis',
@@ -113,21 +126,33 @@ def generate_plot(request, user, plot_type, value_id, **kwargs):
     pm = mpm.PlotManager()
     data = []
     if plot_type == 'file':
-        cf = mmodels.FileCurveSet.get(id=value_id)
+        if to_plot is None:
+            cf = mmodels.FileCurveSet.get(id=value_id)
+        else:
+            cf = to_plot
         data = pm.curveSetHelper(user, cf)
         pm.xlabel = pm.xLabelHelper(user)
         pm.include_x_switch = True
     elif (plot_type == 'curveset'):
-        cs = mmodels.CurveSet.get(id=value_id)
+        if to_plot is None:
+            cs = mmodels.CurveSet.get(id=value_id)
+        else:
+            cs = to_plot
         data = pm.curveSetHelper(user, cs)
         pm.xlabel = pm.xLabelHelper(user)
         pm.include_x_switch = True
     elif (plot_type == 'analysis'):
-        data = pm.analysisHelper(user, value_id)
+        if to_plot is None:
+            data = pm.analysisHelper(user, value_id)
+        else:
+            data = to_plot
         pm.xlabel = pm.xLabelHelper(user)
         pm.include_x_switch = False
     elif (plot_type == 'fileset'):
-        fs = mmodels.FileSet.get(id=value_id)
+        if to_plot is None:
+            fs = mmodels.FileSet.get(id=value_id)
+        else:
+            fs = to_plot
         data = []
         for f in fs.files.all():
             data.extend(pm.curveSetHelper(user, f))
