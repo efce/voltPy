@@ -1,5 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django.db.models.signals import m2m_changed
+from overrides import overrides
 from guardian.shortcuts import assign_perm
 from guardian.shortcuts import get_objects_for_user
 from manager.exceptions import VoltPyNotAllowed
@@ -63,3 +65,12 @@ class VoltPyModel(models.Model):
             super().save()
         else:
             raise VoltPyNotAllowed('Operation not allowed.')
+
+
+def check_permission(sender, instance, check_perms=True, **kwargs):
+    if not isinstance(instance, VoltPyModel) or not check_perms:
+        return
+    user = manager.helpers.functions.getUser()
+    if not user.has_perm('rw', instance):
+        raise VoltPyNotAllowed('Operation not allowed.')
+m2m_changed.connect(check_permission, sender=None)
