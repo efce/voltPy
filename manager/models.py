@@ -844,5 +844,9 @@ class SharedLink(VoltPyModel):
         return 'https://' + Site.objects.get_current().domain + reverse('shareLink',args=[self.link])
 
     def addUser(self, user):
+        # TODO: HACK find a better way to baypass permission check (?)
+        gu = manager.helpers.functions.getUser
+        manager.helpers.functions.getUser = lambda: self.owner
         self.users.add(user)
+        manager.helpers.functions.getUser = gu
         self.save

@@ -311,11 +311,10 @@ def deleteCurveFile(request, user, file_id):
 def deleteCurve(request, user, objType, objId, delId):
     if objType == 'cf':
         try:
-            cd = mmodels.CurveData.get(id=delId)
             delete_fun = mmodels.FileCurveSet.get(id=int(objId)).curvesData.remove
+            cd = mmodels.CurveData.objects.get(id=delId)  # get without permission checking, it is checked in remove func
         except ObjectDoesNotExist:
-            print('CF: obj does not exists')
-            raise
+            raise VoltPyDoesNotExists('Object does not exists, too low permissions')
         redirect_to = reverse('showCurveFile', args=[objId])
         return delete_helper(
             request=request,
@@ -326,11 +325,10 @@ def deleteCurve(request, user, objType, objId, delId):
         )
     else:  # curveset
         try:
-            cd = mmodels.CurveData.get(id=delId)
+            cd = mmodels.CurveData.objects.get(id=delId)
             delete_fun = mmodels.CurveSet.get(id=objId).curvesData.remove
         except ObjectDoesNotExist:
-            print('CS: obj does not exists')
-            raise
+            raise VoltPyDoesNotExists('Object does not exists, too low permissions')
         return delete_helper(
             request=request,
             user=user,

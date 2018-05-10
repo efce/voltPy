@@ -67,8 +67,8 @@ class VoltPyModel(models.Model):
             raise VoltPyNotAllowed('Operation not allowed.')
 
 
-def check_permission(sender, instance, check_perms=True, **kwargs):
-    if not isinstance(instance, VoltPyModel) or not check_perms:
+def check_permission(sender, instance, **kwargs):
+    if not isinstance(instance, VoltPyModel):
         return
     user = manager.helpers.functions.getUser()
     if not user.has_perm('rw', instance):
