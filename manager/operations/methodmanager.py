@@ -159,8 +159,7 @@ class MethodManager:
             plotScr, plotDiv, butDiv = generate_plot(
                 request=request,
                 user=user,
-                plot_type='curveset',
-                value_id=self.__model.curveSet.id,
+                to_plot=self.__model.curveSet,
                 vtype=self.__method.type(),
                 vid=self.__model.id,
                 interactionName=self.__method.step['class'].plot_interaction,
