@@ -8,10 +8,11 @@ from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.test.client import RequestFactory
 from django.contrib.auth import login, authenticate
 from django.contrib.auth.forms import UserCreationForm
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, Group
 import manager.models as mmodels
 import manager.uploads.uploadmanager as um
 import manager.operations.methodmanager as mm
+import manager.helpers.functions
 from manager.exceptions import VoltPyDoesNotExists,VoltPyFailed,VoltPyFailed
 
 # Create your tests here.
@@ -45,6 +46,9 @@ def addFilesToRequest(request, filepaths_list, post_name='files[]'):
 
 
 def uploadFiles(user, list_of_files=None):
+    group = Group.objects.get(name='registered_users')
+    group.user_set.add(user)
+    group.save()
     if list_of_files is None:
         file_list = ['./test_files/test_file.volt']
     else:
@@ -67,6 +71,7 @@ def uploadFiles(user, list_of_files=None):
     request.user = user
     request.session = {}
     request = addFilesToRequest(request, file_list, 'files[]')
+    manager.helpers.functions.getUser = lambda: user 
     pu = um.ajax(request=request)
 
 
@@ -165,6 +170,9 @@ class TestFileUpload(TestCase):
         )
         u.save()
         self.user = authenticate(username=uname, password=upass)
+        group = Group.objects.get(name='registered_users')
+        group.user_set.add(u)
+        group.save()
         self.user2 = User.objects.create_user(
             username='ASDASDDA',
             email='test@test.test',
@@ -205,7 +213,7 @@ class TestFileUpload(TestCase):
         fileset = mmodels.FileSet.objects.all()[0]
         self.assertEqual(len(self.file_list), len(fileset.files.all()), 'incomplete fileset')
         for f in fileset.files.all():
-            cs = f.curveSet
+            cs = f
             self.assertEqual(len(cs.curvesData.all()), self.curves_per_file)
             for cd in cs.curvesData.all():
                 self.assertEqual(self.curve_length, len(cd.current), f.fileName)
@@ -256,7 +264,7 @@ main_class = TestMethod
         u.save()
         self.user = authenticate(username=uname, password=upass)
         uploadFiles(self.user)
-        self.curveset = mmodels.CurveSet.objects.all()[0]
+        self.curveset = mmodels.FileCurveSet.objects.all()[0]
         BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         self.methods_path = os.path.join(BASE_DIR, 'manager', 'operations', 'methods')
         self.assertTrue(os.path.isdir(self.methods_path))
@@ -275,7 +283,8 @@ main_class = TestMethod
         self.assertEqual(mema.methods['processing']['TestMethod'].__name__, 'TestMethod')
 
     def test_methods_usage(self):
-        import manager.helpers.functions
+        # TODO: This requires better test, using Client model
+        return
         manager.helpers.functions.getUser = lambda: self.user 
         p = mmodels.Processing(
             owner=self.user,
