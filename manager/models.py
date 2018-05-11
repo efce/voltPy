@@ -847,6 +847,8 @@ class SharedLink(VoltPyModel):
         # TODO: HACK find a better way to baypass permission check (?)
         gu = manager.helpers.functions.getUser
         manager.helpers.functions.getUser = lambda: self.owner
-        self.users.add(user)
-        manager.helpers.functions.getUser = gu
+        try:
+            self.users.add(user)
+        finally:
+            manager.helpers.functions.getUser = gu
         self.save
