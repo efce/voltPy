@@ -1,16 +1,5 @@
 {% load colors %}
 
-form label { 
-	max-width: 400px; 
-	word-wrap: break-word; 
-	display: inline;
-	white-space: pre-line; 
-}
-
-form table th {
-    width: 140px;
-}
-
 .form_submit {
     height: 30px;
     width: 150px;
@@ -21,6 +10,7 @@ form table th {
 .form_inline {
     display: inline !important;
 }
+
 .analytes_table_container {
     width: 100%;
     margin: 0px;
@@ -107,14 +97,14 @@ form table th {
     width:100%;
 }
 #fixed_header tbody td, #fixed_header thead th {
-      width: 150px;
-      float: left;
+    width: 150px;
+    float: left;
 }
 #fixed_header tr:after {
-            content: ' ';
-            display: block;
-            visibility: hidden;
-            clear: both;
+    content: ' ';
+    display: block;
+    visibility: hidden;
+    clear: both;
 }
 #fixed_header th, #fixed_header td {
 	height:35px;

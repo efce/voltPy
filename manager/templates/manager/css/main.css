@@ -11,6 +11,7 @@
     src: url({% static 'manager/OpenSans-Regular.ttf' %});
     font-weight: 400;
 }
+
 body {
     background-color: #EEE;
     font-family: regular;
