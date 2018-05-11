@@ -8,7 +8,7 @@ def calc_normal_equation_fit(xvec, yvec):
     using normal equation.
     """
     xlen = len(xvec)
-    assert xlen >= 3 and len(yvec) == xlen, 'xvec and yvec should have the same length.  However, len(xvec)=%i, len(yvec)=%i.' % (xlen,len(y))
+    assert xlen >= 3 and len(yvec) == xlen, 'xvec and yvec should have the same length.  However, len(xvec)=%i, len(yvec)=%i.' % (xlen,len(yvec))
     xvec = np.matrix(xvec)
     xvec = xvec.transpose()
     unitVec = np.ones((xlen, 1), dtype='float')
