@@ -14,7 +14,7 @@
             </th>
             {% if list_to_disp.0.disp_type == 'curve set' %}
             <th>
-                Lock
+                &nbsp;
             </th>
             {% endif %}
             <th>
@@ -23,6 +23,9 @@
             {% if list_to_disp.0.disp_type == 'analysis' %}
             <th>
                 <a href="./?sort=method">Method</a>
+            </th>
+            <th>
+                <a href="./?sort=curveset">Curve Set</a>
             </th>
             {% endif %}
             {% if list_to_disp.0.disp_type == 'file' %}
@@ -40,7 +43,7 @@
                 <a href="./?sort=owner">Owner</a>
             </th>
             <th>
-                Action
+                <small>Action</small>
             </th>
         </tr>
     </thead>
@@ -52,7 +55,11 @@
             </td>
             {% if list_to_disp.0.disp_type == 'curve set' %}
             <td>
-                {{ el.locked }}
+            {% if el.locked %}
+                🔒
+            {% else %}
+                🔓
+            {% endif %}
             </td>
             {% endif %}
             <td>
@@ -61,6 +68,9 @@
             {% if list_to_disp.0.disp_type == 'analysis' %}
             <td>
                 {{ el.methodDisplayName }}
+            </td>
+            <td>
+                {{ el.curveSet.name }}
             </td>
             {% endif %}
             {% if list_to_disp.0.disp_type == 'file' %}
