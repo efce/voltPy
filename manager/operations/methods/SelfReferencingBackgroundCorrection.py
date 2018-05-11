@@ -5,6 +5,8 @@ from manager.operations.methodsteps.tagcurves import TagCurves
 from manager.exceptions import VoltPyFailed
 import manager.models as mmodels
 import manager.helpers.selfReferencingBackgroundCorrection as sbcm
+from manager.operations.checks.check_datalenuniform import check_datalenuniform
+from manager.operations.checks.check_analyte import check_analyte
 
 
 class SelfReferencingBackgroundCorrection(method.AnalysisMethod):
@@ -33,6 +35,9 @@ Select range containing peak and press Forward, or press Back to change the sele
 """,
         },
     ]
+
+    checks = (check_datalenuniform, check_analyte)
+
     description = """
 [1] Ciepiela, F., Lisak, G., & Jakubowska, M. (2013). Self-referencing
 background correction method for voltammetric investigation of reversible

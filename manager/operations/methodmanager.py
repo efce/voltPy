@@ -215,11 +215,13 @@ class MethodManager:
         """
         Returns form instance with selection of analysis methods.
         """
+        curveSet = kwargs.pop('curveSet')
         return MethodManager._AltSelectionForm(
             self,
             self.methods['analysis'],
             type='analysis',
             prefix='analysis',
+            curveSet=curveSet,
             *args,
             **kwargs
         )
@@ -228,11 +230,13 @@ class MethodManager:
         """
         Returns form instance with selection of processing methods.
         """
+        curveSet = kwargs.pop('curveSet')
         return MethodManager._AltSelectionForm(
             self,
             self.methods['processing'],
             type='processing',
             prefix='processing',
+            curveSet=curveSet,
             *args,
             **kwargs
         )
@@ -250,7 +254,8 @@ class MethodManager:
         return (self.__method is not None)
 
     class _AltSelectionForm(forms.Form):
-        def __init__(self,  parent, methods: Dict, *args, **kwargs):
+        def __init__(self, parent, methods: Dict, *args, **kwargs):
+            curveSet = kwargs.pop('curveSet')
             self.type = kwargs.pop('type', 'processing')
             if self.type == 'processing':
                 label = 'Processing method'
@@ -268,6 +273,8 @@ class MethodManager:
                     [v.__str__() for k, v in methods.items()]
                 )
             )
+            self._checkCurveset(curveSet)
+
             defKey = list(self.methods)[0]
             defMethod = self.methods[defKey]
             self.fields['method'] = forms.ChoiceField(
@@ -276,9 +283,20 @@ class MethodManager:
                 label=label,
                 initial=defKey
             )
+
+        def _checkCurveset(self, curveSet):
+            for k, v in self.methods.items():
+                v.errors = []
+                for check in v.checks:
+                    if check is None:
+                        continue
+                    try:
+                        check(curveSet)
+                    except VoltPyFailed as err:
+                        v.errors.append(err)
         
         def draw(self):
-            to_disp = [ (k, v.__str__(), v.description or '', v.video) for k, v in self.methods.items() ]
+            to_disp = [(k, v.__str__(), v.description or '', v.errors, v.video) for k, v in self.methods.items()]
             context = {
                 'disabled': self.disabled,
                 'methods': to_disp,
@@ -288,9 +306,12 @@ class MethodManager:
             return tt.render(context=context)
 
         def process(self, user, curveset):
+            self._checkCurveset(curveset)
             if self.type == 'processing':
                 mname = self.cleaned_data.get('method', None)
                 if mname in self.methods:
+                    if self.methods[mname].errors:
+                        raise VoltPyFailed('Data does not meets requirements for selected method.')
                     a = mmodels.Processing(
                         owner=user,
                         curveSet=curveset,
@@ -308,6 +329,8 @@ class MethodManager:
             elif self.type == 'analysis':
                 mname = self.cleaned_data.get('method', None)
                 if mname in self.methods:
+                    if self.methods[mname].errors:
+                        raise VoltPyFailed('Data does not meets requirements for selected method.')
                     a = mmodels.Analysis(
                         owner=user,
                         curveSet=curveset,

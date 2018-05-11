@@ -11,6 +11,7 @@ from manager.exceptions import VoltPyFailed
 from manager.helpers.functions import check_curveset_integrity
 from manager.helpers.fithelpers import fit_capacitive_eq
 from manager.helpers.fithelpers import calc_capacitive
+from manager.operations.checks.check_sampling import check_sampling
 
 
 class ASDDecomposition(method.ProcessingMethod):
@@ -30,6 +31,9 @@ Range should extend about two width of the peak either way from it.
             """,
         },
     )
+
+    checks = (check_sampling, )
+
     description = """
 Decomposes the data into factor, for which automatically selects,
 the one which is correlated to the selected analyte.

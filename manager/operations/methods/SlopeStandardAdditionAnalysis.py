@@ -5,6 +5,8 @@ import manager.operations.method as method
 import manager.models as mmodels
 import manager.plotmanager as pm
 from manager.exceptions import VoltPyFailed
+from manager.operations.checks.check_sampling import check_sampling
+from manager.operations.checks.check_analyte import check_analyte
 
 
 class SlopeStandardAdditionAnalysis(method.AnalysisMethod):
@@ -21,6 +23,7 @@ class SlopeStandardAdditionAnalysis(method.AnalysisMethod):
             'desc': 'Enter approx. X value of peak of interest and press Forward, or press back to change the selection.',
         },
     )
+    checks = (check_sampling, check_analyte)
     description = """
 Slope Standard Addition Analysis is advanced signal analysis method, 
 which requires that the data was registerd without current sample averaging

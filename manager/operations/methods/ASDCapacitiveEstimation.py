@@ -8,6 +8,7 @@ from manager.exceptions import VoltPyFailed
 from manager.exceptions import VoltPyNotAllowed
 from manager.helpers.fithelpers import fit_capacitive_eq
 from manager.helpers.fithelpers import fit_faradaic_eq
+from manager.operations.checks.check_sampling import check_sampling
 
 
 class ASDCapacitiveEstimation(method.AnalysisMethod):
@@ -19,6 +20,7 @@ class ASDCapacitiveEstimation(method.AnalysisMethod):
             'desc': """Confirm start of ASD cell time estimation.""",
         },
     )
+    checks = (check_sampling, )
     description = """
 Decomposes the data into factors with ASD, and tries to estimate the cell time costant
 and cell resistance based on the capacitive factor.

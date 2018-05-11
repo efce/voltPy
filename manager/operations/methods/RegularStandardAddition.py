@@ -9,6 +9,7 @@ from manager.helpers.fithelpers import calc_normal_equation_fit
 from manager.helpers.fithelpers import calc_sx0
 from manager.helpers.fithelpers import significant_digit
 from manager.exceptions import VoltPyFailed
+from manager.operations.checks.check_analyte import check_analyte
 
 
 class RegularStandardAddition(method.AnalysisMethod):
@@ -25,6 +26,7 @@ class RegularStandardAddition(method.AnalysisMethod):
             'desc': 'Select range containing peak and press Forward, or press Back to change the selection.',
         },
     ]
+    checks = (check_analyte, )
     description = """
 This is standard addition method, where the height of the signal is
 calculated as a difference between max and min signal in the given range.
