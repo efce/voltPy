@@ -137,7 +137,7 @@ class FileSet(VoltPyModel):
 
     @property
     def analytes(self):
-        return Analyte.objects.filter(curveset__in=[x.id for x in self.files.all().only('id')])
+        return Analyte.objects.filter(curveset__in=[x.id for x in self.files.all().only('id')]).distinct()
 
 
 class Curve(VoltPyModel):
