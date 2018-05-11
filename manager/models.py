@@ -135,6 +135,10 @@ class FileSet(VoltPyModel):
         ])
         return ret
 
+    @property
+    def analytes(self):
+        return Analyte.objects.filter(curveset__in=[x.id for x in self.files.all().only('id')]).distinct()
+
 
 class Curve(VoltPyModel):
     class Param(IntEnum):
@@ -479,7 +483,7 @@ class CurveSet(VoltPyModel):
     date = models.DateField(auto_now_add=True)
     curvesData = models.ManyToManyField(CurveData, related_name="curvesData")
     undoCurvesData = models.ManyToManyField(CurveData, related_name="undoCurvesData")
-    analytes = models.ManyToManyField(Analyte, related_name="analytes")
+    analytes = models.ManyToManyField(Analyte)
     undoAnalytes = models.ManyToManyField(Analyte, related_name="undoAnalytes")
     analytesConc = PickledObjectField(default={})  # dictionary key is analyte id
     undoAnalytesConc = PickledObjectField(default={})  # dictionary key is analyte id

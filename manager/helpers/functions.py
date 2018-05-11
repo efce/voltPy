@@ -274,9 +274,15 @@ def paginate(request, queryset, sortable_by: List, current_page: int):
         if request.GET.get('sort', False):
             sort_by = request.GET.get('sort')
             if sort_by in sortable_by:
-                order_by = sort_by
-                txt_sort = '?sort=%s' % sort_by
-                queryset = queryset.order_by(order_by)
+                if sort_by == 'analytes':
+                    from django.db.models import Min
+                    order_by = sort_by
+                    txt_sort = '?sort=%s' % sort_by
+                    queryset = queryset.annotate(an_name=Min('analytes__name')).order_by('an_name')
+                else:
+                    order_by = sort_by
+                    txt_sort = '?sort=%s' % sort_by
+                    queryset = queryset.order_by(order_by)
     splpath = path.split('/')
     if is_number(splpath[-2]):
         path = '/'.join(splpath[:-2])

@@ -12,12 +12,20 @@
             <th>
                 <a href="./?sort=id">Id</a>
             </th>
+            {% if list_to_disp.0.disp_type == 'curve set' %}
+            <th>
+                &nbsp;
+            </th>
+            {% endif %}
             <th>
                 <a href="./?sort=name">Name</a>
             </th>
             {% if list_to_disp.0.disp_type == 'analysis' %}
             <th>
                 <a href="./?sort=method">Method</a>
+            </th>
+            <th>
+                <a href="./?sort=curveset">Curve Set</a>
             </th>
             {% endif %}
             {% if list_to_disp.0.disp_type == 'file' %}
@@ -26,13 +34,16 @@
             </th>
             {% endif %}
             <th>
+                <a href="./?sort=analytes">Analytes</a>
+            </th>
+            <th>
                 <a href="./?sort=date">Date</a>
             </th>
             <th>
                 <a href="./?sort=owner">Owner</a>
             </th>
             <th>
-                Action
+                <small>Action</small>
             </th>
         </tr>
     </thead>
@@ -42,6 +53,15 @@
             <td>
                 {{ el.id }}
             </td>
+            {% if list_to_disp.0.disp_type == 'curve set' %}
+            <td>
+            {% if el.locked %}
+                🔒
+            {% else %}
+                🔓
+            {% endif %}
+            </td>
+            {% endif %}
             <td>
                 {{ el.name }}
             </td>
@@ -49,12 +69,21 @@
             <td>
                 {{ el.methodDisplayName }}
             </td>
+            <td>
+                {{ el.curveSet.name }}
+            </td>
             {% endif %}
             {% if list_to_disp.0.disp_type == 'file' %}
             <td>
                 {{ el.fileName }}
             </td>
             {% endif %}
+            <td>
+                {% for a in el.analytes.all %} 
+                {% if not forloop.first %}, {% endif %}
+                {{ a.name }} 
+                {% endfor %}
+            </td>
             <td>
                 {{ el.date | date:"c" }}
             </td>
