@@ -642,27 +642,27 @@ def showCurveSet(request, user, curveset_id):
     mm = mmm.MethodManager(user=user, curveset_id=curveset_id)
     if request.method == 'POST':
         if 'startAnalyze' in request.POST:
-            formAnalyze = mm.getAnalysisSelectionForm(request.POST)
+            formAnalyze = mm.getAnalysisSelectionForm(request.POST, curveSet=cs)
             if formAnalyze.is_valid():
                 analyzeid = formAnalyze.process(user, cs)
                 return HttpResponseRedirect(reverse('analyze', args=[analyzeid]))
         else:
-            formAnalyze = mm.getAnalysisSelectionForm()
+            formAnalyze = mm.getAnalysisSelectionForm(curveSet=cs)
 
         if all([
             not cs.locked,
             'startProcessing' in request.POST
         ]):
-            formProcess = mm.getProcessingSelectionForm(request.POST)
+            formProcess = mm.getProcessingSelectionForm(request.POST, curveSet=cs)
             if formProcess.is_valid():
                 procid = formProcess.process(user, cs)
                 return HttpResponseRedirect(reverse('process', args=[procid]))
         else:
-            formProcess = mm.getProcessingSelectionForm(disabled=cs.locked)
+            formProcess = mm.getProcessingSelectionForm(curveSet=cs, disabled=cs.locked)
 
     else:
-        formAnalyze = mm.getAnalysisSelectionForm()
-        formProcess = mm.getProcessingSelectionForm(disabled=cs.locked)
+        formAnalyze = mm.getAnalysisSelectionForm(curveSet=cs)
+        formProcess = mm.getProcessingSelectionForm(curveSet=cs, disabled=cs.locked)
 
     if cs.owner == user:
         share_button = '_voltJS_requestLink'

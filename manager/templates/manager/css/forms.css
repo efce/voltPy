@@ -67,6 +67,13 @@ form table th {
     margin: 3px;
 }
 
+.method_element_error {
+    background-color: #ee0055;
+    color: white;
+    border: 1px solid {% color3 %};
+    margin: 3px;
+}
+
 .method_element:hover {
     background-color: {% color2 %};
     color: {% color2font %};

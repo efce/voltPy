@@ -57,6 +57,14 @@ class Method(ABC):
         """
         raise NotImplementedError
 
+        """
+        checks described what tests should be made to the curveSet in order for procedure
+        to be implemented correctly. Please use procedures from manager.operations.checks.
+        Use partial implementation of function if you need some parameters to be passed.
+        """
+    checks = ()
+    errors = []
+
     @property
     def can_be_applied(self) -> bool:
         """

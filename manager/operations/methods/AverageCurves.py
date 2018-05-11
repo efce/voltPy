@@ -3,6 +3,7 @@ import numpy as np
 from manager.exceptions import VoltPyFailed
 import manager.operations.method as method
 from manager.operations.methodsteps.tagcurves import TagCurves
+from manager.operations.checks.check_datalenuniform import check_datalenuniform
 
 
 class AverageCurves(method.ProcessingMethod):
@@ -14,6 +15,7 @@ class AverageCurves(method.ProcessingMethod):
             'desc': 'Tag the curves you want to average with the same alphanumeric value.',
         },
     ]
+    checks = (check_datalenuniform,)
     description = """
 This is simple averaging method which allow to calculate the average from
 given number of plots.
