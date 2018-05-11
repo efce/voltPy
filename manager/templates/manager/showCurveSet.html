@@ -3,10 +3,6 @@
 {% block title %} Curve Set {% endblock %}
 
 {% block real_content %}
-<fieldset class="mt_rest">
-	<legend class="mt_name">Curves:</legend>
-	{{ at | safe }}
-</fieldset>
 <div class="mt_name">
 <a class="expandable" onclick="toggleDetails(this, '#select_analysis');">Analysis ↧</a>
 	<div id="select_analysis" class="mt_rest invisible">
@@ -31,4 +27,8 @@
 		{% endif %}
 	</div>
 </div>
+<fieldset class="mt_rest">
+	<legend class="mt_name">Curves:</legend>
+	{{ at | safe }}
+</fieldset>
 {% endblock %}

@@ -311,11 +311,10 @@ def deleteCurveFile(request, user, file_id):
 def deleteCurve(request, user, objType, objId, delId):
     if objType == 'cf':
         try:
-            cd = mmodels.CurveData.get(id=delId)
             delete_fun = mmodels.FileCurveSet.get(id=int(objId)).curvesData.remove
+            cd = mmodels.CurveData.objects.get(id=delId)  # get without permission checking, it is checked in remove func
         except ObjectDoesNotExist:
-            print('CF: obj does not exists')
-            raise
+            raise VoltPyDoesNotExists('Object does not exists, too low permissions')
         redirect_to = reverse('showCurveFile', args=[objId])
         return delete_helper(
             request=request,
@@ -326,11 +325,10 @@ def deleteCurve(request, user, objType, objId, delId):
         )
     else:  # curveset
         try:
-            cd = mmodels.CurveData.get(id=delId)
+            cd = mmodels.CurveData.objects.get(id=delId)
             delete_fun = mmodels.CurveSet.get(id=objId).curvesData.remove
         except ObjectDoesNotExist:
-            print('CS: obj does not exists')
-            raise
+            raise VoltPyDoesNotExists('Object does not exists, too low permissions')
         return delete_helper(
             request=request,
             user=user,
@@ -435,8 +433,7 @@ def showAnalysis(request, user, analysis_id):
     plotScr, plotDiv, butDiv = generate_plot(
         request=request,
         user=user,
-        plot_type='curveset',
-        value_id=an.curveSet.id
+        to_plot=an.curveSet
     )
     if mm.methodCanBeApplied():
         applyClass = '_voltJS_applyModel _voltJS_model@' + str(an.id)
@@ -541,8 +538,7 @@ def showFileSet(request, user, fileset_id):
     plotScr, plotDiv, butDiv = generate_plot(
         request=request,
         user=user,
-        plot_type='fileset',
-        value_id=fs.id
+        to_plot=fs
     )
     if fs.owner == user:
         share_button = '_voltJS_requestLink'
@@ -634,8 +630,7 @@ def showCurveSet(request, user, curveset_id):
     plotScr, plotDiv, butDiv = generate_plot(
         request=request,
         user=user,
-        plot_type='curveset',
-        value_id=cs.id
+        to_plot=cs
     )
 
     import manager.analytesTable as at
@@ -782,8 +777,7 @@ def showCurveFile(request, user, file_id):
     plotScr, plotDiv, butDiv = generate_plot(
         request=request,
         user=user,
-        plot_type='file',
-        value_id=cf.id
+        to_plot=cf
     )
 
     at_disp = at.analytesTable(cf, objType='cf')

@@ -12,6 +12,7 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 from picklefield.fields import PickledObjectField
 from manager.voltpymodel import VoltPyModel
+from manager.exceptions import VoltPyNotAllowed
 import manager
 
 
@@ -734,6 +735,12 @@ class Analysis(VoltPyModel):
             ('del', 'Delete'),
         )
 
+    def save(self, *args, **kwargs):
+        user = manager.helpers.functions.getUser()
+        if not user.has_perm('rw', self.curveSet):
+            raise VoltPyNotAllowed('Operation not allowed.')
+        super().save(*args, **kwargs)
+
     def __str__(self):
         return '%s %s: %s' % (self.date, self.methodDisplayName, self.name)
 
@@ -783,6 +790,12 @@ class Processing(VoltPyModel):
     error = models.CharField(max_length=255)
     completed = models.BooleanField(default=0)
 
+    def save(self, *args, **kwargs):
+        user = manager.helpers.functions.getUser()
+        if not user.has_perm('rw', self.curveSet):
+            raise VoltPyNotAllowed('Operation not allowed.')
+        super().save(*args, **kwargs)
+
     def getCopy(self, curveSet):
         newp = copy(self)
         newp.id = None
@@ -831,5 +844,11 @@ class SharedLink(VoltPyModel):
         return 'https://' + Site.objects.get_current().domain + reverse('shareLink',args=[self.link])
 
     def addUser(self, user):
-        self.users.add(user)
+        # TODO: HACK find a better way to baypass permission check (?)
+        gu = manager.helpers.functions.getUser
+        manager.helpers.functions.getUser = lambda: self.owner
+        try:
+            self.users.add(user)
+        finally:
+            manager.helpers.functions.getUser = gu
         self.save

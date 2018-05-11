@@ -48,7 +48,7 @@ class MethodManager:
             self.__type = 'processing'
             _id = int(kwargs.get('processing_id', kwargs.get('processing')))
             try:
-                self.__model = mmodels.Processing.objects.get(id=_id)
+                self.__model = mmodels.Processing.get(id=_id)
                 self.__curveset_id = self.__model.curveSet.id
             except ObjectDoesNotExist:
                 raise VoltPyDoesNotExists
@@ -56,7 +56,7 @@ class MethodManager:
             self.__type = 'analysis'
             _id = int(kwargs.get('analysis_id', kwargs.get('analysis')))
             try:
-                self.__model = mmodels.Analysis.objects.get(id=_id)
+                self.__model = mmodels.Analysis.get(id=_id)
             except ObjectDoesNotExist:
                 raise VoltPyDoesNotExists
         else:
@@ -159,8 +159,7 @@ class MethodManager:
             plotScr, plotDiv, butDiv = generate_plot(
                 request=request,
                 user=user,
-                plot_type='curveset',
-                value_id=self.__model.curveSet.id,
+                to_plot=self.__model.curveSet,
                 vtype=self.__method.type(),
                 vid=self.__model.id,
                 interactionName=self.__method.step['class'].plot_interaction,
@@ -195,7 +194,7 @@ class MethodManager:
 
     def applyTo(self, user, request, curveset_id) -> None:
         try:
-            cs = mmodels.CurveSet.objects.get(id=int(curveset_id))
+            cs = mmodels.CurveSet.get(id=int(curveset_id))
         except (ObjectDoesNotExist, ValueError):
             raise VoltPyDoesNotExists
         try:

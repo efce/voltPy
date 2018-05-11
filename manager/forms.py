@@ -175,6 +175,9 @@ class EditAnalytesForm(forms.Form):
         return self.cleaned_data
 
     def process(self, user):
+        if not user.has_perm('rw', self.cs):
+            raise VoltPyNotAllowed('Operation not allowed.')
+
         a = None
         if int(self.cleaned_data.get('existingAnalyte', -1)) == -1:
             analyteName = self.cleaned_data['newAnalyte']
