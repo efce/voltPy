@@ -137,22 +137,7 @@ class FileSet(VoltPyModel):
 
     @property
     def analytes(self):
-        return self.files.all()[0].analytes_set
-        fids = []
-        for f in self.files.only('id'):
-            fids.append(f.id)
-        return Analyte.objects.filter(filecurveset_set__id__in=fids).distinct()
-        # enumate ManyToMany field behavoir
-        alist = []
-        for f in self.files.all():
-            alist.extend(f.analytes.all())
-        auniq = list(set(alist))
-
-        class Tmp:
-            def all(cls):
-                return auniq
-
-        return Tmp
+        return Analyte.objects.filter(curveset__in=[x.id for x in self.files.all().only('id')])
 
 
 class Curve(VoltPyModel):
