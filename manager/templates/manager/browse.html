@@ -12,6 +12,11 @@
             <th>
                 <a href="./?sort=id">Id</a>
             </th>
+            {% if list_to_disp.0.disp_type == 'curve set' %}
+            <th>
+                Lock
+            </th>
+            {% endif %}
             <th>
                 <a href="./?sort=name">Name</a>
             </th>
@@ -25,6 +30,9 @@
                 <a href="./?sort=fileName">File name</a>
             </th>
             {% endif %}
+            <th>
+                <a href="./?sort=analytes">Analytes</a>
+            </th>
             <th>
                 <a href="./?sort=date">Date</a>
             </th>
@@ -42,6 +50,11 @@
             <td>
                 {{ el.id }}
             </td>
+            {% if list_to_disp.0.disp_type == 'curve set' %}
+            <td>
+                {{ el.locked }}
+            </td>
+            {% endif %}
             <td>
                 {{ el.name }}
             </td>
@@ -55,6 +68,12 @@
                 {{ el.fileName }}
             </td>
             {% endif %}
+            <td>
+                {% for a in el.analytes.all %} 
+                {% if not forloop.first %}, {% endif %}
+                {{ a.name }} 
+                {% endfor %}
+            </td>
             <td>
                 {{ el.date | date:"c" }}
             </td>

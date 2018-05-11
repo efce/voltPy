@@ -173,6 +173,7 @@ def browseCurveFiles(request, user, page_number=1):
     sortable_by = (
         'id',
         'name',
+        'analytes',
         'fileName',
         'owner',
         'date'
@@ -211,6 +212,7 @@ def browseAnalysis(request, user, page_number=1):
         'id',
         'name',
         'method',
+        'analytes',
         'owner',
         'date'
     )
@@ -245,6 +247,7 @@ def browseCurveSet(request, user, page_number=1):
     sortable_by = (
         'id',
         'name',
+        'analytes',
         'owner',
         'date'
     )
