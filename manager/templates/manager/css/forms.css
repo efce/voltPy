@@ -72,6 +72,8 @@ form table th {
     color: white;
     border: 1px solid {% color3 %};
     margin: 3px;
+    padding: 3px;
+    height: 100%;
 }
 
 .method_element:hover {

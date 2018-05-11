@@ -5,12 +5,13 @@
 <ul class="metehod_list" style="margin-top: 30px;">
     Browsing {{ type }} methods:
     {% for method in methods %}
-    <div {% if not method.3 %}class="method_element" onclick="selectMethod('{{ type }}', '{{ method.0 }}', '{{ method.1 }}');"{% else %} class="method_element_error"{% endif %}>
+    <div class="method_element"{% if not method.3 %} onclick="selectMethod('{{ type }}', '{{ method.0 }}', '{{ method.1 }}');"{% endif %}>
         <div class="align_top" style="display: inline-block; width: 59%">
             <t2>{{ method.1 | safe }}</t2>
             <p>{{ method.2 | safe }}</p>
             {% if method.3 %}
-            Data incompatible with method:
+            <div class="method_element_error">
+            Data incompatible with this method:
             <ul>
                 {% for err in method.3 %}
                     {% if err %}
@@ -18,6 +19,7 @@
                     {% endif %}
                 {% endfor %}
             </ul>
+            </div>
             {% endif %}
         </div>
         <div style="display: inline-block; width: 40%">
