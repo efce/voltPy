@@ -655,6 +655,7 @@ class CurveSet(VoltPyModel):
         user = manager.helpers.functions.getUser()
         ret = ''.join([
             '<li>Object ID: %d</li>' % self.id,
+            '<li>Status: %s</li>' % ('Locked' if self.locked else 'Unlocked'),
             '<li>Permissions: %s</li>' % ', '.join([x for x in get_user_perms(user, self)]),
             '<li>Owner: %s</li>' % self.owner,
             '<li>Date: %s</li>' % self.date.strftime("%Y-%m-%d"),

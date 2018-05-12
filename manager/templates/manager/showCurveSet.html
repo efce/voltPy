@@ -13,7 +13,9 @@
 	</div>
 </div>
 <div class="mt_name">
-	<a class="expandable" onclick="toggleDetails(this, '#select_processing');">Processing ↧</a>
+	<a class="expandable" onclick="toggleDetails(this, '#select_processing');">
+		{% if showing.locked %}🔒 {% endif %}Processing ↧
+	</a>
 	<div id="select_processing" class="mt_rest invisible">
 		{% if showing.locked %}
 		Processing of this curveset is not allowed, because it was already used in
@@ -28,7 +30,7 @@
 	</div>
 </div>
 <fieldset class="mt_rest">
-	<legend class="mt_name">Curves:</legend>
+	<legend class="mt_name">{% if showing.locked %}🔒 {% endif %}Curves:</legend>
 	{{ at | safe }}
 </fieldset>
 {% endblock %}

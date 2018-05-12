@@ -15,8 +15,10 @@
         <button class="{{ back_to_browse_button }}">Browse {{ showing.disp_type }}</button>
         {% if showing.disp_type == 'analysis' %}
         <button class="{{ curve_set_button }}">Goto curve set</button>
+        {% elif showing.disp_type == 'curve set' %}
+        <button class="{{ curve_set_button }}">Copy curve set</button>
         {% else %}
-        <button class="{{ curve_set_button }}">New curve set</button>
+        <button class="{{ curve_set_button }}">Create curve set</button>
         {% endif %}
         <a class="expandable" onclick="toggleDetails(this, '#more_actions');">More actions ↧</a>
         <div id="more_actions" class="mt_rest invisible">
