@@ -174,11 +174,11 @@ $( function() {
         
         if ( window.voltPy1.ChangeDispCurrent != -1 ) {
             var classToHide = '_voltJS_changeValue_' + window.voltPy1.ChangeDispCurrent;
-            $( '.' + classToHide ).addClass('at_other');
+            $( '.' + classToHide ).addClass('at_hideable');
         }
         if (value != -1 ) {
             var classToShow = '_voltJS_changeValue_' + value;
-            $( "." + classToShow ).removeClass('at_other');
+            $( "." + classToShow ).removeClass('at_hideable');
         }
         window.voltPy1.ChangeDispCurrent = value;
     });

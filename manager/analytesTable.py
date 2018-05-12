@@ -37,7 +37,7 @@ def analytesTable(obj, objType: str) -> str:
 
     for a in cs.analytes.all():
         ret.append("""
-            <th class="at_other _voltJS_changeValue_{an_id}">&nbsp;
+            <th class="at_hideable _voltJS_changeValue_{an_id}">&nbsp;
                 <button class="{goTo}"{disabled}> {an_name} [{an_unit}] </button>
             </th>""".format(
                 an_name=a.name,
@@ -54,7 +54,7 @@ def analytesTable(obj, objType: str) -> str:
             )
         )
 
-    ret.append('<th class="at_other">{0}</th>'.format(addAnalyteBtn))
+    ret.append('<th class="at_hideable">{0}</th>'.format(addAnalyteBtn))
     ret.append('</tr></thead><tbody>')
 
     for cd in cs.curvesData.only('id', 'curve'):
@@ -66,8 +66,8 @@ def analytesTable(obj, objType: str) -> str:
         )
         for a in cs.analytes.all():
             conc = cs.analytesConc.get(a.id, {}).get(cd.id, 0)
-            ret.append('<td class="at_other _voltJS_changeValue_%s"> %f </td>' % (a.id, conc))
-        ret.append('<td class="at_other">')
+            ret.append('<td class="at_hideable _voltJS_changeValue_%s"> %f </td>' % (a.id, conc))
+        ret.append('<td class="at_hideable">')
         if not cs.locked:
             ret.append(
                 htmlButton.format(
