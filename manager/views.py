@@ -993,10 +993,10 @@ def editAnalyte(request, user, objType, objId, analyteId):
 
     if objType == 'cf':
         plotType = 'file'
-        dispType = 'File'
+        dispType = 'file'
     else:
         plotType = 'curveset'
-        dispType = 'CurveSet'
+        dispType = 'curveSet'
     plotScr, plotDiv, butDiv = generate_plot(
         request=request,
         user=user,
@@ -1005,12 +1005,12 @@ def editAnalyte(request, user, objType, objId, analyteId):
     )
 
     if analyteId == 'new':
-        infotext = 'Adding new analyte in '
+        infotext = 'Adding new analyte for '
     else:
         try:
             analyte = mmodels.Analyte.get(id=analyteId)
         except ObjectDoesNotExist:
-            infotext = 'Adding new analyte in '
+            infotext = 'Adding new analyte for '
         infotext = 'Editing {0} in '.format(analyte.name)
 
     context = {
@@ -1024,7 +1024,7 @@ def editAnalyte(request, user, objType, objId, analyteId):
         'infotext': ''.join([
             infotext,
             dispType,
-            ' #{0}'.format(objId)
+            ' {0}'.format(cs)
         ])
     }
     return voltpy_render(
