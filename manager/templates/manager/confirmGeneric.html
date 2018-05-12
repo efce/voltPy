@@ -3,8 +3,9 @@
 {% block title %} Confirm {% endblock %}
 
 {% block real_content %}
-<p>{{ text_to_confirm }}</p>
+<p>{{ text_to_confirm | safe }}</p>
 <form method="post" action="" enctype="multipart/form-data">
+	{{ hidden_values | safe }}
 	<table>
 	{% csrf_token %}
 	{{ form.as_table }}

@@ -31,8 +31,14 @@
 		{% endif %}
 	</div>
 </div>
-<fieldset class="mt_rest">
-	<legend class="mt_name">{% if showing.locked %}🔒 {% endif %}Curves:</legend>
-	{{ at | safe }}
-</fieldset>
+<form method="post" action="{% url 'deleteFromCurveSet' showing.id %}">
+{% csrf_token %}
+	<fieldset class="mt_rest">
+		<legend class="mt_name">{% if showing.locked %}🔒 {% endif %}Curves:&nbsp;
+			<button type="button" class="{{ add_analyte_button }}">Add analyte</button>&nbsp;
+			<button type="submit">Delete selected</button>
+		</legend>
+		{{ at | safe }}
+	</fieldset>
+</form>
 {% endblock %}

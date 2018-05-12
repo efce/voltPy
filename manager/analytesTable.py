@@ -10,19 +10,6 @@ def analytesTable(obj, objType: str) -> str:
     cs = obj
 
     htmlButton = '<button class="{goTo}">{bname}</button>'
-    if not cs.locked:
-        addAnalyteBtn = htmlButton.format(
-            bname='Add analyte',
-            goTo=get_redirect_class(
-                reverse('editAnalyte', kwargs={
-                    'objType': objType,
-                    'objId': obj.id,
-                    'analyteId': 'new'
-                })
-            )
-        )
-    else:
-        addAnalyteBtn = '<button disabled> Add analyte </button>'
 
     lenana = len(cs.analytes.only('id'))
 
@@ -38,7 +25,7 @@ def analytesTable(obj, objType: str) -> str:
     for a in cs.analytes.all():
         ret.append("""
             <th class="at_hideable _voltJS_changeValue_{an_id}">&nbsp;
-                <button class="{goTo}"{disabled}> {an_name} [{an_unit}] </button>
+                <button type="button" class="{goTo}"{disabled}> {an_name} [{an_unit}] </button>
             </th>""".format(
                 an_name=a.name,
                 an_id=a.id,
@@ -46,7 +33,7 @@ def analytesTable(obj, objType: str) -> str:
                 goTo=get_redirect_class(
                     reverse('editAnalyte', kwargs={
                         'objType': objType,
-                        'objId': obj.id, 
+                        'objId': obj.id,
                         'analyteId': a.id
                     })
                 ),
@@ -54,21 +41,27 @@ def analytesTable(obj, objType: str) -> str:
             )
         )
 
-    ret.append('<th class="at_hideable">{0}</th>'.format(addAnalyteBtn))
+    ret.append('<th class="at_hideable">&#9634;</th>')
     ret.append('</tr></thead><tbody>')
 
     for cd in cs.curvesData.only('id', 'curve'):
         ret.append(
-            '<tr class="_voltJS_plotHighlight _voltJS_highlightCurve@{0}"><td> {1} </td>'.format(
-                cd.id,
-                cd.curve.__str__()
+            '<tr class="_voltJS_plotHighlight _voltJS_highlightCurve@{cdid}" onclick="$(\'input[name=cd_{cdid}]\').click();"><td> {cdname} </td>'.format(
+                cdid=cd.id,
+                cdname=cd.curve.__str__()
             )
         )
         for a in cs.analytes.all():
             conc = cs.analytesConc.get(a.id, {}).get(cd.id, 0)
             ret.append('<td class="at_hideable _voltJS_changeValue_%s"> %f </td>' % (a.id, conc))
         ret.append('<td class="at_hideable">')
+        ret.append(
+            '<input style="width: 17px; height: 17px;" type="checkbox" name="cd_%i" %s/>' 
+                % (cd.id, 'disabled' if cs.locked else '')
+        )
+        """
         if not cs.locked:
+            ret.append('<input type="checkbox" name="cd_%i">' % cd.id)
             ret.append(
                 htmlButton.format(
                     bname='Delete',
@@ -83,6 +76,7 @@ def analytesTable(obj, objType: str) -> str:
             )
         else:
             ret.append('<button disabled>Delete</button>')
+        """
         ret.append('</td>')
         ret.append('</tr>')
     ret.append('</tbody></table></div>')

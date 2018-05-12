@@ -375,6 +375,80 @@ def deleteCurveSet(request, user, curveset_id):
 
 @redirect_on_voltpyexceptions
 @with_user
+def deleteFromCurveSet(request, user, curveset_id):
+    cs = mmodels.CurveSet.get(id=int(curveset_id))
+    return deleteFromCurveSetLike(request, user, cs)
+
+
+@redirect_on_voltpyexceptions
+@with_user
+def deleteFromFile(request, user, file_id):
+    cs = mmodels.FileCurveSet.get(id=int(file_id))
+    return deleteFromCurveSetLike(request, user, cs)
+
+
+def deleteFromCurveSetLike(request, user, cs):
+    if request.method == 'POST':
+        text = []
+        if request.POST.get('confirm', False):
+            confForm = mforms.GenericConfirmForm(request.POST)
+            cdids = request.POST.get('cdids', '').split(',')
+            cdids = list(map(int, cdids))
+            if confForm.confirmed():
+                cds = mmodels.CurveData.filter(id__in=cdids)
+                for cd in cds.all():
+                    cs.removeCurve(cd)
+                cs.save()
+                add_notification(request=request, text="Deleted")
+                return HttpResponseRedirect(cs.getUrl())
+            extra_data = ''.join([
+                '<input type="hidden" name="cdids" value="',
+                ','.join(map(str, cdids)),
+                '" />'
+            ])
+            if len(cdids) > 0:
+                cds = mmodels.CurveData.filter(id__in=cdids)
+                text.append('Following curves will be removed from %s:<ul>' % cs)
+                for cd in cds.all():
+                    text.append('<li> %s </li>' % cd.curve.name)
+                text.append('</ul>')
+        else:
+            to_del = []
+            for pkey, pval in request.POST.items():
+                if pkey.startswith('cd_'):
+                    if pval == 'on':
+                        to_del.append(int(pkey[3:]))
+            text = []
+            if len(to_del) > 0:
+                cds = mmodels.CurveData.filter(id__in=to_del)
+                text.append('Following curves will be removed from %s:<ul>' % cs)
+                for cd in cds.all():
+                    text.append('<li> %s </li>' % cd.curve.name)
+                text.append('</ul>')
+            extra_data = ''.join([
+                '<input type="hidden" name="cdids" value="',
+                ','.join(map(str, to_del)),
+                '" />'
+            ])
+
+        confForm = mforms.GenericConfirmForm()
+
+        context = {
+            'text_to_confirm': ''.join(text),
+            'hidden_values': extra_data,
+            'form': confForm,
+            'user': user,
+        }
+
+        return voltpy_render(
+            request=request,
+            template_name='manager/confirmGeneric.html',
+            context=context
+        )
+
+
+@redirect_on_voltpyexceptions
+@with_user
 def createCurveSet(request, user, toCloneCF=[], toCloneCS=[]):
     """
     from pyinstrument import Profiler
@@ -676,6 +750,16 @@ def showCurveSet(request, user, curveset_id):
         )
     else:
         undo_button = '_disabled'
+    if not cs.locked:
+        add_analyte = get_redirect_class(
+            reverse('editAnalyte', kwargs={
+                'objType': 'cs',
+                'objId': cs.id,
+                'analyteId': 'new'
+            })
+        )
+    else:
+        add_analyte = '_disabled'
     context = {
         'scripts': plotScr + formAnalyze.getJS(request) + formProcess.getJS(request),
         'main_plot': plotDiv,
@@ -707,6 +791,7 @@ def showCurveSet(request, user, curveset_id):
                 'toCloneId': cs.id,
             })
         ),
+        'add_analyte_button': add_analyte,
     }
     return voltpy_render(
         request=request,
@@ -789,6 +874,13 @@ def showCurveFile(request, user, file_id):
     else:
         share_button = '_disabled'
 
+    add_analyte = get_redirect_class(
+        reverse('editAnalyte', kwargs={
+            'objType': 'cf',
+            'objId': cf.id,
+            'analyteId': 'new'
+        })
+    )
     context = {
         'scripts': plotScr,
         'main_plot': plotDiv,
@@ -817,7 +909,8 @@ def showCurveFile(request, user, file_id):
         'share_button': share_button,
         'back_to_browse_button': get_redirect_class(
             reverse('browseCurveFiles')
-        )
+        ),
+        'add_analyte_button': add_analyte
     }
     return voltpy_render(
         request=request,
