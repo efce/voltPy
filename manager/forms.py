@@ -81,10 +81,10 @@ class EditAnalytesForm(forms.Form):
         super(EditAnalytesForm, self).__init__(*args, **kwargs)
         self.isCal = False
         self.cs = curveSet
-        self.generateFields(analyte_id)
+        self.generateFields(user, analyte_id)
         self.original_id = analyte_id
 
-    def generateFields(self, analyte_id):
+    def generateFields(self, user, analyte_id):
         analyte = None
         if analyte_id != '-1':
             try:
@@ -101,7 +101,7 @@ class EditAnalytesForm(forms.Form):
         eaDefaultUnit = '0g'
 
         # TODO: user analytes or all ?
-        analytesFromDb = mmodels.Analyte.objects.all()
+        analytesFromDb = mmodels.Analyte.objects.filter(owner=user)
         existingAnalytes = [(-1, 'Add new')]
         if analytesFromDb:
             for an in analytesFromDb:
