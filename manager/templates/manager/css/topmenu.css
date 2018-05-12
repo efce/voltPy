@@ -16,7 +16,7 @@
   float: left; 
 } 
 
-#topmenu li a,span { 
+#topmenu li a, #topmenu li span { 
   display: block; 
   text-align: center; 
   padding: 12px 14px; 

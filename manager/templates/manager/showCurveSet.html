@@ -1,4 +1,5 @@
 {% extends "manager/main.html" %}
+{% load volt_html %}
 
 {% block title %} Curve Set {% endblock %}
 
@@ -13,8 +14,9 @@
 	</div>
 </div>
 <div class="mt_name">
+	{% if showing.locked %}{% lock %} {% endif %}
 	<a class="expandable" onclick="toggleDetails(this, '#select_processing');">
-		{% if showing.locked %}🔒 {% endif %}Processing ↧
+		Processing ↧
 	</a>
 	<div id="select_processing" class="mt_rest invisible">
 		{% if showing.locked %}
@@ -34,9 +36,9 @@
 <form method="post" action="{% url 'deleteFromCurveSet' showing.id %}">
 {% csrf_token %}
 	<fieldset class="mt_rest">
-		<legend class="mt_name">{% if showing.locked %}🔒 {% endif %}Curves:&nbsp;
+		<legend class="mt_name">{% if showing.locked %}{% lock %} {% endif %}Curves:&nbsp;
 			<button type="button" class="{{ add_analyte_button }}">Add analyte</button>&nbsp;
-			<button type="submit">Delete selected</button>
+			<button type="submit" {% if showing.locked %}class="_disabled"{% endif %}>Delete selected</button>
 		</legend>
 		{{ at | safe }}
 	</fieldset>

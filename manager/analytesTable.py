@@ -41,7 +41,7 @@ def analytesTable(obj, objType: str) -> str:
             )
         )
 
-    ret.append('<th class="at_hideable">&#9634;</th>')
+    ret.append('<th class="at_hideable at_selection">&#9634;</th>')
     ret.append('</tr></thead><tbody>')
 
     for cd in cs.curvesData.only('id', 'curve'):
@@ -54,9 +54,9 @@ def analytesTable(obj, objType: str) -> str:
         for a in cs.analytes.all():
             conc = cs.analytesConc.get(a.id, {}).get(cd.id, 0)
             ret.append('<td class="at_hideable _voltJS_changeValue_%s"> %f </td>' % (a.id, conc))
-        ret.append('<td class="at_hideable">')
+        ret.append('<td class="at_hideable at_selection">')
         ret.append(
-            '<input style="width: 17px; height: 17px;" type="checkbox" name="cd_%i" %s/>' 
+            '<input class="at_selection" style="height: 19px" type="checkbox" name="cd_%i" %s/>' 
                 % (cd.id, 'disabled' if cs.locked else '')
         )
         """

@@ -27,7 +27,7 @@
     padding: 0px;
     border-spacing: 0px;
 }
-.analytes_table th,td {
+.analytes_table th,.analytes_table td {
     padding: 1px 3px;
     width: 150px;
     margin: 2px;
@@ -37,7 +37,6 @@
     border-radius: 0px !important;
 }
 .analytes_table td {
-    padding: 1px 5px;
     border-right: 1px {% color1 %} solid;
     border-bottom: 1px {% color1 %} solid;
 }
@@ -46,6 +45,10 @@
     background-color: {% color1 %};
     color: {% color1font %};
     border-right: 1px {% color2 %} solid;
+}
+
+.at_selection {
+    width: 20px !important;
 }
 
 .method_list {
@@ -82,6 +85,11 @@
 .browse_table th {
     background-color: {% color1 %};
     color: {% color1font %};
+    padding: 1px 6px;
+}
+.browse_table td {
+    border-radius: 0px !important;
+    padding: 1px 6px;
 }
 .browse_table th a {
     color: {% color1font %};
