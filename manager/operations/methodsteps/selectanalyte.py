@@ -25,7 +25,7 @@ class SelectAnalyte(MethodStep):
     def getHTML(self, user, request, model):
         cs = model.curveSet
 
-        style = "<style>.at_other { display: none; };</style>"
+        style = "<style>.at_other { display: none !important; };</style>"
         import manager.analytesTable as at
         at_disp = at.analytesTable(cs, objType='cs')
 

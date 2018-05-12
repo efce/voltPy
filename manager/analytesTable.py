@@ -38,7 +38,7 @@ def analytesTable(obj, objType: str) -> str:
     for a in cs.analytes.all():
         ret.append("""
             <th class="at_other _voltJS_changeValue_{an_id}">&nbsp;
-                <button class="{goTo} at_other"{disabled}> {an_name} [{an_unit}] </button>
+                <button class="{goTo}"{disabled}> {an_name} [{an_unit}] </button>
             </th>""".format(
                 an_name=a.name,
                 an_id=a.id,

@@ -74,6 +74,8 @@ calculated as a difference between max and min signal in the given range.
             yvalues.append(max(cd.yVector[startIndex:endIndex])-min(cd.yVector[startIndex:endIndex]))
             xvalues.append(self.model.curveSet.analytesConc.get(analyte.id, {}).get(cd.id, 0))
 
+        if 0 not in xvalues:
+            raise VoltPyFailed('The method requires signal value for concentration 0 %s' % self.model.customData['units'])
         data = [
             [float(b) for b in xvalues],
             [float(b) for b in yvalues]
