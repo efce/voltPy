@@ -127,9 +127,12 @@ class EditAnalytesForm(forms.Form):
         self.fields['newAnalyte'] = forms.CharField(
             label="",
             max_length=128,
-            required=False
+            required=False,
+            widget=forms.TextInput(attrs={
+                'placeholder': 'New analyte name',
+                'class': 'newAnalyte'
+            })
         )
-        self.fields['newAnalyte'].widget.attrs['class'] = 'newAnalyte'
 
         if conc is not None:
             self.fields['newAnalyte'].initial = ""
