@@ -97,7 +97,9 @@
 .browse_table tbody tr:nth-child(even) {
     background-color: {% color3even %};
 }
-
+.newAnalyte {
+    margin-bottom: 30px !important;
+}
 #fixed_header thead, #fixed_header tbody, #fixed_header tr, #fixed_header td, #fixed_header th { 
     display: block; 
 }  
