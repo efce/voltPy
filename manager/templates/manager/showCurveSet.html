@@ -18,9 +18,11 @@
 	</a>
 	<div id="select_processing" class="mt_rest invisible">
 		{% if showing.locked %}
-		Processing of this curveset is not allowed, because it was already used in
-		analysis.<br /> To process the data further please create a copy of it.<br />
-		<button class="_voltJS_urlChanger _voltJS_url@{{ cloneCSUrl }}"> Copy </button>
+		<p class="method_element_error" style="padding 5px; width: 85%">
+		This CurveSet is locked and its alteration (except for name) is not allowed. It was already used in
+		analysis and any changes would result in data integrity errors.<br /> To process the data further please create a copy of it.<br />
+		<button class="{{ curve_set_button }}"> Copy curve set</button>
+		</p>
 		{% else %}
 		<form method="post" action="" enctype="multipart/form-data">
 			{% csrf_token %}
