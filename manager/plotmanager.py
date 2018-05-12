@@ -447,7 +447,10 @@ class PlotManager:
         else:
             w = widgetbox(radio_button_group, height=50)
             # actionbar = row([px, w, bback, bforward], width=self.plot_width)
-            actionbar = row([w, bunselect], sizing_mode='fixed', height=150)
+            if self.include_x_switch:
+                actionbar = row([w, bunselect], sizing_mode='fixed', height=50)
+            else:
+                actionbar = row([bunselect], sizing_mode='fixed', height=50)
 
         return (self.p, actionbar)
         """

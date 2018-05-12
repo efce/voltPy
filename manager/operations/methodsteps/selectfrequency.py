@@ -51,6 +51,8 @@ class SelectFrequency(MethodStep):
             )
         
         p.setInteraction('set1cursor')
-        p.include_x_switch = True
+        p.include_x_switch = False
+        p.plot_height = 300
+        p.plot_width = 500
         src, divPlot, divBut = p.getEmbeded(request, user, 'processing', model.id)
-        return {'head': src, 'body': ' '.join([divPlot, cf_txt])}
+        return {'head': src, 'body': ' '.join(['<div style="height: 300px;">', divPlot, '</div><div style="height: 60px;">', divBut, '</div><div>', cf_txt, '</div>'])}
