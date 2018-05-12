@@ -674,7 +674,7 @@ def undoCurveSet(request, user, curveset_id):
         confForm = mforms.GenericConfirmForm()
 
     context = {
-        'text_to_confirm': 'This will undo changes to CurveSet {0}'.format(cs.id),
+        'text_to_confirm': 'This will undo changes to CurveSet {0}'.format(cs),
         'form': confForm,
         'user': user,
     }

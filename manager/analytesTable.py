@@ -56,27 +56,9 @@ def analytesTable(obj, objType: str) -> str:
             ret.append('<td class="at_hideable _voltJS_changeValue_%s"> %f </td>' % (a.id, conc))
         ret.append('<td class="at_hideable at_selection">')
         ret.append(
-            '<input class="at_selection" style="height: 19px" type="checkbox" name="cd_%i" %s/>' 
+            '<input onclick="event.stopPropagation();" class="at_selection" style="height: 19px" type="checkbox" name="cd_%i" %s/>'
                 % (cd.id, 'disabled' if cs.locked else '')
         )
-        """
-        if not cs.locked:
-            ret.append('<input type="checkbox" name="cd_%i">' % cd.id)
-            ret.append(
-                htmlButton.format(
-                    bname='Delete',
-                    goTo=get_redirect_class(
-                        reverse('deleteCurve', kwargs={
-                            'objType': objType,
-                            'objId': obj.id, 
-                            'delId': cd.id
-                        })
-                    )
-                )
-            )
-        else:
-            ret.append('<button disabled>Delete</button>')
-        """
         ret.append('</td>')
         ret.append('</tr>')
     ret.append('</tbody></table></div>')
