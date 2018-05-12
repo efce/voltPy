@@ -464,7 +464,7 @@ def showAnalysis(request, user, analysis_id):
                 an.curveSet.id
             ])
         ),
-        'export_data': get_redirect_class(
+        'export_data_button': get_redirect_class(
             reverse('export', kwargs={
                 'objType': 'an',
                 'objId': an.id,
