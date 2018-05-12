@@ -20,6 +20,11 @@
             <th>
                 <a href="./?sort=name">Name</a>
             </th>
+            {% if list_to_disp.0.disp_type == 'file set' %}
+            <th>
+                <small>Files</small>
+            </th>
+            {% endif %}
             {% if list_to_disp.0.disp_type == 'analysis' %}
             <th>
                 <a href="./?sort=method">Method</a>
@@ -55,16 +60,23 @@
             </td>
             {% if list_to_disp.0.disp_type == 'curve set' %}
             <td>
-            {% if el.locked %}
+                {% if el.locked %}
                 🔒
-            {% else %}
+                {% else %}
                 🔓
-            {% endif %}
+                {% endif %}
             </td>
             {% endif %}
             <td>
                 {{ el.name }}
             </td>
+            {% if el.disp_type == 'file set' %}
+            <td><ul class="ul_compress">
+                {% for f in el.files.all %}
+                    <li>{{ f.name }}</li>
+                {% endfor %}
+            </ul></td>
+            {% endif %}
             {% if list_to_disp.0.disp_type == 'analysis' %}
             <td>
                 {{ el.methodDisplayName }}
@@ -79,10 +91,10 @@
             </td>
             {% endif %}
             <td>
-                {% for a in el.analytes.all %} 
+            {% for a in el.analytes.all %} 
                 {% if not forloop.first %}, {% endif %}
                 {{ a.name }} 
-                {% endfor %}
+            {% endfor %}
             </td>
             <td>
                 {{ el.date | date:"c" }}

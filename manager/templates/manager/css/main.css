@@ -151,3 +151,8 @@ button, input[type="submit"] {
     width: 60%;
     height: 70%;
 }
+
+.ul_compress {
+    margin: 0px 1.5em;
+    padding: 0px;
+}
