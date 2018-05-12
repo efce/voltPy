@@ -1,5 +1,21 @@
 <button type="button" style="width: 300px" onclick="toggleMethod('{{ type }}');">Select {{ type }} method</button>
-<div id="{{ type }}_selected">No method selected.</div>
+<div id="{{ type }}_selected">No method selected.
+</div>
+<div class="last_used">
+    <fieldset>
+        <legend>Last used</legend>
+    {% if type == 'processing' %}
+        {% for meth in user.profile.lastUsedProcessing %}
+        <button type="button" onclick="selectMethod('{{ type }}', '{{ meth.method }}', '{{ meth.methodDisplayName }}', false);">{{ meth.methodDisplayName }}</button><br />
+        {% endfor %}
+    {% elif type == 'analysis' %}
+        {% for meth in user.profile.lastUsedAnalysis %}
+        <button type="button" onclick="selectMethod('{{ type }}', '{{ meth.method }}', '{{ meth.methodDisplayName }}', false);">{{ meth.methodDisplayName }}</button><br />
+        {% endfor %}
+    {% endif %}
+    </fieldset>
+</div>
+
 <div class="{{ type }}_methods float_menu invisible">
 <a class="closeX"></a>
 <ul class="metehod_list" style="margin-top: 30px;">

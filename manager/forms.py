@@ -52,7 +52,8 @@ class EditName(forms.Form):
             max_length=128,
             initial=self.model.name,
             required=False,
-            label=label_name
+            label=label_name,
+            widget=forms.TextInput(attrs={'size': 30})
         )
         self.fields['e_id'] = forms.CharField(
             max_length=10,

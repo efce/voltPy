@@ -14,6 +14,7 @@ from manager.exceptions import VoltPyFailed
 from manager.helpers.functions import generate_plot
 from manager.helpers.functions import voltpy_render
 from manager.helpers.functions import add_notification
+from manager.helpers.functions import getUser
 
 
 class MethodManager:
@@ -301,6 +302,7 @@ class MethodManager:
                 'disabled': self.disabled,
                 'methods': to_disp,
                 'type': self.type,
+                'user': getUser()
             }
             tt = loader.get_template('manager/method_selection.html')
             return tt.render(context=context)

@@ -49,6 +49,8 @@
 
 .at_selection {
     width: 20px !important;
+    padding-left: 0px !important;
+    font-size: large;
 }
 
 .method_list {

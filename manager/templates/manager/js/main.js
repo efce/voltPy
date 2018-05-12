@@ -341,7 +341,7 @@ function toggleMethod(type) {
     $(class_name).toggleClass('invisible');
 }
 
-function selectMethod(mtype, mname, mdisp) {
+function selectMethod(mtype, mname, mdisp, toggle=true) {
     $('#' + mtype + '_selected').text('Selected: ' + mdisp + " ")
     input = $('<input type="hidden" name="' + mtype + '-method" value="' + mname + '" />');
     if (mtype == 'analysis') {
@@ -351,5 +351,7 @@ function selectMethod(mtype, mname, mdisp) {
     }
     $('#' + mtype + '_selected').append(input);
     $('#' + mtype + '_selected').append(but);
-    toggleMethod(mtype);
+    if (toggle) {
+        toggleMethod(mtype);
+    }
 }

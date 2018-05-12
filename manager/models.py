@@ -49,6 +49,24 @@ class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
     email_confirmed = models.BooleanField(default=False)
     show_on_x = models.CharField(max_length=1, choices=ONX_OPTIONS, default='P')
+    #fav_processing = PickledObjectField(default=[])
+    #fav_analysis = PickledObjectField(default=[])
+    
+    @property
+    def lastUsedProcessing(self, number=3) -> List:
+        user = manager.helpers.functions.getUser()
+        ret = Processing.filter(owner=user).values('method', 'methodDisplayName').distinct()
+        if len(ret) > 3:
+            ret = ret[len(ret)-3:]
+        return ret
+
+    @property
+    def lastUsedAnalysis(self, number=3) -> List:
+        user = manager.helpers.functions.getUser()
+        ret = Analysis.filter(owner=user).values('method', 'methodDisplayName').distinct()
+        if len(ret) > 3:
+            ret = ret[len(ret)-3:]
+        return ret
 
 
 @receiver(post_save, sender=User)
