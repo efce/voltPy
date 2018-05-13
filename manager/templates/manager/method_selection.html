@@ -6,11 +6,28 @@
         <legend>Last used</legend>
     {% if type == 'processing' %}
         {% for meth in user.profile.lastUsedProcessing %}
-        <button type="button" onclick="selectMethod('{{ type }}', '{{ meth.method }}', '{{ meth.methodDisplayName }}', false);">{{ meth.methodDisplayName }}</button><br />
+        {# Probably extremely inefficient way to check if method is compatible with the curveset #}
+            {% for method in methods %}
+                {% if meth.method == method.0 %}
+                    {% if method.3 %}
+        <button class="_disabled" type="button" onclick="">{{ meth.methodDisplayName }}</button><br />
+                    {% else %}
+        <button class="" type="button" onclick="selectMethod('{{ type }}', '{{ meth.method }}', '{{ meth.methodDisplayName }}', false);">{{ meth.methodDisplayName }}</button><br />
+                    {% endif %}
+                {% endif %}
+            {% endfor %}
         {% endfor %}
     {% elif type == 'analysis' %}
         {% for meth in user.profile.lastUsedAnalysis %}
-        <button type="button" onclick="selectMethod('{{ type }}', '{{ meth.method }}', '{{ meth.methodDisplayName }}', false);">{{ meth.methodDisplayName }}</button><br />
+            {% for method in methods %}
+                {% if meth.method == method.0 %}
+                    {% if method.3 %}
+        <button class="_disabled" type="button" onclick="">{{ meth.methodDisplayName }}</button><br />
+                    {% else %}
+        <button class="" type="button" onclick="selectMethod('{{ type }}', '{{ meth.method }}', '{{ meth.methodDisplayName }}', false);">{{ meth.methodDisplayName }}</button><br />
+                    {% endif %}
+                {% endif %}
+            {% endfor %}
         {% endfor %}
     {% endif %}
     </fieldset>
