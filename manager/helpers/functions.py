@@ -330,6 +330,7 @@ def paginate(request, queryset, sortable_by: List, current_page: int):
         '<a href="%s%s/%s">[&gt;]</a>&nbsp;' % (path, str(current_page+1) if (current_page < ret['number_of_pages']) else str(ret['number_of_pages']), txt_sort),
         '<a href="%s%s/%s">[&gt;&gt;]</a>' % (path, str(ret['number_of_pages']), txt_sort),
         '&nbsp; %d items per page' % page_size,
+        ((' [search result for: %s]' % search_string) if search_string else ''),
         '</div>'
     ])
     return ret
