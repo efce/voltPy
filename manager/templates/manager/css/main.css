@@ -157,3 +157,9 @@ button, input[type="submit"] {
     margin: 0px 1.5em;
     padding: 0px;
 }
+
+.css_search {
+    padding: 0px;
+    margin: 5px 3px;
+    display: block-inline;
+}

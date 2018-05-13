@@ -268,6 +268,7 @@ def generate_share_link(user, perm, obj):
 
 
 def paginate(request, queryset, sortable_by: List, current_page: int):
+    page_size = 15
     path = request.path
     txt_sort = ''
     search_string = ''
@@ -299,7 +300,6 @@ def paginate(request, queryset, sortable_by: List, current_page: int):
         path = '/'.join(splpath[:-2])
         path += '/'
     ret = {}
-    page_size = 30
     elements = len(queryset)
     ret['number_of_pages'] = int(np.ceil(elements/page_size))
     if current_page <= 0 or current_page > ret['number_of_pages']:
@@ -326,11 +326,12 @@ def paginate(request, queryset, sortable_by: List, current_page: int):
             ret['paginator'] += '[{num}]&nbsp;'.format(num=p)
         else: 
             ret['paginator'] += '<a href="{path}{num}/{sort}">[{num}]</a>&nbsp;'.format(path=path, num=p, sort=txt_sort)
+    search_string = search_string.replace('<', '&lt;').replace('>', '&gt;')
     ret['paginator'] += ''.join([
         '<a href="%s%s/%s">[&gt;]</a>&nbsp;' % (path, str(current_page+1) if (current_page < ret['number_of_pages']) else str(ret['number_of_pages']), txt_sort),
         '<a href="%s%s/%s">[&gt;&gt;]</a>' % (path, str(ret['number_of_pages']), txt_sort),
         '&nbsp; %d items per page' % page_size,
-        ((' [search result for: %s]' % search_string) if search_string else ''),
+        ((' <span class="css_search">&nbsp;[search results for: %s]&nbsp;</span>' % search_string) if search_string else ''),
         '</div>'
     ])
     return ret
