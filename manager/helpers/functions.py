@@ -313,6 +313,7 @@ def paginate(request, queryset, sortable_by: List, current_page: int):
             txt_sort = '?search=%s' % quote(search_string)
         else:
             txt_sort += '&search=%s' % quote(search_string)
+    items_count = len(queryset)
     ret['current_page_content'] = queryset[start:end:1]
     ret['paginator'] = ''
     ret['paginator'] = ''.join([
@@ -330,7 +331,7 @@ def paginate(request, queryset, sortable_by: List, current_page: int):
     ret['paginator'] += ''.join([
         '<a href="%s%s/%s">[&gt;]</a>&nbsp;' % (path, str(current_page+1) if (current_page < ret['number_of_pages']) else str(ret['number_of_pages']), txt_sort),
         '<a href="%s%s/%s">[&gt;&gt;]</a>' % (path, str(ret['number_of_pages']), txt_sort),
-        '&nbsp; %d items per page' % page_size,
+        '&nbsp; %d items out of %s ' % (len(ret['current_page_content']), items_count),
         ((' <span class="css_search">&nbsp;[search results for: %s]&nbsp;</span>' % search_string) if search_string else ''),
         '</div>'
     ])
