@@ -3,7 +3,7 @@
 </div>
 <div class="last_used">
     <fieldset>
-        <legend>Last used</legend>
+        <legend>Recently used</legend>
     {% if type == 'processing' %}
         {% for meth in user.profile.lastUsedProcessing %}
         {# Probably extremely inefficient way to check if method is compatible with the curveset #}

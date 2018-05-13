@@ -270,7 +270,13 @@ def generate_share_link(user, perm, obj):
 def paginate(request, queryset, sortable_by: List, current_page: int):
     path = request.path
     txt_sort = ''
+    search_string = ''
+    if request.method == 'POST':
+        search_string = request.POST.get('search', '')
     if request.method == 'GET':
+        search_string = request.GET.get('search', '')
+    queryset = queryset.filter(name__icontains=search_string)
+    if request.method in ['GET', 'POST']:
         if request.GET.get('sort', False):
             sort_by = request.GET.get('sort')
             if sort_by in sortable_by:
@@ -283,6 +289,11 @@ def paginate(request, queryset, sortable_by: List, current_page: int):
                     order_by = sort_by
                     txt_sort = '?sort=%s' % sort_by
                     queryset = queryset.order_by(order_by)
+        else:
+            queryset = queryset.order_by('-id')
+    else:
+        raise VoltPyFailed('Error.')
+        
     splpath = path.split('/')
     if is_number(splpath[-2]):
         path = '/'.join(splpath[:-2])
@@ -296,6 +307,12 @@ def paginate(request, queryset, sortable_by: List, current_page: int):
         current_page = 1
     start = (current_page - 1) * page_size
     end = start + page_size
+    if search_string != '':
+        from urllib.parse import quote
+        if not txt_sort:
+            txt_sort = '?search=%s' % quote(search_string)
+        else:
+            txt_sort += '&search=%s' % quote(search_string)
     ret['current_page_content'] = queryset[start:end:1]
     ret['paginator'] = ''
     ret['paginator'] = ''.join([
