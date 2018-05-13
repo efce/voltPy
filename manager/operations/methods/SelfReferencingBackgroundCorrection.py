@@ -1,3 +1,5 @@
+import numpy as np
+from scipy.stats import t
 import manager.operations.method as method
 from manager.operations.methodsteps.selectanalyte import SelectAnalyte
 from manager.operations.methodsteps.selectrange import SelectRange
@@ -7,6 +9,7 @@ import manager.models as mmodels
 import manager.helpers.selfReferencingBackgroundCorrection as sbcm
 from manager.operations.checks.check_datalenuniform import check_datalenuniform
 from manager.operations.checks.check_analyte import check_analyte
+from manager.helpers.fithelpers import significant_digit
 
 
 class SelfReferencingBackgroundCorrection(method.AnalysisMethod):
@@ -102,21 +105,32 @@ https://doi.org/10.1002/elan.201300181"""
             info = """
             <p> Could not calculate the final result. Please check your dataset and/or choose diffrent intervals.</p>
             """
-
         else:
-            info = """
-            <p>Analyte: {analyte}<br />Final result: {res} {unit}<br />Std dev: {stddev} {unit}</p>
-            <p>Equations:<br>{eqs}</p>
-            """.format(
-                res=self.model.customData['result'],
-                stddev=self.model.customData['resultStdDev'],
-                eqs=self.model.customData['fitEquations'],
-                analyte=self.model.customData['analyte'],
-                unit=self.model.customData['units']
-            )
+            res = self.model.customData['result']
+            n = len(self.model.customData['fitEquations'])
+            tval = t.ppf(0.975, n-1)
+            ci = self.model.customData['resultStdDev'] * tval / np.sqrt(n-1)
+            sdig = significant_digit(ci)
+            info = [
+                '<p>Analyte: {analyte}<br />Final result: {res}&plusmn;{ci} {unit}</p>'.format(
+                    res='%.*f' % (sdig, res),
+                    ci='%.*f' % (sdig, ci),
+                    analyte=self.model.customData['analyte'],
+                    unit=self.model.customData['units']
+                ),
+                '<p>Equations:<br />',
+                '<br />'.join([
+                    'Sens "{k}": y = {slope}x + {int}; r<sup>2</sup> = {rsq}'.format(
+                        slope=v['fit']['slope'],
+                        int=v['fit']['intercept'],
+                        rsq=v['rsq'],
+                        k=k
+                    ) for k, v in self.model.customData['fitEquations'].items()
+                ])
+            ]
         return {
             'head': '',
-            'body': info,
+            'body': ''.join(info),
         }
 
 main_class = SelfReferencingBackgroundCorrection
