@@ -54,18 +54,21 @@ class Profile(models.Model):
     
     @property
     def lastUsedProcessing(self, number=3) -> List:
-        user = manager.helpers.functions.getUser()
-        ret = Processing.filter(owner=user).values('method', 'methodDisplayName').distinct()
-        if len(ret) > 3:
-            ret = ret[len(ret)-3:]
-        return ret
+        return self._lastUsed(Processing, number)
 
     @property
     def lastUsedAnalysis(self, number=3) -> List:
+        return self._lastUsed(Analysis, number)
+
+    def _lastUsed(self, Klass, number):
         user = manager.helpers.functions.getUser()
-        ret = Analysis.filter(owner=user).values('method', 'methodDisplayName').distinct()
-        if len(ret) > 3:
-            ret = ret[len(ret)-3:]
+        qury = Klass.filter(owner=user).order_by('-id').values('method', 'methodDisplayName')
+        ret = []
+        for qr in qury:
+            if qr not in ret:
+                ret.append(qr)
+                if len(ret) >= number:
+                    break
         return ret
 
 
