@@ -30,7 +30,7 @@
     color: {% color1font %};
 }
 
-.topmenu_bkg a:hover,span:hover {
+.topmenu_bkg a:hover,.topmenu_bkp span:hover {
     background-color: {% color2 %};
     color: {% color2font %}
 }
