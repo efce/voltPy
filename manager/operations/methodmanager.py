@@ -313,7 +313,8 @@ class MethodManager:
                 mname = self.cleaned_data.get('method', None)
                 if mname in self.methods:
                     if self.methods[mname].errors:
-                        raise VoltPyFailed('Data does not meets requirements for selected method.')
+                        errors = '\n'.join([str(x) for x in self.methods[mname].errors])
+                        raise VoltPyFailed('Data does not meets requirements for selected method: %s' % errors)
                     a = mmodels.Processing(
                         owner=user,
                         curveSet=curveset,
@@ -332,7 +333,8 @@ class MethodManager:
                 mname = self.cleaned_data.get('method', None)
                 if mname in self.methods:
                     if self.methods[mname].errors:
-                        raise VoltPyFailed('Data does not meets requirements for selected method.')
+                        errors = '\n'.join([str(x) for x in self.methods[mname].errors])
+                        raise VoltPyFailed('Data does not meets requirements for selected method: %s' % errors)
                     a = mmodels.Analysis(
                         owner=user,
                         curveSet=curveset,
