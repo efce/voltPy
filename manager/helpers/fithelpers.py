@@ -1,5 +1,6 @@
 import numpy as np
 from scipy.optimize import curve_fit
+from manager.exceptions import VoltPyFailed
 
 
 def calc_normal_equation_fit(xvec, yvec):
@@ -35,7 +36,7 @@ def calc_sx0(slope, intercept, xvec, yvec):
     if minx == 0:
         x0index = np.argmin(xvec)
     else:
-        raise ValueError('Requires point with coordinates (0, y).')
+        raise VoltPyFailed('Requires data point with coordinates concentration 0.')
     xmean = np.average(xvec)
     sr = np.sqrt(1/(len(xvec)-2) * np.sum((yi-ye)**2 for yi, ye in zip(yvec, yevec)))
     sxx = np.sum(np.power(np.subtract(xvec, xmean), 2))
