@@ -330,7 +330,13 @@ def paginate(request, queryset, sortable_by: List, current_page: int):
             txt_sort += '&search=%s' % sanitize_search
     items_count = len(queryset)
     ret['current_page_content'] = queryset[start:end:1]
-    ret['paginator'] = ''
+    search_url = request.get_full_path()
+    if 'search=' in search_url:
+        try:
+            search_url = search_url[:search_url.index('&search=')]
+        except:
+            search_url = search_url[:search_url.index('search=')]
+    ret['search_url'] = search_url
     ret['paginator'] = ''.join([
         '<div class="paginator">',
         '<a href="%s1/%s">[&lt;&lt;]</a>&nbsp' % (path, txt_sort),
@@ -343,11 +349,11 @@ def paginate(request, queryset, sortable_by: List, current_page: int):
         else: 
             ret['paginator'] += '<a href="{path}{num}/{sort}">[{num}]</a>&nbsp;'.format(path=path, num=p, sort=txt_sort)
     search_string = search_string.replace('<', '&lt;').replace('>', '&gt;')
+    ret['search_results_for'] = (('<span class="css_search">Search results for&nbsp;<i>%s</i>:</span><br />' % search_string) if search_string else '')
     ret['paginator'] += ''.join([
         '<a href="%s%s/%s">[&gt;]</a>&nbsp;' % (path, str(current_page+1) if (current_page < ret['number_of_pages']) else str(ret['number_of_pages']), txt_sort),
         '<a href="%s%s/%s">[&gt;&gt;]</a>' % (path, str(ret['number_of_pages']), txt_sort),
         '&nbsp; %d items out of %s ' % (len(ret['current_page_content']), items_count),
-        ((' <span class="css_search">&nbsp;[search results for: %s]&nbsp;</span>' % search_string) if search_string else ''),
         '</div>'
     ])
     return ret

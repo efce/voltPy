@@ -6,18 +6,19 @@
 {% block real_content %}
 <fieldset class="mt_rest">
 <legend class="mt_name">{{ list_header }}</legend>
-<form action="{{ request.get_full_path }}" method="POST">
+<form action="{{ paginator.search_url }}" method="POST">
 	{% csrf_token %}
     <input type="text" name="search" value="" />&nbsp;
     <input type="submit" name="submit" value="Search" />
 </form>
+{{ paginator.search_results_for | safe }}
 <br />
-{% if list_to_disp %}
+{% if paginator.current_page_content %}
 <table class="browse_table">
     <thead>
         <tr>
             <th>
-                <a href="./?sort=id{{ search_append }}">Id</a>
+                <a href="./?sort=id{{ paginator.search_append }}">Id</a>
             </th>
             {% if list_to_disp.0.disp_type == 'curve set' %}
             <th>
@@ -25,7 +26,7 @@
             </th>
             {% endif %}
             <th>
-                <a href="./?sort=name{{ search_append }}">Name</a>
+                <a href="./?sort=name{{ paginator.search_append }}">Name</a>
             </th>
             {% if list_to_disp.0.disp_type == 'file set' %}
             <th>
@@ -34,7 +35,7 @@
             {% endif %}
             {% if list_to_disp.0.disp_type == 'analysis' %}
             <th>
-                <a href="./?sort=method{{ search_append }}">Method</a>
+                <a href="./?sort=method{{ paginator.search_append }}">Method</a>
             </th>
             <th>
                 <a href="./?sort=curveset{{ search_append }}">Curve Set</a>
@@ -42,17 +43,17 @@
             {% endif %}
             {% if list_to_disp.0.disp_type == 'file' %}
             <th>
-                <a href="./?sort=fileName{{ search_append }}">File name</a>
+                <a href="./?sort=fileName{{ paginator.search_append }}">File name</a>
             </th>
             {% endif %}
             <th>
-                <a href="./?sort=analytes{{ search_append }}">Analytes</a>
+                <a href="./?sort=analytes{{ paginator.search_append }}">Analytes</a>
             </th>
             <th>
-                <a href="./?sort=date{{ search_append }}">Date</a>
+                <a href="./?sort=date{{ paginator.search_append }}">Date</a>
             </th>
             <th>
-                <a href="./?sort=owner{{ search_append }}">Owner</a>
+                <a href="./?sort=owner{{ paginator.search_append }}">Owner</a>
             </th>
             <th>
                 <small>Action</small>
@@ -60,7 +61,7 @@
         </tr>
     </thead>
     <tbody>
-        {% for el in list_to_disp %}
+        {% for el in paginator.current_page_content %}
         <tr style="cursor: pointer;" onclick="document.location.href='{{ el.getUrl }}';">
             <td>
                 {{ el.id }}
@@ -116,7 +117,7 @@
         {% endfor %}
     </tbody>
 </table>
-{{ paginator | safe }}
+{{ paginator.paginator | safe }}
 {% else %}
     <p>{{ when_empty | safe }}</p>
 {% endif %}

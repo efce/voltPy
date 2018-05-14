@@ -151,9 +151,7 @@ def browseFileSets(request, user, page_number=1):
     context = {
         'user': user,
         'list_header': 'Files Sets:',
-        'list_to_disp': files,
-        'search_append': paginated['search_append'],
-        'paginator': paginated['paginator'],
+        'paginator': paginated,
         'when_empty': ''.join([
             "You have no files uploaded. ",
             "<a href='{url}'>Upload one</a>.".format(
@@ -189,9 +187,7 @@ def browseCurveFiles(request, user, page_number=1):
     context = {
         'user': user,
         'list_header': 'Files:',
-        'list_to_disp': paginated['current_page_content'],
-        'paginator': paginated['paginator'],
-        'search_append': paginated['search_append'],
+        'paginator': paginated,
         'when_empty': ''.join([
             "You have no files uploaded. ",
             "<a href='{url}'>Upload one</a>.".format(
@@ -228,9 +224,7 @@ def browseAnalysis(request, user, page_number=1):
     context = {
         'user': user,
         'list_header': 'Analysis:',
-        'list_to_disp': paginated['current_page_content'],
-        'paginator': paginated['paginator'],
-        'search_append': paginated['search_append'],
+        'paginator': paginated,
         'when_empty': ''.join([
             "Analysis can only be performed on the CurveSet. ",
             "<a href='{url}'>Choose one</a>.".format(
@@ -265,9 +259,7 @@ def browseCurveSet(request, user, page_number=1):
     context = {
         'user': user,
         'list_header': 'Curve Sets:',
-        'list_to_disp': paginated['current_page_content'],
-        'paginator': paginated['paginator'],
-        'search_append': paginated['search_append'],
+        'paginator': paginated,
         'when_empty': ''.join([
             "You have no CurveSets. ",
             "<a href='{url}'>Prepare one</a>.".format(
