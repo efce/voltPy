@@ -17,7 +17,7 @@
     <thead>
         <tr>
             <th>
-                <a href="./?sort=id">Id</a>
+                <a href="./?sort=id{{ search_append }}">Id</a>
             </th>
             {% if list_to_disp.0.disp_type == 'curve set' %}
             <th>
@@ -25,7 +25,7 @@
             </th>
             {% endif %}
             <th>
-                <a href="./?sort=name">Name</a>
+                <a href="./?sort=name{{ search_append }}">Name</a>
             </th>
             {% if list_to_disp.0.disp_type == 'file set' %}
             <th>
@@ -34,25 +34,25 @@
             {% endif %}
             {% if list_to_disp.0.disp_type == 'analysis' %}
             <th>
-                <a href="./?sort=method">Method</a>
+                <a href="./?sort=method{{ search_append }}">Method</a>
             </th>
             <th>
-                <a href="./?sort=curveset">Curve Set</a>
+                <a href="./?sort=curveset{{ search_append }}">Curve Set</a>
             </th>
             {% endif %}
             {% if list_to_disp.0.disp_type == 'file' %}
             <th>
-                <a href="./?sort=fileName">File name</a>
+                <a href="./?sort=fileName{{ search_append }}">File name</a>
             </th>
             {% endif %}
             <th>
-                <a href="./?sort=analytes">Analytes</a>
+                <a href="./?sort=analytes{{ search_append }}">Analytes</a>
             </th>
             <th>
-                <a href="./?sort=date">Date</a>
+                <a href="./?sort=date{{ search_append }}">Date</a>
             </th>
             <th>
-                <a href="./?sort=owner">Owner</a>
+                <a href="./?sort=owner{{ search_append }}">Owner</a>
             </th>
             <th>
                 <small>Action</small>

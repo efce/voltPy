@@ -6,6 +6,7 @@ from django.urls import reverse
 from django.http import HttpResponseRedirect
 from django.shortcuts import render
 from django.template import loader
+from django.db.models import Q
 from manager.exceptions import VoltPyNotAllowed
 from manager.exceptions import VoltPyFailed
 import manager.plotmanager as mpm
@@ -276,7 +277,14 @@ def paginate(request, queryset, sortable_by: List, current_page: int):
         search_string = request.POST.get('search', '')
     if request.method == 'GET':
         search_string = request.GET.get('search', '')
-    queryset = queryset.filter(name__icontains=search_string)
+    dbquery = Q(name__icontains=search_string)
+    if 'fileName' in sortable_by:
+        dbquery |= Q(fileName__icontains=search_string)
+    if 'curveset' in sortable_by:
+        dbquery |= Q(curveSet__name__icontains=search_string)
+    if 'analytes' in sortable_by:
+        dbquery |= Q(analytes__name__icontains=search_string)
+    queryset = queryset.filter(dbquery)
     if request.method in ['GET', 'POST']:
         if request.GET.get('sort', False):
             sort_by = request.GET.get('sort')
@@ -286,6 +294,10 @@ def paginate(request, queryset, sortable_by: List, current_page: int):
                     order_by = sort_by
                     txt_sort = '?sort=%s' % sort_by
                     queryset = queryset.annotate(an_name=Min('analytes__name')).order_by('an_name')
+                elif sort_by == 'curveset':
+                    order_by = sort_by
+                    txt_sort = '?sort=%s' % sort_by
+                    queryset = queryset.order_by('curveSet__name')
                 else:
                     order_by = sort_by
                     txt_sort = '?sort=%s' % sort_by
@@ -307,12 +319,15 @@ def paginate(request, queryset, sortable_by: List, current_page: int):
         current_page = 1
     start = (current_page - 1) * page_size
     end = start + page_size
+    ret['search_append'] = ''
     if search_string != '':
         from urllib.parse import quote
+        sanitize_search = quote(search_string)
+        ret['search_append'] = '&search=' + sanitize_search
         if not txt_sort:
-            txt_sort = '?search=%s' % quote(search_string)
+            txt_sort = '?search=%s' % sanitize_search
         else:
-            txt_sort += '&search=%s' % quote(search_string)
+            txt_sort += '&search=%s' % sanitize_search
     items_count = len(queryset)
     ret['current_page_content'] = queryset[start:end:1]
     ret['paginator'] = ''
