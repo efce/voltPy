@@ -20,7 +20,7 @@
             <th>
                 <a href="./?sort=id{{ paginator.search_append }}">Id</a>
             </th>
-            {% if list_to_disp.0.disp_type == 'curve set' %}
+            {% if paginator.current_page_content.0.disp_type == 'curve set' %}
             <th>
                 &nbsp;
             </th>
@@ -28,12 +28,12 @@
             <th>
                 <a href="./?sort=name{{ paginator.search_append }}">Name</a>
             </th>
-            {% if list_to_disp.0.disp_type == 'file set' %}
+            {% if paginator.current_page_content.0.disp_type == 'file set' %}
             <th>
                 <small>Files</small>
             </th>
             {% endif %}
-            {% if list_to_disp.0.disp_type == 'analysis' %}
+            {% if paginator.current_page_content.0.disp_type == 'analysis' %}
             <th>
                 <a href="./?sort=method{{ paginator.search_append }}">Method</a>
             </th>
@@ -41,7 +41,7 @@
                 <a href="./?sort=curveset{{ search_append }}">Curve Set</a>
             </th>
             {% endif %}
-            {% if list_to_disp.0.disp_type == 'file' %}
+            {% if paginator.current_page_content.0.disp_type == 'file' %}
             <th>
                 <a href="./?sort=fileName{{ paginator.search_append }}">File name</a>
             </th>
@@ -66,7 +66,7 @@
             <td>
                 {{ el.id }}
             </td>
-            {% if list_to_disp.0.disp_type == 'curve set' %}
+            {% if paginator.current_page_content.0.disp_type == 'curve set' %}
             <td>
                 {% if el.locked %}
                 {% lock %}
@@ -85,7 +85,7 @@
                 {% endfor %}
             </ul></td>
             {% endif %}
-            {% if list_to_disp.0.disp_type == 'analysis' %}
+            {% if paginator.current_page_content.0.disp_type == 'analysis' %}
             <td>
                 {{ el.methodDisplayName }}
             </td>
@@ -93,7 +93,7 @@
                 {{ el.curveSet.name }}
             </td>
             {% endif %}
-            {% if list_to_disp.0.disp_type == 'file' %}
+            {% if paginator.current_page_content.0.disp_type == 'file' %}
             <td>
                 {{ el.fileName }}
             </td>
