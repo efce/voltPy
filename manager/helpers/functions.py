@@ -1,9 +1,11 @@
+import re
 import numpy as np
 import datetime
 import base64 as b64
 from typing import List
 from django.urls import reverse
 from django.http import HttpResponseRedirect
+from django.http import HttpResponse
 from django.shortcuts import render
 from django.template import loader
 from django.db.models import Q
@@ -15,10 +17,11 @@ import manager.models as mmodels
 from manager.helpers.decorators import with_user
 
 
-def voltpy_render(*args, **kwargs):
+def voltpy_render(*args, template_name, **kwargs):
     """
-    This is proxy function which sets usually needed context elemenets.
-    It is very much prefered over django default.
+    This is proxy function which sets usually needed context elements.
+    It is very much preferred over django default.
+    WARNING: it removes extra spaces eol's and tabs.
     """
     request = kwargs['request']
     context = kwargs.pop('context', {})
@@ -31,13 +34,15 @@ def voltpy_render(*args, **kwargs):
     #context['plot_width'] = mpm.PlotManager.plot_width
     #context['plot_height'] = mpm.PlotManager.plot_height
     notifications = request.session.pop('VOLTPY_notification', [])
+    template = loader.get_template(template_name=template_name)
     if len(notifications) > 0:
         con_note = context.get('notifications', [])
         con_note.extend(notifications)
         context['notifications'] = con_note
-        return render(*args, **kwargs, context=context)
-    else:
-        return render(*args, **kwargs, context=context)
+    render_str = template.render(request=request, context=context)
+    render_str = render_str.replace('\t', ' ').replace('\n', ' ')
+    render_str = re.sub(' +', ' ', render_str)
+    return HttpResponse(render_str)
 
 
 def voltpy_serve_csv(request, filedata, filename):
