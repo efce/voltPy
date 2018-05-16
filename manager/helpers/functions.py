@@ -284,16 +284,17 @@ def paginate(request, queryset, sortable_by: List, current_page: int):
         search_string = request.POST.get('search', '')
     if request.method == 'GET':
         search_string = request.GET.get('search', '')
-    dbquery = Q(name__icontains=search_string)
-    if 'fileName' in sortable_by:
-        dbquery |= Q(fileName__icontains=search_string)
-    if 'curveset' in sortable_by:
-        dbquery |= Q(curveSet__name__icontains=search_string)
-    if 'analytes' in sortable_by:
-        dbquery |= Q(analytes__name__icontains=search_string)
-    if 'method' in sortable_by:
-        dbquery |= Q(methodDisplayName__icontains=search_string)
-    queryset = queryset.filter(dbquery)
+    if search_string:
+        dbquery = Q(name__icontains=search_string)
+        if 'fileName' in sortable_by:
+            dbquery |= Q(fileName__icontains=search_string)
+        if 'curveset' in sortable_by:
+            dbquery |= Q(curveSet__name__icontains=search_string)
+        if 'analytes' in sortable_by:
+            dbquery |= Q(analytes__name__icontains=search_string)
+        if 'method' in sortable_by:
+            dbquery |= Q(methodDisplayName__icontains=search_string)
+        queryset = queryset.filter(dbquery)
     if request.method in ['GET', 'POST']:
         if request.GET.get('sort', False):
             sort_by = request.GET.get('sort')
