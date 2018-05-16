@@ -40,8 +40,10 @@ def voltpy_render(*args, template_name, **kwargs):
         con_note.extend(notifications)
         context['notifications'] = con_note
     render_str = template.render(request=request, context=context)
-    render_str = render_str.replace('\t', ' ').replace('\n', ' ')
+    render_str = render_str.replace('\t', ' ')
     render_str = re.sub(' +', ' ', render_str)
+    render_str = re.sub(r'\n ', r'\n', render_str)
+    render_str = re.sub(r'\n+', r'\n', render_str)
     return HttpResponse(render_str)
 
 
