@@ -60,6 +60,8 @@ urlpatterns = [
         views.undoCurveSet, name='undoCurveSet'),
     url(r'^edit-analyte/(?P<objType>[cf|cs]+)/(?P<objId>[0-9]+)/(?P<analyteId>[0-9|new]+)/$',
         views.editAnalyte, name='editAnalyte'),
+    url(r'^edit-curves/(?P<objType>[cf|cs]+)/(?P<objId>[0-9]+)/$',
+        views.editCurves, name='editCurves'),
     url(r'^apply-model/(?P<objType>[an|pr]+)/(?P<objId>[0-9]+)/(?P<curveset_id>[0-9|new]+)/$',
         views.applyModel, name='applyModel'),
     url(r'^delete-curveset/(?P<curveset_id>[0-9]+)/$',

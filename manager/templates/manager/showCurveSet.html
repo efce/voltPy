@@ -37,7 +37,6 @@
 {% csrf_token %}
 	<fieldset class="mt_rest">
 		<legend class="mt_name">{% if showing.locked %}{% lock %} {% endif %}Curves:&nbsp;
-			<button type="button" class="{{ add_analyte_button }}">Add analyte</button>&nbsp;
 			<button type="submit" {% if showing.locked %}class="_disabled"{% endif %}>Delete selected</button>
 		</legend>
 		{{ at | safe }}

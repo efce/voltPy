@@ -686,10 +686,7 @@ def undoCurveSet(request, user, curveset_id):
 @redirect_on_voltpyexceptions
 @with_user
 def showCurveSet(request, user, curveset_id):
-    try:
-        cs = mmodels.CurveSet.get(id=curveset_id)
-    except ObjectDoesNotExist:
-        raise VoltPyDoesNotExists()
+    cs = mmodels.CurveSet.get(id=curveset_id)
 
     form_data = {'model': cs, 'label_name': ''}
     edit_name_form = form_helper(
@@ -783,6 +780,13 @@ def showCurveSet(request, user, curveset_id):
             })
         ),
         'undo_button': undo_button,
+        'edit_curves_button':get_redirect_class(
+            reverse('editCurves', kwargs={
+                'objType': 'cs',
+                'objId': cs.id,
+            })
+        ),
+ 
         'curve_set_button': get_redirect_class(
             reverse('cloneCurveSet', kwargs={
                 'toCloneId': cs.id,
@@ -957,19 +961,71 @@ def applyModel(request, user, objType, objId, curveset_id):
 
 @redirect_on_voltpyexceptions
 @with_user
+def editCurves(request, user, objType, objId):
+    if objType == 'cf':
+        cs = mmodels.FileCurveSet.get(id=objId)
+    elif objType == 'cs':
+        cs = mmodels.CurveSet.get(id=objId)
+    else:
+        raise VoltPyNotAllowed
+
+    if request.method == 'POST':
+        form = mforms.EditCurvesForm(user, cs, request.POST)
+        if form.is_valid():
+            if form.process(user) is True:
+                if objType == 'cf':
+                    return HttpResponseRedirect(
+                        reverse('showCurveFile', args=[objId])
+                    )
+                else:
+                    return HttpResponseRedirect(
+                        reverse('showCurveSet', args=[objId])
+                    )
+    else:
+        form = mforms.EditCurvesForm(user, cs)
+
+    if objType == 'cf':
+        plotType = 'file'
+        dispType = 'file'
+    else:
+        plotType = 'curveset'
+        dispType = 'curveSet'
+    plotScr, plotDiv, butDiv = generate_plot(
+        request=request,
+        user=user,
+        plot_type=plotType,
+        value_id=objId
+    )
+
+    infotext = 'Editing curves in '.format(cs.name)
+
+    context = {
+        'scripts': plotScr,
+        'main_plot': plotDiv,
+        'main_plot_buttons': butDiv,
+        'user': user,
+        'obj_name': dispType,
+        'obj_id': objId,
+        'form': form,
+        'infotext': ''.join([
+            infotext,
+            dispType,
+        ])
+    }
+    return voltpy_render(
+        request=request,
+        template_name='manager/editAnalyte.html',
+        context=context
+    )
+
+
+@redirect_on_voltpyexceptions
+@with_user
 def editAnalyte(request, user, objType, objId, analyteId):
     if objType == 'cf':
-        try:
-            cs = mmodels.FileCurveSet.get(id=objId)
-        except ObjectDoesNotExist:
-            raise VoltPyNotAllowed
-
+        cs = mmodels.FileCurveSet.get(id=objId)
     elif objType == 'cs':
-        try:
-            cs = mmodels.CurveSet.get(id=objId)
-        except ObjectDoesNotExist:
-            raise VoltPyNotAllowed
-
+        cs = mmodels.CurveSet.get(id=objId)
     else:
         raise VoltPyNotAllowed
 

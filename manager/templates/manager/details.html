@@ -16,13 +16,24 @@
         {% if showing.disp_type == 'analysis' %}
         <button class="{{ curve_set_button }}">Goto curve set</button>
         {% elif showing.disp_type == 'curve set' %}
+        <button class="{{ add_analyte_button }}">Add analyte</button>
         <button class="{{ curve_set_button }}">Copy curve set</button>
+        {% elif showing.disp_type == 'file' %}
+        <button class="{{ add_analyte_button }}">Add analyte</button>
+        <button class="{{ curve_set_button }}">Create curve set</button>
         {% else %}
         <button class="{{ curve_set_button }}">Create curve set</button>
         {% endif %}
         <a class="expandable" onclick="toggleDetails(this, '#more_actions');">More actions ↧</a>
         <div id="more_actions" class="mt_rest invisible">
+        {% if showing %}
+            {% if showing.disp_type == 'curve set' %}
+            <button class="{{ edit_curves_button }}">Edit curves</button>
             <button class="{{ undo_button }}">Undo</button>
+            {% elif showing.disp_type == 'file' %}
+            <button class="{{ edit_curves_button }}">Edit curves</button>
+            {% endif %}
+        {% endif %}
             <button class="{{ export_data_button }}">Export data</button>
             <button class="{{ share_button }}">Share</button>
             <button class="{{ delete_button }}">Delete</button>

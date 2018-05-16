@@ -73,6 +73,50 @@ class EditName(forms.Form):
         manager.helpers.functions.add_notification(request, 'Saved.', 0)
 
 
+class EditCurvesForm(forms.Form):
+    def __init__(self, user, curveSet, *args, **kwargs):
+        super(EditCurvesForm, self).__init__(*args, **kwargs)
+        self.cs = curveSet
+        self.generateFields()
+
+    def generateFields(self):
+        for cd in self.cs.curvesData.all():
+            self.fields['curve_%d_name' % cd.id] = forms.CharField(
+                label='Name',
+                required=True,
+                initial=cd.curve.name,
+                max_length=255,
+            )
+            self.fields['curve_%d_name' % cd.id].widget.attrs['class'] = ' '.join([
+                '_voltJS_plotHighlightInput',
+                '_voltJS_highlightCurve@%d' % cd.id,
+            ])
+            self.fields['curve_%d_comment' % cd.id] = forms.CharField(
+                label='Comment',
+                required=False,
+                initial=cd.curve.comment,
+                max_length=255,
+            )
+            self.fields['curve_%d_comment' % cd.id].widget.attrs['class'] = ' '.join([
+                '_voltJS_plotHighlightInput',
+                '_voltJS_highlightCurve@%d' % cd.id,
+            ])
+
+    def process(self, user):
+        # TODO: Perms to what are required (?)
+        if not user.has_perm('rw', self.cs):
+            raise VoltPyNotAllowed('Not allowed to change the curve set.')
+        for cd in self.cs.curvesData.all():
+            name = self.cleaned_data.get('curve_%d_name' % cd.id, None)
+            comment = self.cleaned_data.get('curve_%d_comment' % cd.id, None)
+            if name is None or comment is None:
+                raise VoltPyNotAllowed('Incomplete form, please try again.')
+            cd.curve.name = name
+            cd.curve.comment = comment
+            cd.curve.save()
+        return True
+
+
 class EditAnalytesForm(forms.Form):
     # TODO: draw plot of file, provide fields for settings analytes
     isCal = False
