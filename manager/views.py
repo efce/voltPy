@@ -786,7 +786,6 @@ def showCurveSet(request, user, curveset_id):
                 'objId': cs.id,
             })
         ),
- 
         'curve_set_button': get_redirect_class(
             reverse('cloneCurveSet', kwargs={
                 'toCloneId': cs.id,
@@ -847,10 +846,7 @@ def upload(request, user):
 @redirect_on_voltpyexceptions
 @with_user
 def showCurveFile(request, user, file_id):
-    try:
-        cf = mmodels.FileCurveSet.get(id=int(file_id))
-    except ObjectDoesNotExist:
-        raise VoltPyNotAllowed(user)
+    cf = mmodels.FileCurveSet.get(id=int(file_id))
 
     form_data = {'model': cf, 'label_name': ''}
     edit_name_form = form_helper(
@@ -910,6 +906,12 @@ def showCurveFile(request, user, file_id):
         'share_button': share_button,
         'back_to_browse_button': get_redirect_class(
             reverse('browseCurveFiles')
+        ),
+        'edit_curves_button':get_redirect_class(
+            reverse('editCurves', kwargs={
+                'objType': 'cf',
+                'objId': cf.id,
+            })
         ),
         'add_analyte_button': add_analyte
     }
