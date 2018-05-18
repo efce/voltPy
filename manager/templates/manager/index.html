@@ -3,25 +3,43 @@
 {% block title %} Index {% endblock %}
 
 {% block real_content %}
-<fieldset class="mt_rest" style="width: 40%"><legend class="mt_name">Welcome</legend>
+<fieldset class="mt_rest" style="width: 40%; float: left"><legend class="mt_name">Welcome</legend>
 Welcome to the voltammetry signal processing web service!<br />
-Here you can upload, store, search, process and analyze your voltammograms. At the moment the service is in alpha state, therefore, many new changes and features will arrive on regular basis. However, there is wide selection of tools available already! 
-We hope you'll enjoy during your time here. Please report any errors, bugs, feature requests etc. at <a href="mailto:voltammetry.center@gmail.com">voltammetry.center@gmail.com</a> or directly to our <a href="https://github.com/efce/voltPy/issues">GitHub</a> page.
-<!--
+Our goal is to create simple to use site, with both novel and standard processing and analysis procedures.
+Here you can upload, store, manage, search, process and analyze your voltammograms. At the moment the service is in alpha state, therefore, many new changes and features will arrive on regular basis. However, there is wide selection of tools available already! 
+We hope you'll enjoy during your time here. Please report any errors, bugs, feature requests etc. directly to our <a href="https://github.com/efce/voltPy/issues">GitHub</a> page.
 </fieldset>
+<fieldset class="mt_rest" style="width: 50%; float: right">
+<legend class="mt_name">Glossary</legend>
+Short explanation of terms used in the web service:
+<ul>
+    <li><b>File</b> - file uploaded by the user and parsed into the database.</li>
+    <li><b>Fileset</b> - collection of files uploaded together.</li>
+    <li><b>Dataset</b> - basic block of the data used on the web service. 
+        Only datasets can be processed and analyzed. Dataset can be created out 
+        of whole file (create dataset in file view), 
+        whole fileset (create dataset in fileset view) or 
+        any selected curves via Create Dataset menu option.</li>
+    <li><b>Processing</b> - processing is operation on the dataset which results in its change.
+         Processing includes digital filtration and background corretion methods.</li>
+    <li><b>Analysis</b> - analysis is the process which tries to obtain usefull information from the dataset.
+        Analysis can be estamation of some measurement parameters or for example the standard addition method.</li>
+</ul>
+</fieldset>
+<!--
 Welcome to the index page!<br />
-Search for CurveSets: <input onkeyup="search()" id='ss' />
+Search for Datasets: <input onkeyup="search()" id='ss' />
 <div id="curve_list"></div>
 <script>
     function search() {
         txt = $('#ss').val();
-        searchCurveSet(txt, addOpt);
+        searchDataset(txt, addOpt);
     }
     function addOpt(data) {
         $('#curve_list').empty();
         kdata = data['result'];
         for (key in kdata) {
-            $('#curve_list').append($('<a href="/manager/show-curveset/' + key + '/">id' + key + ': ' + kdata[key] + '</a> <br />'));
+            $('#curve_list').append($('<a href="/manager/show-dataset/' + key + '/">id' + key + ': ' + kdata[key] + '</a> <br />'));
         }
     }
 </script>-->

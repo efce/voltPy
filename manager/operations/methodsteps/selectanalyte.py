@@ -23,11 +23,11 @@ class SelectAnalyte(MethodStep):
             self.fields['analyteId'].widget.attrs['class'] = '_voltJS_ChangeDispValue'
 
     def getHTML(self, user, request, model):
-        cs = model.curveSet
+        cs = model.dataset
 
         style = "<style>.at_hideable { display: none !important; };</style>"
         import manager.analytesTable as at
-        at_disp = at.analytesTable(cs, objType='cs')
+        at_disp = at.analytesTable(cs, obj_type='dataset')
 
         analyte_sel = self.AnalyteSelectionForm(analytes=cs.analytes)
         from django.template import loader
@@ -45,7 +45,7 @@ class SelectAnalyte(MethodStep):
         return {'head': style, 'desc': '', 'body': txt}
 
     def process(self, user, request, model):
-        cs = model.curveSet
+        cs = model.dataset
 
         analyte_sel = self.AnalyteSelectionForm(request.POST, analytes=cs.analytes)
         if analyte_sel.is_valid():
@@ -53,7 +53,7 @@ class SelectAnalyte(MethodStep):
                 analyte = mmodels.Analyte.objects.get(id=analyte_sel.cleaned_data['analyteId'])
             except ObjectDoesNotExist:
                 return False
-            model.stepsData['SelectAnalyte'] = analyte.id
+            model.steps_data['SelectAnalyte'] = analyte.id
             model.analytes.add(analyte)
             model.save()
             return True

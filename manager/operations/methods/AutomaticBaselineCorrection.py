@@ -49,34 +49,34 @@ https://doi.org/10.1016/j.electacta.2014.05.076
     def __str__(cls):
         return "Automatic Baseline Correction"
 
-    def apply(self, user, curveSet):
+    def apply(self, user, dataset):
         if self.model.completed is not True:
             raise VoltPyNotAllowed('Incomplete procedure.')
-        self.__perform(curveSet)
+        self.__perform(dataset)
 
-    def __perform(self, curveSet):
-        iterations = self.model.customData['iterations']
-        degree = self.model.customData['degree']
-        for cd in curveSet.curvesData.all():
+    def __perform(self, dataset):
+        iterations = self.model.custom_data['iterations']
+        degree = self.model.custom_data['degree']
+        for cd in dataset.curves_data.all():
             newcd = cd.getCopy()
-            newcdConc = curveSet.getCurveConcDict(cd)
+            newcdConc = dataset.getCurveConcDict(cd)
             yvec = newcd.yVector
             xvec = range(len(yvec))
             yvec = calc_abc(xvec, yvec, degree, iterations)['yvec']
             newcd.yVector = yvec
             newcd.date = timezone.now()
             newcd.save()
-            curveSet.removeCurve(cd)
-            curveSet.addCurve(newcd, newcdConc)
-        curveSet.save()
+            dataset.removeCurve(cd)
+            dataset.addCurve(newcd, newcdConc)
+        dataset.save()
 
     def finalize(self, user):
         try:
-            self.model.customData['iterations'] = int(self.model.stepsData['Settings']['Iterations'])
-            self.model.customData['degree'] = int(self.model.stepsData['Settings']['Degree'])
+            self.model.custom_data['iterations'] = int(self.model.steps_data['Settings']['Iterations'])
+            self.model.custom_data['degree'] = int(self.model.steps_data['Settings']['Degree'])
         except ValueError:
             raise VoltPyFailed('Wrong values for degree or iterations.')
-        self.__perform(self.model.curveSet)
+        self.__perform(self.model.dataset)
         self.model.step = None
         self.model.completed = True
         self.model.save()

@@ -108,11 +108,11 @@ def delete_helper(request, user, item, delete_fun=None, onSuccessRedirect=None):
 def generate_plot(request, user, to_plot=None, plot_type=None, value_id=None, **kwargs):
     assert (to_plot is not None and plot_type is None) or (to_plot is None and plot_type is not None)
     if to_plot is not None:
-        if isinstance(to_plot, mmodels.FileCurveSet):
+        if isinstance(to_plot, mmodels.File):
             plot_type = 'file'
-        elif isinstance(to_plot, mmodels.CurveSet):
-            plot_type = 'curveset'
-        elif isinstance(to_plot, mmodels.FileSet):
+        elif isinstance(to_plot, mmodels.Dataset):
+            plot_type = 'dataset'
+        elif isinstance(to_plot, mmodels.Fileset):
             plot_type = 'fileset'
         elif isinstance(to_plot, mmodels.Analysis):
             plot_type = 'analysis'
@@ -122,7 +122,7 @@ def generate_plot(request, user, to_plot=None, plot_type=None, value_id=None, **
     allowedTypes = [
         'file',
         'analysis',
-        'curveset',
+        'dataset',
         'fileset',
     ]
     if plot_type not in allowedTypes:
@@ -135,18 +135,18 @@ def generate_plot(request, user, to_plot=None, plot_type=None, value_id=None, **
     data = []
     if plot_type == 'file':
         if to_plot is None:
-            cf = mmodels.FileCurveSet.get(id=value_id)
+            cf = mmodels.File.get(id=value_id)
         else:
             cf = to_plot
-        data = pm.curveSetHelper(user, cf)
+        data = pm.datasetHelper(user, cf)
         pm.xlabel = pm.xLabelHelper(user)
         pm.include_x_switch = True
-    elif (plot_type == 'curveset'):
+    elif (plot_type == 'dataset'):
         if to_plot is None:
-            cs = mmodels.CurveSet.get(id=value_id)
+            cs = mmodels.Dataset.get(id=value_id)
         else:
             cs = to_plot
-        data = pm.curveSetHelper(user, cs)
+        data = pm.datasetHelper(user, cs)
         pm.xlabel = pm.xLabelHelper(user)
         pm.include_x_switch = True
     elif (plot_type == 'analysis'):
@@ -158,12 +158,12 @@ def generate_plot(request, user, to_plot=None, plot_type=None, value_id=None, **
         pm.include_x_switch = False
     elif (plot_type == 'fileset'):
         if to_plot is None:
-            fs = mmodels.FileSet.get(id=value_id)
+            fs = mmodels.Fileset.get(id=value_id)
         else:
             fs = to_plot
         data = []
         for f in fs.files.all():
-            data.extend(pm.curveSetHelper(user, f))
+            data.extend(pm.datasetHelper(user, f))
         pm.xlabel = pm.xLabelHelper(user)
         pm.include_x_switch = True
 
@@ -232,14 +232,14 @@ def get_redirect_class(redirectUrl):
     return ret % b64.b64encode(redirectUrl.encode()).decode('UTF-8')
 
 
-def check_curveset_integrity(curveSet, params_to_check: List):
-    if len(curveSet.curvesData.all()) < 2:
+def check_dataset_integrity(dataset, params_to_check: List):
+    if len(dataset.curves_data.all()) < 2:
         return
-    cd1 = curveSet.curvesData.all()[0]
-    for cd in curveSet.curvesData.all():
+    cd1 = dataset.curves_data.all()[0]
+    for cd in dataset.curves_data.all():
         for p in params_to_check:
             if cd.curve.params[p] != cd1.curve.params[p]:
-                raise VoltPyFailed('All curves in curveSet have to be similar.')
+                raise VoltPyFailed('All curves in dataset have to be similar.')
 
 
 def generate_share_link(user, perm, obj):
@@ -286,14 +286,14 @@ def paginate(request, queryset, sortable_by: List, current_page: int):
         search_string = request.GET.get('search', '')
     if search_string:
         dbquery = Q(name__icontains=search_string)
-        if 'fileName' in sortable_by:
-            dbquery |= Q(fileName__icontains=search_string)
-        if 'curveset' in sortable_by:
-            dbquery |= Q(curveSet__name__icontains=search_string)
+        if 'filename' in sortable_by:
+            dbquery |= Q(filename=search_string)
+        if 'dataset' in sortable_by:
+            dbquery |= Q(dataset__name__icontains=search_string)
         if 'analytes' in sortable_by:
             dbquery |= Q(analytes__name__icontains=search_string)
         if 'method' in sortable_by:
-            dbquery |= Q(methodDisplayName__icontains=search_string)
+            dbquery |= Q(method_display_name__icontains=search_string)
         queryset = queryset.filter(dbquery)
     if request.method in ['GET', 'POST']:
         if request.GET.get('sort', False):
@@ -304,10 +304,10 @@ def paginate(request, queryset, sortable_by: List, current_page: int):
                     order_by = sort_by
                     txt_sort = '?sort=%s' % sort_by
                     queryset = queryset.annotate(an_name=Min('analytes__name')).order_by('an_name')
-                elif sort_by == 'curveset':
+                elif sort_by == 'dataset':
                     order_by = sort_by
                     txt_sort = '?sort=%s' % sort_by
-                    queryset = queryset.order_by('curveSet__name')
+                    queryset = queryset.order_by('dataset__name')
                 else:
                     order_by = sort_by
                     txt_sort = '?sort=%s' % sort_by
@@ -369,5 +369,5 @@ def paginate(request, queryset, sortable_by: List, current_page: int):
     return ret
 
 
-def getUser():
+def get_user():
     return with_user._user

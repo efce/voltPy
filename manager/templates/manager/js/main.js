@@ -7,8 +7,8 @@ function sleep (time) {
     return new Promise((resolve) => setTimeout(resolve, time))
 };
 
-function searchCurveSet(txt, funcResults) {
-    url = '/manager/ajax/search-curveset/';
+function searchDataset(txt, funcResults) {
+    url = '/manager/ajax/search-dataset/';
     csfr = $("{% csrf_token %}").val();
     object = {
         'search': txt,
@@ -285,13 +285,13 @@ $( function() {
         classes.forEach( function(name) {
             if (name.startsWith(imodel)) {
                 var number = name.substring(imodel.length);
-                addApplyToCurveSetChooser(number);
+                addApplyToDatasetChooser(number);
             }
         });
     });
 });
 
-function addApplyToCurveSetChooser(model_num) {
+function addApplyToDatasetChooser(model_num) {
     var amd = $('#id_ApplyModel');
     if (amd.length) {
         if (amd.css('display') == 'none') {
@@ -314,7 +314,7 @@ function setCurveList(model_num, id_where) {
     function setLinks(data) {
         setApplyModelLinks(model_num, id_where, data);
     }
-    searchCurveSet(txt, setLinks);
+    searchDataset(txt, setLinks);
 }
 
 function setApplyModelLinks(model_num, id_where, data) {

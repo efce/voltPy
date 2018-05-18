@@ -8,7 +8,7 @@ from manager.operations.methodsteps.selectanalyte import SelectAnalyte
 from manager.operations.methodsteps.selectrange import SelectRange
 from manager.exceptions import VoltPyNotAllowed
 from manager.exceptions import VoltPyFailed
-from manager.helpers.functions import check_curveset_integrity
+from manager.helpers.functions import check_dataset_integrity
 from manager.helpers.fithelpers import fit_capacitive_eq
 from manager.helpers.fithelpers import calc_capacitive
 from manager.operations.checks.check_sampling import check_sampling
@@ -54,20 +54,20 @@ Chemom. Intell. Lab. Syst., vol. 65, no. 1, pp. 119–137, 2003.
     def __str__(cls):
         return "ASD Decomposition"
 
-    def __perform(self, curveSet):
+    def __perform(self, dataset):
         method_type = self.type_together
         if method_type not in self._allowed_types:
             raise VoltPyFailed('Not allowed type.')
 
         Param = mmodels.Curve.Param
 
-        cd1 = curveSet.curvesData.all()[0]
-        self.model.customData['tp'] = cd1.curve.params[Param.tp]
-        self.model.customData['tw'] = cd1.curve.params[Param.tw]
+        cd1 = dataset.curves_data.all()[0]
+        self.model.custom_data['tp'] = cd1.curve.params[Param.tp]
+        self.model.custom_data['tw'] = cd1.curve.params[Param.tw]
         tptw = cd1.curve.params[Param.tp] + cd1.curve.params[Param.tw]
         dE = cd1.curve.params[Param.dE]
-        dec_start = cd1.xValue2Index(self.model.customData['DecomposeRange'][0])
-        dec_end = cd1.xValue2Index(self.model.customData['DecomposeRange'][1])
+        dec_start = cd1.xValue2Index(self.model.custom_data['DecomposeRange'][0])
+        dec_end = cd1.xValue2Index(self.model.custom_data['DecomposeRange'][1])
         if dec_start > dec_end:
             dec_start, dec_end = dec_end, dec_start
 
@@ -86,12 +86,12 @@ Chemom. Intell. Lab. Syst., vol. 65, no. 1, pp. 119–137, 2003.
             Param.Ek,
             Param.Estep
         ]
-        check_curveset_integrity(self.model.curveSet, params_to_check)
+        check_dataset_integrity(self.model.dataset, params_to_check)
 
         an_selected = self.model.analytes.all()[0]
-        concs_different = curveSet.getUncorrelatedConcs()
-        an_selected_conc = curveSet.getConc(an_selected.id)
-        self.model.customData['analyte'] = an_selected.name
+        concs_different = dataset.getUncorrelatedConcs()
+        an_selected_conc = dataset.getConc(an_selected.id)
+        self.model.custom_data['analyte'] = an_selected.name
 
         if not an_selected_conc:
             raise VoltPyFailed('Wrong analyte selected.')
@@ -101,41 +101,41 @@ Chemom. Intell. Lab. Syst., vol. 65, no. 1, pp. 119–137, 2003.
 
         if method_type == self.type_separate:
             main_data_1 = np.zeros(
-                (tptw, int(len(cd1.currentSamples)/tptw/2), len(curveSet.curvesData.all()))
+                (tptw, int(len(cd1.current_samples)/tptw/2), len(dataset.curves_data.all()))
             )
             main_data_2 = np.zeros(
-                (tptw, int(len(cd1.currentSamples)/tptw/2), len(curveSet.curvesData.all()))
+                (tptw, int(len(cd1.current_samples)/tptw/2), len(dataset.curves_data.all()))
             )
-            for cnum, cd in enumerate(curveSet.curvesData.all()):
+            for cnum, cd in enumerate(dataset.curves_data.all()):
                 pos = 0
-                for i in np.arange(0, len(cd1.currentSamples), 2*tptw):
+                for i in np.arange(0, len(cd1.current_samples), 2*tptw):
                     pos = int(i/(2*tptw))
-                    main_data_1[:, pos, cnum] = cd.currentSamples[i:(i+tptw)]
-                    main_data_2[:, pos, cnum] = cd.currentSamples[(i+tptw):(i+(2*tptw))]
+                    main_data_1[:, pos, cnum] = cd.current_samples[i:(i+tptw)]
+                    main_data_2[:, pos, cnum] = cd.current_samples[(i+tptw):(i+(2*tptw))]
             main_data_1 = main_data_1[:, dec_start:dec_end, :]
             main_data_2 = main_data_2[:, dec_start:dec_end, :]
 
         elif method_type == self.type_together:
             main_data_1 = np.zeros(
-                (tptw, int(len(cd1.currentSamples)/tptw), len(curveSet.curvesData.all()))
+                (tptw, int(len(cd1.current_samples)/tptw), len(dataset.curves_data.all()))
             )
-            for cnum, cd in enumerate(curveSet.curvesData.all()):
+            for cnum, cd in enumerate(dataset.curves_data.all()):
                 pos = 0
-                for i in np.arange(0, len(cd1.currentSamples), tptw):
+                for i in np.arange(0, len(cd1.current_samples), tptw):
                     pos = int(i/tptw)
-                    main_data_1[:, pos, cnum] = cd.currentSamples[i:(i+tptw)]
+                    main_data_1[:, pos, cnum] = cd.current_samples[i:(i+tptw)]
             main_data_1 = main_data_1[:, 2*dec_start:2*dec_end, :]
             main_data_1 = self.remove_bkg_current(main_data_1)
 
         elif method_type == self.type_combined:
             main_data_1 = np.zeros(
-                (2*tptw, int(len(cd1.currentSamples)/tptw/2), len(curveSet.curvesData.all()))
+                (2*tptw, int(len(cd1.current_samples)/tptw/2), len(dataset.curves_data.all()))
             )
-            for cnum, cd in enumerate(curveSet.curvesData.all()):
+            for cnum, cd in enumerate(dataset.curves_data.all()):
                 pos = 0
-                for i in np.arange(0, len(cd1.currentSamples), 2*tptw):
+                for i in np.arange(0, len(cd1.current_samples), 2*tptw):
                     pos = int(i/(2*tptw))
-                    main_data_1[:, pos, cnum] = cd.currentSamples[i:(i+2*tptw)]
+                    main_data_1[:, pos, cnum] = cd.current_samples[i:(i+2*tptw)]
             main_data_1 = main_data_1[:, dec_start:dec_end, :]
         
 
@@ -174,12 +174,12 @@ Chemom. Intell. Lab. Syst., vol. 65, no. 1, pp. 119–137, 2003.
 
         def recompose(bfd, method_type):
             if method_type != self.type_combined:
-                mult = np.mean(bfd['x'][self.model.customData['tw']:])
+                mult = np.mean(bfd['x'][self.model.custom_data['tw']:])
                 yvecs = np.dot(np.matrix(bfd['y']).T, np.matrix(bfd['z']))
                 yvecs = np.dot(yvecs, mult)
             else:
-                mult1 = np.mean(bfd['x'][self.model.customData['tw']:self.model.customData['tp']])
-                mult2 = np.mean(bfd['x'][(2*self.model.customData['tw']+self.model.customData['tp']):])
+                mult1 = np.mean(bfd['x'][self.model.custom_data['tw']:self.model.custom_data['tp']])
+                mult2 = np.mean(bfd['x'][(2*self.model.custom_data['tw']+self.model.custom_data['tp']):])
                 yvecs1 = np.dot(np.matrix(bfd['y']).T, np.matrix(bfd['z'])).dot(mult1)
                 yvecs2 = np.dot(np.matrix(bfd['y']).T, np.matrix(bfd['z'])).dot(mult2)
                 yvecs = np.zeros((yvecs1.shape[0]*2, yvecs1.shape[1]))
@@ -220,32 +220,32 @@ Chemom. Intell. Lab. Syst., vol. 65, no. 1, pp. 119–137, 2003.
         elif method_type == self.type_combined:
             pass
 
-        if yvecs2.shape[1] == len(curveSet.curvesData.all()):
-            for i, cd in enumerate(curveSet.curvesData.all()):
+        if yvecs2.shape[1] == len(dataset.curves_data.all()):
+            for i, cd in enumerate(dataset.curves_data.all()):
                 newcd = cd.getCopy()
-                newcdConc = curveSet.getCurveConcDict(cd)
+                newcdConc = dataset.getCurveConcDict(cd)
                 newy = np.array(yvecs2[:, i].T).squeeze()  # change to array to remove dimension
                 newcd.yVector = newy
                 newcd.xVector = newcd.xVector[dec_start:dec_end]
                 newcd.date = timezone.now()
                 newcd.save()
-                curveSet.removeCurve(cd)
-                curveSet.addCurve(newcd, newcdConc)
-            curveSet.save()
+                dataset.removeCurve(cd)
+                dataset.addCurve(newcd, newcdConc)
+            dataset.save()
         else:
             raise VoltPyFailed('Computation error.')
 
     def finalize(self, user):
-        self.model.customData['DecomposeRange'] = self.model.stepsData['SelectRange']
-        self.__perform(self.model.curveSet)
+        self.model.custom_data['DecomposeRange'] = self.model.steps_data['SelectRange']
+        self.__perform(self.model.dataset)
         self.model.step = None
         self.model.completed = True
         self.model.save()
 
-    def apply(self, user, curveSet):
+    def apply(self, user, dataset):
         if self.model.completed is not True:
             raise VoltPyNotAllowed('Incomplete procedure.')
-        self.__perform(curveSet)
+        self.__perform(dataset)
 
     def _best_fit_factor(self, dE, concs, SamplingPred, PotentialPred, ConcentrationPred):
         capac_index = -1

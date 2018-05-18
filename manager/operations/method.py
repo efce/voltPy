@@ -58,7 +58,7 @@ class Method(ABC):
         raise NotImplementedError
 
         """
-        checks described what tests should be made to the curveSet in order for procedure
+        checks described what tests should be made to the dataset in order for procedure
         to be implemented correctly. Please use procedures from manager.operations.checks.
         Use partial implementation of function if you need some parameters to be passed.
         """
@@ -69,7 +69,7 @@ class Method(ABC):
     def can_be_applied(self) -> bool:
         """
         Describes if after creating the model it can
-        be applied to other curveset with apply method.
+        be applied to other dataset with apply method.
         """
         raise NotImplementedError
 
@@ -158,7 +158,7 @@ class Method(ABC):
                 self.model.completed = True
                 self.model.save()
                 if isinstance(self.model, mmodels.Processing):
-                    for cd in self.model.curveSet.curvesData.all():
+                    for cd in self.model.dataset.curves_data.all():
                         cd.processedWith = self.model
                         cd.save()
                 self.step = None
@@ -200,7 +200,7 @@ class Method(ABC):
         """
         Requires override.
         Is called to prepare main plot, after adding all elements,
-        of CurveSet. This should return Dict, and will be passed to
+        of Dataset. This should return Dict, and will be passed to
         PlotManager.add() method.
         """
         return None
@@ -236,10 +236,10 @@ class Method(ABC):
         pass
 
     @abstractmethod
-    def apply(self, user, curveSet):
+    def apply(self, user, dataset):
         """
         This should apply already completed processing/analysis method,
-        to the new curveSet with the same settings as original.
+        to the new dataset with the same settings as original.
         """
         pass
 

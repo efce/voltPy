@@ -27,12 +27,12 @@
     {% if user.is_authenticated %}
       <li class="topmenu_bkg" style="margin-left: 10%"><a href="{% url 'index' %}">Index</a></li>
       <li class="topmenu_bkg"><a href="{% url 'upload' %}">Upload Files</a></li>
-      <li class="topmenu_bkg"><a href="{% url 'createCurveSet' %}">Create Curve Set</a></li>
+      <li class="topmenu_bkg"><a href="{% url 'createDataset' %}">Create Dataset</a></li>
       <li class='dropdown topmenu_bkg'><span>&nbsp;Browse&nbsp;</span>
         <div class='dropdown_content topmenu_bkg'>
-          <a href="{% url 'browseFileSets' %}">File Sets</a><br />
-          <a href="{% url 'browseCurveFiles' %}">Files</a><br />
-          <a href="{% url 'browseCurveSets' %}">Curve Sets</a><br />
+          <a href="{% url 'browseFilesets' %}">Filesets</a><br />
+          <a href="{% url 'browseFiles' %}">Files</a><br />
+          <a href="{% url 'browseDatasets' %}">Datasets</a><br />
           <a href="{% url 'browseAnalysis' %}">Analysis</a>
         </div>
       </li>

@@ -3,9 +3,9 @@ from manager.helpers.functions import get_redirect_class
 import manager.models as mmodels
 
 
-def analytesTable(obj, objType: str) -> str:
+def analytesTable(obj, obj_type: str) -> str:
     """
-    cs - is CurveFile or CurveSet for which the table will be prepared.
+    cs - is File or Dataset for which the table will be prepared.
     """
     cs = obj
 
@@ -20,19 +20,19 @@ def analytesTable(obj, objType: str) -> str:
     ]
     ret.append('<tr><th>Name</th>')
 
-    unitsTrans = dict(mmodels.CurveSet.CONC_UNITS)
+    unitsTrans = dict(mmodels.Dataset.CONC_UNITS)
 
     for a in cs.analytes.all():
         ret.append("""
             <th class="at_hideable _voltJS_changeValue_{an_id}"><button type="button" class="{goTo}"{disabled}> {an_name} [{an_unit}]</button> </th>""".format(
                 an_name=a.name,
                 an_id=a.id,
-                an_unit=unitsTrans[cs.analytesConcUnits[a.id]],
+                an_unit=unitsTrans[cs.analytes_conc_unit[a.id]],
                 goTo=get_redirect_class(
                     reverse('editAnalyte', kwargs={
-                        'objType': objType,
-                        'objId': obj.id,
-                        'analyteId': a.id
+                        'obj_type': obj_type,
+                        'obj_id': obj.id,
+                        'analyte_id': a.id
                     })
                 ),
                 disabled=' disabled' if cs.locked else ''
@@ -42,7 +42,7 @@ def analytesTable(obj, objType: str) -> str:
     ret.append('<th class="at_hideable at_selection">&#9634;</th>')
     ret.append('</tr></thead><tbody>')
 
-    for cd in cs.curvesData.only('id', 'curve'):
+    for cd in cs.curves_data.only('id', 'curve'):
         ret.append(
             '<tr class="_voltJS_plotHighlight _voltJS_highlightCurve@{cdid}" onclick="$(\'input[name=cd_{cdid}]\').click();"><td> {cdname} </td>'.format(
                 cdid=cd.id,
@@ -50,7 +50,7 @@ def analytesTable(obj, objType: str) -> str:
             )
         )
         for a in cs.analytes.all():
-            conc = cs.analytesConc.get(a.id, {}).get(cd.id, 0)
+            conc = cs.analytes_conc.get(a.id, {}).get(cd.id, 0)
             ret.append('<td class="at_hideable _voltJS_changeValue_%s"> %f </td>' % (a.id, conc))
         ret.append('<td class="at_hideable at_selection">')
         ret.append(

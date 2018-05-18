@@ -33,18 +33,18 @@ class Parser(ABC):
     }
 
     def saveModels(self, user):
-        cf = mmodels.FileCurveSet(
+        cf = mmodels.File(
             name=self.cfile.name,
-            fileName=self.cfile.name,
-            fileDate=self._curves[0].date,
+            filename=self.cfile.name,
+            file_date=self._curves[0].date,
         )
         cf.save()
 
         order = 0
         for c in self._curves:
             cb = mmodels.Curve(
-                curveFile=cf,
-                orderInFile=order,
+                file=cf,
+                order_in_file=order,
                 name=c.name,
                 comment=c.comment,
                 params=c.vec_param,
@@ -58,10 +58,10 @@ class Parser(ABC):
                 time=c.vec_time,
                 potential=c.vec_potential,
                 current=c.vec_current,
-                currentSamples=c.vec_sampling
+                current_samples=c.vec_sampling
             )
             cd.save()
-            cf.curvesData.add(cd)
+            cf.curves_data.add(cd)
 
             ci = mmodels.CurveIndex(
                 curve=cb,
@@ -74,7 +74,7 @@ class Parser(ABC):
                 current_min=np.min(c.vec_current),
                 current_max=np.max(c.vec_current),
                 current_range=np.max(c.vec_current)-np.min(c.vec_current),
-                samplingRate=c.vec_param[Param.nonaveragedsampling],
+                sampling_rate=c.vec_param[Param.nonaveragedsampling],
             )
             ci.save()
             order += 1

@@ -28,30 +28,30 @@ signal back to the original domain.
     def __str__(cls):
         return "Low Pass FFT filter"
 
-    def __perform(self, curveSet):
-        for cd in curveSet.curvesData.all():
+    def __perform(self, dataset):
+        for cd in dataset.curves_data.all():
             newcd = cd.getCopy()
-            newcdConc = curveSet.getCurveConcDict(cd)
+            newcdConc = dataset.getCurveConcDict(cd)
             yvec = newcd.yVector
             ylen = len(yvec)
-            st = round(self.model.stepsData['SelectFrequency'])
+            st = round(self.model.steps_data['SelectFrequency'])
             en = ylen - st + 1
             ffty = np.fft.fft(yvec)
             ffty[st:en] = [0]*(en-st)
             iffty = np.fft.ifft(ffty)
             newcd.yVector = np.real(iffty)
             newcd.save()
-            curveSet.removeCurve(cd)
-            curveSet.addCurve(newcd, newcdConc)
-        curveSet.save()
+            dataset.removeCurve(cd)
+            dataset.addCurve(newcd, newcdConc)
+        dataset.save()
 
-    def apply(self, user, curveSet):
+    def apply(self, user, dataset):
         if self.model.completed is not True:
             raise VoltPyNotAllowed('Incomplete procedure.')
-        self.__perform(curveSet)
+        self.__perform(dataset)
 
     def finalize(self, user):
-        self.__perform(self.model.curveSet)
+        self.__perform(self.model.dataset)
         self.model.step = None
         self.model.completed = True
         self.model.save()

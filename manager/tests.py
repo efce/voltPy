@@ -21,7 +21,7 @@ Test should:
     add user
     login as user
     upload file
-    create curve set
+    create dataset
     process file
     check the result of processing
 """
@@ -71,7 +71,7 @@ def uploadFiles(user, list_of_files=None):
     request.user = user
     request.session = {}
     request = addFilesToRequest(request, file_list, 'files[]')
-    manager.helpers.functions.getUser = lambda: user 
+    manager.helpers.functions.get_user = lambda: user 
     pu = um.ajax(request=request)
 
 
@@ -210,13 +210,13 @@ class TestFileUpload(TestCase):
         if 'success' not in ret['command']:
             self.fail('success not reported by uploadmanager')
 
-        fileset = mmodels.FileSet.objects.all()[0]
+        fileset = mmodels.Fileset.objects.all()[0]
         self.assertEqual(len(self.file_list), len(fileset.files.all()), 'incomplete fileset')
         for f in fileset.files.all():
             cs = f
-            self.assertEqual(len(cs.curvesData.all()), self.curves_per_file)
-            for cd in cs.curvesData.all():
-                self.assertEqual(self.curve_length, len(cd.current), f.fileName)
+            self.assertEqual(len(cs.curves_data.all()), self.curves_per_file)
+            for cd in cs.curves_data.all():
+                self.assertEqual(self.curve_length, len(cd.current), f.filename)
                 float(cd.current[3])  # Test random element - selected by a dice roll
                 float(cd.potential[3])
                 float(cd.time[3])
@@ -240,11 +240,11 @@ class TestMethod(method.ProcessingMethod):
     def __str__(self):
         return "TestMethod"
 
-    def apply(self, curveSet):
+    def apply(self, dataset):
         return
 
     def finalize(self, user):
-        self.model.customData['FINALIZED'] = user.id
+        self.model.custom_data['FINALIZED'] = user.id
         self.model.step = None
         self.model.completed = True
         self.model.save()
@@ -264,7 +264,7 @@ main_class = TestMethod
         u.save()
         self.user = authenticate(username=uname, password=upass)
         uploadFiles(self.user)
-        self.curveset = mmodels.FileCurveSet.objects.all()[0]
+        self.dataset = mmodels.File.objects.all()[0]
         BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         self.methods_path = os.path.join(BASE_DIR, 'manager', 'operations', 'methods')
         self.assertTrue(os.path.isdir(self.methods_path))
@@ -277,7 +277,7 @@ main_class = TestMethod
         os.remove(self.testmethodfile)
 
     def test_methods_load(self):
-        mema = mm.MethodManager(user=self.user, curveset_id=self.curveset.id)
+        mema = mm.MethodManager(user=self.user, dataset_id=self.dataset.id)
         self.assertTrue(mema.methods.get('processing', False))
         self.assertTrue(mema.methods.get('analysis', False))
         self.assertEqual(mema.methods['processing']['TestMethod'].__name__, 'TestMethod')
@@ -285,10 +285,10 @@ main_class = TestMethod
     def test_methods_usage(self):
         # TODO: This requires better test, using Client model
         return
-        manager.helpers.functions.getUser = lambda: self.user 
+        manager.helpers.functions.get_user = lambda: self.user 
         p = mmodels.Processing(
             owner=self.user,
-            curveSet=self.curveset,
+            dataset=self.dataset,
             date=timezone.now(),
             name='PROC',
             method='TestMethod',
@@ -309,4 +309,4 @@ main_class = TestMethod
         request = req()
         mema.process(request=request, user=self.user)
         p = mmodels.Processing.objects.get(id=p.id)
-        self.assertEqual(p.customData['FINALIZED'], self.user.id)
+        self.assertEqual(p.custom_data['FINALIZED'], self.user.id)

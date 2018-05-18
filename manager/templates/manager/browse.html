@@ -20,7 +20,7 @@
             <th>
                 <a href="./?sort=id{{ paginator.search_append }}">Id</a>
             </th>
-            {% if paginator.current_page_content.0.disp_type == 'curve set' %}
+            {% if paginator.current_page_content.0.disp_type == 'dataset' %}
             <th>
                 &nbsp;
             </th>
@@ -28,7 +28,7 @@
             <th>
                 <a href="./?sort=name{{ paginator.search_append }}">Name</a>
             </th>
-            {% if paginator.current_page_content.0.disp_type == 'file set' %}
+            {% if paginator.current_page_content.0.disp_type == 'fileset' %}
             <th>
                 <small>Files</small>
             </th>
@@ -38,12 +38,12 @@
                 <a href="./?sort=method{{ paginator.search_append }}">Method</a>
             </th>
             <th>
-                <a href="./?sort=curveset{{ search_append }}">Curve Set</a>
+                <a href="./?sort=dataset{{ paginator.search_append }}">Dataset</a>
             </th>
             {% endif %}
             {% if paginator.current_page_content.0.disp_type == 'file' %}
             <th>
-                <a href="./?sort=fileName{{ paginator.search_append }}">File name</a>
+                <a href="./?sort=filename{{ paginator.search_append }}">File name</a>
             </th>
             {% endif %}
             <th>
@@ -66,7 +66,7 @@
             <td>
                 {{ el.id }}
             </td>
-            {% if paginator.current_page_content.0.disp_type == 'curve set' %}
+            {% if paginator.current_page_content.0.disp_type == 'dataset' %}
             <td>
                 {% if el.locked %}
                 {% lock %}
@@ -78,7 +78,7 @@
             <td>
                 {{ el.name }}
             </td>
-            {% if el.disp_type == 'file set' %}
+            {% if el.disp_type == 'fileset' %}
             <td><ul class="ul_compress">
                 {% for f in el.files.all %}
                     <li>{{ f.name }}</li>
@@ -87,15 +87,15 @@
             {% endif %}
             {% if paginator.current_page_content.0.disp_type == 'analysis' %}
             <td>
-                {{ el.methodDisplayName }}
+                {{ el.method_display_name }}
             </td>
             <td>
-                {{ el.curveSet.name }}
+                {{ el.dataset.name }}
             </td>
             {% endif %}
             {% if paginator.current_page_content.0.disp_type == 'file' %}
             <td>
-                {{ el.fileName }}
+                {{ el.filename }}
             </td>
             {% endif %}
             <td>

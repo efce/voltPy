@@ -14,20 +14,20 @@
         Actions:
         <button class="{{ back_to_browse_button }}">Browse {{ showing.disp_type }}</button>
         {% if showing.disp_type == 'analysis' %}
-        <button class="{{ curve_set_button }}">Goto curve set</button>
-        {% elif showing.disp_type == 'curve set' %}
+        <button class="{{ curve_set_button }}">Goto dataset</button>
+        {% elif showing.disp_type == 'dataset' %}
         <button class="{{ add_analyte_button }}">Add analyte</button>
-        <button class="{{ curve_set_button }}">Copy curve set</button>
+        <button class="{{ curve_set_button }}">Copy dataset</button>
         {% elif showing.disp_type == 'file' %}
         <button class="{{ add_analyte_button }}">Add analyte</button>
-        <button class="{{ curve_set_button }}">Create curve set</button>
+        <button class="{{ curve_set_button }}">Create dataset</button>
         {% else %}
-        <button class="{{ curve_set_button }}">Create curve set</button>
+        <button class="{{ curve_set_button }}">Create dataset</button>
         {% endif %}
         <a class="expandable" onclick="toggleDetails(this, '#more_actions');">More actions ↧</a>
         <div id="more_actions" class="mt_rest invisible">
         {% if showing %}
-            {% if showing.disp_type == 'curve set' %}
+            {% if showing.disp_type == 'dataset' %}
             <button class="{{ edit_curves_button }}">Edit curves</button>
             <button class="{{ undo_button }}">Undo</button>
             {% elif showing.disp_type == 'file' %}

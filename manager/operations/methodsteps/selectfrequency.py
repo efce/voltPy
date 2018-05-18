@@ -21,7 +21,7 @@ class SelectFrequency(MethodStep):
                         return False
                 if data is None:
                     return False
-                model.stepsData['SelectFrequency'] = data 
+                model.steps_data['SelectFrequency'] = data 
                 model.save()
                 return True
         return False
@@ -39,7 +39,7 @@ class SelectFrequency(MethodStep):
             request=request
         )
         p = pm.PlotManager()
-        for cd in model.curveSet.curvesData.all():
+        for cd in model.dataset.curves_data.all():
             ylen = len(cd.yVector)
             newy = np.absolute(np.fft.fft(cd.yVector))
             newy = newy[:round(ylen/2.0)].tolist()

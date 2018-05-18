@@ -28,28 +28,28 @@ given number of plots.
     @overrides
     def initialForStep(self, step_num):
         if step_num == 0:
-            if len(self.model.curveSet.analytesConc) > 0:
-                v = next(iter(self.model.curveSet.analytesConc.values()))
+            if len(self.model.dataset.analytes_conc) > 0:
+                v = next(iter(self.model.dataset.analytes_conc.values()))
                 return v
 
-    def apply(self, user, curveSet):
+    def apply(self, user, dataset):
         """
         This does not support appliyng existing
         """
         raise VoltPyFailed('Average curve does not support apply function.')
 
     def finalize(self, user):
-        cs = self.model.curveSet
-        for k, f in self.model.stepsData['TagCurves'].items():
+        cs = self.model.dataset
+        for k, f in self.model.steps_data['TagCurves'].items():
             if (len(f) > 1):
                 cid = f[0]
-                orgcd = cs.curvesData.get(id=cid)
+                orgcd = cs.curves_data.get(id=cid)
                 newcd = orgcd.getCopy()
                 newcdConc = cs.getCurveConcDict(orgcd)
                 cs.removeCurve(orgcd)
                 yvecs = []
                 for cid in f[1:]:
-                    cd = self.model.curveSet.curvesData.get(id=cid)
+                    cd = self.model.dataset.curves_data.get(id=cid)
                     yvecs.append(cd.yVector)
                     cs.removeCurve(cd)
                 newcd.yVector = np.mean(yvecs, axis=0)

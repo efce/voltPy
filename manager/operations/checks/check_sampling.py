@@ -1,13 +1,13 @@
 from manager.exceptions import VoltPyFailed
 
 
-def check_sampling(curveSet, same_sampling=True):
-    if len(curveSet.curvesData.all()) == 0:
+def check_sampling(dataset, same_sampling=True):
+    if len(dataset.curves_data.all()) == 0:
         return
-    ptnr = len(curveSet.curvesData.all()[0].currentSamples)
+    ptnr = len(dataset.curves_data.all()[0].current_samples)
     if ptnr == 0:
         raise VoltPyFailed('Data have to include multi-sampling (nonaveraged).')
     if same_sampling:
-        for cd in curveSet.curvesData.all():
-            if len(cd.currentSamples) != ptnr:
+        for cd in dataset.curves_data.all():
+            if len(cd.current_samples) != ptnr:
                 raise VoltPyFailed('Each curve needs to have the same sampling length.')

@@ -14,7 +14,7 @@ from manager.exceptions import VoltPyFailed
 from manager.helpers.functions import generate_plot
 from manager.helpers.functions import voltpy_render
 from manager.helpers.functions import add_notification
-from manager.helpers.functions import getUser
+from manager.helpers.functions import get_user
 
 
 class MethodManager:
@@ -41,16 +41,16 @@ class MethodManager:
 
         self.__loadMethods()
 
-        if 'curveset_id' in kwargs:
+        if 'dataset_id' in kwargs:
             self.__type = 'other'
-            self.__curveset_id = int(kwargs.get('curveset_id', None))
+            self.__dataset_id = int(kwargs.get('dataset_id', None))
             return
         elif 'processing_id' in kwargs or 'processing' in kwargs:
             self.__type = 'processing'
             _id = int(kwargs.get('processing_id', kwargs.get('processing')))
             try:
                 self.__model = mmodels.Processing.get(id=_id)
-                self.__curveset_id = self.__model.curveSet.id
+                self.__dataset_id = self.__model.dataset.id
             except ObjectDoesNotExist:
                 raise VoltPyDoesNotExists
         elif 'analysis_id' in kwargs or 'analysis' in kwargs:
@@ -130,7 +130,7 @@ class MethodManager:
         """
         if self.__model.deleted:
             add_notification(request, 'Procedure delted.', 0)
-            return HttpResponseRedirect(self.__model.curveSet.getUrl())
+            return HttpResponseRedirect(self.__model.dataset.getUrl())
 
         if any([
             self.__method.has_next is False,
@@ -139,7 +139,7 @@ class MethodManager:
             return HttpResponseRedirect(self.__model.getUrl())
 
         if not self.isMethodSelected():
-            return HttpResponseRedirect(reverse("browseCurveSet"))
+            return HttpResponseRedirect(reverse("browseDataset"))
 
         stepText = {
             'head': '',
@@ -160,7 +160,7 @@ class MethodManager:
             plotScr, plotDiv, butDiv = generate_plot(
                 request=request,
                 user=user,
-                to_plot=self.__model.curveSet,
+                to_plot=self.__model.dataset,
                 vtype=self.__method.type(),
                 vid=self.__model.id,
                 interactionName=self.__method.step['class'].plot_interaction,
@@ -181,7 +181,7 @@ class MethodManager:
                                     ]),
                 'user': user,
                 'model': self.__model,
-                'curveset_id': self.__model.curveSet.id,
+                'dataset_id': self.__model.dataset.id,
             }
 
             return voltpy_render(
@@ -193,13 +193,13 @@ class MethodManager:
     def methodCanBeApplied(self) -> bool:
         return self.__method.can_be_applied
 
-    def applyTo(self, user, request, curveset_id) -> None:
+    def applyTo(self, user, request, dataset_id) -> None:
         try:
-            cs = mmodels.CurveSet.get(id=int(curveset_id))
+            cs = mmodels.Dataset.get(id=int(dataset_id))
         except (ObjectDoesNotExist, ValueError):
             raise VoltPyDoesNotExists
         try:
-            ret_id = self.__method.apply(user=user, curveSet=cs)
+            ret_id = self.__method.apply(user=user, dataset=cs)
         except VoltPyFailed as e:
             add_notification(request, """
                 Procedure failed. The data may be incompatible with the processing method.
@@ -216,13 +216,13 @@ class MethodManager:
         """
         Returns form instance with selection of analysis methods.
         """
-        curveSet = kwargs.pop('curveSet')
+        dataset = kwargs.pop('dataset')
         return MethodManager._AltSelectionForm(
             self,
             self.methods['analysis'],
             type='analysis',
             prefix='analysis',
-            curveSet=curveSet,
+            dataset=dataset,
             *args,
             **kwargs
         )
@@ -231,13 +231,13 @@ class MethodManager:
         """
         Returns form instance with selection of processing methods.
         """
-        curveSet = kwargs.pop('curveSet')
+        dataset = kwargs.pop('dataset')
         return MethodManager._AltSelectionForm(
             self,
             self.methods['processing'],
             type='processing',
             prefix='processing',
-            curveSet=curveSet,
+            dataset=dataset,
             *args,
             **kwargs
         )
@@ -256,7 +256,7 @@ class MethodManager:
 
     class _AltSelectionForm(forms.Form):
         def __init__(self, parent, methods: Dict, *args, **kwargs):
-            curveSet = kwargs.pop('curveSet')
+            dataset = kwargs.pop('dataset')
             self.type = kwargs.pop('type', 'processing')
             if self.type == 'processing':
                 label = 'Processing method'
@@ -274,7 +274,7 @@ class MethodManager:
                     [v.__str__() for k, v in methods.items()]
                 )
             )
-            self._checkCurveset(curveSet)
+            self._checkDataset(dataset)
 
             defKey = list(self.methods)[0]
             defMethod = self.methods[defKey]
@@ -285,14 +285,14 @@ class MethodManager:
                 initial=defKey
             )
 
-        def _checkCurveset(self, curveSet):
+        def _checkDataset(self, dataset):
             for k, v in self.methods.items():
                 v.errors = []
                 for check in v.checks:
                     if check is None:
                         continue
                     try:
-                        check(curveSet)
+                        check(dataset)
                     except VoltPyFailed as err:
                         v.errors.append(err)
         
@@ -302,13 +302,13 @@ class MethodManager:
                 'disabled': self.disabled,
                 'methods': to_disp,
                 'type': self.type,
-                'user': getUser()
+                'user': get_user()
             }
             tt = loader.get_template('manager/method_selection.html')
             return tt.render(context=context)
 
-        def process(self, user, curveset):
-            self._checkCurveset(curveset)
+        def process(self, user, dataset):
+            self._checkDataset(dataset)
             if self.type == 'processing':
                 mname = self.cleaned_data.get('method', None)
                 if mname in self.methods:
@@ -317,16 +317,16 @@ class MethodManager:
                         raise VoltPyFailed('Data does not meets requirements for selected method: %s' % errors)
                     a = mmodels.Processing(
                         owner=user,
-                        curveSet=curveset,
+                        dataset=dataset,
                         method=mname,
-                        methodDisplayName=self.methods[mname].__str__(),
+                        method_display_name=self.methods[mname].__str__(),
                         name='',
                         active_step_num=0,
                         deleted=False,
                         completed=False
                     )
                     a.save()
-                    curveset.prepareUndo(processingObject=a)
+                    dataset.prepareUndo(processing_instance=a)
                     return a.id
                 return None
             elif self.type == 'analysis':
@@ -337,16 +337,16 @@ class MethodManager:
                         raise VoltPyFailed('Data does not meets requirements for selected method: %s' % errors)
                     a = mmodels.Analysis(
                         owner=user,
-                        curveSet=curveset,
+                        dataset=dataset,
                         method=mname,
-                        methodDisplayName=self.methods[mname].__str__(),
+                        method_display_name=self.methods[mname].__str__(),
                         name='',
                         active_step_num=0,
                         deleted=False,
                         completed=False
                     )
                     a.save()
-                    curveset.save()
+                    dataset.save()
                     return a.id
             return None
 
@@ -418,22 +418,22 @@ $(function(){{
 </script>""".format(field_id=active_field_id, js_dict=js_dict)
             return js_data
 
-        def process(self, user, curveset):
+        def process(self, user, dataset):
             if self.type == 'processing':
                 mname = self.cleaned_data.get('method', None)
                 if mname in self.methods:
                     a = mmodels.Processing(
                         owner=user,
-                        curveSet=curveset,
+                        dataset=dataset,
                         method=mname,
-                        methodDisplayName=self.methods[mname].__str__(),
+                        method_display_name=self.methods[mname].__str__(),
                         name='',
                         active_step_num=0,
                         deleted=False,
                         completed=False
                     )
                     a.save()
-                    curveset.prepareUndo(processingObject=a)
+                    dataset.prepareUndo(processingObject=a)
                     return a.id
                 return None
             elif self.type == 'analysis':
@@ -441,15 +441,15 @@ $(function(){{
                 if mname in self.methods:
                     a = mmodels.Analysis(
                         owner=user,
-                        curveSet=curveset,
+                        dataset=dataset,
                         method=mname,
-                        methodDisplayName=self.methods[mname].__str__(),
+                        method_display_name=self.methods[mname].__str__(),
                         name='',
                         active_step_num=0,
                         deleted=False,
                         completed=False
                     )
                     a.save()
-                    curveset.save()
+                    dataset.save()
                     return a.id
             return None

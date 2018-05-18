@@ -7,7 +7,7 @@
 <legend class="mt_name">Files in the File Set:</legend>
 <ul>
     {% for f in showing.files.all %}
-    <li><a href="{% url 'showCurveFile' f.id %}">{{ f }}</a></li>
+    <li><a href="{% url 'showFile' f.id %}">{{ f }}</a></li>
     {% endfor %}
 </ul>
 </fieldset>

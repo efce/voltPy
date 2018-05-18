@@ -135,7 +135,7 @@ def ajax(request, user):
             if isOk:
                 fileset_id = parseAndCreateModels(files=files, details=details, user=user)
                 jsonData['command'] = 'success'
-                jsonData['location'] = reverse('showFileSet', args=[fileset_id])
+                jsonData['location'] = reverse('showFileset', args=[fileset_id])
             else:
                 jsonData['command'] = 'failed'
                 jsonData['errors'] = ''
@@ -220,7 +220,7 @@ def verifyFileExt(filelist):
 def parseAndCreateModels(files, details, user):
     """
     Try to load parser, create model and save to DB.
-    returns the FileSet id
+    returns the Fileset id
     """
     sid = transaction.savepoint()
     try:
@@ -228,7 +228,7 @@ def parseAndCreateModels(files, details, user):
         for i, f in enumerate(files):
             d = details[i]
             cf_ids.append(_parseGetCFID(f, d, user))
-        fsid = _saveFileSet(cf_ids, user, details)
+        fsid = _saveFileset(cf_ids, user, details)
     except (DatabaseError, VoltPyFailed):
         transaction.savepoint_rollback(sid)
         raise
@@ -236,18 +236,18 @@ def parseAndCreateModels(files, details, user):
     return fsid
 
 
-def _saveFileSet(cf_ids, user, details):
+def _saveFileset(cf_ids, user, details):
     """
-    Save FileSet to DB connecting it to its
-    curveFiles and return the FileSet id.
+    Save Fileset to DB connecting it to its
+    curveFiles and return the Fileset id.
     """
-    fs = mmodels.FileSet(
+    fs = mmodels.Fileset(
         owner=user,
         name=details.get('fileset_name', ''),
     )
     fs.save()
     for i in cf_ids:
-        cf = mmodels.FileCurveSet.objects.get(id=i)
+        cf = mmodels.File.objects.get(id=i)
         fs.files.add(cf)
     fs.save()
     return fs.id
@@ -268,7 +268,7 @@ def _getParserClass(extension):
 
 def _parseGetCFID(cfile, details, user):
     """
-    Upload file and return CurveFile id.
+    Upload file and return File id.
     """
     ext = cfile.name.rsplit('.', 1)[1]
     parserClass = _getParserClass(ext)

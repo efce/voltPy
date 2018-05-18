@@ -40,24 +40,24 @@ other right after it.
 
     def process(self, user, request):
         ret = super(PolynomialBackgroundFit, self).process(user, request)
-        self.model.customData['fitCoeff'] = []
+        self.model.custom_data['fitCoeff'] = []
         if self.model.active_step_num == 2:
-            for cd in self.model.curveSet.curvesData.all():
+            for cd in self.model.dataset.curves_data.all():
                 v = []
-                v.append(cd.xValue2Index(self.model.stepsData['SelectTwoRanges'][0]))
-                v.append(cd.xValue2Index(self.model.stepsData['SelectTwoRanges'][1]))
-                v.append(cd.xValue2Index(self.model.stepsData['SelectTwoRanges'][2]))
-                v.append(cd.xValue2Index(self.model.stepsData['SelectTwoRanges'][3]))
+                v.append(cd.xValue2Index(self.model.steps_data['SelectTwoRanges'][0]))
+                v.append(cd.xValue2Index(self.model.steps_data['SelectTwoRanges'][1]))
+                v.append(cd.xValue2Index(self.model.steps_data['SelectTwoRanges'][2]))
+                v.append(cd.xValue2Index(self.model.steps_data['SelectTwoRanges'][3]))
                 v.sort()
                 (st1, en1, st2, en2) = (v[0], v[1], v[2], v[3])
                 xvec = np.append(cd.xVector[st1:en1], cd.xVector[st2:en2])
                 yvec = np.append(cd.yVector[st1:en1], cd.yVector[st2:en2])
                 try:
-                    degree = int(self.model.stepsData['Settings']['Degree'])
+                    degree = int(self.model.steps_data['Settings']['Degree'])
                 except ValueError:
                     raise VoltPyFailed('Wrong degree of polynomial')
                 p = np.polyfit(xvec, yvec, degree)
-                self.model.customData['fitCoeff'].append(p)
+                self.model.custom_data['fitCoeff'].append(p)
                 self.model.save()
         return ret
 
@@ -78,7 +78,7 @@ other right after it.
     def addToMainPlot(self):
         if self.model.active_step_num == 2:
             fitlines = []
-            for cd, fit in zip(self.model.curveSet.curvesData.all(), self.model.customData['fitCoeff']):
+            for cd, fit in zip(self.model.dataset.curves_data.all(), self.model.custom_data['fitCoeff']):
                 xvec = cd.xVector
                 p = fit
                 fitlines.append(dict(
@@ -90,15 +90,15 @@ other right after it.
             return fitlines
         return None
 
-    def apply(self, user, curveSet):
+    def apply(self, user, dataset):
         if self.model.completed is not True:
             raise VoltPyNotAllowed('Incomplete procedure.')
-        self.__perform(curveSet)
+        self.__perform(dataset)
 
-    def __perform(self, curveSet):
-        for cd, fit in zip(curveSet.curvesData.all(), self.model.customData['fitCoeff']):
+    def __perform(self, dataset):
+        for cd, fit in zip(dataset.curves_data.all(), self.model.custom_data['fitCoeff']):
             newcd = cd.getCopy()
-            newcdConc = curveSet.getCurveConcDict(cd)
+            newcdConc = dataset.getCurveConcDict(cd)
             yvec = newcd.yVector
             xvec = newcd.xVector
             p = fit
@@ -106,12 +106,12 @@ other right after it.
             newyvec = np.subtract(yvec, ybkg)
             newcd.yVector = newyvec
             newcd.save()
-            curveSet.removeCurve(cd)
-            curveSet.addCurve(newcd, newcdConc)
-        curveSet.save()
+            dataset.removeCurve(cd)
+            dataset.addCurve(newcd, newcdConc)
+        dataset.save()
 
     def finalize(self, user):
-        self.__perform(self.model.curveSet)
+        self.__perform(self.model.dataset)
         self.model.step = None
         self.model.completed = True
         self.model.save()
