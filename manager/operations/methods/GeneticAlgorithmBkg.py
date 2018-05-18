@@ -7,6 +7,7 @@ from manager.operations.methodsteps.selectrange import SelectRange
 from manager.helpers.genetic_algorithm.genetic_algorithm import geneticAlgorithm
 from manager.exceptions import VoltPyNotAllowed
 from manager.exceptions import VoltPyFailed
+from manager.operations.checks.check_datalenuniform import check_datalenuniform
 
 
 class GeneticAlgorithmBkg(method.ProcessingMethod):
@@ -24,6 +25,7 @@ class GeneticAlgorithmBkg(method.ProcessingMethod):
         },
     ]
     model = None
+    checks = (check_datalenuniform, )
     description = """
 [1] Application of genetic algorithm for baseline optimization in standard addition voltammetry / Łukasz GÓRSKI, Małgorzata JAKUBOWSKA, Bogusław BAŚ, Władysław W. KUBIAK // Journal of Electroanalytical Chemistry ; ISSN 1572-6657. — 2012 vol. 684, s. 38–46. — Bibliogr. s. 46, Abstr.. — tekst: http://www.sciencedirect.com/science/article/pii/S1572665712003177/pdfft?md5=89a1f051feed10aaf624fbdca4d1a1a7&pid=1-s2.0-S1572665712003177-main.pdf
     """
