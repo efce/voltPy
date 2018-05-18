@@ -293,7 +293,7 @@ def paginate(request, queryset, sortable_by: List, current_page: int):
         if 'analytes' in sortable_by:
             dbquery |= Q(analytes__name__icontains=search_string)
         if 'method' in sortable_by:
-            dbquery |= Q(methd_display_name__icontains=search_string)
+            dbquery |= Q(method_display_name__icontains=search_string)
         queryset = queryset.filter(dbquery)
     if request.method in ['GET', 'POST']:
         if request.GET.get('sort', False):

@@ -38,7 +38,7 @@
                 <a href="./?sort=method{{ paginator.search_append }}">Method</a>
             </th>
             <th>
-                <a href="./?sort=dataset{{ search_append }}">Dataset</a>
+                <a href="./?sort=dataset{{ paginator.search_append }}">Dataset</a>
             </th>
             {% endif %}
             {% if paginator.current_page_content.0.disp_type == 'file' %}
