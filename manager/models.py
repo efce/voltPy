@@ -352,7 +352,7 @@ class CurveData(VoltPyModel):
     based_on = models.ForeignKey('CurveData', null=True, default=None, on_delete=models.DO_NOTHING)
     processedWith = models.ForeignKey('Processing', null=True, default=None, on_delete=models.DO_NOTHING)
     _current_samples = models.ForeignKey(SamplingData, on_delete=models.DO_NOTHING, default=None, null=True)
-    __current_samplesChanged = False
+    __current_samples_changed = False
     disp_type = 'data'
 
     class Meta:
@@ -387,7 +387,7 @@ class CurveData(VoltPyModel):
 
     @current_samples.setter
     def current_samples(self, value):
-        self.__current_samplesChanged = True
+        self.__current_samples_changed = True
         sd = SamplingData()
         sd.data = value
         sd.save()
@@ -395,9 +395,9 @@ class CurveData(VoltPyModel):
         
     @overrides
     def save(self, *args, **kwargs):
-        if self.__current_samplesChanged:
+        if self.__current_samples_changed:
             self._current_samples.save()
-            self.__current_samplesChanged = False
+            self.__current_samples_changed = False
         self.potential = np.array(self.potential)
         self.current = np.array(self.current)
         self.time = np.array(self.time)
