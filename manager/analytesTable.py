@@ -27,7 +27,7 @@ def analytesTable(obj, obj_type: str) -> str:
             <th class="at_hideable _voltJS_changeValue_{an_id}"><button type="button" class="{goTo}"{disabled}> {an_name} [{an_unit}]</button> </th>""".format(
                 an_name=a.name,
                 an_id=a.id,
-                an_unit=unitsTrans[cs.analytes_concUnits[a.id]],
+                an_unit=unitsTrans[cs.analytes_conc_unit[a.id]],
                 goTo=get_redirect_class(
                     reverse('editAnalyte', kwargs={
                         'obj_type': obj_type,

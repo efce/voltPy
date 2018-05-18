@@ -152,7 +152,7 @@ class EditAnalytesForm(forms.Form):
                 existingAnalytes.append((an.id, an.name))
 
         if analyte is not None and conc:
-            eaDefaultUnit = self.cs.analytes_concUnits.get(analyte.id, eaDefaultUnit)
+            eaDefaultUnit = self.cs.analytes_conc_unit.get(analyte.id, eaDefaultUnit)
             eaDefault = analyte.id
 
         self.fields['units'] = forms.ChoiceField(
@@ -259,14 +259,14 @@ class EditAnalytesForm(forms.Form):
             a.id != self.original_id
         ]):
             self.cs.analytes_conc.pop(self.original_id, None)
-            self.cs.analytes_concUnits.pop(self.original_id, None)
+            self.cs.analytes_conc_unit.pop(self.original_id, None)
             try:
                 a_org = mmodels.Analyte.objects.get(id=self.original_id)
                 self.cs.analytes.remove(a_org)
             except ObjectDoesNotExist:
                 pass
         self.cs.analytes_conc[a.id] = conc
-        self.cs.analytes_concUnits[a.id] = units
+        self.cs.analytes_conc_unit[a.id] = units
         self.cs.analytes.add(a)
         self.cs.save()
         return True
@@ -496,7 +496,7 @@ class SelectCurvesForDatasetForm(forms.Form):
                     for a in cs.analytes.all():
                         if not newcs.analytes.filter(id=a.id).exists():
                             newcs.analytes.add(a)
-                            newcs.analytes_conc_unit[a.id] = cs.analytes_concUnits.get(a.id, '0g')
+                            newcs.analytes_conc_unit[a.id] = cs.analytes_conc_unit.get(a.id, '0g')
                     if 'all' in cdids.keys():
                         for cd in cs.curves_data.all():
                             newcs.addCurve(

@@ -65,7 +65,7 @@ calculated as a difference between max and min signal in the given range.
             VoltPyFailed('Wrong analyte selected.')
         self.model.customData['analyte'] = analyte.name
         unitsTrans = dict(mmodels.Dataset.CONC_UNITS)
-        self.model.customData['units'] = unitsTrans[self.model.dataset.analytes_concUnits[analyte.id]]
+        self.model.customData['units'] = unitsTrans[self.model.dataset.analytes_conc_unit[analyte.id]]
         for cd in self.model.dataset.curves_data.all():
             startIndex = cd.xValue2Index(selRange[0])
             endIndex = cd.xValue2Index(selRange[1])

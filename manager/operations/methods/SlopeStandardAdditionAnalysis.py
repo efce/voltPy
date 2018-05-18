@@ -55,7 +55,7 @@ https://doi.org/10.1039/C7AN00185A
         analyte = self.model.dataset.analytes.all()[0]
         self.model.customData['analyte'] = analyte.name
         unitsTrans = dict(mmodels.Dataset.CONC_UNITS)
-        self.model.customData['units'] = unitsTrans[self.model.dataset.analytes_concUnits[analyte.id]]
+        self.model.customData['units'] = unitsTrans[self.model.dataset.analytes_conc_unit[analyte.id]]
         for cd in self.model.dataset.curves_data.all():
             X.append(cd.current_samples)
             Conc.append(self.model.dataset.analytes_conc.get(analyte.id, {}).get(cd.id, 0))

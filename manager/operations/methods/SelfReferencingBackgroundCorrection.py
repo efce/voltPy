@@ -70,7 +70,7 @@ https://doi.org/10.1002/elan.201300181"""
         analyte = self.model.dataset.analytes.all()[0]
         self.model.customData['analyte'] = analyte.name
         unitsTrans = dict(mmodels.Dataset.CONC_UNITS)
-        self.model.customData['units'] = unitsTrans[self.model.dataset.analytes_concUnits[analyte.id]]
+        self.model.customData['units'] = unitsTrans[self.model.dataset.analytes_conc_unit[analyte.id]]
         if len(set(self.model.stepsData['TagCurves'].keys())) <= 2:
             raise VoltPyFailed('Not enough sensitivities to analyze the data.')
         for name, cds in self.model.stepsData['TagCurves'].items():
