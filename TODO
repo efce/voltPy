@@ -12,11 +12,11 @@
   - Clear selection menu with Processing methods
   - Ability to add method to favorites (ability to add star to the method like in gmail)
   - Menu with favorite and last used methods
-  - Separate Copy (instant copy) and add CurveSet to selection in CurveSet creation
-- Ability to share CurveSet/Analysis with other registered user (ro/rw)
-- Sharing of curves/curvesets/analyses via link (ro/rw) -- which instantly displays the data without any login screen
+  - Separate Copy (instant copy) and add Dataset to selection in Dataset creation
+- Ability to share Dataset/Analysis with other registered user (ro/rw)
+- Sharing of curves/datasets/analyses via link (ro/rw) -- which instantly displays the data without any login screen
 - Create panel with user settings and privileges
-o Ability to process selected curve as all in the CurveSet (required for calibration method) - branch calibration
+o Ability to process selected curve as all in the Dataset (required for calibration method) - branch calibration
 o Dynamic adjustment of plot size based on client resolution/window size (?) - WIP
 
 ==== Programming =====

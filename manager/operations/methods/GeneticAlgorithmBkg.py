@@ -32,30 +32,30 @@ class GeneticAlgorithmBkg(method.ProcessingMethod):
     def __str__(cls):
         return "Genetic Algorithm for Background Correction"
 
-    def apply(self, user, curveSet):
+    def apply(self, user, dataset):
         if self.model.completed is not True:
             raise VoltPyNotAllowed('Incomplete procedure.')
-        self.__perform(curveSet)
+        self.__perform(dataset)
 
-    def __perform(self, curveSet):
-        cd1 = curveSet.curvesData.all()[0]
+    def __perform(self, dataset):
+        cd1 = dataset.curves_data.all()[0]
         peak_max_index = cd1.xValue2Index(self.model.customData['PeakMaximum'])
         peak_start_index = cd1.xValue2Index(self.model.customData['PeakSpan'][0])
         peak_end_index = cd1.xValue2Index(self.model.customData['PeakSpan'][1])
         if peak_end_index < peak_start_index:
             peak_end_index, peak_start_index = peak_start_index, peak_end_index
-        yvecs = np.stack([cd.yVector.T for cd in curveSet.curvesData.all()])
+        yvecs = np.stack([cd.yVector.T for cd in dataset.curves_data.all()])
         yvecs = yvecs.T
         (no_bkg, bkg) = geneticAlgorithm(yvecs, peak_max_index, peak_start_index, peak_end_index)
-        for i, cd in enumerate(curveSet.curvesData.all()):
+        for i, cd in enumerate(dataset.curves_data.all()):
             newcd = cd.getCopy()
-            newcdConc = curveSet.getCurveConcDict(cd)
+            newcdConc = dataset.getCurveConcDict(cd)
             newcd.yVector = no_bkg.T[:, i]
             newcd.date = timezone.now()
             newcd.save()
-            curveSet.removeCurve(cd)
-            curveSet.addCurve(newcd, newcdConc)
-        curveSet.save()
+            dataset.removeCurve(cd)
+            dataset.addCurve(newcd, newcdConc)
+        dataset.save()
 
     def finalize(self, user):
         try:
@@ -63,7 +63,7 @@ class GeneticAlgorithmBkg(method.ProcessingMethod):
             self.model.customData['PeakSpan'] = self.model.stepsData['SelectRange']
         except ValueError:
             raise VoltPyFailed('No values selected.')
-        self.__perform(self.model.curveSet)
+        self.__perform(self.model.dataset)
         self.model.step = None
         self.model.completed = True
         self.model.save()

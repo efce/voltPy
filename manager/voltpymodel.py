@@ -18,7 +18,7 @@ class VoltPyModel(models.Model):
         abstract = True
 
     def save(self):
-        user = manager.helpers.functions.getUser()
+        user = manager.helpers.functions.get_user()
         if self.id is None:
             # it is new object in DB, so user is owner
             self.owner = user
@@ -34,7 +34,7 @@ class VoltPyModel(models.Model):
 
     @classmethod
     def get(cls, *args, **kwargs):
-        user = manager.helpers.functions.getUser()
+        user = manager.helpers.functions.get_user()
         kwargs['deleted'] = False
         perms = ('rw', 'ro')
         try:
@@ -44,7 +44,7 @@ class VoltPyModel(models.Model):
 
     @classmethod
     def filter(cls, *args, **kwargs):
-        user = manager.helpers.functions.getUser()
+        user = manager.helpers.functions.get_user()
         kwargs['deleted'] = False
         perms = ('rw', 'ro')
         try:
@@ -54,12 +54,12 @@ class VoltPyModel(models.Model):
 
     @classmethod
     def all(cls, *args, **kwargs):
-        user = manager.helpers.functions.getUser()
+        user = manager.helpers.functions.get_user()
         perms = ('rw', 'ro')
         return get_objects_for_user(user, perms, klass=cls, any_perm=True).filter(deleted=False)
 
     def delete(self):
-        user = manager.helpers.functions.getUser()
+        user = manager.helpers.functions.get_user()
         if user.has_perm('del', self):
             self.deleted = True
             super().save()
@@ -70,7 +70,7 @@ class VoltPyModel(models.Model):
 def check_permission(sender, instance, **kwargs):
     if not isinstance(instance, VoltPyModel):
         return
-    user = manager.helpers.functions.getUser()
+    user = manager.helpers.functions.get_user()
     if not user.has_perm('rw', instance):
         raise VoltPyNotAllowed('Operation not allowed.')
 m2m_changed.connect(check_permission, sender=None)

@@ -44,15 +44,15 @@ Savitzky-Golay smoothing algorithm.
             }
         return None
 
-    def apply(self, user, curveSet):
+    def apply(self, user, dataset):
         if self.model.completed is not True:
             raise VoltPyNotAllowed('Incomplete procedure.')
-        self.__perform(curveSet)
+        self.__perform(dataset)
 
-    def __perform(self, curveSet):
-        for cd in curveSet.curvesData.all():
+    def __perform(self, dataset):
+        for cd in dataset.curves_data.all():
             newcd = cd.getCopy()
-            newcdConc = curveSet.getCurveConcDict(cd)
+            newcdConc = dataset.getCurveConcDict(cd)
             yvec = newcd.yVector
             xvec = newcd.xVector
             newyvec = savgol_filter(
@@ -62,9 +62,9 @@ Savitzky-Golay smoothing algorithm.
             )
             newcd.yVector = newyvec
             newcd.save()
-            curveSet.removeCurve(cd)
-            curveSet.addCurve(newcd, newcdConc)
-        curveSet.save()
+            dataset.removeCurve(cd)
+            dataset.addCurve(newcd, newcdConc)
+        dataset.save()
 
     def finalize(self, user):
         try:
@@ -72,7 +72,7 @@ Savitzky-Golay smoothing algorithm.
             self.model.customData['Degree'] = int(self.model.stepsData['Settings']['Degree'])
         except ValueError:
             raise VoltPyFailed('Wrong values for span or degree.')
-        self.__perform(self.model.curveSet)
+        self.__perform(self.model.dataset)
         self.model.step = None
         self.model.completed = True
         self.model.save()

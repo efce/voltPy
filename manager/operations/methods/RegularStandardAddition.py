@@ -41,9 +41,9 @@ calculated as a difference between max and min signal in the given range.
             raise VoltPyFailed('Incomplete data')
         return np.matrix(self.model.customData['matrix']).T
 
-    def apply(self, user, curveSet):
+    def apply(self, user, dataset):
         an = self.model.getCopy()
-        an.curveSet = curveSet
+        an.dataset = dataset
         an.appliesModel = self.model
         an.save()
         self.model = an
@@ -64,15 +64,15 @@ calculated as a difference between max and min signal in the given range.
         except:
             VoltPyFailed('Wrong analyte selected.')
         self.model.customData['analyte'] = analyte.name
-        unitsTrans = dict(mmodels.CurveSet.CONC_UNITS)
-        self.model.customData['units'] = unitsTrans[self.model.curveSet.analytesConcUnits[analyte.id]]
-        for cd in self.model.curveSet.curvesData.all():
+        unitsTrans = dict(mmodels.Dataset.CONC_UNITS)
+        self.model.customData['units'] = unitsTrans[self.model.dataset.analytes_concUnits[analyte.id]]
+        for cd in self.model.dataset.curves_data.all():
             startIndex = cd.xValue2Index(selRange[0])
             endIndex = cd.xValue2Index(selRange[1])
             if endIndex < startIndex:
                 endIndex, startIndex = startIndex, endIndex
             yvalues.append(max(cd.yVector[startIndex:endIndex])-min(cd.yVector[startIndex:endIndex]))
-            xvalues.append(self.model.curveSet.analytesConc.get(analyte.id, {}).get(cd.id, 0))
+            xvalues.append(self.model.dataset.analytes_conc.get(analyte.id, {}).get(cd.id, 0))
 
         if 0 not in xvalues:
             raise VoltPyFailed('The method requires signal value for concentration 0 %s' % self.model.customData['units'])

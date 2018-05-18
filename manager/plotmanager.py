@@ -50,9 +50,9 @@ class PlotManager:
             sizing_mode='scale_both'
         )
 
-    def curveSetHelper(self, user, cs):
+    def datasetHelper(self, user, cs):
         ret = []
-        for cd in cs.curvesData.all():
+        for cd in cs.curves_data.all():
             ret.append({
                 'x': cd.xVector,
                 'y': cd.yVector,

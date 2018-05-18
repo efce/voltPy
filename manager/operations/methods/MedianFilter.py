@@ -24,26 +24,26 @@ class MedianFilter(method.ProcessingMethod):
     def __str__(cls):
         return "Median Filter"
 
-    def apply(self, user, curveSet):
+    def apply(self, user, dataset):
         if self.model.completed is not True:
             raise VoltPyNotAllowed('Incomplete procedure.')
-        self.__perform(curveSet)
+        self.__perform(dataset)
 
-    def __perform(self, curveSet):
-        for cd in curveSet.curvesData.all():
+    def __perform(self, dataset):
+        for cd in dataset.curves_data.all():
             newcd = cd.getCopy()
-            newcdConc = curveSet.getCurveConcDict(cd)
+            newcdConc = dataset.getCurveConcDict(cd)
             yvec = newcd.yVector
             xvec = newcd.xVector
             newyvec = medfilt(yvec)
             newcd.yVector = newyvec
             newcd.save()
-            curveSet.removeCurve(cd)
-            curveSet.addCurve(newcd, newcdConc)
-        curveSet.save()
+            dataset.removeCurve(cd)
+            dataset.addCurve(newcd, newcdConc)
+        dataset.save()
 
     def finalize(self, user):
-        self.__perform(self.model.curveSet)
+        self.__perform(self.model.dataset)
         self.model.step = None
         self.model.completed = True
         self.model.save()

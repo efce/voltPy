@@ -42,7 +42,7 @@ other right after it.
         ret = super(PolynomialBackgroundFit, self).process(user, request)
         self.model.customData['fitCoeff'] = []
         if self.model.active_step_num == 2:
-            for cd in self.model.curveSet.curvesData.all():
+            for cd in self.model.dataset.curves_data.all():
                 v = []
                 v.append(cd.xValue2Index(self.model.stepsData['SelectTwoRanges'][0]))
                 v.append(cd.xValue2Index(self.model.stepsData['SelectTwoRanges'][1]))
@@ -78,7 +78,7 @@ other right after it.
     def addToMainPlot(self):
         if self.model.active_step_num == 2:
             fitlines = []
-            for cd, fit in zip(self.model.curveSet.curvesData.all(), self.model.customData['fitCoeff']):
+            for cd, fit in zip(self.model.dataset.curves_data.all(), self.model.customData['fitCoeff']):
                 xvec = cd.xVector
                 p = fit
                 fitlines.append(dict(
@@ -90,15 +90,15 @@ other right after it.
             return fitlines
         return None
 
-    def apply(self, user, curveSet):
+    def apply(self, user, dataset):
         if self.model.completed is not True:
             raise VoltPyNotAllowed('Incomplete procedure.')
-        self.__perform(curveSet)
+        self.__perform(dataset)
 
-    def __perform(self, curveSet):
-        for cd, fit in zip(curveSet.curvesData.all(), self.model.customData['fitCoeff']):
+    def __perform(self, dataset):
+        for cd, fit in zip(dataset.curves_data.all(), self.model.customData['fitCoeff']):
             newcd = cd.getCopy()
-            newcdConc = curveSet.getCurveConcDict(cd)
+            newcdConc = dataset.getCurveConcDict(cd)
             yvec = newcd.yVector
             xvec = newcd.xVector
             p = fit
@@ -106,12 +106,12 @@ other right after it.
             newyvec = np.subtract(yvec, ybkg)
             newcd.yVector = newyvec
             newcd.save()
-            curveSet.removeCurve(cd)
-            curveSet.addCurve(newcd, newcdConc)
-        curveSet.save()
+            dataset.removeCurve(cd)
+            dataset.addCurve(newcd, newcdConc)
+        dataset.save()
 
     def finalize(self, user):
-        self.__perform(self.model.curveSet)
+        self.__perform(self.model.dataset)
         self.model.step = None
         self.model.completed = True
         self.model.save()

@@ -11,6 +11,19 @@
     display: inline !important;
 }
 
+form .helptext {
+    margin-top: 0px;
+    background-color: {% color1 %};
+    color: {% color1font %};
+}
+
+form .helptext ul {
+    margin-top: 0px;
+    background-color: {% color1 %};
+    color: {% color1font %};
+}
+
+
 .analytes_table_container {
     width: 100%;
     margin: 0px;

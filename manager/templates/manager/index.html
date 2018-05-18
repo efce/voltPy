@@ -10,18 +10,18 @@ We hope you'll enjoy during your time here. Please report any errors, bugs, feat
 <!--
 </fieldset>
 Welcome to the index page!<br />
-Search for CurveSets: <input onkeyup="search()" id='ss' />
+Search for Datasets: <input onkeyup="search()" id='ss' />
 <div id="curve_list"></div>
 <script>
     function search() {
         txt = $('#ss').val();
-        searchCurveSet(txt, addOpt);
+        searchDataset(txt, addOpt);
     }
     function addOpt(data) {
         $('#curve_list').empty();
         kdata = data['result'];
         for (key in kdata) {
-            $('#curve_list').append($('<a href="/manager/show-curveset/' + key + '/">id' + key + ': ' + kdata[key] + '</a> <br />'));
+            $('#curve_list').append($('<a href="/manager/show-dataset/' + key + '/">id' + key + ': ' + kdata[key] + '</a> <br />'));
         }
     }
 </script>-->

@@ -13,7 +13,7 @@ class TagCurves(ms.MethodStep):
             if initialTags is None:
                 initialTags = {}
             super(TagCurves.TagCurvesForm, self).__init__(*args, **kwargs)
-            for cd in self.model.curveSet.curvesData.all():
+            for cd in self.model.dataset.curves_data.all():
                 self.fields['cd%d' % cd.id] = forms.CharField(
                     max_length=4, 
                     initial=initialTags.get(cd.id, ''),

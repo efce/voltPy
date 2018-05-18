@@ -56,7 +56,7 @@ https://doi.org/10.1002/elan.201300181"""
             raise VoltPyFailed("Data incomplete")
         raise ValueError("Not implemented")
 
-    def apply(self, user, curveSet):
+    def apply(self, user, dataset):
         """
         This procedure cannot be applied to other data.
         """
@@ -67,19 +67,19 @@ https://doi.org/10.1002/elan.201300181"""
         CONC = []
         SENS = []
         RANGES = []
-        analyte = self.model.curveSet.analytes.all()[0]
+        analyte = self.model.dataset.analytes.all()[0]
         self.model.customData['analyte'] = analyte.name
-        unitsTrans = dict(mmodels.CurveSet.CONC_UNITS)
-        self.model.customData['units'] = unitsTrans[self.model.curveSet.analytesConcUnits[analyte.id]]
+        unitsTrans = dict(mmodels.Dataset.CONC_UNITS)
+        self.model.customData['units'] = unitsTrans[self.model.dataset.analytes_concUnits[analyte.id]]
         if len(set(self.model.stepsData['TagCurves'].keys())) <= 2:
             raise VoltPyFailed('Not enough sensitivities to analyze the data.')
         for name, cds in self.model.stepsData['TagCurves'].items():
             for cid in cds:
                 SENS.append(name)
-                cd = self.model.curveSet.curvesData.get(id=cid)
+                cd = self.model.dataset.curves_data.get(id=cid)
                 Y.append([])
                 Y[-1] = cd.yVector
-                CONC.append(self.model.curveSet.analytesConc.get(analyte.id, {}).get(cd.id, 0))
+                CONC.append(self.model.dataset.analytes_conc.get(analyte.id, {}).get(cd.id, 0))
                 rng = [
                     cd.xValue2Index(self.model.stepsData['SelectRange'][0]),
                     cd.xValue2Index(self.model.stepsData['SelectRange'][1])
@@ -99,8 +99,8 @@ https://doi.org/10.1002/elan.201300181"""
         return True
 
     def getFinalContent(self, request, user):
-        cs = self.model.curveSet
-        unitsTrans = dict(mmodels.CurveSet.CONC_UNITS)
+        cs = self.model.dataset
+        unitsTrans = dict(mmodels.Dataset.CONC_UNITS)
         if self.model.customData['result'] is None:
             info = """
             <p> Could not calculate the final result. Please check your dataset and/or choose diffrent intervals.</p>

@@ -1,7 +1,7 @@
 {% extends "manager/main.html" %}
 {% load volt_html %}
 
-{% block title %} Curve Set {% endblock %}
+{% block title %} Dataset {% endblock %}
 
 {% block real_content %}
 <div class="mt_name">
@@ -21,9 +21,9 @@
 	<div id="select_processing" class="mt_rest invisible">
 		{% if showing.locked %}
 		<p class="method_element_error" style="padding 5px; width: 85%">
-		This CurveSet is locked and its alteration (except for name) is not allowed. It was already used in
+		This Dataset is locked and its alteration (except for name) is not allowed. It was already used in
 		analysis and any changes would result in data integrity errors.<br /> To process the data further please create a copy of it.<br />
-		<button class="{{ curve_set_button }}"> Copy curve set</button>
+		<button class="{{ curve_set_button }}"> Copy dataset</button>
 		</p>
 		{% else %}
 		<form method="post" action="" enctype="multipart/form-data">
@@ -33,7 +33,7 @@
 		{% endif %}
 	</div>
 </div>
-<form method="post" action="{% url 'deleteFromCurveSet' showing.id %}">
+<form method="post" action="{% url 'deleteFromDataset' showing.id %}">
 {% csrf_token %}
 	<fieldset class="mt_rest">
 		<legend class="mt_name">{% if showing.locked %}{% lock %} {% endif %}Curves:&nbsp;

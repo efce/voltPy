@@ -49,8 +49,8 @@ class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
     email_confirmed = models.BooleanField(default=False)
     show_on_x = models.CharField(max_length=1, choices=ONX_OPTIONS, default='P')
-    #fav_processing = PickledObjectField(default=[])
-    #fav_analysis = PickledObjectField(default=[])
+    starred_processing = PickledObjectField(default=[])
+    starred_analysis = PickledObjectField(default=[])
     
     @property
     def lastUsedProcessing(self, number=3) -> List:
@@ -61,8 +61,8 @@ class Profile(models.Model):
         return self._lastUsed(Analysis, number)
 
     def _lastUsed(self, Klass, number):
-        user = manager.helpers.functions.getUser()
-        qury = Klass.filter(owner=user).order_by('-id').values('method', 'methodDisplayName')
+        user = manager.helpers.functions.get_user()
+        qury = Klass.filter(owner=user).order_by('-id').values('method', 'method_display_name')
         ret = []
         for qr in qury:
             if qr not in ret:
@@ -79,7 +79,7 @@ def update_user_profile(sender, instance, created, **kwargs):
     instance.profile.save()
 
 
-def exportCDasFile(cds):
+def exportCurvesDataAsCsv(cds: List):
     ''' Not a model, just helper '''
     cdict = {}
     explen = len(cds)
@@ -96,11 +96,11 @@ def exportCDasFile(cds):
     return memoryFile
 
 
-class FileSet(VoltPyModel):
+class Fileset(VoltPyModel):
     name = models.CharField(max_length=255)
-    files = models.ManyToManyField('FileCurveSet')
+    files = models.ManyToManyField('File')
     date = models.DateField(auto_now_add=True)
-    disp_type = 'file set'
+    disp_type = 'fileset'
 
     class Meta:
         permissions = (
@@ -109,33 +109,33 @@ class FileSet(VoltPyModel):
             ('del', 'Delete'),
         )
 
-    def getNewCurveSet(self):
-        newcs = CurveSet(
+    def getNewDataset(self):
+        newcs = Dataset(
             name=self.name,
         )
         newcs.save()
         for file_ in self.files.all():
-            newcs.curvesData.add(*file_.curvesData.all())
+            newcs.curves_data.add(*file_.curves_data.all())
         for file_ in self.files.all():
             for an in file_.analytes.all():
                 newcs.analytes.add(an)
-                newcs.analytesConc[an.id] = {}
-                newcs.analytesConcUnits[an.id] = file_.analytesConcUnits[an.id]
+                newcs.analytes_conc[an.id] = {}
+                newcs.analytes_conc_unit[an.id] = file_.analytesConcUnits[an.id]
                 for cdid, concvalue in file_.analytesConc[an.id].items():
-                    newcs.analytesConc[an.id][cdid] = concvalue
+                    newcs.analytes_conc[an.id][cdid] = concvalue
         for an in newcs.analytes.all():
-            anconc = newcs.analytesConc[an.id]
-            for cd in newcs.curvesData.all():
+            anconc = newcs.analytes_conc[an.id]
+            for cd in newcs.curves_data.all():
                 anconc[cd.id] = anconc.get(cd.id, 0)
-            newcs.analytesConc[an.id] = anconc
+            newcs.analytes_conc[an.id] = anconc
         newcs.save()
         return newcs
 
     def getUrl(self):
-        return reverse('showFileSet', args=[self.id])
+        return reverse('showFileset', args=[self.id])
 
     def getDelUrl(self):
-        return reverse('deleteFileSet', args=[self.id])
+        return reverse('deleteFileset', args=[self.id])
 
     def __str__(self):
         return str(self.id) + ': ' + self.name
@@ -143,11 +143,11 @@ class FileSet(VoltPyModel):
     def export(self):
         cds = []
         for f in self.files.all():
-            cds.extend(f.curvesData.all())
-        return exportCDasFile(cds)
+            cds.extend(f.curves_data.all())
+        return exportCurvesDataAsCsv(cds)
 
     def getHtmlDetails(self):
-        user = manager.helpers.functions.getUser()
+        user = manager.helpers.functions.get_user()
         ret = ''.join([
             '<li>Object ID: %d</li>' % self.id,
             '<li>Owner: %s</li>' % self.owner,
@@ -158,7 +158,7 @@ class FileSet(VoltPyModel):
 
     @property
     def analytes(self):
-        return Analyte.objects.filter(curveset__in=[x.id for x in self.files.all().only('id')]).distinct()
+        return Analyte.objects.filter(dataset__in=[x.id for x in self.files.all().only('id')]).distinct()
 
 
 class Curve(VoltPyModel):
@@ -290,8 +290,8 @@ class Curve(VoltPyModel):
             120, 120, 60, 20, 20, 20, 5, 5, 5, 1, 1, 1, 1, 1
         ]
 
-    curveFile = models.ForeignKey('FileCurveSet', on_delete=models.CASCADE)
-    orderInFile = models.IntegerField()
+    file = models.ForeignKey('File', on_delete=models.CASCADE)
+    order_in_file = models.IntegerField()
     name = models.TextField()
     comment = models.TextField()
     params = PickledObjectField()  # JSON List
@@ -313,7 +313,7 @@ class Curve(VoltPyModel):
             '">',
             self.name,
             '</abbr><br /><sup style="font-size: x-small; white-space: nowrap;">',
-            self.curveFile.__str__(),
+            self.file.__str__(),
             '</sup></div>'
         ])
 
@@ -329,7 +329,7 @@ class CurveIndex(VoltPyModel):
     current_min = models.FloatField()  # in mV
     current_max = models.FloatField()  # in mV
     current_range = models.FloatField()  # in mV
-    samplingRate = models.IntegerField()  # in kHz
+    sampling_rate = models.IntegerField()  # in kHz
 
     class Meta:
         permissions = (
@@ -349,10 +349,10 @@ class CurveData(VoltPyModel):
     time = SimpleNumpyField(null=True, default=None)
     potential = SimpleNumpyField(null=True, default=None)
     current = SimpleNumpyField(null=True, default=None)
-    basedOn = models.ForeignKey('CurveData', null=True, default=None, on_delete=models.DO_NOTHING)
+    based_on = models.ForeignKey('CurveData', null=True, default=None, on_delete=models.DO_NOTHING)
     processedWith = models.ForeignKey('Processing', null=True, default=None, on_delete=models.DO_NOTHING)
-    _currentSamples = models.ForeignKey(SamplingData, on_delete=models.DO_NOTHING, default=None, null=True)
-    __currentSamplesChanged = False
+    _current_samples = models.ForeignKey(SamplingData, on_delete=models.DO_NOTHING, default=None, null=True)
+    __current_samplesChanged = False
     disp_type = 'data'
 
     class Meta:
@@ -363,41 +363,41 @@ class CurveData(VoltPyModel):
         )
 
     @property
-    def pointsNumber(self):
+    def points_number(self):
         return len(self.potential)
 
     @property
-    def samplesNumber(self):
-        return len(self._currentSamples.data)
+    def samples_number(self):
+        return len(self._current_samples.data)
 
     @property
-    def currentSamples(self):
-        if self._currentSamples is None:
+    def current_samples(self):
+        if self._current_samples is None:
             sd = SamplingData()
             sd.save()
-            self._currentSamples = sd
-        return self._currentSamples.data
-
-    @currentSamples.setter
-    def currentSamples(self, value):
-        self.__currentSamplesChanged = True
-        sd = SamplingData()
-        sd.data = value
-        sd.save()
-        self._currentSamples = sd
+            self._current_samples = sd
+        return self._current_samples.data
 
     @overrides
     def __init__(self, *args, **kwargs):
-        cs = kwargs.pop('currentSamples', None)
+        cs = kwargs.pop('current_samples', None)
         super(CurveData, self).__init__(*args, **kwargs)
         if cs is not None:
-            self.currentSamples = cs
+            self.current_samples = cs
+
+    @current_samples.setter
+    def current_samples(self, value):
+        self.__current_samplesChanged = True
+        sd = SamplingData()
+        sd.data = value
+        sd.save()
+        self._current_samples = sd
         
     @overrides
     def save(self, *args, **kwargs):
-        if self.__currentSamplesChanged:
-            self._currentSamples.save()
-            self.__currentSamplesChanged = False
+        if self.__current_samplesChanged:
+            self._current_samples.save()
+            self.__current_samplesChanged = False
         self.potential = np.array(self.potential)
         self.current = np.array(self.current)
         self.time = np.array(self.time)
@@ -408,7 +408,7 @@ class CurveData(VoltPyModel):
         newcd.id = None
         newcd.pk = None
         newcd.date = None
-        newcd.basedOn = self
+        newcd.based_on = self
         newcd.save()
         return newcd
 
@@ -418,8 +418,8 @@ class CurveData(VoltPyModel):
         while True:
             if c.processedWith.deleted is False:
                 steps.append(c.processedWith)
-            if c.basedOn is not None:
-                c = c.basedOn
+            if c.based_on is not None:
+                c = c.based_on
             else:
                 break
         return steps
@@ -431,18 +431,18 @@ class CurveData(VoltPyModel):
 
     @property
     def xVector(self):
-        user = manager.helpers.functions.getUser()
+        user = manager.helpers.functions.get_user()
         onx = user.profile.show_on_x
         if onx == 'P':
             return self.potential
         if onx == 'T':
             return self.time
         if onx == 'S':
-            return range(len(self.currentSamples))
+            return range(len(self.current_samples))
 
     @xVector.setter
     def xVector(self, val):
-        user = manager.helpers.functions.getUser()
+        user = manager.helpers.functions.get_user()
         onx = user.profile.show_on_x
         if onx == 'P':
             self.potential = val
@@ -453,26 +453,26 @@ class CurveData(VoltPyModel):
 
     @property
     def yVector(self):
-        user = manager.helpers.functions.getUser()
+        user = manager.helpers.functions.get_user()
         onx = user.profile.show_on_x
         if onx == 'P' or onx == 'T':
             return self.current
         if onx == 'S':
-            return self.currentSamples
+            return self.current_samples
 
     @yVector.setter
     def yVector(self, val):
-        user = manager.helpers.functions.getUser()
+        user = manager.helpers.functions.get_user()
         onx = user.profile.show_on_x
         if onx == 'P' or onx == 'T':
             self.current = val
         if onx == 'S':
-            self.currentSamples = val
+            self.current_samples = val
 
 
 class Analyte(VoltPyModel):
     name = models.CharField(max_length=125, unique=True)
-    atomicMass = models.FloatField(null=True, default=None)  # to calculate between mol and wight
+    atomic_mass = models.FloatField(null=True, default=None)  # to calculate between mol and wight
 
     class Meta:
         permissions = (
@@ -485,7 +485,7 @@ class Analyte(VoltPyModel):
         return self.name
 
 
-class CurveSet(VoltPyModel):
+class Dataset(VoltPyModel):
     minusOneSS = b'\xE2\x81\xBB\xC2\xB9'.decode("utf-8", "replace")
     cdot = b'\xC2\xB7'.decode("utf-8", "replace")
     CONC_UNITS = (
@@ -502,29 +502,35 @@ class CurveSet(VoltPyModel):
 
     name = models.CharField(max_length=255)
     date = models.DateField(auto_now_add=True)
-    curvesData = models.ManyToManyField(CurveData, related_name="curvesData")
-    undoCurvesData = models.ManyToManyField(CurveData, related_name="undoCurvesData")
+    curves_data = models.ManyToManyField(CurveData, related_name="curves_data")
     analytes = models.ManyToManyField(Analyte)
-    undoAnalytes = models.ManyToManyField(Analyte, related_name="undoAnalytes")
-    analytesConc = PickledObjectField(default={})  # dictionary key is analyte id
-    undoAnalytesConc = PickledObjectField(default={})  # dictionary key is analyte id
-    analytesConcUnits = PickledObjectField(default={})  # dictionary key is analyte id
-    undoAnalytesConcUnits = PickledObjectField(default={})  # dictionary key is analyte id
-    undoProcessing = models.ForeignKey('Processing', null=True, default=None, on_delete=models.DO_NOTHING)
-    disp_type = 'curve set'
+    analytes_conc = PickledObjectField(default={})  # dictionary key is analyte id
+    analytes_conc_unit = PickledObjectField(default={})  # dictionary key is analyte id
+    undo_curves_data = models.ManyToManyField(CurveData, related_name="undoCurvesData")
+    undo_analytes = models.ManyToManyField(Analyte, related_name="undoAnalytes")
+    undo_analytes_conc = PickledObjectField(default={})  # dictionary key is analyte id
+    undo_analytes_conc_unit = PickledObjectField(default={})  # dictionary key is analyte id
+    undo_processing = models.ForeignKey(
+        'Processing',
+        null=True,
+        default=None,
+        on_delete=models.DO_NOTHING,
+        related_name='undoProcessing'
+    )
+    disp_type = 'dataset'
 
     def getCopy(self):
-        newcs = CurveSet(
+        newcs = Dataset(
             name=self.name+'_copy',
-            analytesConc=self.analytesConc,
-            analytesConcUnits=self.analytesConcUnits
+            analytes_conc=self.analytes_conc,
+            analytes_conc_unit=self.analytes_conc_unit
         )
         newcs.save()
         newcs.analytes.set(self.analytes.all())
-        newcs.curvesData.set(self.curvesData.all())
+        newcs.curves_data.set(self.curves_data.all())
         newcs.save()
-        for pr in Processing.objects.filter(curveSet=self, deleted=False, completed=True):
-            newpr = pr.getCopy(curveSet=newcs)
+        for pr in Processing.objects.filter(dataset=self, deleted=False, completed=True):
+            newpr = pr.getCopy(dataset=newcs)
             newpr.save()
         return newcs
 
@@ -537,83 +543,83 @@ class CurveSet(VoltPyModel):
 
     @property
     def locked(self) -> bool:
-        if Analysis.objects.filter(curveSet=self, deleted=False).exists():
+        if Analysis.objects.filter(dataset=self, deleted=False).exists():
             return True
         return False
 
-    def removeCurve(self, curveData: CurveData):
-        self.curvesData.remove(curveData)
-        for k, v in self.analytesConc.items():
-            v.pop(curveData.id, None)
+    def removeCurve(self, cd: CurveData):
+        self.curves_data.remove(cd)
+        for k, v in self.analytes_conc.items():
+            v.pop(cd.id, None)
 
-    def addCurve(self, curveData: CurveData, concDict={}):
-        concValues = concDict.get('values', {})
-        concUnits = concDict.get('units', {})
-        if not self.curvesData.filter(id=curveData.id).exists():
-            self.curvesData.add(curveData)
-        self.setCurveConcDict(curveData, concValues, concDict)
+    def addCurve(self, cd: CurveData, conc_dict={}):
+        concValues = conc_dict.get('values', {})
+        concUnits = conc_dict.get('units', {})
+        if not self.curves_data.filter(id=cd.id).exists():
+            self.curves_data.add(cd)
+        self.setCurveConcDict(cd, concValues, conc_dict)
 
-    def setCurveConcDict(self, curveData: CurveData, curveConcDict: Dict, curveConcUnits: Dict):
-        newAnalytes = list(set(curveConcDict.keys()) - set(self.analytesConc.keys()))
+    def setCurveConcDict(self, cd: CurveData, curve_conc_dict: Dict, curve_conc_units: Dict):
+        newAnalytes = list(set(curve_conc_dict.keys()) - set(self.analytes_conc.keys()))
         for na in newAnalytes:
             self.analytes.add(Analyte.objects.get(id=na))
-            self.analytesConc[na] = self.analytesConc.get(na, {})
-            self.analytesConcUnits[na] = self.analytesConcUnits.get(na, self.CONC_UNIT_DEF)
-            for cd in self.curvesData.all():
-                self.analytesConc[na][cd.id] = 0.0
-        for k, v in self.analytesConc.items():
-            v[curveData.id] = curveConcDict.get(k, 0.0)
+            self.analytes_conc[na] = self.analytes_conc.get(na, {})
+            self.analytes_conc_unit[na] = self.analytes_conc_unit.get(na, self.CONC_UNIT_DEF)
+            for cd in self.curves_data.all():
+                self.analytes_conc[na][cd.id] = 0.0
+        for k, v in self.analytes_conc.items():
+            v[cd.id] = curve_conc_dict.get(k, 0.0)
 
     def getCurveConcDict(self, curveData: CurveData) -> Dict:
         """
         Returns dict of {'values': conc_values<dict>, 'units': conc_units<dict>}
         """
         ret = {}
-        for k, v in self.analytesConc.items():
+        for k, v in self.analytes_conc.items():
             ret[k] = v.get(curveData.id, 0.0)
-        return {'values': ret, 'units': self.analytesConcUnits}
+        return {'values': ret, 'units': self.analytes_conc_unit}
 
     def __str__(self):
         return '%s' % self.name
 
-    def prepareUndo(self, processingObject=None):
-        self.undoCurvesData.clear()
-        for cd in self.curvesData.all():
-            self.undoCurvesData.add(cd)
-        self.undoAnalytes.clear()
+    def prepareUndo(self, processing_instance=None):
+        self.undo_curves_data.clear()
+        for cd in self.curves_data.all():
+            self.undo_curves_data.add(cd)
+        self.undo_analytes.clear()
         for a in self.analytes.all():
-            self.undoAnalytes.add(a)
-        self.undoAnalytesConc = copy(self.analytesConc)
-        self.undoAnalytesConcUnits = copy(self.analytesConcUnits)
-        self.undoProcessing = processingObject
+            self.undo_analytes.add(a)
+        self.undo_analytes_conc = copy(self.analytes_conc)
+        self.undo_analytes_conc_unit = copy(self.analytes_conc_unit)
+        self.undo_processing = processing_instance
         self.save()
 
     def undo(self):
         # TODO: Undo removes also processing method ! (store id somewhere?)
         if not self.hasUndo():
             return
-        self.curvesData.clear()
-        for cd in self.undoCurvesData.all():
-            self.curvesData.add(cd)
+        self.curves_data.clear()
+        for cd in self.undo_curves_data.all():
+            self.curves_data.add(cd)
         self.analytes.clear()
-        for a in self.undoAnalytes.all():
+        for a in self.undo_analytes.all():
             self.analytes.add(a)
-        self.analytesConc = copy(self.undoAnalytesConc)
-        self.analytesConcUnits = copy(self.undoAnalytesConcUnits)
-        self.undoCurvesData.clear()
-        self.undoAnalytes.clear()
-        self.undoAnalytesConc.clear()
-        self.undoAnalytesConcUnits.clear()
-        if self.undoProcessing is not None:
-            self.undoProcessing.error = 'Undone'
-            self.undoProcessing.deleted = True
-            self.undoProcessing.save()
-            self.undoProcessing = None
+        self.analytes_conc = copy(self.undo_analytes_conc)
+        self.analytes_conc_unit = copy(self.undo_analytes_conc_unit)
+        self.undo_curves_data.clear()
+        self.undo_analytes.clear()
+        self.undo_analytes_conc.clear()
+        self.undo_analytes_conc_unit.clear()
+        if self.undo_processing is not None:
+            self.undo_processing.error = 'Undone'
+            self.undo_processing.deleted = True
+            self.undo_processing.save()
+            self.undo_processing = None
         self.save()
 
-    def hasUndo(self):
+    def hasUndo(self) -> bool:
         if any([
-            len(self.undoCurvesData.all()) == 0,
+            len(self.undo_curves_data.all()) == 0,
             self.locked is True
         ]):
             return False
@@ -622,11 +628,11 @@ class CurveSet(VoltPyModel):
         
     def getConc(self, analyte_id: int) -> List:
         """
-        Returns list of concentration for given analyte and all current curvesData.
+        Returns list of concentration for given analyte and all current curves_data.
         """
         conc = []
-        for cd in self.curvesData.all():
-            conc.append(self.analytesConc.get(analyte_id, {}).get(cd.id, 0))
+        for cd in self.curves_data.all():
+            conc.append(self.analytes_conc.get(analyte_id, {}).get(cd.id, 0))
         return conc
         
     def getUncorrelatedConcs(self) -> List:
@@ -636,8 +642,8 @@ class CurveSet(VoltPyModel):
         concs_different = np.empty(0)
         for an in self.analytes.all():
             an_conc = []
-            for cd in self.curvesData.all():
-                an_conc.append(self.analytesConc[an.id].get(cd.id, 0))
+            for cd in self.curves_data.all():
+                an_conc.append(self.analytes_conc[an.id].get(cd.id, 0))
             if concs_different.shape[0] == 0:
                 concs_different = np.array([an_conc])
             else:
@@ -650,30 +656,30 @@ class CurveSet(VoltPyModel):
         return concs_different
 
     def getProcessingHistory(self):
-        return Processing.objects.filter(curveSet=self, deleted=False, completed=True).order_by('id')
+        return Processing.objects.filter(dataset=self, deleted=False, completed=True).order_by('id')
 
     def export(self):
-        return exportCDasFile(self.curvesData.all())
+        return exportCurvesDataAsCsv(self.curves_data.all())
 
     def getUrl(self):
-        return reverse('showCurveSet', args=[self.id])
+        return reverse('showDataset', args=[self.id])
 
     def getDelUrl(self):
-        return reverse('deleteCurveSet', args=[self.id])
+        return reverse('deleteDataset', args=[self.id])
 
     def getHtmlDetails(self):
         proc_hist = ''
         for p in self.getProcessingHistory():
             proc_hist += ''.join(['<li>', str(p), '</li>']) 
 
-        filesUsed = set()
-        for cd in self.curvesData.all():
-            filesUsed.add(cd.curve.curveFile)
+        files_used = set()
+        for cd in self.curves_data.all():
+            files_used.add(cd.curve.file)
         uses_files = ''
-        for f in filesUsed:
+        for f in files_used:
             uses_files += '<li><a href="%s">%s</a></li>' % (f.getUrl(), str(f))
 
-        user = manager.helpers.functions.getUser()
+        user = manager.helpers.functions.get_user()
         ret = ''.join([
             '<li>Object ID: %d</li>' % self.id,
             '<li>Status: %s</li>' % ('Locked' if self.locked else 'Unlocked'),
@@ -686,10 +692,9 @@ class CurveSet(VoltPyModel):
         return ret
 
 
-class FileCurveSet(CurveSet):
-    fileName = models.TextField()
-    fileDate = models.DateField(auto_now=False, auto_now_add=False)  # Each file has its curveset
-    uploadDate = models.DateField(auto_now_add=True)
+class File(Dataset):
+    filename = models.TextField()
+    file_date = models.DateField(auto_now=False, auto_now_add=False)  # Each file has its dataset
     disp_type = 'file'
 
     class Meta:
@@ -699,35 +704,35 @@ class FileCurveSet(CurveSet):
             ('del', 'Delete'),
         )
 
-    def getNewCurveSet(self):
-        newcs = CurveSet(
+    def getNewDataset(self):
+        newcs = Dataset(
             name=self.name,
-            analytesConc=self.analytesConc,
-            analytesConcUnits=self.analytesConcUnits
+            analytesConc=self.analytes_conc,
+            analytesConcUnits=self.analytes_conc_unit
         )
         newcs.save()
         newcs.analytes.set(self.analytes.all())
-        newcs.curvesData.set(self.curvesData.all())
+        newcs.curves_data.set(self.curves_data.all())
         newcs.save()
         return newcs
 
     def getUrl(self):
-        return reverse('showCurveFile', args=[self.id])
+        return reverse('showFile', args=[self.id])
 
     def getDelUrl(self):
-        return reverse('deleteCurveFile', args=[self.id])
+        return reverse('deleteFile', args=[self.id])
 
     def getHtmlDetails(self):
-        user = manager.helpers.functions.getUser()
+        user = manager.helpers.functions.get_user()
         fs = self.fileset_set.all()[0]
         ret = ''.join([
             '<li>Object ID: %d</li>' % self.id,
             '<li>Permissions: %s</li>' % ', '.join([x for x in get_user_perms(user, self)]),
             '<li>Owner: %s</li>' % self.owner,
             '<li>Date: %s</li>' % self.date.strftime("%Y-%m-%d"),
-            '<li>File name: %s</li>' % self.fileName,
-            '<li>File date: %s</li>' % self.fileDate,
-            '<li>File set: <a href="%s">%s</a></li>' % (fs.getUrl(), fs.name)
+            '<li>File date: %s</li>' % self.file_date,
+            '<li>Filename: %s</li>' % self.filename,
+            '<li>Fileset: <a href="%s">%s</a></li>' % (fs.getUrl(), fs.name)
         ])
         return ret
     
@@ -739,19 +744,25 @@ class FileCurveSet(CurveSet):
             return '%s' % self.name
 
 
-class Analysis(VoltPyModel):
-    curveSet = models.ForeignKey(CurveSet, on_delete=models.DO_NOTHING)
+class ModelMethod(VoltPyModel):
+    dataset = models.ForeignKey(Dataset, on_delete=models.DO_NOTHING)
     date = models.DateField(auto_now_add=True)
-    appliesModel = models.ForeignKey('Analysis', default=None, null=True, on_delete=models.DO_NOTHING)
-    customData = PickledObjectField(default={})
-    stepsData = PickledObjectField(default={})
+    applies_model = models.ForeignKey('Analysis', default=None, null=True, on_delete=models.DO_NOTHING)
+    custom_data = PickledObjectField(default={})
+    steps_data = PickledObjectField(default={})
     analytes = models.ManyToManyField(Analyte)
     name = models.CharField(max_length=255)
     method = models.CharField(max_length=255)
-    methodDisplayName = models.TextField()
+    method_display_name = models.TextField()
     active_step_num = models.IntegerField(default=0, null=True)
     error = models.CharField(max_length=255)
     completed = models.BooleanField(default=False)
+
+    class Meta:
+        abstract = True
+
+
+class Analysis(ModelMethod):
     disp_type = "analysis"
 
     class Meta:
@@ -762,13 +773,13 @@ class Analysis(VoltPyModel):
         )
 
     def save(self, *args, **kwargs):
-        user = manager.helpers.functions.getUser()
-        if not user.has_perm('rw', self.curveSet):
+        user = manager.helpers.functions.get_user()
+        if not user.has_perm('rw', self.dataset):
             raise VoltPyNotAllowed('Operation not allowed.')
         super().save(*args, **kwargs)
 
     def __str__(self):
-        return '%s %s: %s' % (self.date, self.methodDisplayName, self.name)
+        return '%s %s: %s' % (self.date, self.method_display_name, self.name)
 
     def getUrl(self):
         if self.completed:
@@ -780,14 +791,14 @@ class Analysis(VoltPyModel):
         return reverse('deleteAnalysis', args=[self.id])
 
     def getHtmlDetails(self):
-        user = manager.helpers.functions.getUser()
+        user = manager.helpers.functions.get_user()
         ret = ''.join([
             '<li>Object ID: %d</li>' % self.id,
             '<li>Permissions: %s</li>' % ', '.join([x for x in get_user_perms(user, self)]),
             '<li>Owner: %s</li>' % self.owner,
             '<li>Date: %s</li>' % self.date.strftime("%Y-%m-%d %H:%M"),
-            '<li>Method: %s</li>' % self.methodDisplayName,
-            '<li>Curve Set: <a href="%s">%s</a></li>' % (self.curveSet.getUrl(), self.curveSet),
+            '<li>Method: %s</li>' % self.method_display_name,
+            '<li>Dataset: <a href="%s">%s</a></li>' % (self.dataset.getUrl(), self.dataset),
         ])
         return ret
 
@@ -797,37 +808,26 @@ class Analysis(VoltPyModel):
         newan.pk = None
         newan.date = None
         newan.deleted = False
-        newan.curveSet = None
+        newan.dataset = None
         newan.save()
         return newan
 
 
-class Processing(VoltPyModel):
-    curveSet = models.ForeignKey(CurveSet, on_delete=models.DO_NOTHING)
-    date = models.DateField(auto_now_add=True)
-    appliesModel = models.ForeignKey('Processing', default=None, null=True, on_delete=models.DO_NOTHING)
-    customData = PickledObjectField(default={})
-    stepsData = PickledObjectField(default={})
-    analytes = models.ManyToManyField(Analyte)
-    name = models.CharField(max_length=255)
-    method = models.CharField(max_length=255)
-    methodDisplayName = models.TextField()
-    active_step_num = models.IntegerField(default=0, null=True)
-    error = models.CharField(max_length=255)
-    completed = models.BooleanField(default=0)
+class Processing(ModelMethod):
+    disp_type = 'processing'
 
     def save(self, *args, **kwargs):
-        user = manager.helpers.functions.getUser()
-        if not user.has_perm('rw', self.curveSet):
+        user = manager.helpers.functions.get_user()
+        if not user.has_perm('rw', self.dataset):
             raise VoltPyNotAllowed('Operation not allowed.')
         super().save(*args, **kwargs)
 
-    def getCopy(self, curveSet):
+    def getCopy(self, dataset):
         newp = copy(self)
         newp.id = None
         newp.pk = None
-        newp.curveSet = curveSet
-        newp.appliesModel = None
+        newp.dataset = dataset
+        newp.applies_model = None
         newp.save()
         return newp
 
@@ -839,10 +839,10 @@ class Processing(VoltPyModel):
         )
 
     def __str__(self):
-        return '%s: %s' % (self.date, self.methodDisplayName)
+        return '%s: %s' % (self.date, self.method_display_name)
 
     def getUrl(self):
-        return reverse('showCurveSet', args=[self.curveSet.id])
+        return reverse('showDataset', args=[self.dataset.id])
 
 
 class SharedLink(VoltPyModel):
@@ -867,14 +867,18 @@ class SharedLink(VoltPyModel):
 
     def getLink(self):
         from django.contrib.sites.models import Site
-        return 'https://' + Site.objects.get_current().domain + reverse('shareLink',args=[self.link])
+        return ''.join([
+            'https://',
+            Site.objects.get_current().domain,
+            reverse('shareLink', args=[self.link])
+        ])
 
     def addUser(self, user):
         # TODO: HACK find a better way to baypass permission check (?)
-        gu = manager.helpers.functions.getUser
-        manager.helpers.functions.getUser = lambda: self.owner
+        gu = manager.helpers.functions.get_user
+        manager.helpers.functions.get_user = lambda: self.owner
         try:
             self.users.add(user)
         finally:
-            manager.helpers.functions.getUser = gu
+            manager.helpers.functions.get_user = gu
         self.save

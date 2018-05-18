@@ -47,25 +47,25 @@ https://doi.org/10.1039/C7AN00185A
         from manager.helpers.prepareStructForSSAA import prepareStructForSSAA
         Param = mmodels.Curve.Param
         self.model.customData['selectedIndex'] = \
-            self.model.curveSet.curvesData.all()[0].xValue2Index(self.model.stepsData['SelectPoint'])
+            self.model.dataset.curves_data.all()[0].xValue2Index(self.model.stepsData['SelectPoint'])
         peak = self.model.customData.get('selectedIndex', 0)
         X = []
         Conc = []
         tptw = 0
-        analyte = self.model.curveSet.analytes.all()[0]
+        analyte = self.model.dataset.analytes.all()[0]
         self.model.customData['analyte'] = analyte.name
-        unitsTrans = dict(mmodels.CurveSet.CONC_UNITS)
-        self.model.customData['units'] = unitsTrans[self.model.curveSet.analytesConcUnits[analyte.id]]
-        for cd in self.model.curveSet.curvesData.all():
-            X.append(cd.currentSamples)
-            Conc.append(self.model.curveSet.analytesConc.get(analyte.id, {}).get(cd.id, 0))
+        unitsTrans = dict(mmodels.Dataset.CONC_UNITS)
+        self.model.customData['units'] = unitsTrans[self.model.dataset.analytes_concUnits[analyte.id]]
+        for cd in self.model.dataset.curves_data.all():
+            X.append(cd.current_samples)
+            Conc.append(self.model.dataset.analytes_conc.get(analyte.id, {}).get(cd.id, 0))
             tptw = cd.curve.params[Param.tp] + cd.curve.params[Param.tw]
 
         tp = 3
         twvec = self.__chooseTw(tptw)
         # TODO:Test if all curves are registered with the same method ?
         # have the same number of points ?
-        numM = self.model.curveSet.curvesData.all()[0].curve.params[Param.method]
+        numM = self.model.dataset.curves_data.all()[0].curve.params[Param.method]
         ctype = 'dp'
         if numM == Param.method_dpv:
             ctype = 'dp'
@@ -99,7 +99,7 @@ https://doi.org/10.1039/C7AN00185A
         arrexp = np.array(self.model.customData['matrix'])
         return arrexp
 
-    def apply(self, user, curveSet):
+    def apply(self, user, dataset):
         """
         This procedure cannot be applied to other data.
         """
@@ -147,7 +147,7 @@ https://doi.org/10.1039/C7AN00185A
             col_cnt += 1
 
         scripts, div, buttons = p.getEmbeded(request, user, 'analysis', self.model.id)
-        unitsTrans = dict(mmodels.CurveSet.CONC_UNITS)
+        unitsTrans = dict(mmodels.Dataset.CONC_UNITS)
         ret = {
             'head': scripts,
             'body': ''.join([
