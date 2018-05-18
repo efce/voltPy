@@ -55,8 +55,8 @@ https://doi.org/10.1016/j.electacta.2014.05.076
         self.__perform(dataset)
 
     def __perform(self, dataset):
-        iterations = self.model.customData['iterations']
-        degree = self.model.customData['degree']
+        iterations = self.model.custom_data['iterations']
+        degree = self.model.custom_data['degree']
         for cd in dataset.curves_data.all():
             newcd = cd.getCopy()
             newcdConc = dataset.getCurveConcDict(cd)
@@ -72,8 +72,8 @@ https://doi.org/10.1016/j.electacta.2014.05.076
 
     def finalize(self, user):
         try:
-            self.model.customData['iterations'] = int(self.model.stepsData['Settings']['Iterations'])
-            self.model.customData['degree'] = int(self.model.stepsData['Settings']['Degree'])
+            self.model.custom_data['iterations'] = int(self.model.steps_data['Settings']['Iterations'])
+            self.model.custom_data['degree'] = int(self.model.steps_data['Settings']['Degree'])
         except ValueError:
             raise VoltPyFailed('Wrong values for degree or iterations.')
         self.__perform(self.model.dataset)

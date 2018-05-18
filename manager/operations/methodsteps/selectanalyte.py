@@ -27,7 +27,7 @@ class SelectAnalyte(MethodStep):
 
         style = "<style>.at_hideable { display: none !important; };</style>"
         import manager.analytesTable as at
-        at_disp = at.analytesTable(cs, obj_type='cs')
+        at_disp = at.analytesTable(cs, obj_type='dataset')
 
         analyte_sel = self.AnalyteSelectionForm(analytes=cs.analytes)
         from django.template import loader
@@ -53,7 +53,7 @@ class SelectAnalyte(MethodStep):
                 analyte = mmodels.Analyte.objects.get(id=analyte_sel.cleaned_data['analyteId'])
             except ObjectDoesNotExist:
                 return False
-            model.stepsData['SelectAnalyte'] = analyte.id
+            model.steps_data['SelectAnalyte'] = analyte.id
             model.analytes.add(analyte)
             model.save()
             return True

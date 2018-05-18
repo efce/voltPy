@@ -173,7 +173,7 @@ def browseFiles(request, user, page_number=1):
         'id',
         'name',
         'analytes',
-        'fileName',
+        'filename',
         'owner',
         'date'
     )
@@ -690,7 +690,7 @@ def showDataset(request, user, dataset_id):
     )
 
     import manager.analytesTable as at
-    at_disp = at.analytesTable(cs, obj_type='cs')
+    at_disp = at.analytesTable(cs, obj_type='dataset')
 
     mm = mmm.MethodManager(user=user, dataset_id=dataset_id)
     if request.method == 'POST':
@@ -850,7 +850,7 @@ def showFile(request, user, file_id):
         to_plot=cf
     )
 
-    at_disp = at.analytesTable(cf, obj_type='cf')
+    at_disp = at.analytesTable(cf, obj_type='file')
     if cf.owner == user:
         share_button = '_voltJS_requestLink'
     else:
@@ -949,9 +949,9 @@ def applyModel(request, user, obj_type, obj_id, dataset_id):
 @redirect_on_voltpyexceptions
 @with_user
 def editCurves(request, user, obj_type, obj_id):
-    if obj_type == 'cf':
+    if obj_type == 'file':
         cs = mmodels.File.get(id=obj_id)
-    elif obj_type == 'cs':
+    elif obj_type == 'dataset':
         cs = mmodels.Dataset.get(id=obj_id)
     else:
         raise VoltPyNotAllowed
@@ -960,7 +960,7 @@ def editCurves(request, user, obj_type, obj_id):
         form = mforms.EditCurvesForm(user, cs, request.POST)
         if form.is_valid():
             if form.process(user) is True:
-                if obj_type == 'cf':
+                if obj_type == 'file':
                     return HttpResponseRedirect(
                         reverse('showFile', args=[obj_id])
                     )
@@ -1009,9 +1009,9 @@ def editCurves(request, user, obj_type, obj_id):
 @redirect_on_voltpyexceptions
 @with_user
 def editAnalyte(request, user, obj_type, obj_id, analyte_id):
-    if obj_type == 'cf':
+    if obj_type == 'file':
         cs = mmodels.File.get(id=obj_id)
-    elif obj_type == 'cs':
+    elif obj_type == 'dataset':
         cs = mmodels.Dataset.get(id=obj_id)
     else:
         raise VoltPyNotAllowed
@@ -1020,14 +1020,9 @@ def editAnalyte(request, user, obj_type, obj_id, analyte_id):
         form = mforms.EditAnalytesForm(user, cs, analyte_id, request.POST)
         if form.is_valid():
             if form.process(user) is True:
-                if obj_type == 'cf':
-                    return HttpResponseRedirect(
-                        reverse('showFile', args=[obj_id])
-                    )
-                else:
-                    return HttpResponseRedirect(
-                        reverse('showDataset', args=[obj_id])
-                    )
+                return HttpResponseRedirect(
+                    cs.getUrl()
+                )
     else:
         form = mforms.EditAnalytesForm(user, cs, analyte_id)
 

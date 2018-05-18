@@ -62,12 +62,12 @@ Chemom. Intell. Lab. Syst., vol. 65, no. 1, pp. 119–137, 2003.
         Param = mmodels.Curve.Param
 
         cd1 = dataset.curves_data.all()[0]
-        self.model.customData['tp'] = cd1.curve.params[Param.tp]
-        self.model.customData['tw'] = cd1.curve.params[Param.tw]
+        self.model.custom_data['tp'] = cd1.curve.params[Param.tp]
+        self.model.custom_data['tw'] = cd1.curve.params[Param.tw]
         tptw = cd1.curve.params[Param.tp] + cd1.curve.params[Param.tw]
         dE = cd1.curve.params[Param.dE]
-        dec_start = cd1.xValue2Index(self.model.customData['DecomposeRange'][0])
-        dec_end = cd1.xValue2Index(self.model.customData['DecomposeRange'][1])
+        dec_start = cd1.xValue2Index(self.model.custom_data['DecomposeRange'][0])
+        dec_end = cd1.xValue2Index(self.model.custom_data['DecomposeRange'][1])
         if dec_start > dec_end:
             dec_start, dec_end = dec_end, dec_start
 
@@ -91,7 +91,7 @@ Chemom. Intell. Lab. Syst., vol. 65, no. 1, pp. 119–137, 2003.
         an_selected = self.model.analytes.all()[0]
         concs_different = dataset.getUncorrelatedConcs()
         an_selected_conc = dataset.getConc(an_selected.id)
-        self.model.customData['analyte'] = an_selected.name
+        self.model.custom_data['analyte'] = an_selected.name
 
         if not an_selected_conc:
             raise VoltPyFailed('Wrong analyte selected.')
@@ -174,12 +174,12 @@ Chemom. Intell. Lab. Syst., vol. 65, no. 1, pp. 119–137, 2003.
 
         def recompose(bfd, method_type):
             if method_type != self.type_combined:
-                mult = np.mean(bfd['x'][self.model.customData['tw']:])
+                mult = np.mean(bfd['x'][self.model.custom_data['tw']:])
                 yvecs = np.dot(np.matrix(bfd['y']).T, np.matrix(bfd['z']))
                 yvecs = np.dot(yvecs, mult)
             else:
-                mult1 = np.mean(bfd['x'][self.model.customData['tw']:self.model.customData['tp']])
-                mult2 = np.mean(bfd['x'][(2*self.model.customData['tw']+self.model.customData['tp']):])
+                mult1 = np.mean(bfd['x'][self.model.custom_data['tw']:self.model.custom_data['tp']])
+                mult2 = np.mean(bfd['x'][(2*self.model.custom_data['tw']+self.model.custom_data['tp']):])
                 yvecs1 = np.dot(np.matrix(bfd['y']).T, np.matrix(bfd['z'])).dot(mult1)
                 yvecs2 = np.dot(np.matrix(bfd['y']).T, np.matrix(bfd['z'])).dot(mult2)
                 yvecs = np.zeros((yvecs1.shape[0]*2, yvecs1.shape[1]))
@@ -236,7 +236,7 @@ Chemom. Intell. Lab. Syst., vol. 65, no. 1, pp. 119–137, 2003.
             raise VoltPyFailed('Computation error.')
 
     def finalize(self, user):
-        self.model.customData['DecomposeRange'] = self.model.stepsData['SelectRange']
+        self.model.custom_data['DecomposeRange'] = self.model.steps_data['SelectRange']
         self.__perform(self.model.dataset)
         self.model.step = None
         self.model.completed = True

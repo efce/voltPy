@@ -43,7 +43,7 @@
             {% endif %}
             {% if paginator.current_page_content.0.disp_type == 'file' %}
             <th>
-                <a href="./?sort=fileName{{ paginator.search_append }}">File name</a>
+                <a href="./?sort=filename{{ paginator.search_append }}">File name</a>
             </th>
             {% endif %}
             <th>
@@ -95,7 +95,7 @@
             {% endif %}
             {% if paginator.current_page_content.0.disp_type == 'file' %}
             <td>
-                {{ el.fileName }}
+                {{ el.filename }}
             </td>
             {% endif %}
             <td>

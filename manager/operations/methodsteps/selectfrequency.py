@@ -21,7 +21,7 @@ class SelectFrequency(MethodStep):
                         return False
                 if data is None:
                     return False
-                model.stepsData['SelectFrequency'] = data 
+                model.steps_data['SelectFrequency'] = data 
                 model.save()
                 return True
         return False

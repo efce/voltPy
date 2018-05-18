@@ -25,7 +25,7 @@ class Settings(MethodStep):
                 user_data = {}
                 for k, v in self.initial.items():
                     user_data[k] = form.cleaned_data[k]
-                model.stepsData['Settings'] = user_data
+                model.steps_data['Settings'] = user_data
                 model.save()
                 return True
             return False

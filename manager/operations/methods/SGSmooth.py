@@ -57,8 +57,8 @@ Savitzky-Golay smoothing algorithm.
             xvec = newcd.xVector
             newyvec = savgol_filter(
                 yvec,
-                self.model.customData['WindowSpan'],
-                self.model.customData['Degree']
+                self.model.custom_data['WindowSpan'],
+                self.model.custom_data['Degree']
             )
             newcd.yVector = newyvec
             newcd.save()
@@ -68,8 +68,8 @@ Savitzky-Golay smoothing algorithm.
 
     def finalize(self, user):
         try:
-            self.model.customData['WindowSpan'] = int(self.model.stepsData['Settings']['Window Span'])
-            self.model.customData['Degree'] = int(self.model.stepsData['Settings']['Degree'])
+            self.model.custom_data['WindowSpan'] = int(self.model.steps_data['Settings']['Window Span'])
+            self.model.custom_data['Degree'] = int(self.model.steps_data['Settings']['Degree'])
         except ValueError:
             raise VoltPyFailed('Wrong values for span or degree.')
         self.__perform(self.model.dataset)

@@ -68,12 +68,12 @@ https://doi.org/10.1002/elan.201300181"""
         SENS = []
         RANGES = []
         analyte = self.model.dataset.analytes.all()[0]
-        self.model.customData['analyte'] = analyte.name
+        self.model.custom_data['analyte'] = analyte.name
         unitsTrans = dict(mmodels.Dataset.CONC_UNITS)
-        self.model.customData['units'] = unitsTrans[self.model.dataset.analytes_conc_unit[analyte.id]]
-        if len(set(self.model.stepsData['TagCurves'].keys())) <= 2:
+        self.model.custom_data['units'] = unitsTrans[self.model.dataset.analytes_conc_unit[analyte.id]]
+        if len(set(self.model.steps_data['TagCurves'].keys())) <= 2:
             raise VoltPyFailed('Not enough sensitivities to analyze the data.')
-        for name, cds in self.model.stepsData['TagCurves'].items():
+        for name, cds in self.model.steps_data['TagCurves'].items():
             for cid in cds:
                 SENS.append(name)
                 cd = self.model.dataset.curves_data.get(id=cid)
@@ -81,42 +81,42 @@ https://doi.org/10.1002/elan.201300181"""
                 Y[-1] = cd.yVector
                 CONC.append(self.model.dataset.analytes_conc.get(analyte.id, {}).get(cd.id, 0))
                 rng = [
-                    cd.xValue2Index(self.model.stepsData['SelectRange'][0]),
-                    cd.xValue2Index(self.model.stepsData['SelectRange'][1])
+                    cd.xValue2Index(self.model.steps_data['SelectRange'][0]),
+                    cd.xValue2Index(self.model.steps_data['SelectRange'][1])
                 ]
                 RANGES.append([])
                 RANGES[-1] = rng
         result = sbcm.selfReferencingBackgroundCorrection(Y, CONC, SENS, RANGES)
-        self.model.customData['result'] = result.get('__AVG__', None)
-        self.model.customData['resultStdDev'] = result.get('__STD__', None)
-        self.model.customData['fitEquations'] = {}
+        self.model.custom_data['result'] = result.get('__AVG__', None)
+        self.model.custom_data['resultStdDev'] = result.get('__STD__', None)
+        self.model.custom_data['fitEquations'] = {}
         for k, v in result.items():
             if isinstance(k, str):
                 if k.startswith('_'):
                     continue
-            self.model.customData['fitEquations'][k] = v
+            self.model.custom_data['fitEquations'][k] = v
         self.model.save()
         return True
 
     def getFinalContent(self, request, user):
         cs = self.model.dataset
         unitsTrans = dict(mmodels.Dataset.CONC_UNITS)
-        if self.model.customData['result'] is None:
+        if self.model.custom_data['result'] is None:
             info = """
             <p> Could not calculate the final result. Please check your dataset and/or choose diffrent intervals.</p>
             """
         else:
-            res = self.model.customData['result']
-            n = len(self.model.customData['fitEquations'])
+            res = self.model.custom_data['result']
+            n = len(self.model.custom_data['fitEquations'])
             tval = t.ppf(0.975, n-1)
-            ci = self.model.customData['resultStdDev'] * tval / np.sqrt(n-1)
+            ci = self.model.custom_data['resultStdDev'] * tval / np.sqrt(n-1)
             sdig = significant_digit(ci)
             info = [
                 '<p>Analyte: {analyte}<br />Final result: {res}&plusmn;{ci} {unit}</p>'.format(
                     res='%.*f' % (sdig, res),
                     ci='%.*f' % (sdig, ci),
-                    analyte=self.model.customData['analyte'],
-                    unit=self.model.customData['units']
+                    analyte=self.model.custom_data['analyte'],
+                    unit=self.model.custom_data['units']
                 ),
                 '<p>Equations:<br />',
                 '<br />'.join([
@@ -125,7 +125,7 @@ https://doi.org/10.1002/elan.201300181"""
                         int=v['fit']['intercept'],
                         rsq=v['rsq'],
                         k=k
-                    ) for k, v in self.model.customData['fitEquations'].items()
+                    ) for k, v in self.model.custom_data['fitEquations'].items()
                 ])
             ]
         return {

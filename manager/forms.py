@@ -488,7 +488,7 @@ class SelectCurvesForDatasetForm(forms.Form):
 
             def fun(selected_data, cf_or_cs):
                 for csid, cdids in selected_data.items():
-                    if cf_or_cs == 'cs':
+                    if cf_or_cs == 'dataset':
                         cs = mmodels.Dataset.get(id=csid)
                     else:
                         cs = mmodels.File.get(id=csid)
@@ -511,8 +511,8 @@ class SelectCurvesForDatasetForm(forms.Form):
                                 conc_dict=cs.getCurveConcDict(cd)
                             )
                 newcs.save()
-            fun(selectedCF, 'cf')
-            fun(selectedCS, 'cs')
+            fun(selectedCF, 'file')
+            fun(selectedCS, 'dataset')
         except DatabaseError:
             transaction.savepoint_rollback(sid)
             raise

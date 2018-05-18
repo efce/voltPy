@@ -39,9 +39,9 @@ class GeneticAlgorithmBkg(method.ProcessingMethod):
 
     def __perform(self, dataset):
         cd1 = dataset.curves_data.all()[0]
-        peak_max_index = cd1.xValue2Index(self.model.customData['PeakMaximum'])
-        peak_start_index = cd1.xValue2Index(self.model.customData['PeakSpan'][0])
-        peak_end_index = cd1.xValue2Index(self.model.customData['PeakSpan'][1])
+        peak_max_index = cd1.xValue2Index(self.model.custom_data['PeakMaximum'])
+        peak_start_index = cd1.xValue2Index(self.model.custom_data['PeakSpan'][0])
+        peak_end_index = cd1.xValue2Index(self.model.custom_data['PeakSpan'][1])
         if peak_end_index < peak_start_index:
             peak_end_index, peak_start_index = peak_start_index, peak_end_index
         yvecs = np.stack([cd.yVector.T for cd in dataset.curves_data.all()])
@@ -59,8 +59,8 @@ class GeneticAlgorithmBkg(method.ProcessingMethod):
 
     def finalize(self, user):
         try:
-            self.model.customData['PeakMaximum'] = float(self.model.stepsData['SelectPoint'])
-            self.model.customData['PeakSpan'] = self.model.stepsData['SelectRange']
+            self.model.custom_data['PeakMaximum'] = float(self.model.steps_data['SelectPoint'])
+            self.model.custom_data['PeakSpan'] = self.model.steps_data['SelectRange']
         except ValueError:
             raise VoltPyFailed('No values selected.')
         self.__perform(self.model.dataset)

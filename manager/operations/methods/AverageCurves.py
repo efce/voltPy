@@ -40,7 +40,7 @@ given number of plots.
 
     def finalize(self, user):
         cs = self.model.dataset
-        for k, f in self.model.stepsData['TagCurves'].items():
+        for k, f in self.model.steps_data['TagCurves'].items():
             if (len(f) > 1):
                 cid = f[0]
                 orgcd = cs.curves_data.get(id=cid)

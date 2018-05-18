@@ -286,7 +286,7 @@ def paginate(request, queryset, sortable_by: List, current_page: int):
         search_string = request.GET.get('search', '')
     if search_string:
         dbquery = Q(name__icontains=search_string)
-        if 'fileName' in sortable_by:
+        if 'filename' in sortable_by:
             dbquery |= Q(filename=search_string)
         if 'dataset' in sortable_by:
             dbquery |= Q(dataset__name__icontains=search_string)

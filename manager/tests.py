@@ -216,7 +216,7 @@ class TestFileUpload(TestCase):
             cs = f
             self.assertEqual(len(cs.curves_data.all()), self.curves_per_file)
             for cd in cs.curves_data.all():
-                self.assertEqual(self.curve_length, len(cd.current), f.fileName)
+                self.assertEqual(self.curve_length, len(cd.current), f.filename)
                 float(cd.current[3])  # Test random element - selected by a dice roll
                 float(cd.potential[3])
                 float(cd.time[3])
@@ -244,7 +244,7 @@ class TestMethod(method.ProcessingMethod):
         return
 
     def finalize(self, user):
-        self.model.customData['FINALIZED'] = user.id
+        self.model.custom_data['FINALIZED'] = user.id
         self.model.step = None
         self.model.completed = True
         self.model.save()

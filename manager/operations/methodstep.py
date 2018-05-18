@@ -6,7 +6,7 @@ class MethodStep(ABC):
     """
     Use as a template for new MethodSteps,
     MethodStep should update model field:
-    model.stepsData[<class name>], with methodstep
+    model.steps_data[<class name>], with methodstep
     specific values.
     MethodStep should be placed in:
     manager.opperations.methodsteps directory.

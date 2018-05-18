@@ -79,23 +79,23 @@ class PlotManager:
         # prepare data points
         ret = []
         ret.append({
-            'x': analysis.customData['matrix'][0],
-            'y': analysis.customData['matrix'][1],
+            'x': analysis.custom_data['matrix'][0],
+            'y': analysis.custom_data['matrix'][1],
             'plottype': 'scatter',
             'color': 'red',
             'size': 8
         })
         # prepare calibration line
-        xs = copy(analysis.customData['matrix'][0])
-        if analysis.customData['result'] is not None:
-            xs.append(-analysis.customData['result'])
+        xs = copy(analysis.custom_data['matrix'][0])
+        if analysis.custom_data['result'] is not None:
+            xs.append(-analysis.custom_data['result'])
         vx = [min(xs), max(xs)]  # x variable is used by the fitEquation
 
         def FofX(xo):
             return (
-                analysis.customData['fitEquation']['slope']
+                analysis.custom_data['fitEquation']['slope']
                 * xo
-                + analysis.customData['fitEquation']['intercept']
+                + analysis.custom_data['fitEquation']['intercept']
             )
 
         vy = [FofX(xi) for xi in vx]

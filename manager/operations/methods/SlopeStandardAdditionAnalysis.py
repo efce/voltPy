@@ -46,16 +46,16 @@ https://doi.org/10.1039/C7AN00185A
         from manager.helpers.slopeStandardAdditionAnalysis import slopeStandardAdditionAnalysis
         from manager.helpers.prepareStructForSSAA import prepareStructForSSAA
         Param = mmodels.Curve.Param
-        self.model.customData['selectedIndex'] = \
-            self.model.dataset.curves_data.all()[0].xValue2Index(self.model.stepsData['SelectPoint'])
-        peak = self.model.customData.get('selectedIndex', 0)
+        self.model.custom_data['selectedIndex'] = \
+            self.model.dataset.curves_data.all()[0].xValue2Index(self.model.steps_data['SelectPoint'])
+        peak = self.model.custom_data.get('selectedIndex', 0)
         X = []
         Conc = []
         tptw = 0
         analyte = self.model.dataset.analytes.all()[0]
-        self.model.customData['analyte'] = analyte.name
+        self.model.custom_data['analyte'] = analyte.name
         unitsTrans = dict(mmodels.Dataset.CONC_UNITS)
-        self.model.customData['units'] = unitsTrans[self.model.dataset.analytes_conc_unit[analyte.id]]
+        self.model.custom_data['units'] = unitsTrans[self.model.dataset.analytes_conc_unit[analyte.id]]
         for cd in self.model.dataset.curves_data.all():
             X.append(cd.current_samples)
             Conc.append(self.model.dataset.analytes_conc.get(analyte.id, {}).get(cd.id, 0))
@@ -81,14 +81,14 @@ https://doi.org/10.1039/C7AN00185A
         prepare = prepareStructForSSAA(X, Conc, tptw, 3, twvec, ctype)
                 
         result = slopeStandardAdditionAnalysis(prepare, peak, {'forceSamePoints': True})
-        self.model.customData['matrix'] = [
+        self.model.custom_data['matrix'] = [
             result['CONC'],
             [x for x in result['Slopes'].items()]
         ]
-        self.model.customData['fitEquation'] = result['Fit']
-        self.model.customData['result'] = result['Mean']
-        self.model.customData['resultStdDev'] = result['STD']
-        self.model.customData['corrCoeff'] = result['R']
+        self.model.custom_data['fitEquation'] = result['Fit']
+        self.model.custom_data['result'] = result['Mean']
+        self.model.custom_data['resultStdDev'] = result['STD']
+        self.model.custom_data['corrCoeff'] = result['R']
         self.model.completed = True
         self.model.step = None
         self.model.save()
@@ -96,7 +96,7 @@ https://doi.org/10.1039/C7AN00185A
     def exportableData(self):
         if not self.model.completed:
             raise VoltPyFailed('Incomplete data for export.')
-        arrexp = np.array(self.model.customData['matrix'])
+        arrexp = np.array(self.model.custom_data['matrix'])
         return arrexp
 
     def apply(self, user, dataset):
@@ -111,12 +111,12 @@ https://doi.org/10.1039/C7AN00185A
         p.plot_height = 400
         p.sizing_mode = 'fixed'
         p.xlabel = 'c_({analyte}) / {units}'.format(
-            analyte=self.model.customData['analyte'],
-            units=self.model.customData['units']
+            analyte=self.model.custom_data['analyte'],
+            units=self.model.custom_data['units']
         )
         p.ylabel = 'i / µA'
-        xvec = self.model.customData['matrix'][0]
-        yvec = self.model.customData['matrix'][1]
+        xvec = self.model.custom_data['matrix'][0]
+        yvec = self.model.custom_data['matrix'][1]
         colors = ['blue', 'red', 'green', 'gray', 'cyan', 'yellow', 'magenta', 'orange']
 
         def getColor(x):
@@ -133,9 +133,9 @@ https://doi.org/10.1039/C7AN00185A
             )
             col_cnt += 1
         xvec2 = list(xvec)
-        xvec2.append(-self.model.customData['result'])
+        xvec2.append(-self.model.custom_data['result'])
         col_cnt = 0
-        for k, fe in self.model.customData['fitEquation'].items():
+        for k, fe in self.model.custom_data['fitEquation'].items():
             Y = [fe['slope']*x+fe['intercept'] for x in xvec2]
             p.add(
                 x=xvec2,
@@ -155,10 +155,10 @@ https://doi.org/10.1039/C7AN00185A
                 div,
                 '</td></tr><tr><td>',
                 '<p>Analyte: {0}<br />Result: {1} {3}<br />STD: {2} {3}</p>'.format(
-                    self.model.customData['analyte'],
-                    self.model.customData['result'],
-                    self.model.customData['resultStdDev'],
-                    self.model.customData['units'] 
+                    self.model.custom_data['analyte'],
+                    self.model.custom_data['result'],
+                    self.model.custom_data['resultStdDev'],
+                    self.model.custom_data['units'] 
                 ),
                 '</td></tr></table>'
             ])

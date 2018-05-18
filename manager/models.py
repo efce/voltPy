@@ -120,8 +120,8 @@ class Fileset(VoltPyModel):
             for an in file_.analytes.all():
                 newcs.analytes.add(an)
                 newcs.analytes_conc[an.id] = {}
-                newcs.analytes_conc_unit[an.id] = file_.analytesConcUnits[an.id]
-                for cdid, concvalue in file_.analytesConc[an.id].items():
+                newcs.analytes_conc_unit[an.id] = file_.analytes_conc_unit[an.id]
+                for cdid, concvalue in file_.analytes_conc[an.id].items():
                     newcs.analytes_conc[an.id][cdid] = concvalue
         for an in newcs.analytes.all():
             anconc = newcs.analytes_conc[an.id]
@@ -707,8 +707,8 @@ class File(Dataset):
     def getNewDataset(self):
         newcs = Dataset(
             name=self.name,
-            analytesConc=self.analytes_conc,
-            analytesConcUnits=self.analytes_conc_unit
+            analytes_conc=self.analytes_conc,
+            analytes_conc_unit=self.analytes_conc_unit
         )
         newcs.save()
         newcs.analytes.set(self.analytes.all())

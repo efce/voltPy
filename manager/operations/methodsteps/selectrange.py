@@ -16,7 +16,7 @@ class SelectRange(MethodStep):
                         data.append(float(v))
                     except:
                         return False
-                model.stepsData['SelectRange'] = data
+                model.steps_data['SelectRange'] = data
                 model.save()
                 return True
         return False

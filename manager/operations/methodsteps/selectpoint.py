@@ -18,7 +18,7 @@ class SelectPoint(MethodStep):
                         return False
                 if data is None:
                     return False
-                model.stepsData['SelectPoint'] = data 
+                model.steps_data['SelectPoint'] = data 
                 model.save()
                 return True
         return False

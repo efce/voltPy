@@ -39,7 +39,7 @@ calculated as a difference between max and min signal in the given range.
     def exportableData(self):
         if not self.model.completed:
             raise VoltPyFailed('Incomplete data')
-        return np.matrix(self.model.customData['matrix']).T
+        return np.matrix(self.model.custom_data['matrix']).T
 
     def apply(self, user, dataset):
         an = self.model.getCopy()
@@ -58,14 +58,14 @@ calculated as a difference between max and min signal in the given range.
     def finalize(self, user):
         xvalues = []
         yvalues = []
-        selRange = self.model.stepsData['SelectRange']
+        selRange = self.model.steps_data['SelectRange']
         try:
-            analyte = self.model.analytes.get(id=int(self.model.stepsData['SelectAnalyte']))
+            analyte = self.model.analytes.get(id=int(self.model.steps_data['SelectAnalyte']))
         except:
             VoltPyFailed('Wrong analyte selected.')
-        self.model.customData['analyte'] = analyte.name
+        self.model.custom_data['analyte'] = analyte.name
         unitsTrans = dict(mmodels.Dataset.CONC_UNITS)
-        self.model.customData['units'] = unitsTrans[self.model.dataset.analytes_conc_unit[analyte.id]]
+        self.model.custom_data['units'] = unitsTrans[self.model.dataset.analytes_conc_unit[analyte.id]]
         for cd in self.model.dataset.curves_data.all():
             startIndex = cd.xValue2Index(selRange[0])
             endIndex = cd.xValue2Index(selRange[1])
@@ -75,26 +75,26 @@ calculated as a difference between max and min signal in the given range.
             xvalues.append(self.model.dataset.analytes_conc.get(analyte.id, {}).get(cd.id, 0))
 
         if 0 not in xvalues:
-            raise VoltPyFailed('The method requires signal value for concentration 0 %s' % self.model.customData['units'])
+            raise VoltPyFailed('The method requires signal value for concentration 0 %s' % self.model.custom_data['units'])
         data = [
             [float(b) for b in xvalues],
             [float(b) for b in yvalues]
         ]
-        self.model.customData['matrix'] = data
+        self.model.custom_data['matrix'] = data
         p = calc_normal_equation_fit(data[0], data[1])
         sx0, sslope, sintercept = calc_sx0(p['slope'], p['intercept'], data[0], data[1])
         if p['slope'] != 0:
-            self.model.customData['fitEquation'] = p
-            self.model.customData['slopeStdDev'] = sslope
-            self.model.customData['interceptStdDev'] = sintercept
-            self.model.customData['result'] = p['intercept']/p['slope']
-            self.model.customData['resultStdDev'] = sx0,
-            self.model.customData['corrCoef'] = np.corrcoef(data[0], data[1])[0, 1]
+            self.model.custom_data['fitEquation'] = p
+            self.model.custom_data['slopeStdDev'] = sslope
+            self.model.custom_data['interceptStdDev'] = sintercept
+            self.model.custom_data['result'] = p['intercept']/p['slope']
+            self.model.custom_data['resultStdDev'] = sx0,
+            self.model.custom_data['corrCoef'] = np.corrcoef(data[0], data[1])[0, 1]
         else:
-            self.model.customData['fitEquation'] = p
-            self.model.customData['result'] = None
-            self.model.customData['resultStdDev'] = None
-            self.model.customData['corrCoef'] = None
+            self.model.custom_data['fitEquation'] = p
+            self.model.custom_data['result'] = None
+            self.model.custom_data['resultStdDev'] = None
+            self.model.custom_data['corrCoef'] = None
         self.model.completed = True
         self.model.step = 0
         self.model.save()
@@ -108,18 +108,18 @@ calculated as a difference between max and min signal in the given range.
         p.plot_height = 400
         p.sizing_mode = 'fixed'
         p.xlabel = 'c_({analyte}) / {units}'.format(
-            analyte=self.model.customData['analyte'],
-            units=self.model.customData['units']
+            analyte=self.model.custom_data['analyte'],
+            units=self.model.custom_data['units']
         )
         p.ylabel = 'i / µA'
         scr, div, buttons = p.getEmbeded(request, user, 'analysis', self.model.id)
-        n = len(self.model.customData['matrix'][0])
+        n = len(self.model.custom_data['matrix'][0])
         talpha = t.ppf(0.975, n-2)
-        conf_interval = np.multiply(self.model.customData['resultStdDev'], talpha)
+        conf_interval = np.multiply(self.model.custom_data['resultStdDev'], talpha)
         sd = significant_digit(conf_interval, 2)
-        slope_interval = np.multiply(self.model.customData['slopeStdDev'], talpha)
+        slope_interval = np.multiply(self.model.custom_data['slopeStdDev'], talpha)
         slopesd = significant_digit(slope_interval, 2)
-        int_interval = np.multiply(self.model.customData['interceptStdDev'], talpha)
+        int_interval = np.multiply(self.model.custom_data['interceptStdDev'], talpha)
         intsd = significant_digit(int_interval, 2)
         return {
             'head': scr,
@@ -134,15 +134,15 @@ calculated as a difference between max and min signal in the given range.
                     Result: {res}&plusmn;{ci} {anu}
                     </td></tr></table>
                 """.format(
-                    res='%.*f' % (sd, self.model.customData['result']),
+                    res='%.*f' % (sd, self.model.custom_data['result']),
                     ci='%.*f' % (sd, conf_interval),
-                    corrcoef='%.4f' % self.model.customData['corrCoef'],
-                    slope='%.*f' % (slopesd, self.model.customData['fitEquation']['slope']),
+                    corrcoef='%.4f' % self.model.custom_data['corrCoef'],
+                    slope='%.*f' % (slopesd, self.model.custom_data['fitEquation']['slope']),
                     sci='%.*f' % (slopesd, slope_interval),
-                    int='%.*f' % (intsd, self.model.customData['fitEquation']['intercept']),
+                    int='%.*f' % (intsd, self.model.custom_data['fitEquation']['intercept']),
                     ici='%.*f' % (intsd, int_interval),
-                    an=self.model.customData['analyte'],
-                    anu=self.model.customData['units']
+                    an=self.model.custom_data['analyte'],
+                    anu=self.model.custom_data['units']
                 )
             ])
         }

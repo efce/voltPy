@@ -35,7 +35,7 @@ class TagCurves(ms.MethodStep):
                     kentry = ret.get(f, [])
                     kentry.append(cid)
                     ret[f] = kentry
-            self.model.stepsData['TagCurves'] = ret
+            self.model.steps_data['TagCurves'] = ret
             self.model.save()
 
     def process(self, user, request, model):

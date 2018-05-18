@@ -32,7 +32,7 @@ def analytesTable(obj, obj_type: str) -> str:
                     reverse('editAnalyte', kwargs={
                         'obj_type': obj_type,
                         'obj_id': obj.id,
-                        'analyteId': a.id
+                        'analyte_id': a.id
                     })
                 ),
                 disabled=' disabled' if cs.locked else ''

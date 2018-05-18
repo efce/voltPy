@@ -61,8 +61,8 @@ Chemom. Intell. Lab. Syst., vol. 65, no. 1, pp. 119–137, 2003.
                 if cd.curve.params[p] != cd1.curve.params[p]:
                     raise VoltPyFailed('All curves in dataset have to be similar.')
 
-        self.model.customData['tp'] = cd1.curve.params[Param.tp]
-        self.model.customData['tw'] = cd1.curve.params[Param.tw]
+        self.model.custom_data['tp'] = cd1.curve.params[Param.tp]
+        self.model.custom_data['tw'] = cd1.curve.params[Param.tw]
         tptw = cd1.curve.params[Param.tp] + cd1.curve.params[Param.tw]
         main_data_1 = np.zeros((tptw, int(len(cd1.current_samples)/tptw/2), len(dataset.curves_data.all())))
         main_data_2 = np.zeros((tptw, int(len(cd1.current_samples)/tptw/2), len(dataset.curves_data.all())))
@@ -160,13 +160,13 @@ Chemom. Intell. Lab. Syst., vol. 65, no. 1, pp. 119–137, 2003.
         cfits = np.matrix(cfits)
         fit_mean = np.mean(cfits, axis=0)
         fit_std = np.std(cfits, axis=0)
-        self.model.customData['Tau'] = fit_mean[0, 2]
-        self.model.customData['TauStdDev'] = fit_std[0, 2]
-        self.model.customData['Romega'] = fit_mean[0, 0]
-        self.model.customData['RomegaStdDev'] = fit_std[0, 0]
-        self.model.customData['BestFitData'] = {}
-        self.model.customData['BestFitData'][0] = bfd0
-        self.model.customData['BestFitData'][1] = bfd1
+        self.model.custom_data['Tau'] = fit_mean[0, 2]
+        self.model.custom_data['TauStdDev'] = fit_std[0, 2]
+        self.model.custom_data['Romega'] = fit_mean[0, 0]
+        self.model.custom_data['RomegaStdDev'] = fit_std[0, 0]
+        self.model.custom_data['BestFitData'] = {}
+        self.model.custom_data['BestFitData'][0] = bfd0
+        self.model.custom_data['BestFitData'][1] = bfd1
         self.model.save()
 
     def finalize(self, user):
@@ -185,10 +185,10 @@ Chemom. Intell. Lab. Syst., vol. 65, no. 1, pp. 119–137, 2003.
 
     def getFinalContent(self, request, user):
         from manager.helpers.fithelpers import significant_digit
-        n = len(self.model.customData['BestFitData'][0]['z'])
+        n = len(self.model.custom_data['BestFitData'][0]['z'])
         ta = t.ppf(0.975, n)
-        tau_ci = self.model.customData['TauStdDev'] * ta / np.sqrt(n)
-        rom_ci = self.model.customData['RomegaStdDev'] * ta / np.sqrt(n)
+        tau_ci = self.model.custom_data['TauStdDev'] * ta / np.sqrt(n)
+        rom_ci = self.model.custom_data['RomegaStdDev'] * ta / np.sqrt(n)
         sigtau = significant_digit(tau_ci)
         sigrom = significant_digit(rom_ci)
         return {
@@ -197,9 +197,9 @@ Chemom. Intell. Lab. Syst., vol. 65, no. 1, pp. 119–137, 2003.
                         Tau: {tau}&plusmn;{tauci}&nbsp;ms(?)<br />
                         Romega: {rom}&plusmn;{romci}&nbsp;Ohm</p>
                     """.format(
-                tau='%.*f' % (sigtau, self.model.customData['Tau']),
+                tau='%.*f' % (sigtau, self.model.custom_data['Tau']),
                 tauci='%.*f' % (sigtau, tau_ci),
-                rom='%.*f' % (sigrom, self.model.customData['Romega']),
+                rom='%.*f' % (sigrom, self.model.custom_data['Romega']),
                 romci='%.*f' % (sigrom, rom_ci)
             )
         }
