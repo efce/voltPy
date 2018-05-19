@@ -42,6 +42,13 @@ Select range containing peak and press Forward, or press Back to change the sele
     checks = (check_datalenuniform, check_analyte)
 
     description = """
+Self Referencing Background Correction (SBCM)is a modification and combination
+of Standard Addition method and polynomial baseline correction.
+The SBCM procedure requires the same calibration recorded with at least three
+different sensitivities (e.g. with three different accumulation times in ASV).
+The procedure tries to fit the baseline generated with p3rd degree polynomial
+to all signals which would result in the same final result.
+
 [1] Ciepiela, F., Lisak, G., & Jakubowska, M. (2013). Self-referencing
 background correction method for voltammetric investigation of reversible
 redox reaction. Electroanalysis, 25(9), 2054–2059.

@@ -44,7 +44,7 @@
                 {% for method in methods %}
                 <div class="method_element"{% if not method.3 %} onclick="selectMethod('{{ type }}', '{{ method.0 }}', '{{ method.1 }}');"{% endif %}>
                     <div class="align_top" style="display: inline-block; width: 59%">
-                        <t2>{{ method.1 | safe }}</t2>
+                        <h4>{{ method.1 | safe }}</h4>
                         <p>{{ method.2 | safe }}</p>
                         {% if method.3 %}
                         <div class="method_element_error">

@@ -19,19 +19,18 @@ class PolynomialBackgroundFit(method.ProcessingMethod):
         {
             'class': SelectTwoRanges,
             'title': 'Choose two fit intervals.',
-            'desc': 'Select two fit intervals and press Forward, or press Back to change the selection.',
+            'desc': 'On the plot select two intervals in which polynomial will be fitted and press Forward, or press Back to go to the previous step.',
         },
         {
             'class': Confirmation,
             'title': 'Confirm background shape.',
-            'desc': 'Press Forward to confirm background shape or press Back to return to interval selection.',
+            'desc': 'Press Forward to subtract the generated baselines or press Back to return to the interval selection.',
         },
     ]
     description = """
-The polynomial fit is the most wieldy used background correction method,
-where the polynomial of given order (in this case 3rd) is fitted into two
-intervals -- one should be directly in front of the peak of interest and
-other right after it.
+The polynomial fit is the most wieldy used baseline correction method,
+where the polynomial of the given order is fitted into two intervals -- the first interval 
+should be placed before the peak of interest and the second after it.
     """
 
     @classmethod

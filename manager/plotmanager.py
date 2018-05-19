@@ -437,20 +437,22 @@ class PlotManager:
         #    callback=CustomJS(args=args, code=js_back)
         #)
         bunselect = Button(
-            label="Unselect", 
+            label="Undo selection",
             width=250,
+            height=35,
             callback=CustomJS(args=args, code=js_back)
         )
+        but_height = 35
         if not self.interaction or self.interaction == 'none':
-            w = widgetbox(radio_button_group, height=50)
-            actionbar = row([w], sizing_mode='fixed', height=50)
+            w = widgetbox(radio_button_group, height=but_height)
+            actionbar = row([w], sizing_mode='fixed', height=but_height)
         else:
-            w = widgetbox(radio_button_group, height=50)
+            w = widgetbox(radio_button_group, height=but_height)
             # actionbar = row([px, w, bback, bforward], width=self.plot_width)
             if self.include_x_switch:
-                actionbar = row([w, bunselect], sizing_mode='fixed', height=50)
+                actionbar = row([w, bunselect], sizing_mode='fixed', height=but_height)
             else:
-                actionbar = row([bunselect], sizing_mode='fixed', height=50)
+                actionbar = row([bunselect], sizing_mode='fixed', height=but_height)
 
         return (self.p, actionbar)
         """
