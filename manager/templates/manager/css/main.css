@@ -146,9 +146,6 @@ button, input[type="submit"] {
 }
 
 .analysis_methods, .processing_methods {
-    position: absolute;
-    top: 100px;
-    left: 250px;
     width: 60%;
     height: 70%;
 }

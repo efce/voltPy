@@ -99,11 +99,11 @@ function processJSONReply(data, plot='', lineData='', cursors='') {
     }
 };
 
-$( function() {
+/*$( function() {
     $(".closeX").on('click', function(e) {
         $(e.target).parent('div').toggleClass('invisible');
     });
-});
+});*/
 
 // This is used in various forms. Magic classes names.
 $( function() { 
@@ -337,8 +337,12 @@ $( function() {
 });
 
 function toggleMethod(type) {
-    class_name = '.' + type + '_methods';
-    $(class_name).toggleClass('invisible');
+    id_name = '#' + type + '_display';
+    if ($(id_name).css('display') == 'none') {
+        $(id_name).css('display', 'block');
+    } else {
+        $(id_name).css('display', 'none');
+    }
 }
 
 function selectMethod(mtype, mname, mdisp, toggle=true) {
@@ -355,3 +359,12 @@ function selectMethod(mtype, mname, mdisp, toggle=true) {
         toggleMethod(mtype);
     }
 }
+
+function closeNotifications(event) {
+    $(event).closest('.notifications_background').toggle();
+}
+$(function() {
+    $('.notifications').click(function(event) {
+        event.stopPropagation();
+    });
+});

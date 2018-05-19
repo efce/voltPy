@@ -33,32 +33,38 @@
     </fieldset>
 </div>
 
-<div class="{{ type }}_methods float_menu invisible">
-<a class="closeX"></a>
-<ul class="metehod_list" style="margin-top: 30px;">
-    Browsing {{ type }} methods:
-    {% for method in methods %}
-    <div class="method_element"{% if not method.3 %} onclick="selectMethod('{{ type }}', '{{ method.0 }}', '{{ method.1 }}');"{% endif %}>
-        <div class="align_top" style="display: inline-block; width: 59%">
-            <t2>{{ method.1 | safe }}</t2>
-            <p>{{ method.2 | safe }}</p>
-            {% if method.3 %}
-            <div class="method_element_error">
-            Data incompatible with this method:
-            <ul>
-                {% for err in method.3 %}
-                    {% if err %}
-                    <li>{{ err }}</li>
-                    {% endif %}
+<div id="{{ type }}_display" class="notifications_background" style="display:none;" onclick="closeNotifications(this);">
+    <div class="notifications {{ type }}_methods">
+        <div class="notifications_bar">
+            Browsing {{ type }} methods
+        </div>
+        <a class="closeX" onclick="closeNotifications(this);"></a>
+        <div class="notifications_content">
+            <ul class="metehod_list" style="margin-top: 30px;">
+                {% for method in methods %}
+                <div class="method_element"{% if not method.3 %} onclick="selectMethod('{{ type }}', '{{ method.0 }}', '{{ method.1 }}');"{% endif %}>
+                    <div class="align_top" style="display: inline-block; width: 59%">
+                        <t2>{{ method.1 | safe }}</t2>
+                        <p>{{ method.2 | safe }}</p>
+                        {% if method.3 %}
+                        <div class="method_element_error">
+                        Data incompatible with this method:
+                        <ul>
+                            {% for err in method.3 %}
+                                {% if err %}
+                                <li>{{ err }}</li>
+                                {% endif %}
+                            {% endfor %}
+                        </ul>
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div style="display: inline-block; width: 40%">
+                        {{ method.4 | safe }}
+                    </div>
+                </div>
                 {% endfor %}
             </ul>
-            </div>
-            {% endif %}
-        </div>
-        <div style="display: inline-block; width: 40%">
-            {{ method.4 | safe }}
         </div>
     </div>
-    {% endfor %}
-</ul>
 </div>
