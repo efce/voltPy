@@ -790,7 +790,7 @@ def showDataset(request, user, dataset_id):
 def cloneDataset(request, user, to_clone_id):
     toCloneCS = mmodels.Dataset.get(id=int(to_clone_id))
     newcs = toCloneCS.getCopy()
-    add_notification(request, 'Dataset cloned. Redirecting to the new Dataset.')
+    add_notification(request, 'Dataset cloned. Redirected to the new Dataset.')
     return HttpResponseRedirect(newcs.getUrl())
 
 
@@ -799,7 +799,7 @@ def cloneDataset(request, user, to_clone_id):
 def cloneFileset(request, user, to_clone_id):
     toCloneCS = mmodels.Fileset.get(id=int(to_clone_id))
     newcs = toCloneCS.getNewDataset()
-    add_notification(request, 'Fileset copied as a new Dataset. Redirecting to the new Dataset.')
+    add_notification(request, 'Fileset copied as a new Dataset. Redirected to the new Dataset.')
     return HttpResponseRedirect(newcs.getUrl())
 
 
@@ -808,7 +808,7 @@ def cloneFileset(request, user, to_clone_id):
 def cloneFile(request, user, to_clone_id):
     toCloneCS = mmodels.File.get(id=int(to_clone_id))
     newcs = toCloneCS.getNewDataset()
-    add_notification(request, 'File copied as a new Dataset. Redirecting to the new Dataset.')
+    add_notification(request, 'File copied as a new Dataset. Redirected to the new Dataset.')
     return HttpResponseRedirect(newcs.getUrl())
 
 

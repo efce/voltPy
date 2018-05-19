@@ -17,6 +17,16 @@ body {
     font-family: regular;
     min-width: 820px;
 }
+
+a {
+    color: blue;
+    text-decoration: underline;
+}
+
+a:visited {
+    color: blue;
+}
+
 .main_table {
     margin-left: 10px;
     margin-right: 10px;
@@ -128,12 +138,13 @@ body {
 }
 
 button, input[type="submit"] {
-    width: auto;
+    padding: 2px 1em;
     height: 2em;
     margin: 3px 5px;
 }
 
 .expandable {
+    color: {% color1font %};
     cursor: pointer;
     -webkit-user-select: none; /* Safari */        
     -moz-user-select: none; /* Firefox */
@@ -143,6 +154,13 @@ button, input[type="submit"] {
 
 .expandable:hover {
     box-shadow: inset 0 0 100px 100px rgba(255, 255, 255, 0.1);
+}
+
+.selected_method {
+    color: {% color1font %};
+    background-color: {% color1 %};
+    padding: 1px 6px;
+    font-weight: bold;
 }
 
 .analysis_methods, .processing_methods {

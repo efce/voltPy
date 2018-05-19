@@ -346,7 +346,8 @@ function toggleMethod(type) {
 }
 
 function selectMethod(mtype, mname, mdisp, toggle=true) {
-    $('#' + mtype + '_selected').text('Selected: ' + mdisp + " ")
+    $('#' + mtype + '_selected').text('Selected: ');
+    $('#' + mtype + '_selected').append($('<span class="selected_method">' + mdisp + "</span>"));
     input = $('<input type="hidden" name="' + mtype + '-method" value="' + mname + '" />');
     if (mtype == 'analysis') {
         but = $('<input type="submit" name="startAnalyze" value="Start Analysis" class="formSubmit" />');
