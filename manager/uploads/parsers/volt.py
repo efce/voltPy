@@ -52,7 +52,7 @@ class Volt(Parser):
             bytename.append(cc[0])
         c.name = bytename.decode('utf8')
         if isCompressed:
-            dataUnc = zlib.decompress(data[index+4:])  # QT qCompress add 4 bytes 
+            dataUnc = zlib.decompress(data[index+4:])  # QT qCompress adds 4 bytes 
             # src: http://bohdan-danishevsky.blogspot.com/2013/11/qt-51-zlib-compression-compatible-with.html
         else:
             dataUnc = data[index:]
@@ -72,8 +72,7 @@ class Volt(Parser):
         paramNum = struct.unpack('<i', dataUnc[index:index+4])[0]
         index += 4
         listparam = struct.unpack('<'+paramNum*'i', dataUnc[index:index+4*paramNum])
-        for i, v in enumerate(listparam):
-            c.vec_param[i] = v
+        c.vec_param = listparam
         index += (4*paramNum)
 
         # Decode vectors
