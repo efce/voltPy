@@ -18,7 +18,7 @@
             <input id="file_selector" type="file" name="files[]" multiple />
             </td>
         </tr>
-        <tr><td>Allowed file types: {% for ft in allowedExt %} {{ ft }} {% endfor %}</td></tr>
+        <tr><td>Allowed file types: {{ allowedExt }}</td></tr>
         <tr>
             <td>
             <input id="file_sender" type="submit" value="Upload" disabled/>

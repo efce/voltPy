@@ -819,7 +819,7 @@ def upload(request, user):
     context = {
         'user': user,
         'can_upload': can_upload,
-        'allowedExt': umanager.allowedExt,
+        'allowedExt': ', '.join(umanager.allowedExt),
     }
     return voltpy_render(
         request=request,

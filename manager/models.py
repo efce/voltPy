@@ -595,7 +595,6 @@ class Dataset(VoltPyModel):
         self.save()
 
     def undo(self):
-        # TODO: Undo removes also processing method ! (store id somewhere?)
         if not self.hasUndo():
             return
         self.curves_data.clear()
