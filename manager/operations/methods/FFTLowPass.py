@@ -15,11 +15,11 @@ class FFTLowPass(method.ProcessingMethod):
     ]
     description = """
 This is low pass frequency filter used primarily for signal smoothing. The
-procedure consists of two steps:
+procedure consists of two steps:<br />
 - The signal is transformed to the frequency domain and the power spectrum
-  is presented to the user.
+  is presented to the user.<br />
 - The user selects the cut off threshold, above which the frequencies are
-  considered noise.
+  considered noise.<br />
 The procedure automatically removes this frequencies and transforms the
 signal back to the original domain.
     """

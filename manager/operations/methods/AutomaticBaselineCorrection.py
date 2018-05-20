@@ -22,11 +22,11 @@ Automatic Baseline Correction (ABC) removes the background by the means
 of automatic polynomial fitting. This implementation is taken from [1].
 ABC usually two parameters to work, however, there are some values
 which offer better performance, therefore, here the number of iterations
-and polynomial degree are set to 40 and 4 respectively.
-
-[1] Górski, Ł., Ciepiela, F., & Jakubowska, M. (2014). Automatic
-baseline correction in voltammetry. Electrochimica Acta, 136, 195–203.
-https://doi.org/10.1016/j.electacta.2014.05.076
+and polynomial degree are set to 40 and 4 respectively.<br />
+<br />
+[1] Ł. Górski, F. Ciepiela, and M. Jakubowska, "Automatic
+baseline correction in voltammetry" Electrochimica Acta, 2014, 136, 195–203.
+<br />doi: 10.1016/j.electacta.2014.05.076
     """
 
     @overrides
