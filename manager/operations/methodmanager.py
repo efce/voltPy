@@ -298,9 +298,10 @@ class MethodManager:
         
         def draw(self):
             to_disp = [(k, v.__str__(), v.description or '', v.errors, v.video) for k, v in self.methods.items()]
+            to_disp_sorted = list(sorted(to_disp, key=lambda item: item[1]))
             context = {
                 'disabled': self.disabled,
-                'methods': to_disp,
+                'methods': to_disp_sorted,
                 'type': self.type,
                 'user': get_user()
             }
