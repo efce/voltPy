@@ -12,12 +12,13 @@ class MedianFilter(method.ProcessingMethod):
         {
             'class': Confirmation,
             'title': 'Apply median filter',
-            'desc': 'Press forward to apply Median Filter.',
+            'desc': 'Press Forward to apply Median Filter.',
         },
     ]
-    degree = 3
     description = """
-    Median filter.
+    Median filter is smoothing algorithm similar to the Savitzky-Golay, however instead of fitting of the polynomial,
+    the middle point of the window is moved to the value of median of the points in the window. The median filter is
+    most usefull for removal of spikes from the signal (single point large amplitude errors).
     """
 
     @classmethod

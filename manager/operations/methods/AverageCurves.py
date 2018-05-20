@@ -18,7 +18,8 @@ class AverageCurves(method.ProcessingMethod):
     checks = (check_datalenuniform,)
     description = """
 This is simple averaging method which allow to calculate the average from
-given number of plots.
+given number of plots. User will be asked to tag with the same alphanumeric string
+plots which should be averaged.
     """
 
     @classmethod
