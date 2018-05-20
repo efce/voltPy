@@ -158,7 +158,7 @@ def verifyFileExt(filelist):
 
     filelist -- list of file names
 
-    returns touple of 3 elements:
+    returns tuple of 3 elements:
         isOk: True if no errors detected
         errors: list of errors in the order of filelist
         needsDescribe: T/F array, of which files requires

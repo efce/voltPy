@@ -118,7 +118,6 @@ class EditCurvesForm(forms.Form):
 
 
 class EditAnalytesForm(forms.Form):
-    # TODO: draw plot of file, provide fields for settings analytes
     isCal = False
 
     def __init__(self, user, dataset, analyte_id, *args, **kwargs):
@@ -144,7 +143,6 @@ class EditAnalytesForm(forms.Form):
         eaDefault = -1
         eaDefaultUnit = '0g'
 
-        # TODO: user analytes or all ?
         analytesFromDb = mmodels.Analyte.objects.filter(owner=user)
         existingAnalytes = [(-1, 'Add new')]
         if analytesFromDb:
