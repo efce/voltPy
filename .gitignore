@@ -4,3 +4,5 @@ migrations
 .ropeproject
 my.cnf
 email.account
+*.ipynb
+.ipynb_checkpoints
