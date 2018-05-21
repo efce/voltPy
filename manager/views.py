@@ -579,10 +579,7 @@ def showProcessed(request, user, processing_id):
 @redirect_on_voltpyexceptions
 @with_user
 def showFileset(request, user, fileset_id):
-    try:
-        fs = mmodels.Fileset.get(id=fileset_id)
-    except ObjectDoesNotExist:
-        raise VoltPyDoesNotExists()
+    fs = mmodels.Fileset.get(id=fileset_id)
 
     form_data = {'model': fs, 'label_name': ''}
     edit_name_form = form_helper(
@@ -615,6 +612,11 @@ def showFileset(request, user, fileset_id):
             reverse('export', kwargs={
                 'obj_type': 'fileset',
                 'obj_id': fs.id,
+            })
+        ),
+        'delete_button': get_redirect_class(
+            reverse('deleteFileset', kwargs={
+                'fileset_id': fs.id
             })
         ),
         'curve_set_button': get_redirect_class(
