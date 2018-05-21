@@ -1,5 +1,6 @@
 {% extends "manager/main.html" %}
 
+{% block title %} Logged out {% endblock %}
 {% block real_content %}
 <p>Logged out!</p>  
 <a href="{% url 'login'%}">Click here to login again.</a>

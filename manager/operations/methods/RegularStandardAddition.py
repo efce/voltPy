@@ -18,19 +18,24 @@ class RegularStandardAddition(method.AnalysisMethod):
         {
             'class': SelectAnalyte,
             'title': 'Select analyte',
-            'desc': """Select analyte.""",
+            'desc': 'Select analyte for analysis.',
         },
         {
             'class': SelectRange,
             'title': 'Select range',
-            'desc': 'Select range containing peak and press Forward, or press Back to change the selection.',
+            'desc': 'Select range containing peak and press Forward, or press Back to change the analyte selection.',
         },
     ]
     checks = (check_analyte, )
     description = """
-This is standard addition method, where the height of the signal is
-calculated as a difference between max and min signal in the given range.
-""".replace('\n', ' ')
+The standard addition method uses estimation of the unknown concentration
+based on the linear regression fit with
+<i>peak&nbsp;current</i>&nbsp;=&nbsp;m&middot;<i>concentration</i>&nbsp;+&nbsp;b
+and final result is given by result&nbsp;=&nbsp;b/m.
+Peak current is calculated as the difference between highest and lowest point in the given interval.
+Because of the way sx0 (standard deviation of x0) value is calculated the point [0, y], i.e. point for concentration 0,
+has to be included in the dataset.
+"""
 
     @classmethod
     def __str__(cls):

@@ -99,11 +99,11 @@ function processJSONReply(data, plot='', lineData='', cursors='') {
     }
 };
 
-$( function() {
+/*$( function() {
     $(".closeX").on('click', function(e) {
         $(e.target).parent('div').toggleClass('invisible');
     });
-});
+});*/
 
 // This is used in various forms. Magic classes names.
 $( function() { 
@@ -337,12 +337,17 @@ $( function() {
 });
 
 function toggleMethod(type) {
-    class_name = '.' + type + '_methods';
-    $(class_name).toggleClass('invisible');
+    id_name = '#' + type + '_display';
+    if ($(id_name).css('display') == 'none') {
+        $(id_name).css('display', 'block');
+    } else {
+        $(id_name).css('display', 'none');
+    }
 }
 
 function selectMethod(mtype, mname, mdisp, toggle=true) {
-    $('#' + mtype + '_selected').text('Selected: ' + mdisp + " ")
+    $('#' + mtype + '_selected').text('Selected: ');
+    $('#' + mtype + '_selected').append($('<span class="selected_method">' + mdisp + "</span>"));
     input = $('<input type="hidden" name="' + mtype + '-method" value="' + mname + '" />');
     if (mtype == 'analysis') {
         but = $('<input type="submit" name="startAnalyze" value="Start Analysis" class="formSubmit" />');
@@ -355,3 +360,12 @@ function selectMethod(mtype, mname, mdisp, toggle=true) {
         toggleMethod(mtype);
     }
 }
+
+function closeNotifications(event) {
+    $(event).closest('.notifications_background').toggle();
+}
+$(function() {
+    $('.notifications').click(function(event) {
+        event.stopPropagation();
+    });
+});

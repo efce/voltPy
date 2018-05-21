@@ -12,3 +12,4 @@ overrides
 django-guardian
 configparser
 logstash
+psycopg2

@@ -579,10 +579,7 @@ def showProcessed(request, user, processing_id):
 @redirect_on_voltpyexceptions
 @with_user
 def showFileset(request, user, fileset_id):
-    try:
-        fs = mmodels.Fileset.get(id=fileset_id)
-    except ObjectDoesNotExist:
-        raise VoltPyDoesNotExists()
+    fs = mmodels.Fileset.get(id=fileset_id)
 
     form_data = {'model': fs, 'label_name': ''}
     edit_name_form = form_helper(
@@ -615,6 +612,11 @@ def showFileset(request, user, fileset_id):
             reverse('export', kwargs={
                 'obj_type': 'fileset',
                 'obj_id': fs.id,
+            })
+        ),
+        'delete_button': get_redirect_class(
+            reverse('deleteFileset', kwargs={
+                'fileset_id': fs.id
             })
         ),
         'curve_set_button': get_redirect_class(
@@ -790,7 +792,7 @@ def showDataset(request, user, dataset_id):
 def cloneDataset(request, user, to_clone_id):
     toCloneCS = mmodels.Dataset.get(id=int(to_clone_id))
     newcs = toCloneCS.getCopy()
-    add_notification(request, 'Dataset cloned. Redirecting to the new Dataset.')
+    add_notification(request, 'Dataset cloned. Redirected to the new Dataset.')
     return HttpResponseRedirect(newcs.getUrl())
 
 
@@ -799,7 +801,7 @@ def cloneDataset(request, user, to_clone_id):
 def cloneFileset(request, user, to_clone_id):
     toCloneCS = mmodels.Fileset.get(id=int(to_clone_id))
     newcs = toCloneCS.getNewDataset()
-    add_notification(request, 'Fileset copied as a new Dataset. Redirecting to the new Dataset.')
+    add_notification(request, 'Fileset copied as a new Dataset. Redirected to the new Dataset.')
     return HttpResponseRedirect(newcs.getUrl())
 
 
@@ -808,7 +810,7 @@ def cloneFileset(request, user, to_clone_id):
 def cloneFile(request, user, to_clone_id):
     toCloneCS = mmodels.File.get(id=int(to_clone_id))
     newcs = toCloneCS.getNewDataset()
-    add_notification(request, 'File copied as a new Dataset. Redirecting to the new Dataset.')
+    add_notification(request, 'File copied as a new Dataset. Redirected to the new Dataset.')
     return HttpResponseRedirect(newcs.getUrl())
 
 
@@ -819,7 +821,7 @@ def upload(request, user):
     context = {
         'user': user,
         'can_upload': can_upload,
-        'allowedExt': umanager.allowedExt,
+        'allowedExt': ', '.join(umanager.allowedExt),
     }
     return voltpy_render(
         request=request,

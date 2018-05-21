@@ -1,9 +1,49 @@
 {% load colors %}
-#notifications { 
+
+.notifications { 
   border: 1px {% color2 %} solid;
-  margin: auto;
   padding: 5px;
   border-radius: 3px;
   background-color: {% color1 %}; 
   color: {% color1font %};
+  z-index: 998;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  width: 35%;
+  min-height: 20%;
+  transform: translate(-50%, -50%);
+  overflow: none;
+}
+
+.notifications_bar {
+  position: absolute;
+  width: 98%;
+  background-color: {% color1font %};
+  color: {% color1 %};
+  border: 1px {% color2 %} solid;
+  margin: 0px;
+  padding: 5px 0px;
+  z-index: 999;
+  text-align: center;
+}
+
+.notifications_content {
+  position: absolute;
+  top: 45px;
+  margin: 0px 0px 0px 0px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  height: 90%;
+}
+
+.notifications_background {
+  position: fixed;
+  left: 1px;
+  top: 1px;
+  bottom: 1px;
+  right: 1px;
+  z-index: 997;
+  background-color: rgba(98, 98, 98, 0.4);
+  display: block;
 }

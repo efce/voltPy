@@ -15,13 +15,22 @@ form .helptext {
     margin-top: 0px;
     background-color: {% color1 %};
     color: {% color1font %};
+    border: 2px {% color1 %} solid;
+    display: block;
+    margin-bottom: 1em;
+    padding: 0px 4px;
 }
 
 form .helptext ul {
     margin-top: 0px;
-    background-color: {% color1 %};
-    color: {% color1font %};
+    margin-bottom: 0px;
 }
+
+form .helptext span {
+    font-size: small;
+}
+
+
 
 
 .analytes_table_container {

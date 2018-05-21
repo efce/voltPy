@@ -19,12 +19,17 @@ class SGSmooth(method.ProcessingMethod):
     ]
     degree = 3
     description = """
-Savitzky-Golay smoothing algorithm.
+Savitzky-Golay smoothing (filtering) is an iterative algorithm where polynomial
+of a given order is fitted into an odd size window, and the middle point
+of the window is moved to the place given by the polynomial. When the point is
+replaced, the window moves one point right and the procedure is repeated
+until the last point is reached. Both the polynomial degree and the window size
+ may be defined.
     """
 
     @classmethod
     def __str__(cls):
-        return "SG-Smooth"
+        return "Savitzky-Golay Smoothing"
 
     @overrides
     def initialForStep(self, step_num):
