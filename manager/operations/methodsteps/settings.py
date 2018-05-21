@@ -11,12 +11,27 @@ class Settings(MethodStep):
             super(Settings.SettingsForm, self).__init__(*args, **kwargs)
             if initial_data:
                 for k, v in initial_data.items():
-                    self.fields[k] = forms.CharField(
-                        max_length=30,
-                        initial=v.get('default', ''),
-                        label=k,
-                        validators=[v['validator']] if v.get('validator', False) else None
-                    )
+                    if v.get('type', 'text') == 'text':
+                        self.fields[k] = forms.CharField(
+                            max_length=30,
+                            initial=v.get('default', ''),
+                            label=k,
+                            validators=[v['validator']] if v.get('validator', False) else []
+                        )
+                    elif v.get('type', '') == 'select':
+                        opts = v.get('options', [])
+                        choices = list(zip(range(len(opts)), opts))
+                        defopt = 0
+                        if v.get('default', False):
+                            for n, o in choices:
+                                if o == v['default']:
+                                    defopt = n
+                                    break
+                        self.fields[k] = forms.ChoiceField(
+                            choices=choices,
+                            label=k,
+                            initial=defopt
+                        )
 
     def process(self, user, request, model):
         if request.POST.get('confirm', False) == 'Forward':

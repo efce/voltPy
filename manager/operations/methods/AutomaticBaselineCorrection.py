@@ -17,6 +17,7 @@ class AutomaticBaselineCorrection(method.ProcessingMethod):
         },
     ]
     model = None
+    # TODO: improve description
     description = """
 Automatic Baseline Correction (ABC) removes the background by the means
 of automatic polynomial fitting. This implementation is taken from [1].

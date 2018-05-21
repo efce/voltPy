@@ -1,11 +1,13 @@
 import numpy as np
-# import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
 from django.utils import timezone
+from overrides import overrides
 import manager.models as mmodels
 import manager.helpers.alternatingSlicewiseDiagonalization as asd
 import manager.operations.method as method
 from manager.operations.methodsteps.selectanalyte import SelectAnalyte
 from manager.operations.methodsteps.selectrange import SelectRange
+from manager.operations.methodsteps.settings import Settings
 from manager.exceptions import VoltPyNotAllowed
 from manager.exceptions import VoltPyFailed
 from manager.helpers.functions import check_dataset_integrity
@@ -30,6 +32,14 @@ Select range for decomposition.
 Range should extend about two width of the peak either way from it.
             """,
         },
+        {
+            'class': Settings,
+            'title': 'Method settings',
+            'desc': """
+            Advanced settings, leave defaults if unsure.
+            """
+
+        }
     )
 
     checks = (check_sampling, )
@@ -54,8 +64,25 @@ Chemom. Intell. Lab. Syst., vol. 65, no. 1, pp. 119–137, 2003.
     def __str__(cls):
         return "ASD Decomposition"
 
+    @overrides
+    def initialForStep(self, step_num):
+        if step_num == 2:
+            return {
+                'Pulse and stair': {
+                    'type': 'select',
+                    'options': ['Pulse separate', 'Pulse together', 'Pulse combined'],
+                    'default': 'Pulse separate',
+                },
+                'Centralize data': {
+                    'type': 'select',
+                    'options': ['no', 'yes'],
+                    'default': 'yes',
+                }
+            }
+
     def __perform(self, dataset):
-        method_type = self.type_together
+        method_type = self.model.custom_data['MethodType']
+        centralize = self.model.custom_data['Centralize']
         if method_type not in self._allowed_types:
             raise VoltPyFailed('Not allowed type.')
 
@@ -138,6 +165,16 @@ Chemom. Intell. Lab. Syst., vol. 65, no. 1, pp. 119–137, 2003.
                     main_data_1[:, pos, cnum] = cd.current_samples[i:(i+2*tptw)]
             main_data_1 = main_data_1[:, dec_start:dec_end, :]
         
+        if centralize:
+            main_mean = np.mean(main_data_1, axis=0)
+            for i in range(main_data_1.shape[1]):
+                for ii in range(main_data_1.shape[2]):
+                    main_data_1[:, i, ii] = main_data_1[:, i, ii] - main_mean[i, ii]
+            if method_type == self.type_separate:
+                main_mean2 = np.mean(main_data_2, axis=0)
+                for i in range(main_data_2.shape[1]):
+                    for ii in range(main_data_2.shape[2]):
+                        main_data_2[:, i, ii] = main_data_2[:, i, ii] - main_mean2[i, ii]
 
         X0 = np.random.rand(factors, main_data_1.shape[0])
         Y0 = np.random.rand(factors, main_data_1.shape[1])
@@ -155,6 +192,13 @@ Chemom. Intell. Lab. Syst., vol. 65, no. 1, pp. 119–137, 2003.
             0.000001,
             100
         )
+        plt.subplot(311)
+        plt.plot(SamplingPred1)
+        plt.subplot(312)
+        plt.plot(PotentialPred1)
+        plt.subplot(313)
+        plt.plot(ConcentrationPred1)
+        plt.show()
 
         if method_type == self.type_separate:
             X0 = SamplingPred1.T
@@ -178,7 +222,7 @@ Chemom. Intell. Lab. Syst., vol. 65, no. 1, pp. 119–137, 2003.
                 yvecs = np.dot(np.matrix(bfd['y']).T, np.matrix(bfd['z']))
                 yvecs = np.dot(yvecs, mult)
             else:
-                mult1 = np.mean(bfd['x'][self.model.custom_data['tw']:self.model.custom_data['tp']])
+                mult1 = np.mean(bfd['x'][self.model.custom_data['tw']:self.model.custom_data['tw'] + self.model.custom_data['tp']])
                 mult2 = np.mean(bfd['x'][(2*self.model.custom_data['tw']+self.model.custom_data['tp']):])
                 yvecs1 = np.dot(np.matrix(bfd['y']).T, np.matrix(bfd['z'])).dot(mult1)
                 yvecs2 = np.dot(np.matrix(bfd['y']).T, np.matrix(bfd['z'])).dot(mult2)
@@ -218,7 +262,15 @@ Chemom. Intell. Lab. Syst., vol. 65, no. 1, pp. 119–137, 2003.
             yvecs2 = np.subtract(yv0[1::2], yv0[0::2])
 
         elif method_type == self.type_combined:
-            pass
+            bfd0 = self._best_fit_factor(
+                dE=dE,
+                concs=an_selected_conc,
+                SamplingPred=SamplingPred1,
+                PotentialPred=PotentialPred1,
+                ConcentrationPred=ConcentrationPred1
+            )
+            yv0 = recompose(bfd0, method_type)
+            yvecs2 = np.subtract(yv0[1::2], yv0[0::2])
 
         if yvecs2.shape[1] == len(dataset.curves_data.all()):
             for i, cd in enumerate(dataset.curves_data.all()):
@@ -237,6 +289,8 @@ Chemom. Intell. Lab. Syst., vol. 65, no. 1, pp. 119–137, 2003.
 
     def finalize(self, user):
         self.model.custom_data['DecomposeRange'] = self.model.steps_data['SelectRange']
+        self.model.custom_data['MethodType'] = int(self.model.steps_data['Settings'].get('Pulse and stair', 0))
+        self.model.custom_data['Centralize'] = int(self.model.steps_data['Settings'].get('Centralize', 1))
         self.__perform(self.model.dataset)
         self.model.step = None
         self.model.completed = True
@@ -250,40 +304,41 @@ Chemom. Intell. Lab. Syst., vol. 65, no. 1, pp. 119–137, 2003.
     def _best_fit_factor(self, dE, concs, SamplingPred, PotentialPred, ConcentrationPred):
         capac_index = -1
         capac_r2 = 0
-        for i, sp in enumerate(SamplingPred.T):
-            if sp[1] > 0:
-                yvec = sp
-            else:
-                yvec = np.dot(sp, -1)
-            x = np.arange(0, len(yvec))
+        if False:
+            for i, sp in enumerate(SamplingPred.T):
+                if sp[1] > 0:
+                    yvec = sp
+                else:
+                    yvec = np.dot(sp, -1)
+                x = np.arange(0, len(yvec))
 
-            capac_fit, capac_cov = fit_capacitive_eq(
-                xvec=x,
-                yvec=yvec,
-                dE=dE
-            )
-            yc_pred = calc_capacitive(x, dE, *capac_fit)
-            r2c = np.power(np.corrcoef(yc_pred, yvec)[0, 1], 2)
-            """
-            import matplotlib.pyplot as plt
-            print(i, ':', r2c)
-            plt.plot(sp, 'g')
-            plt.plot(yc_pred, 'r')
-            plt.show()
-            """
+                capac_fit, capac_cov = fit_capacitive_eq(
+                    xvec=x,
+                    yvec=yvec,
+                    dE=dE
+                )
+                yc_pred = calc_capacitive(x, dE, *capac_fit)
+                r2c = np.power(np.corrcoef(yc_pred, yvec)[0, 1], 2)
+                """
+                import matplotlib.pyplot as plt
+                print(i, ':', r2c)
+                plt.plot(sp, 'g')
+                plt.plot(yc_pred, 'r')
+                plt.show()
+                """
 
-            """
-            farad_fit, farad_cov = fit_faradaic_eq(
-                xvec=x,
-                yvec=yvec
-            )
-            yf_pred = calc_faradaic(x, *farad_fit)
-            r2f = np.power(np.corrcoef(yf_pred, yvec)[0, 1], 2)
-            """
+                """
+                farad_fit, farad_cov = fit_faradaic_eq(
+                    xvec=x,
+                    yvec=yvec
+                )
+                yf_pred = calc_faradaic(x, *farad_fit)
+                r2f = np.power(np.corrcoef(yf_pred, yvec)[0, 1], 2)
+                """
 
-            if r2c > capac_r2:
-                capac_r2 = r2c
-                capac_index = i
+                if r2c > capac_r2:
+                    capac_r2 = r2c
+                    capac_index = i
 
         tobeat = 0
         best_factor = -1
