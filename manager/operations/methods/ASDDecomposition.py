@@ -4,6 +4,7 @@ from django.utils import timezone
 from overrides import overrides
 import manager.models as mmodels
 import manager.helpers.alternatingSlicewiseDiagonalization as asd
+import manager.helpers.prepareDataForASD as prepare
 import manager.operations.method as method
 from manager.operations.methodsteps.selectanalyte import SelectAnalyte
 from manager.operations.methodsteps.selectrange import SelectRange
@@ -55,10 +56,7 @@ Chemom. Intell. Lab. Syst., vol. 65, no. 1, pp. 119–137, 2003.
 
     """
 
-    type_separate = 0
-    type_together = 1
-    type_combined = 2
-    _allowed_types = (type_combined, type_separate, type_together)
+    _allowed_types = (prepare.TYPE_SEPARATE, prepare.TYPE_TOGETHER, prepare.TYPE_COMBINED)
 
     @classmethod
     def __str__(cls):
@@ -71,7 +69,7 @@ Chemom. Intell. Lab. Syst., vol. 65, no. 1, pp. 119–137, 2003.
                 'Pulse and stair': {
                     'type': 'select',
                     'options': ['Pulse separate', 'Pulse together', 'Pulse combined'],
-                    'default': 'Pulse separate',
+                    'default': 'Pulse combined',
                 },
                 'Data centering': {
                     'type': 'select',
@@ -91,29 +89,13 @@ Chemom. Intell. Lab. Syst., vol. 65, no. 1, pp. 119–137, 2003.
         cd1 = dataset.curves_data.all()[0]
         self.model.custom_data['tp'] = cd1.curve.params[Param.tp]
         self.model.custom_data['tw'] = cd1.curve.params[Param.tw]
-        tptw = cd1.curve.params[Param.tp] + cd1.curve.params[Param.tw]
+        tptw = self.model.custom_data['tp'] + self.model.custom_data['tw']
         dE = cd1.curve.params[Param.dE]
+
         dec_start = cd1.xValue2Index(self.model.custom_data['DecomposeRange'][0])
         dec_end = cd1.xValue2Index(self.model.custom_data['DecomposeRange'][1])
         if dec_start > dec_end:
             dec_start, dec_end = dec_end, dec_start
-
-        if all([
-                cd1.curve.params[Param.method] != Param.method_dpv,
-                cd1.curve.params[Param.method] != Param.method_sqw
-        ]):
-            raise VoltPyFailed('Method works only for DP/SQW data.')
-
-        params_to_check = [
-            Param.tp,
-            Param.tw,
-            Param.ptnr,
-            Param.nonaveragedsampling,
-            Param.Ep,
-            Param.Ek,
-            Param.Estep
-        ]
-        check_dataset_integrity(self.model.dataset, params_to_check)
 
         an_selected = self.model.analytes.all()[0]
         concs_different = dataset.getUncorrelatedConcs()
@@ -124,57 +106,16 @@ Chemom. Intell. Lab. Syst., vol. 65, no. 1, pp. 119–137, 2003.
             raise VoltPyFailed('Wrong analyte selected.')
 
         an_num = len(concs_different)
-        factors = an_num + 2  # if interested in faradaic +2 if in capac +1
+        factors = an_num + 2
 
-        if method_type == self.type_separate:
-            main_data_1 = np.zeros(
-                (tptw, int(len(cd1.current_samples)/tptw/2), len(dataset.curves_data.all()))
-            )
-            main_data_2 = np.zeros(
-                (tptw, int(len(cd1.current_samples)/tptw/2), len(dataset.curves_data.all()))
-            )
-            for cnum, cd in enumerate(dataset.curves_data.all()):
-                pos = 0
-                for i in np.arange(0, len(cd1.current_samples), 2*tptw):
-                    pos = int(i/(2*tptw))
-                    main_data_1[:, pos, cnum] = cd.current_samples[i:(i+tptw)]
-                    main_data_2[:, pos, cnum] = cd.current_samples[(i+tptw):(i+(2*tptw))]
-            main_data_1 = main_data_1[:, dec_start:dec_end, :]
-            main_data_2 = main_data_2[:, dec_start:dec_end, :]
-
-        elif method_type == self.type_together:
-            main_data_1 = np.zeros(
-                (tptw, int(len(cd1.current_samples)/tptw), len(dataset.curves_data.all()))
-            )
-            for cnum, cd in enumerate(dataset.curves_data.all()):
-                pos = 0
-                for i in np.arange(0, len(cd1.current_samples), tptw):
-                    pos = int(i/tptw)
-                    main_data_1[:, pos, cnum] = cd.current_samples[i:(i+tptw)]
-            main_data_1 = main_data_1[:, 2*dec_start:2*dec_end, :]
-            main_data_1 = self.remove_bkg_current(main_data_1)
-
-        elif method_type == self.type_combined:
-            main_data_1 = np.zeros(
-                (2*tptw, int(len(cd1.current_samples)/tptw/2), len(dataset.curves_data.all()))
-            )
-            for cnum, cd in enumerate(dataset.curves_data.all()):
-                pos = 0
-                for i in np.arange(0, len(cd1.current_samples), 2*tptw):
-                    pos = int(i/(2*tptw))
-                    main_data_1[:, pos, cnum] = cd.current_samples[i:(i+2*tptw)]
-            main_data_1 = main_data_1[:, dec_start:dec_end, :]
-        
-        if centering:
-            main_mean = np.mean(main_data_1, axis=0)
-            for i in range(main_data_1.shape[1]):
-                for ii in range(main_data_1.shape[2]):
-                    main_data_1[:, i, ii] = main_data_1[:, i, ii] - main_mean[i, ii]
-            if method_type == self.type_separate:
-                main_mean2 = np.mean(main_data_2, axis=0)
-                for i in range(main_data_2.shape[1]):
-                    for ii in range(main_data_2.shape[2]):
-                        main_data_2[:, i, ii] = main_data_2[:, i, ii] - main_mean2[i, ii]
+        main_data_1, main_data_2 = prepare.prepareDataForASD(
+            dataset=dataset,
+            start_index=dec_start,
+            end_index=dec_end,
+            tptw=tptw,
+            method_type=method_type,
+            centering=centering
+        )
 
         X0 = np.random.rand(factors, main_data_1.shape[0])
         Y0 = np.random.rand(factors, main_data_1.shape[1])
@@ -200,7 +141,7 @@ Chemom. Intell. Lab. Syst., vol. 65, no. 1, pp. 119–137, 2003.
         plt.plot(ConcentrationPred1)
         plt.show()
 
-        if method_type == self.type_separate:
+        if method_type == prepare.TYPE_SEPARATE:
             X0 = SamplingPred1.T
             Y0 = PotentialPred1.T
             SamplingPred2, PotentialPred2, ConcentrationPred2, errflag2, iter_num2, cnv2 = asd.asd(
@@ -217,7 +158,7 @@ Chemom. Intell. Lab. Syst., vol. 65, no. 1, pp. 119–137, 2003.
             )
 
         def recompose(bfd, method_type):
-            if method_type != self.type_combined:
+            if method_type != prepare.TYPE_COMBINED:
                 mult = np.mean(bfd['x'][self.model.custom_data['tw']:])
                 yvecs = np.dot(np.matrix(bfd['y']).T, np.matrix(bfd['z']))
                 yvecs = np.dot(yvecs, mult)
@@ -231,7 +172,7 @@ Chemom. Intell. Lab. Syst., vol. 65, no. 1, pp. 119–137, 2003.
                 yvecs[1::2] = yvecs2
             return yvecs
 
-        if method_type == self.type_separate:
+        if method_type == prepare.TYPE_SEPARATE:
             bfd0 = self._best_fit_factor(
                 dE=dE,
                 concs=an_selected_conc,
@@ -250,7 +191,7 @@ Chemom. Intell. Lab. Syst., vol. 65, no. 1, pp. 119–137, 2003.
             yv1 = recompose(bfd1, method_type)
             yvecs2 = np.subtract(yv1, yv0)
 
-        elif method_type == self.type_together:
+        elif method_type == prepare.TYPE_TOGETHER:
             bfd0 = self._best_fit_factor(
                 dE=dE,
                 concs=an_selected_conc,
@@ -261,7 +202,7 @@ Chemom. Intell. Lab. Syst., vol. 65, no. 1, pp. 119–137, 2003.
             yv0 = recompose(bfd0, method_type)
             yvecs2 = np.subtract(yv0[1::2], yv0[0::2])
 
-        elif method_type == self.type_combined:
+        elif method_type == prepare.TYPE_COMBINED:
             bfd0 = self._best_fit_factor(
                 dE=dE,
                 concs=an_selected_conc,
@@ -272,7 +213,7 @@ Chemom. Intell. Lab. Syst., vol. 65, no. 1, pp. 119–137, 2003.
             yv0 = recompose(bfd0, method_type)
             yvecs2 = np.subtract(yv0[1::2], yv0[0::2])
 
-        if yvecs2.shape[1] == len(dataset.curves_data.all()):
+        if yvecs2.shape[1] == dataset.curves_data.all().count():
             for i, cd in enumerate(dataset.curves_data.all()):
                 newcd = cd.getCopy()
                 newcdConc = dataset.getCurveConcDict(cd)
