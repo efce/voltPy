@@ -73,7 +73,7 @@ Chemom. Intell. Lab. Syst., vol. 65, no. 1, pp. 119–137, 2003.
                     'options': ['Pulse separate', 'Pulse together', 'Pulse combined'],
                     'default': 'Pulse separate',
                 },
-                'Centralize data': {
+                'Data centering': {
                     'type': 'select',
                     'options': ['no', 'yes'],
                     'default': 'yes',
@@ -82,7 +82,7 @@ Chemom. Intell. Lab. Syst., vol. 65, no. 1, pp. 119–137, 2003.
 
     def __perform(self, dataset):
         method_type = self.model.custom_data['MethodType']
-        centralize = self.model.custom_data['Centralize']
+        centering = self.model.custom_data['Centering']
         if method_type not in self._allowed_types:
             raise VoltPyFailed('Not allowed type.')
 
@@ -165,7 +165,7 @@ Chemom. Intell. Lab. Syst., vol. 65, no. 1, pp. 119–137, 2003.
                     main_data_1[:, pos, cnum] = cd.current_samples[i:(i+2*tptw)]
             main_data_1 = main_data_1[:, dec_start:dec_end, :]
         
-        if centralize:
+        if centering:
             main_mean = np.mean(main_data_1, axis=0)
             for i in range(main_data_1.shape[1]):
                 for ii in range(main_data_1.shape[2]):
@@ -290,7 +290,7 @@ Chemom. Intell. Lab. Syst., vol. 65, no. 1, pp. 119–137, 2003.
     def finalize(self, user):
         self.model.custom_data['DecomposeRange'] = self.model.steps_data['SelectRange']
         self.model.custom_data['MethodType'] = int(self.model.steps_data['Settings'].get('Pulse and stair', 0))
-        self.model.custom_data['Centralize'] = int(self.model.steps_data['Settings'].get('Centralize', 1))
+        self.model.custom_data['Centering'] = int(self.model.steps_data['Settings'].get('Data centering', 1))
         self.__perform(self.model.dataset)
         self.model.step = None
         self.model.completed = True
