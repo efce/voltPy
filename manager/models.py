@@ -352,6 +352,8 @@ class CurveData(VoltPyModel):
     based_on = models.ForeignKey('CurveData', null=True, default=None, on_delete=models.DO_NOTHING)
     processedWith = models.ForeignKey('Processing', null=True, default=None, on_delete=models.DO_NOTHING)
     _current_samples = models.ForeignKey(SamplingData, on_delete=models.DO_NOTHING, default=None, null=True)
+    _crop_beg = models.IntegerField(null=True, default=None)
+    _crop_end = models.IntegerField(null=True, default=None)
     __current_samples_changed = False
     disp_type = 'data'
 
@@ -434,9 +436,9 @@ class CurveData(VoltPyModel):
         user = manager.helpers.functions.get_user()
         onx = user.profile.show_on_x
         if onx == 'P':
-            return self.potential
+            return self.potential[self._crop_beg:self._crop_end]
         if onx == 'T':
-            return self.time
+            return self.time[self._crop_beg:self._crop_end]
         if onx == 'S':
             return range(len(self.current_samples))
 
@@ -445,9 +447,9 @@ class CurveData(VoltPyModel):
         user = manager.helpers.functions.get_user()
         onx = user.profile.show_on_x
         if onx == 'P':
-            self.potential = val
+            self.potential[self._crop_beg:self._crop_end] = val
         if onx == 'T':
-            self.time = val
+            self.time[self._crop_beg:self._crop_end] = val
         if onx == 'S':
             pass
 
@@ -456,7 +458,7 @@ class CurveData(VoltPyModel):
         user = manager.helpers.functions.get_user()
         onx = user.profile.show_on_x
         if onx == 'P' or onx == 'T':
-            return self.current
+            return self.current[self._crop_beg:self._crop_end]
         if onx == 'S':
             return self.current_samples
 
@@ -465,7 +467,7 @@ class CurveData(VoltPyModel):
         user = manager.helpers.functions.get_user()
         onx = user.profile.show_on_x
         if onx == 'P' or onx == 'T':
-            self.current = val
+            self.current[self._crop_beg:self._crop_end] = val
         if onx == 'S':
             self.current_samples = val
 
