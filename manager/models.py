@@ -471,6 +471,15 @@ class CurveData(VoltPyModel):
         if onx == 'S':
             self.current_samples = val
 
+    def setCrop(self, index_beg: int, index_end: int):
+        if index_beg > index_end:
+            index_end, index_beg = index_beg, index_end
+        self._crop_beg = index_beg
+        self._crop_end = index_end
+
+    def getCrop(self):
+        return (self._crop_beg, self._crop_end)
+
 
 class Analyte(VoltPyModel):
     name = models.CharField(max_length=125, unique=True)
