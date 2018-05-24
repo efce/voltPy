@@ -472,12 +472,17 @@ class CurveData(VoltPyModel):
             self.current_samples = val
 
     def setCrop(self, index_beg: int, index_end: int):
-        if index_beg > index_end:
+        if all([
+            index_beg is not None,
+            index_end is not None,
+            index_beg > index_end
+        ]):
             index_end, index_beg = index_beg, index_end
+
         self._crop_beg = index_beg
         self._crop_end = index_end
 
-    def getCrop(self):
+    def getCrop(self) -> List:
         return (self._crop_beg, self._crop_end)
 
 
@@ -532,7 +537,7 @@ class Dataset(VoltPyModel):
 
     def getCopy(self):
         newcs = Dataset(
-            name=self.name+'_copy',
+            name=self.name + '_copy',
             analytes_conc=self.analytes_conc,
             analytes_conc_unit=self.analytes_conc_unit
         )
