@@ -366,7 +366,7 @@ class CurveData(VoltPyModel):
 
     @property
     def points_number(self):
-        return len(self.potential)
+        return len(self.current[self._crop_beg:self._crop_end])
 
     @property
     def samples_number(self):
