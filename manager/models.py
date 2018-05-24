@@ -427,7 +427,7 @@ class CurveData(VoltPyModel):
         return steps
 
     def xValue2Index(self, value):
-        diffvec = np.abs(np.subtract(self.xVector, value))
+        diffvec = np.abs(np.subtract(self.xVector[self._crop_beg:self._crop_end], value))
         index = np.argmin(diffvec)
         return index
 

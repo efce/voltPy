@@ -216,10 +216,10 @@ Chemom. Intell. Lab. Syst., vol. 65, no. 1, pp. 119–137, 2003.
         if yvecs2.shape[1] == dataset.curves_data.all().count():
             for i, cd in enumerate(dataset.curves_data.all()):
                 newcd = cd.getCopy()
+                newcd.setCrop(dec_start, dec_end)
                 newcdConc = dataset.getCurveConcDict(cd)
                 newy = np.array(yvecs2[:, i].T).squeeze()  # change to array to remove dimension
                 newcd.yVector = newy
-                newcd.xVector = newcd.xVector[dec_start:dec_end]
                 newcd.date = timezone.now()
                 newcd.save()
                 dataset.removeCurve(cd)
