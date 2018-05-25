@@ -1,5 +1,5 @@
-import numpy as np
 import io
+import numpy as np
 from copy import copy
 from enum import IntEnum
 from typing import Dict, List
@@ -79,23 +79,6 @@ def update_user_profile(sender, instance, created, **kwargs):
     instance.profile.save()
 
 
-def exportCurvesDataAsCsv(cds: List):
-    ''' Not a model, just helper '''
-    cdict = {}
-    explen = len(cds)
-    for i, cd in enumerate(cds):
-        for x, y in zip(cd.xVector, cd.yVector):
-            tmp = cdict.get(x, [None]*explen)
-            tmp[i] = y
-            cdict[x] = tmp
-    xcol = np.array(list(cdict.keys())).reshape((-1, 1))
-    ycols = np.array(list(cdict.values()))
-    allCols = np.concatenate((xcol, ycols), axis=1)
-    memoryFile = io.StringIO()
-    np.savetxt(memoryFile, allCols, delimiter=",", newline="\r\n", fmt='%s')
-    return memoryFile
-
-
 class Fileset(VoltPyModel):
     name = models.CharField(max_length=255)
     files = models.ManyToManyField('File')
@@ -144,7 +127,7 @@ class Fileset(VoltPyModel):
         cds = []
         for f in self.files.all():
             cds.extend(f.curves_data.all())
-        return exportCurvesDataAsCsv(cds)
+        return manager.helpers.functions.export_curves_data_as_csv(cds)
 
     def getHtmlDetails(self):
         user = manager.helpers.functions.get_user()
@@ -472,6 +455,10 @@ class CurveData(VoltPyModel):
             self.current_samples = val
 
     def setCrop(self, index_beg: int, index_end: int):
+        """
+        Changes the displayable area of the plot, use None
+        for index to remove cropping on that side of the signal.
+        """
         if all([
             index_beg is not None,
             index_end is not None,
@@ -674,7 +661,7 @@ class Dataset(VoltPyModel):
         return Processing.objects.filter(dataset=self, deleted=False, completed=True).order_by('id')
 
     def export(self):
-        return exportCurvesDataAsCsv(self.curves_data.all())
+        return manager.helpers.functions.export_curves_data_as_csv(self.curves_data.all())
 
     def getUrl(self):
         return reverse('showDataset', args=[self.id])

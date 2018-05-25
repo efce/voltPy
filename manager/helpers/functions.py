@@ -1,7 +1,9 @@
+import io
 import re
 import numpy as np
 import datetime
 import base64 as b64
+from collections import OrderedDict
 from typing import List
 from django.urls import reverse
 from django.http import HttpResponseRedirect
@@ -371,3 +373,23 @@ def paginate(request, queryset, sortable_by: List, current_page: int):
 
 def get_user():
     return with_user._user
+
+
+def export_curves_data_as_csv(cds: List):
+    """
+    Turn a list of CurveData instances into CSV file.
+    """
+    cdict = {}
+    explen = len(cds)
+    for i, cd in enumerate(cds):
+        for x, y in zip(cd.xVector, cd.yVector):
+            tmp = cdict.get(x, [None]*explen)
+            tmp[i] = y
+            cdict[x] = tmp
+    sortdict = OrderedDict(sorted(cdict.items()))
+    xcol = np.array(list(sortdict.keys())).reshape((-1, 1))
+    ycols = np.array(list(sortdict.values()))
+    allCols = np.concatenate((xcol, ycols), axis=1)
+    memoryFile = io.StringIO()
+    np.savetxt(memoryFile, allCols, delimiter=",", newline="\r\n", fmt='%s')
+    return memoryFile

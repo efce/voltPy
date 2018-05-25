@@ -522,7 +522,7 @@ def showAnalysis(request, user, analysis_id):
         ),
         'export_data_button': get_redirect_class(
             reverse('export', kwargs={
-                'obj_type': 'an',
+                'obj_type': 'analysis',
                 'obj_id': an.id,
             })
         ),
