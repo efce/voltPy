@@ -1,5 +1,5 @@
-import numpy as np
 import io
+import numpy as np
 from copy import copy
 from enum import IntEnum
 from typing import Dict, List
@@ -79,23 +79,6 @@ def update_user_profile(sender, instance, created, **kwargs):
     instance.profile.save()
 
 
-def exportCurvesDataAsCsv(cds: List):
-    ''' Not a model, just helper '''
-    cdict = {}
-    explen = len(cds)
-    for i, cd in enumerate(cds):
-        for x, y in zip(cd.xVector, cd.yVector):
-            tmp = cdict.get(x, [None]*explen)
-            tmp[i] = y
-            cdict[x] = tmp
-    xcol = np.array(list(cdict.keys())).reshape((-1, 1))
-    ycols = np.array(list(cdict.values()))
-    allCols = np.concatenate((xcol, ycols), axis=1)
-    memoryFile = io.StringIO()
-    np.savetxt(memoryFile, allCols, delimiter=",", newline="\r\n", fmt='%s')
-    return memoryFile
-
-
 class Fileset(VoltPyModel):
     name = models.CharField(max_length=255)
     files = models.ManyToManyField('File')
@@ -144,7 +127,7 @@ class Fileset(VoltPyModel):
         cds = []
         for f in self.files.all():
             cds.extend(f.curves_data.all())
-        return exportCurvesDataAsCsv(cds)
+        return manager.helpers.functions.export_curves_data_as_csv(cds)
 
     def getHtmlDetails(self):
         user = manager.helpers.functions.get_user()
@@ -352,6 +335,8 @@ class CurveData(VoltPyModel):
     based_on = models.ForeignKey('CurveData', null=True, default=None, on_delete=models.DO_NOTHING)
     processedWith = models.ForeignKey('Processing', null=True, default=None, on_delete=models.DO_NOTHING)
     _current_samples = models.ForeignKey(SamplingData, on_delete=models.DO_NOTHING, default=None, null=True)
+    _crop_beg = models.IntegerField(null=True, default=None)
+    _crop_end = models.IntegerField(null=True, default=None)
     __current_samples_changed = False
     disp_type = 'data'
 
@@ -364,7 +349,7 @@ class CurveData(VoltPyModel):
 
     @property
     def points_number(self):
-        return len(self.potential)
+        return len(self.current[self._crop_beg:self._crop_end])
 
     @property
     def samples_number(self):
@@ -425,7 +410,7 @@ class CurveData(VoltPyModel):
         return steps
 
     def xValue2Index(self, value):
-        diffvec = np.abs(np.subtract(self.xVector, value))
+        diffvec = np.abs(np.subtract(self.xVector[self._crop_beg:self._crop_end], value))
         index = np.argmin(diffvec)
         return index
 
@@ -434,9 +419,9 @@ class CurveData(VoltPyModel):
         user = manager.helpers.functions.get_user()
         onx = user.profile.show_on_x
         if onx == 'P':
-            return self.potential
+            return self.potential[self._crop_beg:self._crop_end]
         if onx == 'T':
-            return self.time
+            return self.time[self._crop_beg:self._crop_end]
         if onx == 'S':
             return range(len(self.current_samples))
 
@@ -445,9 +430,9 @@ class CurveData(VoltPyModel):
         user = manager.helpers.functions.get_user()
         onx = user.profile.show_on_x
         if onx == 'P':
-            self.potential = val
+            self.potential[self._crop_beg:self._crop_end] = val
         if onx == 'T':
-            self.time = val
+            self.time[self._crop_beg:self._crop_end] = val
         if onx == 'S':
             pass
 
@@ -456,7 +441,7 @@ class CurveData(VoltPyModel):
         user = manager.helpers.functions.get_user()
         onx = user.profile.show_on_x
         if onx == 'P' or onx == 'T':
-            return self.current
+            return self.current[self._crop_beg:self._crop_end]
         if onx == 'S':
             return self.current_samples
 
@@ -465,9 +450,27 @@ class CurveData(VoltPyModel):
         user = manager.helpers.functions.get_user()
         onx = user.profile.show_on_x
         if onx == 'P' or onx == 'T':
-            self.current = val
+            self.current[self._crop_beg:self._crop_end] = val
         if onx == 'S':
             self.current_samples = val
+
+    def setCrop(self, index_beg: int, index_end: int):
+        """
+        Changes the displayable area of the plot, use None
+        for index to remove cropping on that side of the signal.
+        """
+        if all([
+            index_beg is not None,
+            index_end is not None,
+            index_beg > index_end
+        ]):
+            index_end, index_beg = index_beg, index_end
+
+        self._crop_beg = index_beg
+        self._crop_end = index_end
+
+    def getCrop(self) -> List:
+        return (self._crop_beg, self._crop_end)
 
 
 class Analyte(VoltPyModel):
@@ -521,7 +524,7 @@ class Dataset(VoltPyModel):
 
     def getCopy(self):
         newcs = Dataset(
-            name=self.name+'_copy',
+            name=self.name + '_copy',
             analytes_conc=self.analytes_conc,
             analytes_conc_unit=self.analytes_conc_unit
         )
@@ -658,7 +661,7 @@ class Dataset(VoltPyModel):
         return Processing.objects.filter(dataset=self, deleted=False, completed=True).order_by('id')
 
     def export(self):
-        return exportCurvesDataAsCsv(self.curves_data.all())
+        return manager.helpers.functions.export_curves_data_as_csv(self.curves_data.all())
 
     def getUrl(self):
         return reverse('showDataset', args=[self.id])

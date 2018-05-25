@@ -29,7 +29,7 @@ class ASDDecomposition(method.ProcessingMethod):
             'class': SelectRange,
             'title': 'Select range',
             'desc': """
-Select range for decomposition. 
+Select range for decomposition.
 Range should extend about two width of the peak either way from it.
             """,
         },
@@ -78,7 +78,7 @@ Chemom. Intell. Lab. Syst., vol. 65, no. 1, pp. 119–137, 2003.
                 }
             }
 
-    def __perform(self, dataset):
+    def __perform(self, dataset: mmodels.Dataset):
         method_type = self.model.custom_data['MethodType']
         centering = self.model.custom_data['Centering']
         if method_type not in self._allowed_types:
@@ -164,10 +164,10 @@ Chemom. Intell. Lab. Syst., vol. 65, no. 1, pp. 119–137, 2003.
                 yvecs = np.dot(yvecs, mult)
             else:
                 mult1 = np.mean(bfd['x'][self.model.custom_data['tw']:self.model.custom_data['tw'] + self.model.custom_data['tp']])
-                mult2 = np.mean(bfd['x'][(2*self.model.custom_data['tw']+self.model.custom_data['tp']):])
+                mult2 = np.mean(bfd['x'][(2 * self.model.custom_data['tw'] + self.model.custom_data['tp']):])
                 yvecs1 = np.dot(np.matrix(bfd['y']).T, np.matrix(bfd['z'])).dot(mult1)
                 yvecs2 = np.dot(np.matrix(bfd['y']).T, np.matrix(bfd['z'])).dot(mult2)
-                yvecs = np.zeros((yvecs1.shape[0]*2, yvecs1.shape[1]))
+                yvecs = np.zeros((yvecs1.shape[0] * 2, yvecs1.shape[1]))
                 yvecs[0::2] = yvecs1
                 yvecs[1::2] = yvecs2
             return yvecs
@@ -216,10 +216,10 @@ Chemom. Intell. Lab. Syst., vol. 65, no. 1, pp. 119–137, 2003.
         if yvecs2.shape[1] == dataset.curves_data.all().count():
             for i, cd in enumerate(dataset.curves_data.all()):
                 newcd = cd.getCopy()
+                newcd.setCrop(dec_start, dec_end)
                 newcdConc = dataset.getCurveConcDict(cd)
                 newy = np.array(yvecs2[:, i].T).squeeze()  # change to array to remove dimension
                 newcd.yVector = newy
-                newcd.xVector = newcd.xVector[dec_start:dec_end]
                 newcd.date = timezone.now()
                 newcd.save()
                 dataset.removeCurve(cd)
