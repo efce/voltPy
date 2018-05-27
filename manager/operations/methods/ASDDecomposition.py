@@ -1,5 +1,5 @@
 import numpy as np
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 from django.utils import timezone
 from overrides import overrides
 import manager.models as mmodels
@@ -133,6 +133,7 @@ Chemom. Intell. Lab. Syst., vol. 65, no. 1, pp. 119–137, 2003.
             0.000001,
             100
         )
+        """
         plt.subplot(311)
         plt.plot(SamplingPred1)
         plt.subplot(312)
@@ -140,7 +141,7 @@ Chemom. Intell. Lab. Syst., vol. 65, no. 1, pp. 119–137, 2003.
         plt.subplot(313)
         plt.plot(ConcentrationPred1)
         plt.show()
-
+        """
         if method_type == prepare.TYPE_SEPARATE:
             X0 = SamplingPred1.T
             Y0 = PotentialPred1.T
