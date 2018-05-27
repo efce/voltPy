@@ -53,7 +53,7 @@ Chemom. Intell. Lab. Syst., vol. 65, no. 1, pp. 119–137, 2003.
         dE = cd1.curve.params[Param.dE]
 
         an_num = dataset.analytes.all().count()
-        factors = an_num + 1
+        factors = (an_num + 1) if an_num > 0 else 2
 
         main_data_1, main_data_2 = prepare.prepareDataForASD(
             dataset=dataset,
