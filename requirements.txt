@@ -11,5 +11,5 @@ lxml
 overrides
 django-guardian
 configparser
-logstash
+python-logstash
 psycopg2
