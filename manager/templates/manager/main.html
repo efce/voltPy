@@ -18,6 +18,12 @@
 </head>
 
 <body>
+{% if not accepted_cookies %}
+<div id="cookie_consent">
+  This website uses only cookies which are essential for providing the service (no tracking cookies). 
+  <button onclick="cookiesAccepted();">OK!</button>
+</div>
+{% endif %}
 
 {% if notifications %}
 <div class="notifications_background" onclick="closeNotifications(this);">

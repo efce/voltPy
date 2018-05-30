@@ -87,6 +87,12 @@ def account_activation_sent(request):
     )
 
 
+def acceptCookies(request):
+    from django.http import HttpResponse
+    request.session['accepted_cookies'] = True
+    return HttpResponse('')
+
+
 @redirect_on_voltpyexceptions
 def index(request):
     context = {'request': request}

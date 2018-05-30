@@ -179,3 +179,13 @@ button, input[type="submit"] {
     margin: 5px 3px;
     display: block-inline;
 }
+
+#cookie_consent {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background-color: {% color2 %};
+    color: {% color2font %};
+    padding: 10px;
+}

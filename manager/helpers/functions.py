@@ -28,11 +28,13 @@ def voltpy_render(*args, template_name, **kwargs):
     request = kwargs['request']
     context = kwargs.pop('context', {})
     con_scr = context.get('scripts', '')
+    accepted_cookies = request.session.get('accepted_cookies', False)
     scr = ''.join([
         "\n",
         con_scr,
     ])
     context['bokeh_scripts'] = scr
+    context['accepted_cookies'] = accepted_cookies
     #context['plot_width'] = mpm.PlotManager.plot_width
     #context['plot_height'] = mpm.PlotManager.plot_height
     notifications = request.session.pop('VOLTPY_notification', [])

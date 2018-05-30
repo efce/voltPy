@@ -369,3 +369,8 @@ $(function() {
         event.stopPropagation();
     });
 });
+
+function cookiesAccepted() {
+    $.get('{% url 'acceptCookies' %}');
+    $('#cookie_consent').toggle();
+}
