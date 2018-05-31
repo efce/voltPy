@@ -156,7 +156,7 @@ def browseFilesets(request, user, page_number=1):
     files = paginated['current_page_content']
     context = {
         'user': user,
-        'list_header': 'Filesets:',
+        'list_header': 'Filesets',
         'paginator': paginated,
         'when_empty': ''.join([
             "You have no files uploaded. ",
@@ -192,7 +192,7 @@ def browseFiles(request, user, page_number=1):
     )
     context = {
         'user': user,
-        'list_header': 'Files:',
+        'list_header': 'Files',
         'paginator': paginated,
         'when_empty': ''.join([
             "You have no files uploaded. ",
@@ -229,7 +229,7 @@ def browseAnalysis(request, user, page_number=1):
     )
     context = {
         'user': user,
-        'list_header': 'Analysis:',
+        'list_header': 'Analysis',
         'paginator': paginated,
         'when_empty': ''.join([
             "Analysis can only be performed on the Dataset. ",
@@ -264,7 +264,7 @@ def browseDatasets(request, user, page_number=1):
     )
     context = {
         'user': user,
-        'list_header': 'Datasets:',
+        'list_header': 'Datasets',
         'paginator': paginated,
         'when_empty': ''.join([
             "You have no Datasets. ",
