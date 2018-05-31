@@ -1,3 +1,5 @@
+{% load static %}
+{% load volt_html %}
 <!DOCTYPE html>
 <html>
 <head>
@@ -15,6 +17,7 @@
     {% block style %} 
     {% endblock %}
   </style>
+  <link rel="icon" type="image/png" href="{% static 'manager/voltcenter_favico.png' %}" sizes="96x96" />
 </head>
 
 <body>
@@ -44,7 +47,10 @@
   <div id="topmenu">
     <ul>
     {% if user.is_authenticated %}
-      <li class="topmenu_bkg" style="margin-left: 10%"><a href="{% url 'index' %}">Index</a></li>
+      <li class="topmenu_bkg">
+        <img src="{% static '/manager/vc_logo.svg' %}" style="height: {% topmenu_height_logo %}; margin: 3px 3px -2px 3px" />
+      </li>
+      <li class="topmenu_bkg" style="margin-left: 2em"><a href="{% url 'index' %}">Index</a></li>
       <li class="topmenu_bkg"><a href="{% url 'upload' %}">Upload Files</a></li>
       <li class="topmenu_bkg"><a href="{% url 'createDataset' %}">Create Dataset</a></li>
       <li class='dropdown topmenu_bkg'><span>&nbsp;Browse&nbsp;</span>

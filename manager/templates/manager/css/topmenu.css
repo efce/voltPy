@@ -1,25 +1,30 @@
 {% load colors %}
+{% load volt_html %}
 
 #topmenu div { 
-  margin: auto; 
+  margin: 0px; 
 }
 
 #topmenu ul { 
   list-style-type: none; 
   margin: 0; 
   padding: 0; 
+  font-size: large;
+  width: 100%;
   overflow: hidden; 
   background-color: {% color1 %}; 
   border: 1px {% color2 %} solid;
 }
 #topmenu li { 
   float: left; 
+  height: {% topmenu_height %};
+  line-height: {% topmenu_height %};
 } 
 
 #topmenu li a, #topmenu li span { 
   display: block; 
   text-align: center; 
-  padding: 12px 14px; 
+  padding: 0px 14px; 
   text-decoration: none; 
   color: {% color1font %};
   font-weight: 800;
@@ -38,6 +43,7 @@
 .dropdown_content {
     display: none;
     position: absolute;
+    line-height: 1em;
     min-width: 10em;
     box-shadow: 0px 5px 5px 0px rgba(0,0,0,0.2);
     padding: 5px 5px;
@@ -50,10 +56,16 @@
     display: block;
 }
 
+#topmenu .dropdown_content > a {
+  padding-top: 12px;
+  padding-bottom: 12px;
+}
+
+
 .topmenu_wht { 
   background: {% color3 %}; 
   color: {% color3font %} ;  
   text-align: center; 
-  padding: 12px 14px; 
+  padding: 0 14px; 
   text-decoration: none; 
 }
