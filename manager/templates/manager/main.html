@@ -23,7 +23,7 @@
 <body>
 {% if not accepted_cookies %}
 <div id="cookie_consent">
-  This website uses only cookies which are essential for providing the service (no tracking cookies). 
+  This website uses only cookies which are essential for providing the service (no tracking cookies). Learn about our <a style="color: white" href="{% url 'privacyPolicy' %}">privacy policy</a>. 
   <button onclick="cookiesAccepted();">OK!</button>
 </div>
 {% endif %}

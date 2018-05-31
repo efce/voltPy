@@ -18,6 +18,7 @@ tr, td, {
     <table>
     {% csrf_token %}
     {{ form.as_table }}
+    <tr><td colspan=2><label><input type="checkbox" id="agree_tos" required />I agree to the <a href="{% url 'termsOfService' %}" target="_blank">Terms of Service</a> and <a href="{% url 'privacyPolicy' %}" target="_blank">Privacy Policy</a></label> </td></tr>
     <tr><td colspan=2><button type="submit">Sign in</button></td></tr>
   </table>
   </form>

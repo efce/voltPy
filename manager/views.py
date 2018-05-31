@@ -93,6 +93,28 @@ def acceptCookies(request):
     return HttpResponse('')
 
 
+def termsOfService(request):
+    context = {}
+    if request.user:
+        context['user'] = request.user
+    return voltpy_render(
+        request=request,
+        template_name="manager/tos.html",
+        context=context,
+    )
+
+
+def privacyPolicy(request):
+    context = {}
+    if request.user:
+        context['user'] = request.user
+    return voltpy_render(
+        request=request,
+        template_name="manager/privacy_policy.html",
+        context=context,
+    )
+
+
 @redirect_on_voltpyexceptions
 def index(request):
     context = {'request': request}

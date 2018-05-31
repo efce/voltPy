@@ -88,6 +88,10 @@ urlpatterns = [
         views.activate, name='activate'),
     url(r'^accept-cookies/',
         views.acceptCookies, name='acceptCookies'),
+    url(r'^terms-of-service/',
+        views.termsOfService, name='termsOfService'),
+    url(r'^privacy-policy/',
+        views.privacyPolicy, name='privacyPolicy'),
 ]
 
 urlpatterns += [
