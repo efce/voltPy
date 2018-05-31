@@ -18,6 +18,9 @@ allowedExt = (  # TODO: build based on parsers
     'ods',  # General: LO Calc
     'xls',  # General: MS Excel 
     'xlsx',  # General: MS Excel
+)
+"""
+in preparation:
     'ici',  # Autolab, GPES: graphics/display (ignored)
     'ixi',  # Autolab, GPES: graphics/display (ignored)
     'iei',  # Autolab, GPES: graphics/display (ignored)
@@ -28,6 +31,7 @@ allowedExt = (  # TODO: build based on parsers
     'iew',  # Autolab, GPES: parameters VOLT
     'ixw',  # Autolab, GPES: parameters CHRONOPOT
 )
+"""
 
 maxfile_size = 100000  # size in kB
 
