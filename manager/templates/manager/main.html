@@ -51,10 +51,10 @@
   {% block navigation %}
   <div id="topmenu">
     <ul>
-    {% if user.is_authenticated %}
       <li class="topmenu_bkg">
         <img src="{% static '/manager/vc_logo.svg' %}" style="height: {% topmenu_height_logo %}; margin: 3px 3px -2px 3px" />
       </li>
+    {% if user.is_authenticated %}
       <li class="topmenu_bkg" style="margin-left: 2em"><a href="{% url 'index' %}">Index</a></li>
       <li class="topmenu_bkg"><a href="{% url 'upload' %}">Upload Files</a></li>
       <li class="topmenu_bkg"><a href="{% url 'createDataset' %}">Create Dataset</a></li>
@@ -69,7 +69,7 @@
       <li class="topmenu_bkg" style="float: right; margin-right: 10%"><a href="{% url 'logout' %}">Logout</a></li>
       <li class="topmenu_wht" style="float: right">Logged in as: {{ user }} (uid: {{ user.id }})</li>
     {% else %}
-      <li class="topmenu_bkg" style="margin-left: 10%"><a href="{% url 'index' %}">Index</a></li>
+      <li class="topmenu_bkg" style="margin-left: 2em"><a href="{% url 'index' %}">Index</a></li>
       <li class="topmenu_bkg"><a href="{% url 'login' %}">Login</a></li>
       <li class="topmenu_bkg"><a href="{% url 'register' %}">Register</a></li>
     {% endif%}
