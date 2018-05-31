@@ -1,8 +1,6 @@
 db.sqlite3
 __pycache__
 migrations
-.ropeproject
 my.cnf
 email.account
-*.ipynb
-.ipynb_checkpoints
+.*
