@@ -99,12 +99,6 @@ function processJSONReply(data, plot='', lineData='', cursors='') {
     }
 };
 
-/*$( function() {
-    $(".closeX").on('click', function(e) {
-        $(e.target).parent('div').toggleClass('invisible');
-    });
-});*/
-
 // This is used in various forms. Magic classes names.
 $( function() { 
     //function used in forms:
@@ -136,7 +130,7 @@ $( function() {
             }
         });
     });
-    // Check conditions at the beggining:
+    // Check conditions at the beginning:
     $( '._voltJS_testForNegative' ).trigger('change');
 });
 
@@ -264,7 +258,7 @@ function displayLinks(data) {
     var amd = $('#share_link');
     amd.removeClass('invisible');
     var form = '<a class="closeX" onclick="closeShare();"></a><br /><br />';
-    form += 'The following urls will allow to acces the data without logging in:';
+    form += 'The following urls will allow to access the data without logging in:';
     form += '<p>Read only: ' + data['link_ro'] + '</p>';
     form += '<p>Editable: ' + data['link_rw'] + '</p>';
 
