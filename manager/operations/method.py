@@ -84,7 +84,7 @@ class Method(ABC):
     step = None
     model = None
     has_next = True
-    video = '<iframe width="300" height="200" src="https://www.youtube-nocookie.com/embed/vr0HiIed-8Q?rel=0" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>'
+    video = '<iframe width="300" height="200" src="https://www.youtube-nocookie.com/embed/IC6m249zvI0?rel=0&amp;showinfo=0" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>'
 
     def __init__(self, model):
         if not model:
