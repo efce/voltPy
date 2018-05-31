@@ -3,11 +3,18 @@
 {% block title %} Index {% endblock %}
 
 {% block real_content %}
-<fieldset class="mt_rest" style="width: 40%; float: left"><legend class="mt_name">Welcome</legend>
-Welcome to the voltammetry signal processing web service!<br />
-Our goal is to create simple to use site, with both novel and standard processing and analysis procedures.
-Here you can upload, store, manage, search, process and analyze your voltammograms. At the moment the service is in alpha state, therefore, many new changes and features will arrive on regular basis. However, there is wide selection of tools available already! 
-We hope you'll enjoy during your time here. Please report any errors, bugs, feature requests etc. directly to our <a href="https://github.com/efce/voltPy/issues">GitHub</a> page.
+<fieldset class="mt_rest" style="width: 40%; float: left;"><legend class="mt_name">Welcome</legend>
+Welcome to the Voltammetry Center, voltammetric signal processing and analysis web service!<br />
+Our goal is to create easy to use website, offering both novel/advanced and standard processing 
+and analysis procedures.<br />
+Here you can upload, store, manage, search, process and analyze your voltammograms. 
+The service is in rapid development, therefore, many new changes and features 
+will arrive on regular basis and it is considered as an alpha version. However, 
+there is wide selection of tools already available! 
+We hope you'll enjoy during your time here. Please report any errors, bugs, feature requests 
+etc. directly to our <a href="https://github.com/efce/voltPy/issues">GitHub</a> page. <br />
+This is an open source project, with the source code available at 
+<a href="https://github.com/efce/voltPy/">https://github.com/efce/voltPy/</a>.
 </fieldset>
 <fieldset class="mt_rest" style="width: 50%; float: right">
 <legend class="mt_name">Glossary</legend>
@@ -26,21 +33,20 @@ Short explanation of terms used in the web service:
         Analysis can be estamation of some measurement parameters or for example the standard addition method.</li>
 </ul>
 </fieldset>
-<!--
-Welcome to the index page!<br />
-Search for Datasets: <input onkeyup="search()" id='ss' />
-<div id="curve_list"></div>
+<fieldset class="mt_rest" style="width: 98%; float: left">
+<legend class="mt_name">Authors</legend>
+<ul>
+<li>
 <script>
-    function search() {
-        txt = $('#ss').val();
-        searchDataset(txt, addOpt);
-    }
-    function addOpt(data) {
-        $('#curve_list').empty();
-        kdata = data['result'];
-        for (key in kdata) {
-            $('#curve_list').append($('<a href="/manager/show-dataset/' + key + '/">id' + key + ': ' + kdata[key] + '</a> <br />'));
-        }
-    }
-</script>-->
+  emailD = 'gmail.com';
+  emailP1 = 'filip.';
+  emailP2 = 'ciepiela'
+  emailE = (emailP1 + emailP2 + '@' + emailD);
+  document.write('<a href="mailto:' + emailE + '">' + 'Filip Ciepiela, Ph.D' + '</a>')
+</script>
+     - main developer, site engine, majority of processing and analysis procedures, contact person</li>
+<li>Łukasz Górski, Ph.D. - advanced processing methods (inc. genetic algorithm and automatic background correction)</li>
+<li>Marek Maślanka, M.Eng. - site engine, server backend</li>
+</ul>
+</fieldset>
 {% endblock %}
