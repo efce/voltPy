@@ -374,3 +374,11 @@ function cookiesAccepted() {
     $.get('{% url 'acceptCookies' %}');
     $('#cookie_consent').toggle();
 }
+$(function() {
+    if( (navigator.userAgent.indexOf("MSIE") != -1 ) 
+    || (!!document.documentMode == true )) {
+        while (true) {
+            alert('This webpage is not compatible with Internet Explorer, please visit again using different browser.'); 
+        }
+    } 
+});
