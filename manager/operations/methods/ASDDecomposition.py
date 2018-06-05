@@ -49,7 +49,7 @@ Range should extend about two width of the peak either way from it.
 Decomposes the data into factors by the mean of trilinear decomposition,
 and automatically selects, the one which is correlated to the selected analyte.
 The methodology is based on [1] and ASD algorithm implementation
-is based on [2].< br />
+is based on [2].<br />
 <br />
 [1] F. Ciepiela, and M. Jakubowska, "Faradaic and Capacitive Current 
 Estimation by DPV-ATLD", J. Electrochem. Soc., 2017, 164, 760-769.<br />
