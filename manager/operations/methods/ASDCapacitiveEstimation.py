@@ -26,13 +26,17 @@ class ASDCapacitiveEstimation(method.AnalysisMethod):
     )
     checks = (check_sampling, )
     description = """
-Decomposes the data into factors with ASD, and tries to estimate the cell time costant
-and cell resistance based on the capacitive factor.
-Uses implementation of ASD based on:
-
-N. M. Faber, R. Bro, and P. K. Hopke, 
-“Recent developments in CANDECOMP/PARAFAC algorithms:A critical review,”
-Chemom. Intell. Lab. Syst., vol. 65, no. 1, pp. 119–137, 2003.
+Decomposes the data into factors by the mean of trilinear decomposition,
+and selects capacitive component and fits the capacitive current equation
+in order to estimate the cell time constant.
+The methodology is based on [1] and ASD algorithm implementation
+is based on [2].< br />
+<br />
+[1] F. Ciepiela, and M. Jakubowska, "Faradaic and Capacitive Current Estimation by DPV-ATLD", J. Electrochem. Soc., 2017, 164, 760-769.<br />
+doi: 10.1149/2.0881712jes
+[2] N. M. Faber, R. Bro, and P. K. Hopke, "Recent developments in CANDECOMP/PARAFAC 
+algorithms: A critical review", Chemom. Intell. Lab. Syst., 2003, 65, 119–137.<br />
+doi: 10.1016/S0169-7439(02)00089-8
 
     """
 
