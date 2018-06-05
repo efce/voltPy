@@ -53,7 +53,7 @@ is based on [2].< br />
 <br />
 [1] F. Ciepiela, and M. Jakubowska, "Faradaic and Capacitive Current 
 Estimation by DPV-ATLD", J. Electrochem. Soc., 2017, 164, 760-769.<br />
-doi: 10.1149/2.0881712jes
+doi: 10.1149/2.0881712jes<br />
 [2] N. M. Faber, R. Bro, and P. K. Hopke, "Recent developments in CANDECOMP/PARAFAC 
 algorithms: A critical review", Chemom. Intell. Lab. Syst., 2003, 65, 119–137.<br />
 doi: 10.1016/S0169-7439(02)00089-8
