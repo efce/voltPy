@@ -92,6 +92,12 @@ urlpatterns = [
         views.termsOfService, name='termsOfService'),
     url(r'^privacy-policy/',
         views.privacyPolicy, name='privacyPolicy'),
+    url(r'^voltammetry-theory/',
+        views.theoryVoltammetryMain, name='theoryVoltammetryMain'),
+    url(r'^signal-processing-theory/',
+        views.theorySigprocMain, name='theorySigprocMain'),
+    url(r'^analysis-theory/',
+        views.theoryAnalysisMain, name='theoryAnalysisMain'),
 ]
 
 urlpatterns += [

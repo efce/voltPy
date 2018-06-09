@@ -52,10 +52,16 @@
   <div id="topmenu">
     <ul>
       <li class="topmenu_bkg">
-        <img src="{% static '/manager/vc_logo.svg' %}" style="height: {% topmenu_height_logo %}; margin: 3px 3px -2px 3px" />
+        <img onclick="document.location.href='{% url 'index' %}'" src="{% static '/manager/vc_logo.svg' %}" style="cursor: pointer; height: {% topmenu_height_logo %}; margin: 3px 3px -2px 3px" />
+      </li>
+      <li class='dropdown topmenu_bkg' style="margin-left: 2em"><span>&nbsp;Theory&nbsp;</span>
+        <div class='dropdown_content topmenu_bkg'>
+          <a href="{% url 'theoryVoltammetryMain' %}">Voltammetry</a><br />
+          <a href="{% url 'theorySigprocMain' %}">Signal Processing</a><br />
+          <a href="{% url 'theoryAnalysisMain' %}">Data Analysis</a><br />
+        </div>
       </li>
     {% if user.is_authenticated %}
-      <li class="topmenu_bkg" style="margin-left: 2em"><a href="{% url 'index' %}">Index</a></li>
       <li class="topmenu_bkg"><a href="{% url 'upload' %}">Upload Files</a></li>
       <li class="topmenu_bkg"><a href="{% url 'createDataset' %}">Create Dataset</a></li>
       <li class='dropdown topmenu_bkg'><span>&nbsp;Browse&nbsp;</span>
@@ -69,7 +75,6 @@
       <li class="topmenu_bkg" style="float: right; margin-right: 10%"><a href="{% url 'logout' %}">Logout</a></li>
       <li class="topmenu_wht" style="float: right">Logged in as: {{ user }} (uid: {{ user.id }})</li>
     {% else %}
-      <li class="topmenu_bkg" style="margin-left: 2em"><a href="{% url 'index' %}">Index</a></li>
       <li class="topmenu_bkg"><a href="{% url 'login' %}">Login</a></li>
       <li class="topmenu_bkg"><a href="{% url 'register' %}">Register</a></li>
     {% endif%}

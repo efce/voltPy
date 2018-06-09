@@ -115,6 +115,39 @@ def privacyPolicy(request):
     )
 
 
+def theoryVoltammetryMain(request):
+    context = {}
+    if request.user:
+        context['user'] = request.user
+    return voltpy_render(
+        request=request,
+        template_name="manager/theory_voltammetry_main.html",
+        context=context,
+    )
+
+
+def theorySigprocMain(request):
+    context = {}
+    if request.user:
+        context['user'] = request.user
+    return voltpy_render(
+        request=request,
+        template_name="manager/theory_sigproc_main.html",
+        context=context,
+    )
+
+
+def theoryAnalysisMain(request):
+    context = {}
+    if request.user:
+        context['user'] = request.user
+    return voltpy_render(
+        request=request,
+        template_name="manager/theory_analysis_main.html",
+        context=context,
+    )
+
+
 @redirect_on_voltpyexceptions
 def index(request):
     context = {'request': request}
