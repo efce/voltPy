@@ -121,7 +121,7 @@ def theoryVoltammetryMain(request):
         context['user'] = request.user
     return voltpy_render(
         request=request,
-        template_name="manager/theory_voltammetry_main.html",
+        template_name="theory/voltammetry_main.html",
         context=context,
     )
 
@@ -132,7 +132,7 @@ def theorySigprocMain(request):
         context['user'] = request.user
     return voltpy_render(
         request=request,
-        template_name="manager/theory_sigproc_main.html",
+        template_name="theory/sigproc_main.html",
         context=context,
     )
 
@@ -143,7 +143,7 @@ def theoryAnalysisMain(request):
         context['user'] = request.user
     return voltpy_render(
         request=request,
-        template_name="manager/theory_analysis_main.html",
+        template_name="theory/analysis_main.html",
         context=context,
     )
 
