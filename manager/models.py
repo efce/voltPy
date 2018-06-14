@@ -51,7 +51,7 @@ class Profile(models.Model):
     show_on_x = models.CharField(max_length=1, choices=ONX_OPTIONS, default='P')
     starred_processing = PickledObjectField(default=[])
     starred_analysis = PickledObjectField(default=[])
-    
+
     @property
     def lastUsedProcessing(self, number=3) -> List:
         return self._lastUsed(Processing, number)
@@ -77,6 +77,16 @@ def update_user_profile(sender, instance, created, **kwargs):
     if created:
         Profile.objects.create(user=instance)
     instance.profile.save()
+
+
+def get_user_name(self):
+    user = self
+    if user is None:
+        return '[not logged in]'
+    elif user.groups.filter(name='temp_users').exists():
+        return '[temp]'
+    return user.username
+User.__str__ = get_user_name
 
 
 class Fileset(VoltPyModel):
@@ -377,7 +387,7 @@ class CurveData(VoltPyModel):
         sd.data = value
         sd.save()
         self._current_samples = sd
-        
+
     @overrides
     def save(self, *args, **kwargs):
         if self.__current_samples_changed:
@@ -884,3 +894,9 @@ class SharedLink(VoltPyModel):
         finally:
             manager.helpers.functions.get_user = gu
         self.save
+
+    def user_names(self):
+        unames = [x.__str__() for x in self.users.all()]
+        if not unames:
+            return None
+        return list(set(unames))

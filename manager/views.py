@@ -127,6 +127,34 @@ def index(request):
 
 @redirect_on_voltpyexceptions
 @with_user
+def settings(request, user):
+    shared = mmodels.SharedLink.objects.all()
+    if request.method == 'POST':
+        if request.POST.get('apply_settings', False):
+            form = mforms.SettingsForm(request, user=user)
+            if form.is_valid():
+                add_notification(request, 'Changes saved')
+            else:
+                add_notification(request, 'Settings form error')
+        else:
+            form = mforms.SettingsForm(user=user)
+    else:
+        form = mforms.SettingsForm(user=user)
+    context = {
+        'user': user,
+        'form': form,
+        'shared': shared,
+    }
+    return voltpy_render(
+        request=request,
+        template_name='manager/settings.html',
+        context=context
+    )
+    
+
+
+@redirect_on_voltpyexceptions
+@with_user
 def export(request, user, obj_type, obj_id):
     allowedTypes = ('fileset', 'file', 'dataset', 'analysis')
     assert obj_type in allowedTypes

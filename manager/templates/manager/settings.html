@@ -1,0 +1,25 @@
+{% extends "manager/main.html" %}
+
+{% block title %} Settings {% endblock %}
+
+{% block real_content %}
+
+{{ user }}
+
+<ul>
+{% for share in shared %}
+    <li>{{ share.object_type }}: id {{ share.object_id }} - Shared with: 
+        {% if share.user_names %} 
+            {% for us in share.user_names %}
+                {{ us }},&nbsp;
+            {% endfor %}
+        {% else %} 
+            None 
+        {% endif %} - Perm: {{ share.permissions }}
+    </li>
+{% endfor %}
+</ul>
+
+{{ form.as_table }}
+
+{% endblock %}

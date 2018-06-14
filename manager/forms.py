@@ -42,6 +42,14 @@ class GenericConfirmForm(forms.Form):
             return False
 
 
+class SettingsForm(forms.Form):
+    def __init__(self, *args, **kwargs):
+        user = kwargs.pop('user', None)
+        if user is None:
+            raise VoltPyNotAllowed('Operation not allowed')
+        super(SettingsForm, self).__init__(*args, **kwargs)
+
+
 class EditName(forms.Form):
     def __init__(self, *args, **kwargs):
         self.model = kwargs.pop('model', None)
