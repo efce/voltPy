@@ -66,8 +66,13 @@
           <a href="{% url 'browseAnalysis' %}">Analysis</a>
         </div>
       </li>
-      <li class="topmenu_bkg" style="float: right; margin-right: 10%"><a href="{% url 'logout' %}">Logout</a></li>
-      <li class="topmenu_wht" style="float: right">Logged in as: {{ user }} (uid: {{ user.id }})</li>
+      <li class="dropdown topmenu_wht" style="float: right; margin-right: 3px;">Logged in as: 
+        {{ user }} (uid: {{ user.id }})
+        <div class='dropdown_content topmenu_bkg'>
+          <a href="{% url 'settings' %}">Settings</a><br />
+          <a href="{% url 'logout' %}">Logout</a>
+        </div>
+      </li>
     {% else %}
       <li class="topmenu_bkg" style="margin-left: 2em"><a href="{% url 'index' %}">Index</a></li>
       <li class="topmenu_bkg"><a href="{% url 'login' %}">Login</a></li>

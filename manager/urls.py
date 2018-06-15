@@ -80,6 +80,8 @@ urlpatterns = [
         views.deleteAnalysis, name='deleteAnalysis'),
     url(r'^share/(?P<link_hash>[0-9a-zA-Z]+)/$',
         views.shareLink, name='shareLink'),
+    url(r'^unshare/(?P<share_id>[0-9]+)/$',
+        views.unshare, name='unshare'),
     url(r'^settings/$',
         views.settings, name='settings'),
     url(r'^show-processed/(?P<processing_id>[0-9]+)/$',

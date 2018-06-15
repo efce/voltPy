@@ -9,6 +9,7 @@ from django.db import models
 from django.urls import reverse
 from django.contrib.auth.models import User
 from django.db.models.signals import post_save
+from django.db.models import Q
 from django.dispatch import receiver
 from picklefield.fields import PickledObjectField
 from manager.voltpymodel import VoltPyModel
@@ -87,6 +88,20 @@ def get_user_name(self):
         return '[temp]'
     return user.username
 User.__str__ = get_user_name
+
+
+def displayable_groups(self):
+    if any([
+        self is None,
+        self.groups.filter(name='temp_users').exists()
+    ]):
+        return []
+    else:
+        ret = []
+        for g in self.groups.filter(~Q(name='registered_users')):
+            ret += g.__str__
+        return ret
+User.displayable_groups = displayable_groups
 
 
 class Fileset(VoltPyModel):
@@ -875,7 +890,12 @@ class SharedLink(VoltPyModel):
         )
 
     def __str__(self):
-        return '%s: %s' % (self.link, self.users.all())
+        return '<Sharing: {klass} {kid}; permission: {perm}>'.format(
+            klass=self.object_type,
+            kid=self.object_id,
+            perm=self.permissions,
+            )
+        #return '%s: %s' % (self.link, self.users.all())
 
     def getLink(self):
         from django.contrib.sites.models import Site

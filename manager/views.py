@@ -1,4 +1,5 @@
 import json
+from guardian.shortcuts import remove_perm
 from django.contrib.auth import login, authenticate
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User, Group
@@ -29,6 +30,7 @@ from manager.helpers.functions import voltpy_render
 from manager.helpers.functions import voltpy_serve_csv
 from manager.helpers.functions import is_number
 from manager.helpers.functions import get_redirect_class
+from manager.helpers.functions import get_shared_object
 from manager.helpers.functions import generate_share_link
 from manager.helpers.functions import paginate
 from manager.helpers.decorators import with_user
@@ -128,7 +130,7 @@ def index(request):
 @redirect_on_voltpyexceptions
 @with_user
 def settings(request, user):
-    shared = mmodels.SharedLink.objects.all()
+    shared = mmodels.SharedLink.all()
     if request.method == 'POST':
         if request.POST.get('apply_settings', False):
             form = mforms.SettingsForm(request, user=user)
@@ -1171,6 +1173,26 @@ def plotInteraction(request, user):
 
 
 @redirect_on_voltpyexceptions
+@with_user
+def unshare(request, user, share_id):
+    share = mmodels.SharedLink.get(id=int(share_id))
+
+    def deleteFun(share):
+        obj = get_shared_object(share)
+        share.delete()
+        for u in share.users.all():
+            remove_perm(share.permissions, u, obj)
+
+    return delete_helper(
+        request=request,
+        user=user,
+        item=share,
+        delete_fun=deleteFun,
+        onSuccessRedirect=reverse('settings')
+    )
+
+
+@redirect_on_voltpyexceptions
 def shareLink(request, link_hash):
     import random
     import string
@@ -1180,13 +1202,7 @@ def shareLink(request, link_hash):
     except ObjectDoesNotExist as e:
         raise VoltPyDoesNotExists
 
-    importlib = __import__('importlib')
-    load_models = importlib.import_module('manager.models')
-    obj_class = getattr(load_models, shared_link.object_type)
-    try:
-        obj = obj_class.objects.get(id=shared_link.object_id)
-    except ObjectDoesNotExist as e:
-        raise VoltPyDoesNotExists
+    obj = get_shared_object(shared_link)
 
     try:
         user = request.User

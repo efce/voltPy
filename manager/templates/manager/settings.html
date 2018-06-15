@@ -4,8 +4,24 @@
 
 {% block real_content %}
 
-{{ user }}
+username: {{ user }}<br />
+email: {{ user.email }}<br />
 
+<p>
+<ul>
+Groups:
+{% if user.displayable_groups %}
+{% for g in user.displayable_groups %}
+    {{ g }},
+{% endfor %}
+
+{% else %}
+No Groups
+</ul>
+{% endif %}
+</p>
+<p>
+Shares:
 <ul>
 {% for share in shared %}
     <li>{{ share.object_type }}: id {{ share.object_id }} - Shared with: 
@@ -15,10 +31,12 @@
             {% endfor %}
         {% else %} 
             None 
-        {% endif %} - Perm: {{ share.permissions }}
+        {% endif %} - Perm: {{ share.permissions }} | 
+        <button onclick="document.location.href='{% url 'unshare' share.id %}'">Unshare</button>
     </li>
 {% endfor %}
 </ul>
+</p>
 
 {{ form.as_table }}
 
