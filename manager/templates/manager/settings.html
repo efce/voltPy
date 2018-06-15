@@ -31,7 +31,12 @@ Shares:
             {% endfor %}
         {% else %} 
             None 
-        {% endif %} - Perm: {{ share.permissions }} | 
+        {% endif %} - Perm: {{ share.permissions }} |  
+        <a class="dropdown">SHOW LINK
+            <div class="dropdown_content topmenu_wht" style="padding: 5px;margin-top: -10px !important">
+                {{ share.getLink }}
+            </div>
+        </a> | 
         <button onclick="document.location.href='{% url 'unshare' share.id %}'">Unshare</button>
     </li>
 {% endfor %}
