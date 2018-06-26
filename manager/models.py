@@ -49,6 +49,8 @@ class Profile(models.Model):
     )
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
     email_confirmed = models.BooleanField(default=False)
+    new_email = models.CharField(max_length=255, null=True, default=None)
+    new_email_confirmation_hash = models.CharField(max_length=64, null=True, default=None)
     show_on_x = models.CharField(max_length=1, choices=ONX_OPTIONS, default='P')
     starred_processing = PickledObjectField(default=[])
     starred_analysis = PickledObjectField(default=[])

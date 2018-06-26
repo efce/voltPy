@@ -209,6 +209,24 @@ def changeEmail(request, user):
 
 
 @redirect_on_voltpyexceptions
+def confirmNewEmail(request, uid, token):
+    user = User.objects.filter(id=uid)
+    if not user.exists():
+        raise VoltPyNotAllowed('Unknown code or already used')
+    user = user[0]
+    if user.profile.new_email_confirmation_hash == token:
+        user.email = user.profile.new_email
+        user.save()
+        user.profile.new_email = None
+        user.profile.new_email_confirmation_hash = None
+        user.profile.save()
+        add_notification(request, 'Email changed')
+        return HttpResponseRedirect('index')
+    else:
+        raise VoltPyNotAllowed('Unknown code or already used')
+
+
+@redirect_on_voltpyexceptions
 @with_user
 def settings(request, user):
     if request.method == 'POST':

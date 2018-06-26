@@ -125,9 +125,16 @@ class ChangeEmailForm(forms.Form):
         if user.check_password(self.cleaned_data['password']):
             if self.cleaned_data['new_email'] == self.cleaned_data['new_email2']:
                 # TODO: send verification email
-                user.email = self.cleaned_data['new_email']
-                user.save()
-                manager.helpers.functions.add_notification(request, 'Email changed')
+                from django.utils.crypto import get_random_string
+                email_hash = get_random_string(length=32)
+                user.profile.new_email = self.cleaned_data['new_email']
+                user.profile.new_email_confirmation_hash = email_hash
+                user.profile.save()
+                if manager.helpers.functions.send_change_mail(user):
+                    manager.helpers.functions.add_notification(request, 'Confirmation email sent to %s' % user.profile.new_email)
+                else:
+                    manager.helpers.functions.add_notification(request, 'There was an error while sending email to %s' % user.profile.new_email)
+                    return
                 self.redirect = True
             else:
                 manager.helpers.functions.add_notification(request, 'Emails do not match')

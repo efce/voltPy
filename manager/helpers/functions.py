@@ -6,11 +6,16 @@ import base64 as b64
 from collections import OrderedDict
 from typing import List
 from django.urls import reverse
+from django.conf import settings
+from django.core.mail import send_mail
 from django.http import HttpResponseRedirect
 from django.http import HttpResponse
 from django.shortcuts import render
 from django.template import loader
 from django.db.models import Q
+from django.utils.http import urlsafe_base64_encode
+from django.utils.encoding import force_bytes
+from django.contrib.sites.models import Site
 from manager.exceptions import VoltPyNotAllowed
 from manager.exceptions import VoltPyFailed
 import manager.plotmanager as mpm
@@ -244,6 +249,17 @@ def check_dataset_integrity(dataset, params_to_check: List):
         for p in params_to_check:
             if cd.curve.params[p] != cd1.curve.params[p]:
                 raise VoltPyFailed('All curves in dataset have to be similar.')
+
+
+def send_change_mail(user):
+    subject = 'Confirm voltammetry.center new email address'
+    message = loader.render_to_string('mails/confirm_new_email.html', {
+        'user': user,
+        'domain': Site.objects.get_current(),
+        'uid': user.id, 
+        'token': user.profile.new_email_confirmation_hash,
+    })
+    return send_mail(subject, message, from_email=settings.DEFAULT_FROM_EMAIL, recipient_list=[user.profile.new_email])
 
 
 def generate_share_link(user, perm, obj):

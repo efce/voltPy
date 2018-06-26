@@ -96,6 +96,8 @@ urlpatterns = [
         views.changeEmail, name='changeEmail'),
     url(r'^activate/(?P<uidb64>[0-9A-Za-z_\-]+)/(?P<token>[0-9A-Za-z]{1,13}-[0-9A-Za-z]{1,20})/$',
         views.activate, name='activate'),
+    url(r'^confirm-new-email/(?P<uid>[0-9]+)/(?P<token>[0-9A-Za-z]+)/$',
+        views.confirmNewEmail, name='confirmNewEmail'),
     url(r'^accept-cookies/',
         views.acceptCookies, name='acceptCookies'),
     url(r'^terms-of-service/',
