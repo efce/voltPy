@@ -1,0 +1,27 @@
+{% extends "manager/main.html" %}
+
+{% block title %} Settings {% endblock %}
+
+{% block real_content %}
+<fieldset class="mt_rest"><legend class="mt_name">User data</legend>
+Username: {{ user }}<br />
+Email: {{ user.email }} <button onclick="document.location.href='{% url 'changeEmail' %}'">Change email</button><br />
+<button onclick="document.location.href='{% url 'changePassword' %}'">Change password</button><br />
+</fieldset>
+<fieldset class="mt_rest">
+<legend class="mt_name">Groups</legend>
+<ul>
+{% if user.displayable_groups %}
+{% for g in user.displayable_groups %}
+    {{ g }},
+{% endfor %}
+
+{% else %}
+Not implemented yet.
+</ul>
+{% endif %}
+</fieldset>
+
+{{ form.as_table }}
+
+{% endblock %}

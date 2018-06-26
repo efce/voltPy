@@ -1,0 +1,14 @@
+{% extends "manager/main.html" %}
+
+{% block title %} {{ window_title }} {% endblock %}
+
+{% block style %}
+{{ extra_style }} 
+{% endblock %}
+
+{% block real_content %}
+<fieldset class="mt_rest">
+	<legend class="mt_name">{{ fieldset_title }}</legend>
+{{ display }}
+</fieldset>
+{% endblock %}

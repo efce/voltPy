@@ -7,6 +7,8 @@ from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
 from django.utils.safestring import mark_safe
+import django.core.validators as validators
+from django.contrib.auth.password_validation import validate_password
 import manager
 import manager.models as mmodels
 from manager.exceptions import VoltPyNotAllowed
@@ -40,6 +42,104 @@ class GenericConfirmForm(forms.Form):
             return True
         else:
             return False
+
+
+class SettingsForm(forms.Form):
+    def __init__(self, *args, **kwargs):
+        user = kwargs.pop('user', None)
+        if user is None:
+            raise VoltPyNotAllowed('Operation not allowed')
+        super(SettingsForm, self).__init__(*args, **kwargs)
+
+
+class ChangePassForm(forms.Form):
+    redirect = False
+    old_password = forms.CharField(
+        label="Old password",
+        max_length=128,
+        initial='',
+        widget=forms.PasswordInput
+    )
+    new_password = forms.CharField(
+        label="New password",
+        max_length=128,
+        initial='',
+        widget=forms.PasswordInput,
+        help_text="""
+<small>
+<ul>
+<li>Your password can't be too similar to your other personal information.</li>
+<li>Your password must contain at least 8 characters.</li>
+<li>Your password can't be a commonly used password.</li>
+<li>Your password can't be entirely numeric.</li>
+</ul>
+</small>
+        """
+    )
+    new_password2 = forms.CharField(
+        label="Retype new password",
+        max_length=128,
+        initial='',
+        widget=forms.PasswordInput
+    )
+
+    def clean(self):
+        super().clean()
+        validate_password(self.cleaned_data['new_password'], manager.helpers.functions.get_user())
+
+    def process(self, user, request):
+        if user.check_password(self.cleaned_data['old_password']):
+            if self.cleaned_data['new_password'] == self.cleaned_data['new_password2']:
+                user.set_password(self.cleaned_data['new_password'])
+                user.save()
+                manager.helpers.functions.add_notification(request, 'Password changed')
+                self.redirect = True
+            else:
+                manager.helpers.functions.add_notification(request, 'Passwords do not match')
+        else:
+            manager.helpers.functions.add_notification(request, 'Incorrect password')
+
+
+class ChangeEmailForm(forms.Form):
+    redirect = False
+    password = forms.CharField(
+        label="Password",
+        max_length=128,
+        initial='',
+        widget=forms.PasswordInput
+    )
+    new_email = forms.CharField(
+        label="New email",
+        max_length=255,
+        initial='',
+        validators=[validators.EmailValidator]
+    )
+    new_email2 = forms.CharField(
+        label="Retype email",
+        max_length=255,
+        initial='',
+        validators=[validators.EmailValidator]
+    )
+
+    def process(self, user, request):
+        if user.check_password(self.cleaned_data['password']):
+            if self.cleaned_data['new_email'] == self.cleaned_data['new_email2']:
+                # TODO: send verification email
+                from django.utils.crypto import get_random_string
+                email_hash = get_random_string(length=32)
+                user.profile.new_email = self.cleaned_data['new_email']
+                user.profile.new_email_confirmation_hash = email_hash
+                user.profile.save()
+                if manager.helpers.functions.send_change_mail(user):
+                    manager.helpers.functions.add_notification(request, 'Confirmation email sent to %s' % user.profile.new_email)
+                else:
+                    manager.helpers.functions.add_notification(request, 'There was an error while sending email to %s' % user.profile.new_email)
+                    return
+                self.redirect = True
+            else:
+                manager.helpers.functions.add_notification(request, 'Emails do not match')
+        else:
+            manager.helpers.functions.add_notification(request, 'Incorrect password')
 
 
 class EditName(forms.Form):

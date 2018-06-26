@@ -9,6 +9,7 @@ from django.db import models
 from django.urls import reverse
 from django.contrib.auth.models import User
 from django.db.models.signals import post_save
+from django.db.models import Q
 from django.dispatch import receiver
 from picklefield.fields import PickledObjectField
 from manager.voltpymodel import VoltPyModel
@@ -48,10 +49,12 @@ class Profile(models.Model):
     )
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
     email_confirmed = models.BooleanField(default=False)
+    new_email = models.CharField(max_length=255, null=True, default=None)
+    new_email_confirmation_hash = models.CharField(max_length=64, null=True, default=None)
     show_on_x = models.CharField(max_length=1, choices=ONX_OPTIONS, default='P')
     starred_processing = PickledObjectField(default=[])
     starred_analysis = PickledObjectField(default=[])
-    
+
     @property
     def lastUsedProcessing(self, number=3) -> List:
         return self._lastUsed(Processing, number)
@@ -77,6 +80,30 @@ def update_user_profile(sender, instance, created, **kwargs):
     if created:
         Profile.objects.create(user=instance)
     instance.profile.save()
+
+
+def get_user_name(self):
+    user = self
+    if user is None:
+        return '[not logged in]'
+    elif user.groups.filter(name='temp_users').exists():
+        return '[temp]'
+    return user.username
+User.__str__ = get_user_name
+
+
+def displayable_groups(self):
+    if any([
+        self is None,
+        self.groups.filter(name='temp_users').exists()
+    ]):
+        return []
+    else:
+        ret = []
+        for g in self.groups.filter(~Q(name='registered_users')):
+            ret += g.__str__
+        return ret
+User.displayable_groups = displayable_groups
 
 
 class Fileset(VoltPyModel):
@@ -377,7 +404,7 @@ class CurveData(VoltPyModel):
         sd.data = value
         sd.save()
         self._current_samples = sd
-        
+
     @overrides
     def save(self, *args, **kwargs):
         if self.__current_samples_changed:
@@ -865,7 +892,12 @@ class SharedLink(VoltPyModel):
         )
 
     def __str__(self):
-        return '%s: %s' % (self.link, self.users.all())
+        return '<Sharing: {klass} {kid}; permission: {perm}>'.format(
+            klass=self.object_type,
+            kid=self.object_id,
+            perm=self.permissions,
+            )
+        #return '%s: %s' % (self.link, self.users.all())
 
     def getLink(self):
         from django.contrib.sites.models import Site
@@ -884,3 +916,9 @@ class SharedLink(VoltPyModel):
         finally:
             manager.helpers.functions.get_user = gu
         self.save
+
+    def user_names(self):
+        unames = [x.__str__() for x in self.users.all()]
+        if not unames:
+            return None
+        return list(set(unames))

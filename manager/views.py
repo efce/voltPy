@@ -1,4 +1,5 @@
 import json
+from guardian.shortcuts import remove_perm
 from django.contrib.auth import login, authenticate
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User, Group
@@ -29,12 +30,14 @@ from manager.helpers.functions import voltpy_render
 from manager.helpers.functions import voltpy_serve_csv
 from manager.helpers.functions import is_number
 from manager.helpers.functions import get_redirect_class
+from manager.helpers.functions import get_shared_object
 from manager.helpers.functions import generate_share_link
 from manager.helpers.functions import paginate
 from manager.helpers.decorators import with_user
 from manager.helpers.decorators import redirect_on_voltpyexceptions
 
 
+@redirect_on_voltpyexceptions
 def register(request):
     if request.method == 'POST':
         form = SignInForm(request.POST)
@@ -57,6 +60,7 @@ def register(request):
     return render(request, 'registration/signin.html', {'form': form})
 
 
+@redirect_on_voltpyexceptions
 def activate(request, uidb64, token):
     # TODO: move logic somewhere else:
     try:
@@ -78,6 +82,7 @@ def activate(request, uidb64, token):
         return render(request, 'registration/account_activation_invalid.html')
 
 
+@redirect_on_voltpyexceptions
 def account_activation_sent(request):
     context = {'user': None}
     return voltpy_render(
@@ -87,12 +92,14 @@ def account_activation_sent(request):
     )
 
 
+@redirect_on_voltpyexceptions
 def acceptCookies(request):
     from django.http import HttpResponse
     request.session['accepted_cookies'] = True
     return HttpResponse('')
 
 
+@redirect_on_voltpyexceptions
 def termsOfService(request):
     context = {}
     if request.user:
@@ -104,6 +111,7 @@ def termsOfService(request):
     )
 
 
+@redirect_on_voltpyexceptions
 def privacyPolicy(request):
     context = {}
     if request.user:
@@ -121,6 +129,124 @@ def index(request):
     return voltpy_render(
         request=request,
         template_name='manager/index.html',
+        context=context
+    )
+
+
+@redirect_on_voltpyexceptions
+@with_user
+def sharing(request, user):
+    shared = mmodels.SharedLink.all()
+    context = {
+        'user': user,
+        'shared': shared,
+    }
+    return voltpy_render(
+        request=request,
+        template_name='manager/sharing.html',
+        context=context
+    )
+
+
+@redirect_on_voltpyexceptions
+@with_user
+def changePassword(request, user):
+    if (request.method == 'POST'):
+        if request.POST.get('_voltJS_backButton', False):
+            return HttpResponseRedirect(reverse('settings'))
+
+    form_ret = form_helper(
+        user=user,
+        request=request,
+        formClass=mforms.ChangePassForm,
+        submitName='changePass',
+        submitText='Submit',
+        formTemplate='manager/form.html',
+        #formExtraData=None,
+    )
+    if form_ret['instance'].redirect:
+        return HttpResponseRedirect(reverse('settings'))
+    return voltpy_render(
+        request=request,
+        template_name="manager/display.html",
+        context={
+            'user': user,
+            'display': form_ret['html'],
+            'window_title': 'Change email',
+            'fieldset_title': 'Change email',
+            'extra_style': '#id_new_password {margin-top: 20px;}',
+        }
+    )
+
+
+@redirect_on_voltpyexceptions
+@with_user
+def changeEmail(request, user):
+    if (request.method == 'POST'):
+        if request.POST.get('_voltJS_backButton', False):
+            return HttpResponseRedirect(reverse('settings'))
+
+    form_ret = form_helper(
+        user=user,
+        request=request,
+        formClass=mforms.ChangeEmailForm,
+        submitName='changeMail',
+        submitText='Submit',
+        formTemplate='manager/form.html',
+    )
+    if form_ret['instance'].redirect:
+        return HttpResponseRedirect(reverse('settings'))
+    return voltpy_render(
+        request=request,
+        template_name="manager/display.html",
+        context={
+            'user': user,
+            'display': form_ret['html'],
+            'window_title': 'Change email',
+            'fieldset_title': 'Change email',
+        }
+    )
+
+
+@redirect_on_voltpyexceptions
+def confirmNewEmail(request, uid, token):
+    user = User.objects.filter(id=uid)
+    if not user.exists():
+        raise VoltPyNotAllowed('Unknown code or already used')
+    user = user[0]
+    if user.profile.new_email_confirmation_hash == token:
+        user.email = user.profile.new_email
+        user.save()
+        user.profile.new_email = None
+        user.profile.new_email_confirmation_hash = None
+        user.profile.save()
+        add_notification(request, 'Email changed')
+        return HttpResponseRedirect('index')
+    else:
+        raise VoltPyNotAllowed('Unknown code or already used')
+
+
+@redirect_on_voltpyexceptions
+@with_user
+def settings(request, user):
+    if request.method == 'POST':
+        if request.POST.get('apply_settings', False):
+            form = mforms.SettingsForm(request, user=user)
+            if form.is_valid():
+                add_notification(request, 'Changes saved')
+            else:
+                add_notification(request, 'Settings form error')
+        else:
+            form = mforms.SettingsForm(user=user)
+    else:
+        form = mforms.SettingsForm(user=user)
+    context = {
+        'user': user,
+        'form': form,
+    }
+    return voltpy_render(
+        request=request,
+        template_name='manager/settings.html',
         context=context
     )
 
@@ -1143,6 +1269,26 @@ def plotInteraction(request, user):
 
 
 @redirect_on_voltpyexceptions
+@with_user
+def unshare(request, user, share_id):
+    share = mmodels.SharedLink.get(id=int(share_id))
+
+    def deleteFun(share):
+        obj = get_shared_object(share)
+        share.delete()
+        for u in share.users.all():
+            remove_perm(share.permissions, u, obj)
+
+    return delete_helper(
+        request=request,
+        user=user,
+        item=share,
+        delete_fun=deleteFun,
+        onSuccessRedirect=reverse('settings')
+    )
+
+
+@redirect_on_voltpyexceptions
 def shareLink(request, link_hash):
     import random
     import string
@@ -1152,13 +1298,7 @@ def shareLink(request, link_hash):
     except ObjectDoesNotExist as e:
         raise VoltPyDoesNotExists
 
-    importlib = __import__('importlib')
-    load_models = importlib.import_module('manager.models')
-    obj_class = getattr(load_models, shared_link.object_type)
-    try:
-        obj = obj_class.objects.get(id=shared_link.object_id)
-    except ObjectDoesNotExist as e:
-        raise VoltPyDoesNotExists
+    obj = get_shared_object(shared_link)
 
     try:
         user = request.User
