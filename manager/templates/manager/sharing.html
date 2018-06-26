@@ -1,0 +1,42 @@
+{% extends "manager/main.html" %}
+
+{% block title %} Sharing {% endblock %}
+
+{% block real_content %}
+<fieldset class="mt_rest">
+    <legend class="mt_name">Sharing</legend>
+<table class="main_table">
+    <tr>
+        <th>type</th>
+        <th>id</th>
+        <th>perm</th>
+        <th>users</th>
+        <th>action</th>
+    </tr>
+{% for share in shared %}
+    <tr>
+        <td>{{ share.object_type }}</td>
+        <td>{{ share.object_id }}</td>
+        <td> {{ share.permissions }}</td>
+        <td>
+        {% if share.user_names %} 
+            {% for us in share.user_names %}
+                {{ us }},&nbsp;
+            {% endfor %}
+        {% else %} 
+            None 
+        {% endif %}
+        </td>
+        <td>
+            <a class="dropdown">SHOW LINK
+                <div class="dropdown_content topmenu_wht" style="padding: 5px;margin-top: -10px !important">
+                    {{ share.getLink }}
+                </div>
+            </a> | 
+            <button onclick="document.location.href='{% url 'unshare' share.id %}'">Unshare</button>
+        </td>
+    </tr>
+{% endfor %}
+</fieldset>
+
+{% endblock %}
