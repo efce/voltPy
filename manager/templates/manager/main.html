@@ -13,9 +13,9 @@
   {% block head %} 
   {% endblock %}
   <style>
-    {% include "./css/main.css" %}
-    {% block style %} 
-    {% endblock %}
+  {% include './css/main.css' %}
+  {% block style %} 
+  {% endblock %}
   </style>
   <link rel="icon" type="image/png" href="{% static 'manager/voltcenter_favico.png' %}" sizes="96x96" />
 </head>
@@ -66,10 +66,11 @@
           <a href="{% url 'browseAnalysis' %}">Analysis</a>
         </div>
       </li>
-      <li class="dropdown topmenu_wht" style="float: right; margin-right: 3px;">Logged in as: 
+      <li class="dropdown topmenu_wht" style="float: right; margin-right: 3px; text-decoration: underline">Logged in as: 
         {{ user }} (uid: {{ user.id }})
         <div class='dropdown_content topmenu_bkg'>
           <a href="{% url 'settings' %}">Settings</a><br />
+          <a href="{% url 'sharing' %}">Sharing</a><br />
           <a href="{% url 'logout' %}">Logout</a>
         </div>
       </li>

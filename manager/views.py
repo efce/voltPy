@@ -37,6 +37,7 @@ from manager.helpers.decorators import with_user
 from manager.helpers.decorators import redirect_on_voltpyexceptions
 
 
+@redirect_on_voltpyexceptions
 def register(request):
     if request.method == 'POST':
         form = SignInForm(request.POST)
@@ -59,6 +60,7 @@ def register(request):
     return render(request, 'registration/signin.html', {'form': form})
 
 
+@redirect_on_voltpyexceptions
 def activate(request, uidb64, token):
     # TODO: move logic somewhere else:
     try:
@@ -80,6 +82,7 @@ def activate(request, uidb64, token):
         return render(request, 'registration/account_activation_invalid.html')
 
 
+@redirect_on_voltpyexceptions
 def account_activation_sent(request):
     context = {'user': None}
     return voltpy_render(
@@ -89,12 +92,14 @@ def account_activation_sent(request):
     )
 
 
+@redirect_on_voltpyexceptions
 def acceptCookies(request):
     from django.http import HttpResponse
     request.session['accepted_cookies'] = True
     return HttpResponse('')
 
 
+@redirect_on_voltpyexceptions
 def termsOfService(request):
     context = {}
     if request.user:
@@ -106,6 +111,7 @@ def termsOfService(request):
     )
 
 
+@redirect_on_voltpyexceptions
 def privacyPolicy(request):
     context = {}
     if request.user:
@@ -129,8 +135,82 @@ def index(request):
 
 @redirect_on_voltpyexceptions
 @with_user
-def settings(request, user):
+def sharing(request, user):
     shared = mmodels.SharedLink.all()
+    context = {
+        'user': user,
+        'shared': shared,
+    }
+    return voltpy_render(
+        request=request,
+        template_name='manager/sharing.html',
+        context=context
+    )
+
+
+@redirect_on_voltpyexceptions
+@with_user
+def changePassword(request, user):
+    if (request.method == 'POST'):
+        if request.POST.get('_voltJS_backButton', False):
+            return HttpResponseRedirect(reverse('settings'))
+
+    form_ret = form_helper(
+        user=user,
+        request=request,
+        formClass=mforms.ChangePassForm,
+        submitName='changePass',
+        submitText='Submit',
+        formTemplate='manager/form.html',
+        #formExtraData=None,
+    )
+    if form_ret['instance'].redirect:
+        return HttpResponseRedirect(reverse('settings'))
+    return voltpy_render(
+        request=request,
+        template_name="manager/display.html",
+        context={
+            'user': user,
+            'display': form_ret['html'],
+            'window_title': 'Change email',
+            'fieldset_title': 'Change email',
+            'extra_style': '#id_new_password {margin-top: 20px;}',
+        }
+    )
+
+
+@redirect_on_voltpyexceptions
+@with_user
+def changeEmail(request, user):
+    if (request.method == 'POST'):
+        if request.POST.get('_voltJS_backButton', False):
+            return HttpResponseRedirect(reverse('settings'))
+
+    form_ret = form_helper(
+        user=user,
+        request=request,
+        formClass=mforms.ChangeEmailForm,
+        submitName='changeMail',
+        submitText='Submit',
+        formTemplate='manager/form.html',
+    )
+    if form_ret['instance'].redirect:
+        return HttpResponseRedirect(reverse('settings'))
+    return voltpy_render(
+        request=request,
+        template_name="manager/display.html",
+        context={
+            'user': user,
+            'display': form_ret['html'],
+            'window_title': 'Change email',
+            'fieldset_title': 'Change email',
+        }
+    )
+
+
+@redirect_on_voltpyexceptions
+@with_user
+def settings(request, user):
     if request.method == 'POST':
         if request.POST.get('apply_settings', False):
             form = mforms.SettingsForm(request, user=user)
@@ -145,14 +225,12 @@ def settings(request, user):
     context = {
         'user': user,
         'form': form,
-        'shared': shared,
     }
     return voltpy_render(
         request=request,
         template_name='manager/settings.html',
         context=context
     )
-    
 
 
 @redirect_on_voltpyexceptions
