@@ -1284,7 +1284,7 @@ def unshare(request, user, share_id):
         user=user,
         item=share,
         delete_fun=deleteFun,
-        onSuccessRedirect=reverse('settings')
+        onSuccessRedirect=reverse('sharing')
     )
 
 
