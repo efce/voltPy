@@ -892,12 +892,12 @@ class SharedLink(VoltPyModel):
         )
 
     def __str__(self):
-        return '<Sharing: {klass} {kid}; permission: {perm}>'.format(
+        return '<Sharing: {klass} {kid}: {name}; permission: {perm}>'.format(
             klass=self.object_type,
             kid=self.object_id,
+            name=self.getSharedObject().name,
             perm=self.permissions,
-            )
-        #return '%s: %s' % (self.link, self.users.all())
+        )
 
     def getLink(self):
         from django.contrib.sites.models import Site
