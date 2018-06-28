@@ -922,3 +922,13 @@ class SharedLink(VoltPyModel):
         if not unames:
             return None
         return list(set(unames))
+            
+    def getSharedObject(self):
+        importlib = __import__('importlib')
+        load_models = importlib.import_module('manager.models')
+        obj_class = getattr(load_models, self.object_type)
+        try:
+            obj = obj_class.objects.get(id=self.object_id)
+            return obj
+        except ObjectDoesNotExist as e:
+            raise VoltPyDoesNotExists

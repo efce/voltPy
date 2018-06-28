@@ -9,6 +9,7 @@
     <tr>
         <th>type</th>
         <th>id</th>
+        <th>name</th>
         <th>perm</th>
         <th>users</th>
         <th>action</th>
@@ -17,6 +18,7 @@
     <tr>
         <td>{{ share.object_type }}</td>
         <td>{{ share.object_id }}</td>
+        <td>{{ share.getSharedObject.name }}</td>
         <td> {{ share.permissions }}</td>
         <td>
         {% if share.user_names %} 

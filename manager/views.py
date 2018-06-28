@@ -30,7 +30,6 @@ from manager.helpers.functions import voltpy_render
 from manager.helpers.functions import voltpy_serve_csv
 from manager.helpers.functions import is_number
 from manager.helpers.functions import get_redirect_class
-from manager.helpers.functions import get_shared_object
 from manager.helpers.functions import generate_share_link
 from manager.helpers.functions import paginate
 from manager.helpers.decorators import with_user
@@ -1274,7 +1273,7 @@ def unshare(request, user, share_id):
     share = mmodels.SharedLink.get(id=int(share_id))
 
     def deleteFun(share):
-        obj = get_shared_object(share)
+        obj = share.getSharedObject()
         share.delete()
         for u in share.users.all():
             remove_perm(share.permissions, u, obj)
@@ -1297,8 +1296,7 @@ def shareLink(request, link_hash):
         shared_link = mmodels.SharedLink.objects.get(link=link_hash)
     except ObjectDoesNotExist as e:
         raise VoltPyDoesNotExists
-
-    obj = get_shared_object(shared_link)
+    obj = shared_link.getSharedObject()
 
     try:
         user = request.User

@@ -411,14 +411,3 @@ def export_curves_data_as_csv(cds: List):
     memoryFile = io.StringIO()
     np.savetxt(memoryFile, allCols, delimiter=",", newline="\r\n", fmt='%s')
     return memoryFile
-
-
-def get_shared_object(shared_link: mmodels.SharedLink):
-    importlib = __import__('importlib')
-    load_models = importlib.import_module('manager.models')
-    obj_class = getattr(load_models, shared_link.object_type)
-    try:
-        obj = obj_class.objects.get(id=shared_link.object_id)
-        return obj
-    except ObjectDoesNotExist as e:
-        raise VoltPyDoesNotExists
