@@ -189,3 +189,7 @@ button, input[type="submit"] {
     color: {% color2font %};
     padding: 10px;
 }
+
+#id_honeypot {
+    display: none;
+}

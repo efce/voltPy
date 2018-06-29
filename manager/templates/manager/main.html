@@ -106,25 +106,37 @@
 
 <fieldset class="mt_rest" style="text-align: left"><legend class="mt_name">Comments</legend>
 {% get_comment_list for showing as comment_list %}
+{% if not comment_list %}
+<p>No comments</p>
+{% else %}
 {% for comment in comment_list %}
-============================
-{{ comment }}
-===========================
+<fieldset><legend><large><b>{{ comment.name }}</b></large> <small><i>{{ comment.submit_date }}</i></small></legend>
+{{ comment.comment }}</fieldset>
 {% endfor %}
+{% endif %}
+</fieldset>
 
+<fieldset class="mt_rest" style="text-align: left"><legend class="mt_name">Add Comment</legend>
+{% get_comment_form for showing as com_form %}
+<form action="{% comment_form_target %}" method="POST">
+{% csrf_token %}
 <table>
-  {% get_comment_form for showing as cform %}
-  <form action="{% comment_form_target %}" method="post">
-    {% csrf_token %}
-    {{ cform }}
-    <tr>
-      <td colspan="2">
-        <input type="submit" name="submit" value="Post">
-        <input type="submit" name="preview" value="Preview">
-      </td>
-    </tr>
-  </form>
+  <tr>
+<td>Comment:</td><td>{{ com_form.comment }}</td></tr>
+</tr>
+{% if user.is_temp %}
+<tr><td>Name:</td><td>{{ com_form.name }}</td></tr>
+<tr><td>Email:</td><td>{{ com_form.email }}</td></tr>
+{% endif %}
+{{ com_form.honeypot }}
+{{ com_form.content_type }}
+{{ com_form.object_pk }}
+{{ com_form.timestamp }}
+{{ com_form.security_hash }}
+<input type="hidden" name="next" value="{{ showing.getUrl }}" />
+<tr><td>&nbsp;</td><td><input type="submit" value="Add comment" id="id_submit" /></td></tr>
 </table>
+</form>
 </fieldset>
 {% endif %}
 
