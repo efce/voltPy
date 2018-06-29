@@ -100,6 +100,34 @@
 </div>
 {% endblock %} 
 
+{% if showing %}
+
+{% load comments %}
+
+<fieldset class="mt_rest" style="text-align: left"><legend class="mt_name">Comments</legend>
+{% get_comment_list for showing as comment_list %}
+{% for comment in comment_list %}
+============================
+{{ comment }}
+===========================
+{% endfor %}
+
+<table>
+  {% get_comment_form for showing as cform %}
+  <form action="{% comment_form_target %}" method="post">
+    {% csrf_token %}
+    {{ cform }}
+    <tr>
+      <td colspan="2">
+        <input type="submit" name="submit" value="Post">
+        <input type="submit" name="preview" value="Preview">
+      </td>
+    </tr>
+  </form>
+</table>
+</fieldset>
+{% endif %}
+
 {% block footer %}
 {% endblock %}
 
