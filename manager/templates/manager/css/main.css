@@ -4,6 +4,7 @@
 {% include "./topmenu.css" %}
 {% include "./notifications.css" %}
 {% include "./forms.css" %}
+{% include "./comments.css" %}
 {% load static %}
 
 @font-face {
@@ -16,6 +17,23 @@ body {
     background-color: #EEE;
     font-family: regular;
     min-width: 820px;
+}
+
+input, button, textarea {
+    -webkit-border-radius: 4px;
+    -moz-border-radius: 4px;
+    border-radius: 4px;
+    background:#fff; border:1px solid #ccc; 
+    box-shadow: inset 0px 0px 0px 0px red;
+}
+
+button, input[type="submit"] {
+    background:#f1f1f1; border:1px solid #ccc; 
+    cursor: pointer;
+}
+
+button:hover, input[type="submit"]:hover {
+    background:#d1d1d1; border:1px solid #ccc; 
 }
 
 a {
@@ -188,8 +206,4 @@ button, input[type="submit"] {
     background-color: {% color2 %};
     color: {% color2font %};
     padding: 10px;
-}
-
-#id_honeypot {
-    display: none;
 }

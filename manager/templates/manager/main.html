@@ -104,25 +104,27 @@
 
 {% load comments %}
 
-<fieldset class="mt_rest" style="text-align: left"><legend class="mt_name">Comments</legend>
+<fieldset class="comments_list" style="text-align: left"><legend class="mt_name">Comments</legend>
 {% get_comment_list for showing as comment_list %}
 {% if not comment_list %}
 <p>No comments</p>
 {% else %}
 {% for comment in comment_list %}
-<fieldset><legend><large><b>{{ comment.name }}</b></large> <small><i>{{ comment.submit_date }}</i></small></legend>
-{{ comment.comment }}</fieldset>
+<div class="comment">
+<span class="comment_author">{{ comment.name }}: </span><br />
+<span class="comment_date">{{ comment.submit_date | date:"Y-m-d H:i"}}</span>
+<pre>{{ comment.comment }}</pre>
+</div>
+<hr />
 {% endfor %}
 {% endif %}
-</fieldset>
-
-<fieldset class="mt_rest" style="text-align: left"><legend class="mt_name">Add Comment</legend>
+<fieldset class="comments_list" style="text-align: left"><legend>Add Comment</legend>
 {% get_comment_form for showing as com_form %}
 <form action="{% comment_form_target %}" method="POST">
 {% csrf_token %}
 <table>
   <tr>
-<td>Comment:</td><td>{{ com_form.comment }}</td></tr>
+<td>Text: </td><td>{{ com_form.comment }}</td></tr>
 </tr>
 {% if user.is_temp %}
 <tr><td>Name:</td><td>{{ com_form.name }}</td></tr>
@@ -137,6 +139,7 @@
 <tr><td>&nbsp;</td><td><input type="submit" value="Add comment" id="id_submit" /></td></tr>
 </table>
 </form>
+</fieldset>
 </fieldset>
 {% endif %}
 
