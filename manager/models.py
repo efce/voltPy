@@ -89,7 +89,15 @@ def get_user_name(self):
     elif user.groups.filter(name='temp_users').exists():
         return '[temp]'
     return user.username
-User.__str__ = get_user_name
+
+def user_is_temp(self):
+    user = self
+    if user is None:
+        return True
+    elif user.groups.filter(name='temp_users').exists():
+        return True
+    return False
+User.is_temp = user_is_temp
 
 
 def displayable_groups(self):

@@ -100,6 +100,49 @@
 </div>
 {% endblock %} 
 
+{% if showing %}
+
+{% load comments %}
+
+<fieldset class="comments_list" style="text-align: left"><legend class="mt_name">Comments</legend>
+{% get_comment_list for showing as comment_list %}
+{% if not comment_list %}
+<p>No comments</p>
+{% else %}
+{% for comment in comment_list %}
+<div class="comment">
+<span class="comment_author">{{ comment.name }}: </span><br />
+<span class="comment_date">{{ comment.submit_date | date:"Y-m-d H:i"}}</span>
+<pre>{{ comment.comment }}</pre>
+</div>
+<hr />
+{% endfor %}
+{% endif %}
+<fieldset class="comments_list" style="text-align: left"><legend>Add Comment</legend>
+{% get_comment_form for showing as com_form %}
+<form action="{% comment_form_target %}" method="POST">
+{% csrf_token %}
+<table>
+  <tr>
+<td>Text: </td><td>{{ com_form.comment }}</td></tr>
+</tr>
+{% if user.is_temp %}
+<tr><td>Name:</td><td>{{ com_form.name }}</td></tr>
+<tr><td>Email:</td><td>{{ com_form.email }}</td></tr>
+{% endif %}
+{{ com_form.honeypot }}
+{{ com_form.content_type }}
+{{ com_form.object_pk }}
+{{ com_form.timestamp }}
+{{ com_form.security_hash }}
+<input type="hidden" name="next" value="{{ showing.getUrl }}" />
+<tr><td>&nbsp;</td><td><input type="submit" value="Add comment" id="id_submit" /></td></tr>
+</table>
+</form>
+</fieldset>
+</fieldset>
+{% endif %}
+
 {% block footer %}
 {% endblock %}
 

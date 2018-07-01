@@ -26,6 +26,9 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 ALLOWED_HOSTS = ['www.voltammetry.center', 'voltammetry.center', '127.0.0.1', 'localhost']
 
+DATE_FORMAT = '%Y-%m-%d'   # '2006-10-25 14:30:59']
+DATETIME_FORMAT = '%Y-%m-%d %H:%M:%S'   # '2006-10-25 14:30:59']
+TIME_FORMAT = '%H:%M:%S'   # '2006-10-25 14:30:59']
 
 # Application definition
 
@@ -39,6 +42,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.sites',
+    'django_comments',
 ]
 
 MIDDLEWARE = [

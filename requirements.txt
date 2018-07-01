@@ -13,3 +13,4 @@ django-guardian
 configparser
 python-logstash
 psycopg2
+django-contrib-comments
