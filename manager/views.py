@@ -800,6 +800,67 @@ def showProcessed(request, user, processing_id):
 
 @redirect_on_voltpyexceptions
 @with_user
+def showFileset(request, user, fileset_id):
+    fs = mmodels.Fileset.get(id=fileset_id)
+
+    form_data = {'model': fs, 'label_name': ''}
+    edit_name_form = form_helper(
+        user=user,
+        request=request,
+        formClass=mforms.EditName,
+        submitName='anEditName',
+        submitText='Save',
+        formExtraData=form_data
+    )
+
+    plotScr, plotDiv, butDiv = generate_plot(
+        request=request,
+        user=user,
+        to_plot=fs
+    )
+    if fs.owner == user:
+        share_button = '_voltJS_getShareMenu'
+    else:
+        share_button = '_disabled'
+
+    context = {
+        'scripts': plotScr,  # + formAnalyze.getJS(request) + formProcess.getJS(request),
+        'main_plot': plotDiv,
+        'main_plot_buttons': butDiv,
+        'user': user,
+        'disp_name_edit': edit_name_form['html'],
+        'showing': fs,
+        'export_data_button': get_redirect_class(
+            reverse('export', kwargs={
+                'obj_type': 'fileset',
+                'obj_id': fs.id,
+            })
+        ),
+        'delete_button': get_redirect_class(
+            reverse('deleteFileset', kwargs={
+                'fileset_id': fs.id
+            })
+        ),
+        'curve_set_button': get_redirect_class(
+            reverse('cloneFileset', kwargs={
+                'to_clone_id': fs.id
+            })
+        ),
+        'undo_button': '_disabled',
+        'share_button': share_button,
+        'back_to_browse_button': get_redirect_class(
+            reverse('browseFilesets')
+        )
+    }
+    return voltpy_render(
+        request=request,
+        template_name='manager/showFileset.html',
+        context=context
+    )
+
+
+@redirect_on_voltpyexceptions
+@with_user
 def getShareMenu(request, user):
     try:
         shares_updated = False
@@ -879,61 +940,69 @@ def getShareMenu(request, user):
 
 @redirect_on_voltpyexceptions
 @with_user
-def showFileset(request, user, fileset_id):
-    fs = mmodels.Fileset.get(id=fileset_id)
+def leaveGroup(request, user, group_id):
+    try:
+        group = mmodels.Dataset.get(id=int(group_id))
+    except ObjectDoesNotExist:
+        raise VoltPyDoesNotExists()
+    if user.profile.owned_groups.filter(id=group.id).exists():
+        raise VoltPyNotAllowed('Creator cannot leaeve group')
+    #TODO: NOT IMPLEMENTED
 
-    form_data = {'model': fs, 'label_name': ''}
-    edit_name_form = form_helper(
-        user=user,
-        request=request,
-        formClass=mforms.EditName,
-        submitName='anEditName',
-        submitText='Save',
-        formExtraData=form_data
-    )
 
-    plotScr, plotDiv, butDiv = generate_plot(
-        request=request,
-        user=user,
-        to_plot=fs
-    )
-    if fs.owner == user:
-        share_button = '_voltJS_getShareMenu'
+@redirect_on_voltpyexceptions
+@with_user
+def inviteUser(request, user, group_id):
+    try:
+        group = mmodels.Dataset.get(id=int(group_id))
+    except ObjectDoesNotExist:
+        raise VoltPyDoesNotExists()
+    if not user.profile.owned_groups.filter(id=group.id).exists():
+        raise VoltPyDoesNotExists()
+    #TODO: NOT IMPLEMENTED
+
+
+@redirect_on_voltpyexceptions
+@with_user
+def removeUser(request, user, group_id, to_remove_user_id):
+    try:
+        group = mmodels.Dataset.get(id=int(group_id))
+    except ObjectDoesNotExist:
+        raise VoltPyDoesNotExists()
+    if not user.profile.owned_groups.filter(id=group.id).exists():
+        raise VoltPyDoesNotExists()
+    if user.id == int(to_remove_user_id):
+        raise VoltPyNotAllowed('Creator cannot leave group')
+    to_remove = User.objects.filter(id=int(to_remove_user_id))
+    if not to_remove.exists():
+        raise VoltPyDoesNotExists()
+    if not to_remove.groups.filter(name=group.name).exists():
+        raise VoltPyDoesNotExists('User is not a member of %s' % group.name)
+
+    if request.method == "POST" and request.POST.get('confirm', False):
+        confForm = mforms.GenericConfirmForm(request.POST)
+        if confForm.confirmed():
+            to_remove.groups.remove(group)
+            add_notification(request, 'User removed')
+            return HttpResponseRedirect(reverse('showGroup', args=[group.id]))
+        else:
+            add_notification(request, 'Check the checkbox to confirm.', 1)
+
     else:
-        share_button = '_disabled'
+        confForm = mforms.GenericConfirmForm()
 
     context = {
-        'scripts': plotScr,  # + formAnalyze.getJS(request) + formProcess.getJS(request),
-        'main_plot': plotDiv,
-        'main_plot_buttons': butDiv,
+        'text_to_confirm': 'This will remove user {user} from group {group}'.format(
+            user=to_remove,
+            group=group
+        ),
+        'form': confForm,
         'user': user,
-        'disp_name_edit': edit_name_form['html'],
-        'showing': fs,
-        'export_data_button': get_redirect_class(
-            reverse('export', kwargs={
-                'obj_type': 'fileset',
-                'obj_id': fs.id,
-            })
-        ),
-        'delete_button': get_redirect_class(
-            reverse('deleteFileset', kwargs={
-                'fileset_id': fs.id
-            })
-        ),
-        'curve_set_button': get_redirect_class(
-            reverse('cloneFileset', kwargs={
-                'to_clone_id': fs.id
-            })
-        ),
-        'undo_button': '_disabled',
-        'share_button': share_button,
-        'back_to_browse_button': get_redirect_class(
-            reverse('browseFilesets')
-        )
     }
+
     return voltpy_render(
         request=request,
-        template_name='manager/showFileset.html',
+        template_name='manager/confirmGeneric.html',
         context=context
     )
 
