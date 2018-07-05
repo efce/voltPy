@@ -836,20 +836,30 @@ def getShareMenu(request, user):
                 shares_updated = True
         else:
             form = mforms.ShareWithGroupForm(groups=groups.all(), shared_with=shared_with)
+        if request.POST.get('submit', None) == 'generate_read_only':
+            link_ro = generate_share_link(user, 'ro', obj)
+        elif request.POST.get('submit', None) == 'generate_read_write': 
+            link_rw = generate_share_link(user, 'rw', obj)
         form_disp = loader.render_to_string('manager/form_json.html', request=request, context={
             'user': user,
             'form': form,
             'disable_back': True,
-            'submit': 'update_share_menu',
-            'submit_value': 'Update groups',
+            'submit_name': 'Update groups',
             'onclick': 'updateShareMenu(event);',
         })
 
         links = mmodels.SharedLink.filter(object_type=obj.__class__.__name__, object_id=obj.id)
+        share_names = dict(mmodels.SharedLink.PERMISSIONS)
         links_disp = ['<ul>']
+        has_shares = []
         for l in links:
-            links_disp.append(''.join(['<li>', l.permissions, ': ', l.getLink(), '</li>']))
+            has_shares.append(l.permissions)
+            links_disp.append(''.join(['<li>', share_names[l.permissions], ': ', l.getLink(), '</li>']))
         links_disp.append('</ul>')
+        if 'ro' not in has_shares:
+            links_disp.append('<button onclick="getROShareLink();" type="button">Generate read only link</button><br />')
+        if 'rw' not in has_shares:
+            links_disp.append('<button onclick="getRWShareLink();" type="button">Generate editable link</button>')
         links_disp = ''.join(links_disp)
         info = ''
         if shares_updated:

@@ -279,6 +279,20 @@ function displayAjax(data, element_id) {
     element.text('');
     element.append(content);
 }
+function getROShareLink() {
+    csfr = $("{% csrf_token %}").val();
+    object = $('#share_menu form');
+    object.append($('<input type="hidden" name="share_address" value="' + window.location.href + '" />'));
+    object.append($('<input type="hidden" name="submit" value="generate_read_only" />'));
+    $.post(url, object.serialize()).done(dispInShareMenu);
+}
+function getRWShareLink() {
+    csfr = $("{% csrf_token %}").val();
+    object = $('#share_menu form');
+    object.append($('<input type="hidden" name="share_address" value="' + window.location.href + '" />'));
+    object.append($('<input type="hidden" name="submit" value="generate_read_write" />'));
+    $.post(url, object.serialize()).done(dispInShareMenu);
+}
 
 function updateShareMenu(event) {
     event.preventDefault();

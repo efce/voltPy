@@ -4,5 +4,5 @@
 	{{ form.as_table|safe }}
     <tr><td>
 	</table>
-	<input name="{{ submit }}" type="button" onclick="{{ onclick | default:''}}" value="{{ submit_value | default:'Forward'}}" />
+	<button type="button" onclick="{{ onclick | default:''}}">{{ submit_name }}</button>
 </form>
