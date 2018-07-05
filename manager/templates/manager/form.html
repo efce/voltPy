@@ -5,5 +5,6 @@
 	{{ form.as_table|safe }}
     <tr><td>
 	</table>
-	<button class="_voltJS_backButton" name="backButton" value="1">Back</button>&nbsp;<input name="{{ submit }}" type="submit" value="Forward" />
+	<button class="_voltJS_backButton" name="backButton" value="1">Back</button>&nbsp;
+	<input name="{{ submit }}" type="submit" value="{{ submit_value | default:'Forward'}}" />
 </form>

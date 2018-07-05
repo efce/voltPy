@@ -10,6 +10,8 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.utils.safestring import mark_safe
 import django.core.validators as validators
 from django.contrib.auth.password_validation import validate_password
+from guardian.shortcuts import remove_perm
+from guardian.shortcuts import assign_perm
 import manager
 import manager.models as mmodels
 from manager.exceptions import VoltPyNotAllowed
@@ -99,6 +101,48 @@ class ChangePassForm(forms.Form):
                 manager.helpers.functions.add_notification(request, 'Passwords do not match')
         else:
             manager.helpers.functions.add_notification(request, 'Incorrect password')
+
+
+class ShareWithGroupForm(forms.Form):
+    CHOICES = (
+        ('ns', 'Not shared'),
+        ('ro', 'Read only'),
+        ('rw', 'Editable')
+    )
+
+    def __init__(self, *args, groups, shared_with, **kwargs):
+        super(ShareWithGroupForm, self).__init__(*args, **kwargs)
+        for group in groups:
+            self.fields['group_%d' % group.id] = forms.ChoiceField(
+                label=group.name,
+                choices=self.CHOICES,
+                initial=shared_with.get(group.id, 'ns')
+            )
+
+    def process(self, user, obj):
+        for key, val in self.cleaned_data.items():
+            if not key.startswith('group_'):
+                continue
+            gr_id = int(key[6:])
+            group = Group.objects.filter(id=gr_id)
+            if not group.exists():
+                raise VoltPyNotAllowed()
+            group = group.all()[0]
+            if group.name == 'registered_users':
+                raise VoltPyNotAllowed()
+            if not user.groups.filter(id=gr_id).exists():
+                raise VoltPyNotAllowed()
+            if val == 'ns':
+                remove_perm('ro', group, obj)
+                remove_perm('rw', group, obj)
+            elif val == 'ro':
+                remove_perm('rw', group, obj)
+                assign_perm('ro', group, obj)
+            elif val == 'rw':
+                remove_perm('ro', group, obj)
+                assign_perm('rw', group, obj)
+            else:
+                raise VoltPyNotAllowed('Wrong permission')
 
 
 class CreateGroupForm(forms.Form):

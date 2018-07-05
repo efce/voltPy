@@ -252,24 +252,47 @@ $( function() {
         to_send = window.location.href;
         getShareable(to_send, displayLinks);
     });
+    $('._voltJS_getShareMenu').click(function() {
+        to_send = window.location.href;
+        getShareMenu(to_send);
+    });
 });
 
-function displayLinks(data) {
-    var amd = $('#share_link');
-    amd.removeClass('invisible');
-    var form = '<a class="closeX" onclick="closeShare();"></a><br /><br />';
-    form += 'The following urls will allow to access the data without logging in:';
-    form += '<p>Read only: ' + data['link_ro'] + '</p>';
-    form += '<p>Editable: ' + data['link_rw'] + '</p>';
+function getShareMenu(to_send) {
+    url = '/manager/ajax/get-share-menu/';
+    csfr = $("{% csrf_token %}").val();
+    object = {
+        'share_address': to_send,
+        'csrfmiddlewaretoken': csfr,
+    };
+    $.post(url, object).done(dispInShareMenu);
+}
 
-    amd.text('');
-    amd.append($(form));
-    amd.css('width', '50em');
-    amd.css('right', '10px');
+function dispInShareMenu(data) {
+    displayAjax(data, 'share_menu');
+}
+
+function displayAjax(data, element_id) {
+    var element = $('#' + element_id);
+    element.removeClass('invisible');
+    var content = $('<div><a class="closeX" onclick="closeShare();"></a><br />' + data['content'] + '</div>');
+    element.text('');
+    element.append(content);
+}
+
+function updateShareMenu(event) {
+    event.preventDefault();
+    event.stopPropagation();
+    url = '/manager/ajax/get-share-menu/';
+    csfr = $("{% csrf_token %}").val();
+    object = $('#share_menu form');
+    object.append($('<input type="hidden" name="share_address" value="' + window.location.href + '" />'));
+    object.append($('<input type="hidden" name="submit" value="update_share" />'));
+    $.post(url, object.serialize()).done(dispInShareMenu);
 }
 
 function closeShare() {
-    $('#share_link').addClass('invisible');
+    $('#share_menu').addClass('invisible');
 }
 
 $( function() {

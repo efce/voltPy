@@ -1,5 +1,6 @@
 import json
 from guardian.shortcuts import remove_perm
+from guardian.shortcuts import get_perms
 from guardian.shortcuts import get_objects_for_group
 from django.contrib.auth import login, authenticate
 from django.contrib.auth.forms import UserCreationForm
@@ -720,7 +721,7 @@ def showAnalysis(request, user, analysis_id):
     else:
         applyClass = '_disabled'
     if an.owner == user:
-        share_button = '_voltJS_requestLink'
+        share_button = '_voltJS_getShareMenu'
     else:
         share_button = '_disabled'
 
@@ -799,6 +800,75 @@ def showProcessed(request, user, processing_id):
 
 @redirect_on_voltpyexceptions
 @with_user
+def getShareMenu(request, user):
+    try:
+        shares_updated = False
+        if request.method != 'POST':
+            return
+        to_share = request.POST['share_address']
+        if to_share not in request.META['HTTP_REFERER']:
+            raise VoltPyNotAllowed('Wrong referrer')
+        to_share = to_share.split('/')
+        obj_id = int(to_share[-2])
+        obj_type = to_share[-3]
+        if obj_type == 'show-dataset':
+            obj = mmodels.Dataset.get(id=obj_id)
+        elif obj_type == 'show-file':
+            obj = mmodels.File.get(id=obj_id)
+        elif obj_type == 'show-fileset':
+            obj = mmodels.Fileset.get(id=obj_id)
+        elif obj_type == 'show-analysis':
+            obj = mmodels.Analysis.get(id=obj_id)
+        else:
+            raise VoltPyNotAllowed('Unknown origin url.')
+        groups = user.groups.exclude(name='registered_users')
+        shared_with = {}
+        for g in groups:
+            perms = get_perms(g, obj)
+            if 'rw' in perms:
+                shared_with[g.id] = 'rw'
+            elif 'ro' in perms:
+                shared_with[g.id] = 'ro'
+        if request.POST.get('submit', None) == 'update_share':
+            form = mforms.ShareWithGroupForm(request.POST, groups=groups, shared_with=shared_with)
+            if form.is_valid():
+                form.process(user, obj)
+                shares_updated = True
+        else:
+            form = mforms.ShareWithGroupForm(groups=groups.all(), shared_with=shared_with)
+        form_disp = loader.render_to_string('manager/form_json.html', request=request, context={
+            'user': user,
+            'form': form,
+            'disable_back': True,
+            'submit': 'update_share_menu',
+            'submit_value': 'Update groups',
+            'onclick': 'updateShareMenu(event);',
+        })
+
+        links = mmodels.SharedLink.filter(object_type=obj.__class__.__name__, object_id=obj.id)
+        links_disp = ['<ul>']
+        for l in links:
+            links_disp.append(''.join(['<li>', l.permissions, ': ', l.getLink(), '</li>']))
+        links_disp.append('</ul>')
+        links_disp = ''.join(links_disp)
+        info = ''
+        if shares_updated:
+            import datetime
+            now = datetime.datetime.now().strftime('%H:%M:%S') 
+            info = '<p>%s: Sharing information updated</p>' % now
+        ret_html = '%s<fieldset class="mt_rest"><legend class="mt_name">Groups:</legend>%s</fieldset><fieldset class="mt_rest"><legend class="mt_name">Links:</legend>%s</fieldset>' % (info, form_disp, links_disp)
+        return JsonResponse({
+            'content': ret_html,
+        })
+    except Exception as e:
+        import traceback
+        print('Exception! ', e)
+        traceback.print_exc(e)
+        return JsonResponse({'content': 'error'})
+
+
+@redirect_on_voltpyexceptions
+@with_user
 def showFileset(request, user, fileset_id):
     fs = mmodels.Fileset.get(id=fileset_id)
 
@@ -818,7 +888,7 @@ def showFileset(request, user, fileset_id):
         to_plot=fs
     )
     if fs.owner == user:
-        share_button = '_voltJS_requestLink'
+        share_button = '_voltJS_getShareMenu'
     else:
         share_button = '_disabled'
 
@@ -941,7 +1011,7 @@ def showDataset(request, user, dataset_id):
         formProcess = mm.getProcessingSelectionForm(dataset=cs, disabled=cs.locked)
 
     if cs.owner == user:
-        share_button = '_voltJS_requestLink'
+        share_button = '_voltJS_getShareMenu'
     else:
         share_button = '_disabled'
     if cs.hasUndo():
@@ -1075,7 +1145,7 @@ def showFile(request, user, file_id):
 
     at_disp = at.analytesTable(cf, obj_type='file')
     if cf.owner == user:
-        share_button = '_voltJS_requestLink'
+        share_button = '_voltJS_getShareMenu'
     else:
         share_button = '_disabled'
 

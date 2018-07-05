@@ -90,6 +90,8 @@ urlpatterns = [
         views.showGroup, name='showGroup'),
     url(r'^sharing/$',
         views.sharing, name='sharing'),
+    url(r'^ajax/get-share-menu/$',
+        views.getShareMenu, name='getShareMenu'),
     url(r'^show-processed/(?P<processing_id>[0-9]+)/$',
         views.showProcessed, name='showProcessed'),
     url(r'^account_activation_sent/$',
