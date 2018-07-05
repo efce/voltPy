@@ -1,0 +1,31 @@
+
+{% extends "manager/main.html" %}
+
+{% block title %} Group {% endblock %}
+
+{% block real_content %}
+<fieldset class="mt_rest">
+	<legend class="mt_name">Group:&nbsp;{{ group }}
+    </legend>
+    <fieldset class="mt_rest" style="float: left; width: 45%">
+        <legend class="mt_name">Users</legend>
+        <ul>
+        {% for us in group.user_set.all %}
+            <li>{{ us }}</li>
+        {% endfor %}
+        </ul>
+    </fieldset>
+    <fieldset class="mt_rest" style="float: right; width: 45%">
+        <legend class="mt_name">Shared resources</legend>
+        {% for key, value in resources.items %}
+            <h3>{{ key }}</h3>
+            <ul>
+            {% for res in value %}
+                <li>{{ res }}</li>
+            {% endfor %}
+            </ul>
+        {% endfor %}
+    </fieldset>
+</fieldset>
+
+{% endblock %}

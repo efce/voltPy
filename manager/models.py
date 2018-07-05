@@ -8,6 +8,8 @@ from guardian.shortcuts import get_user_perms
 from django.db import models
 from django.urls import reverse
 from django.contrib.auth.models import User
+from django.contrib.auth.models import Group
+from django.utils.safestring import mark_safe
 from django.db.models.signals import post_save
 from django.db.models import Q
 from django.dispatch import receiver
@@ -48,6 +50,7 @@ class Profile(models.Model):
         ('S', 'Samples')
     )
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
+    owned_groups = models.ManyToManyField(Group)
     email_confirmed = models.BooleanField(default=False)
     new_email = models.CharField(max_length=255, null=True, default=None)
     new_email_confirmation_hash = models.CharField(max_length=64, null=True, default=None)
@@ -108,8 +111,17 @@ def displayable_groups(self):
         return []
     else:
         ret = []
-        for g in self.groups.filter(~Q(name='registered_users')):
-            ret += g.__str__
+        for g in self.groups.filter(~Q(name="registered_users")):
+            gstr = g.__str__()
+            if self.profile.owned_groups.filter(id=g.id).exists():
+                gstr = ''.join([
+                    gstr,
+                    '&nbsp;<button onclick="document.location.href=\'',
+                    reverse('showGroup', args=[g.id]),
+                    '\'">Manage</button>',
+                ])
+            gstr = gstr
+            ret.append(gstr)
         return ret
 User.displayable_groups = displayable_groups
 

@@ -1,5 +1,6 @@
 import json
 from guardian.shortcuts import remove_perm
+from guardian.shortcuts import get_objects_for_group
 from django.contrib.auth import login, authenticate
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User, Group
@@ -583,6 +584,73 @@ def deleteFromDatasetLike(request, user, cs):
             template_name='manager/confirmGeneric.html',
             context=context
         )
+
+
+@redirect_on_voltpyexceptions
+@with_user
+def newGroup(request, user):
+    if user.is_temp():
+        raise VoltPyNotAllowed('Requires registered user.')
+    if (request.method == 'POST'):
+        if request.POST.get('_voltJS_backButton', False):
+            return HttpResponseRedirect(reverse('settings'))
+
+    form_ret = form_helper(
+        user=user,
+        request=request,
+        formClass=mforms.CreateGroupForm,
+        submitName='createGroup',
+        submitText='Create',
+        formTemplate='manager/form.html',
+        #formExtraData=None,
+    )
+    if form_ret['instance'].redirect:
+        return HttpResponseRedirect(reverse('settings'))
+    return voltpy_render(
+        request=request,
+        template_name="manager/display.html",
+        context={
+            'user': user,
+            'display': form_ret['html'],
+            'window_title': 'Create group',
+            'fieldset_title': 'Create new group',
+            'extra_style': '',
+        }
+    )
+
+
+@redirect_on_voltpyexceptions
+@with_user
+def showGroup(request, user, group_id):
+    group = Group.objects.filter(id=int(group_id))
+    if not group.exists():
+        raise VoltPyNotAllowed('Not allowed to view this page')
+    group = group[0]
+    if not user.profile.owned_groups.filter(id=group.id).exists():
+        raise VoltPyNotAllowed('Not allowed to view this page')
+    
+    if user.is_temp():
+        raise VoltPyNotAllowed('Requires registered user.')
+    if (request.method == 'POST'):
+        if request.POST.get('_voltJS_backButton', False):
+            return HttpResponseRedirect(reverse('settings'))
+    perms = ['ro', 'rw']
+    resources = {}
+    resources['Filesets'] = get_objects_for_group(group, perms, mmodels.Fileset, True)
+    resources['Files'] = get_objects_for_group(group, perms, mmodels.File, True)
+    resources['Datasets'] = get_objects_for_group(group, perms, mmodels.Dataset, True)
+    resources['Analysis'] = get_objects_for_group(group, perms, mmodels.Analysis, True)
+    context = {
+        'user': user,
+        'group': group,
+        'resources': resources,
+    }
+
+    return voltpy_render(
+        request=request,
+        template_name='manager/showGroup.html',
+        context=context
+    )
 
 
 @redirect_on_voltpyexceptions

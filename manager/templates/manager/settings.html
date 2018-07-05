@@ -13,13 +13,14 @@ Email: {{ user.email }} <button onclick="document.location.href='{% url 'changeE
 <ul>
 {% if user.displayable_groups %}
 {% for g in user.displayable_groups %}
-    {{ g }},
+    <li>{{ g | safe }}</li>
 {% endfor %}
 
 {% else %}
-Not implemented yet.
+Not belong to any group.
 </ul>
 {% endif %}
+<button onclick="document.location.href='{% url 'newGroup' %}'">Create new group</button>
 </fieldset>
 
 {{ form.as_table }}

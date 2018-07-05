@@ -5,6 +5,7 @@ from django.db import DatabaseError
 from django.utils import timezone
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
+from django.contrib.auth.models import Group
 from django.core.exceptions import ObjectDoesNotExist
 from django.utils.safestring import mark_safe
 import django.core.validators as validators
@@ -98,6 +99,36 @@ class ChangePassForm(forms.Form):
                 manager.helpers.functions.add_notification(request, 'Passwords do not match')
         else:
             manager.helpers.functions.add_notification(request, 'Incorrect password')
+
+
+class CreateGroupForm(forms.Form):
+    redirect = False
+    group_name = forms.CharField(
+        label="Group name",
+        max_length=80,
+        initial='',
+    )
+
+    def clean(self):
+        super().clean()
+        gname = self.cleaned_data['group_name']
+        if Group.objects.filter(name=gname).exists():
+            raise forms.ValidationError('Group already exists.')
+
+    def process(self, user, request):
+        self.redirect = True
+        if user.profile.owned_groups.count() > 10:
+            manager.helpers.functions.add_notification(request, 'One user cannot create more than 10 groups.')
+            return
+
+        gname = self.cleaned_data['group_name']
+        gname = gname.strip().replace('<', '&lt;').replace('>', '&gt;')
+        g = Group(name=gname)
+        g.save()
+        user.groups.add(g)
+        user.profile.owned_groups.add(g)
+        user.profile.save()
+        manager.helpers.functions.add_notification(request, 'Group created')
 
 
 class ChangeEmailForm(forms.Form):
