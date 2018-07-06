@@ -133,6 +133,8 @@ class InviteUserForm(forms.Form):
         alread_exists = mmodels.GroupInvitation.objects.filter(
             invited_user_disp=inv_user_disp,
             group=group,
+            deleted=False,
+            accepted=False,
         ).exists()
 
         if alread_exists or is_member:

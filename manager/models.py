@@ -923,7 +923,6 @@ class GroupInvitation(VoltPyModel):
     accepted = models.BooleanField(default=False)
 
     class Meta:
-        unique_together = ('group', 'invited_user_disp')
         permissions = (
             ('ro', 'Read only'),
             ('rw', 'Read write'),
