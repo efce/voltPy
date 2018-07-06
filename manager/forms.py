@@ -103,6 +103,50 @@ class ChangePassForm(forms.Form):
             manager.helpers.functions.add_notification(request, 'Incorrect password')
 
 
+class InviteUserForm(forms.Form):
+    username = forms.CharField(
+        max_length=255,
+        initial="",
+        validators=[User.username_validator]
+    )
+
+    def __init__(self, *args, group_id, **kwargs):
+        super(InviteUserForm, self).__init__(*args, **kwargs)
+        self.fields['group_id'] = forms.CharField(
+            max_length=10,
+            initial=group_id,
+            widget=forms.HiddenInput()
+        )
+
+    def process(self, group):
+        if group.id != int(self.cleaned_data['group_id']):
+            raise VoltPyNotAllowed('Error in form')
+        inv_user_disp = self.cleaned_data['username']
+        inv_user = User.objects.filter(username=inv_user_disp)
+        is_member = False
+        if not inv_user.exists():
+            inv_user = None
+        else:
+            inv_user = inv_user[0]
+            is_member = inv_user.groups.filter(id=group.id).exists()
+
+        alread_exists = mmodels.GroupInvitation.objects.filter(
+            invited_user_disp=inv_user_disp,
+            group=group,
+        ).exists()
+
+        if alread_exists or is_member:
+            return False
+
+        inv = mmodels.GroupInvitation(
+            invited_user=inv_user,
+            invited_user_disp=self.cleaned_data['username'],
+            group=group,
+        )
+        inv.save()
+        return True
+
+
 class ShareWithGroupForm(forms.Form):
     CHOICES = (
         ('ns', 'Not shared'),
