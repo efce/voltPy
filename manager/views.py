@@ -229,6 +229,87 @@ def confirmNewEmail(request, uid, token):
 
 @redirect_on_voltpyexceptions
 @with_user
+def acceptInvitation(request, user, inv_id):
+    inv_id = int(inv_id)
+    inv = mmodels.GroupInvitation.objects.filter(
+        id=inv_id,
+        invited_user=user,
+        accepted=False,
+        deleted=False
+    )
+    if not inv.exists():
+        raise VoltPyDoesNotExists('Invitation does not exists or already accepted')
+    inv = inv[0]
+    
+    if request.method == "POST" and request.POST.get('confirm', False):
+        confForm = mforms.GenericConfirmForm(request.POST)
+        if confForm.confirmed():
+            inv.accept()
+            add_notification(request, 'Invitation accepted')
+            return HttpResponseRedirect(reverse('settings'))
+        else:
+            add_notification(request, 'Check the checkbox to confirm.', 1)
+
+    else:
+        confForm = mforms.GenericConfirmForm()
+
+    context = {
+        'text_to_confirm': 'Join group {group} ?'.format(
+            group=inv.group.name
+        ),
+        'form': confForm,
+        'user': user,
+    }
+
+    return voltpy_render(
+        request=request,
+        template_name='manager/confirmGeneric.html',
+        context=context
+    )
+
+
+@redirect_on_voltpyexceptions
+@with_user
+def cancelInvitation(request, user, inv_id):
+    inv_id = int(inv_id)
+    inv = mmodels.GroupInvitation.filter(
+        id=inv_id,
+        accepted=False,
+    )
+    if not inv.exists():
+        raise VoltPyDoesNotExists('Invitation does not exists or already accepted')
+    inv = inv[0]
+    
+    if request.method == "POST" and request.POST.get('confirm', False):
+        confForm = mforms.GenericConfirmForm(request.POST)
+        if confForm.confirmed():
+            inv.delete()
+            add_notification(request, 'Invitation canceled')
+            return HttpResponseRedirect(reverse('settings'))
+        else:
+            add_notification(request, 'Check the checkbox to confirm.', 1)
+
+    else:
+        confForm = mforms.GenericConfirmForm()
+
+    context = {
+        'text_to_confirm': 'Cancel invitation of {username} to {group} ?'.format(
+            username=inv.invited_user_disp,
+            group=inv.group.name
+        ),
+        'form': confForm,
+        'user': user,
+    }
+
+    return voltpy_render(
+        request=request,
+        template_name='manager/confirmGeneric.html',
+        context=context
+    )
+
+
+@redirect_on_voltpyexceptions
+@with_user
 def settings(request, user):
     if request.method == 'POST':
         if request.POST.get('apply_settings', False):
@@ -241,9 +322,19 @@ def settings(request, user):
             form = mforms.SettingsForm(user=user)
     else:
         form = mforms.SettingsForm(user=user)
+    inv_recv = mmodels.GroupInvitation.objects.filter(
+        deleted=False,
+        accepted=False,
+        invited_user=user,
+    )
+    inv_sent = mmodels.GroupInvitation.filter(
+        accepted=False,
+    )
     context = {
         'user': user,
         'form': form,
+        'inv_sent': inv_sent,
+        'inv_recv': inv_recv,
     }
     return voltpy_render(
         request=request,
@@ -942,24 +1033,72 @@ def getShareMenu(request, user):
 @with_user
 def leaveGroup(request, user, group_id):
     try:
-        group = mmodels.Dataset.get(id=int(group_id))
+        group = Group.objects.get(id=int(group_id))
     except ObjectDoesNotExist:
         raise VoltPyDoesNotExists()
     if user.profile.owned_groups.filter(id=group.id).exists():
         raise VoltPyNotAllowed('Creator cannot leaeve group')
-    #TODO: NOT IMPLEMENTED
+    
+    if request.method == "POST" and request.POST.get('confirm', False):
+        confForm = mforms.GenericConfirmForm(request.POST)
+        if confForm.confirmed():
+            user.leave_group(group)
+            add_notification(request, 'Group left')
+            return HttpResponseRedirect(reverse('settings'))
+        else:
+            add_notification(request, 'Check the checkbox to confirm.', 1)
+
+    else:
+        confForm = mforms.GenericConfirmForm()
+
+    context = {
+        'text_to_confirm': 'Leave group {group} ?'.format(
+            group=group.name
+        ),
+        'form': confForm,
+        'user': user,
+    }
+    return voltpy_render(
+        request=request,
+        template_name='manager/confirmGeneric.html',
+        context=context
+    )
 
 
 @redirect_on_voltpyexceptions
 @with_user
 def inviteUser(request, user, group_id):
     try:
-        group = mmodels.Dataset.get(id=int(group_id))
+        group = Group.objects.get(id=int(group_id))
     except ObjectDoesNotExist:
         raise VoltPyDoesNotExists()
     if not user.profile.owned_groups.filter(id=group.id).exists():
         raise VoltPyDoesNotExists()
-    #TODO: NOT IMPLEMENTED
+    if request.method == 'POST':
+        if request.POST.get('_voltJS_backButton', False):
+            return HttpResponseRedirect(reverse('showGroup', args=[group.id]))
+        form = mforms.InviteUserForm(request.POST, group_id=group.id)
+        if form.is_valid():
+            if form.process(group):
+                add_notification(request, 'Invitation send')
+                return HttpResponseRedirect(reverse('showGroup', args=[group.id]))
+            else:
+                add_notification(request, 'Invitation not send, maybe already invited?')
+    else:
+        form = mforms.InviteUserForm(group_id=group.id)
+
+    form_disp = loader.render_to_string('manager/form.html', request=request, context={'form': form, 'submit': 'Invite'})
+    return voltpy_render(
+        request=request,
+        template_name="manager/display.html",
+        context={
+            'user': user,
+            'display': form_disp,
+            'window_title': 'Invite user',
+            'fieldset_title': 'Invite user to %s' % group.name,
+            'extra_style': '',
+        }
+    )
 
 
 @redirect_on_voltpyexceptions

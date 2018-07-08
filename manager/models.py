@@ -105,6 +105,17 @@ def user_is_temp(self):
 User.is_temp = user_is_temp
 
 
+def user_leave_group(self, group):
+    from guardian.shortcuts import remove_perm
+    types = [Dataset, Analysis, File, Fileset]
+    for t in types:
+        for d in t.filter(owner=self):
+            remove_perm('ro', d, group)
+            remove_perm('rw', d, group)
+    self.groups.remove(group)
+User.leave_group = user_leave_group
+
+
 def displayable_groups(self):
     if any([
         self is None,
@@ -122,6 +133,14 @@ def displayable_groups(self):
                     reverse('showGroup', args=[g.id]),
                     '\'">Manage</button>',
                 ])
+            else:
+                gstr = ''.join([
+                    gstr,
+                    '&nbsp;<button onclick="document.location.href=\'',
+                    reverse('leaveGroup', args=[g.id]),
+                    '\'">Leave</button>',
+                ])
+
             gstr = gstr
             ret.append(gstr)
         return ret
@@ -894,6 +913,37 @@ class Processing(ModelMethod):
 
     def getUrl(self):
         return reverse('showDataset', args=[self.dataset.id])
+
+
+class GroupInvitation(VoltPyModel):
+    creation_date = models.DateField(auto_now_add=True)
+    group = models.ForeignKey(Group, on_delete=models.DO_NOTHING)
+    invited_user = models.ForeignKey(User, null=True, default=None, on_delete=models.DO_NOTHING, related_name='invited')
+    invited_user_disp = models.TextField(default='')
+    accepted = models.BooleanField(default=False)
+
+    class Meta:
+        permissions = (
+            ('ro', 'Read only'),
+            ('rw', 'Read write'),
+            ('del', 'Delete'),
+        )
+
+    def accept(self):
+        if self.deleted:
+            raise VoltPyNotAllowed()
+        if not self.owner.profile.owned_groups.filter(id=self.group.id).exists():
+            raise VoltPyNotAllowed()
+        if manager.helpers.functions.get_user() != self.invited_user:
+            raise VoltPyNotAllowed()
+        self.invited_user.groups.add(self.group)
+        self.accepted = True
+        gu = manager.helpers.functions.get_user
+        manager.helpers.functions.get_user = lambda: self.owner
+        try:
+            self.save()
+        finally:
+            manager.helpers.functions.get_user = gu
 
 
 class SharedLink(VoltPyModel):
