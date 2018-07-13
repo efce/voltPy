@@ -21,8 +21,8 @@ class Confirmation(MethodStep):
         conf_form = self.ConfirmForm()
         template = loader.get_template('manager/form.html')
         context = { 
-            'form': conf_form, 
-            'submit': 'confirm' 
+            'form': conf_form,
+            'submit': 'confirm'
         }
         conf_txt = template.render(
             context=context,

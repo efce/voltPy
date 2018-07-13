@@ -108,7 +108,7 @@ class Method(ABC):
             self.step['object'] = None
 
     def __nextStep(self):
-        if (self.model.active_step_num+1) < len(self._steps):
+        if (self.model.active_step_num + 1) < len(self._steps):
             self.model.active_step_num = self.model.active_step_num + 1
             self.model.save()
             self.step = self._steps[self.model.active_step_num]
