@@ -71,8 +71,8 @@ in standard addition voltammetry" J. Electroanal. Chem., 2012, 684, 38–46.
 
     def finalize(self, user):
         try:
-            self.model.custom_data['PeakMaximum'] = float(self.model.steps_data['SelectPoint'])
-            self.model.custom_data['PeakSpan'] = self.model.steps_data['SelectRange']
+            self.model.custom_data['PeakMaximum'] = float(SelectPoint.getData(self))
+            self.model.custom_data['PeakSpan'] = SelectRange.getData(self)
         except ValueError:
             raise VoltPyFailed('No values selected.')
         self.__perform(self.model.dataset)

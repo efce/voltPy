@@ -11,7 +11,6 @@ from manager.operations.methodsteps.selectrange import SelectRange
 from manager.operations.methodsteps.settings import Settings
 from manager.exceptions import VoltPyNotAllowed
 from manager.exceptions import VoltPyFailed
-from manager.helpers.functions import check_dataset_integrity
 from manager.helpers.fithelpers import fit_capacitive_eq
 from manager.helpers.fithelpers import calc_capacitive
 from manager.operations.checks.check_sampling import check_sampling
@@ -234,9 +233,10 @@ doi: 10.1016/S0169-7439(02)00089-8
             raise VoltPyFailed('Computation error.')
 
     def finalize(self, user):
-        self.model.custom_data['DecomposeRange'] = self.model.steps_data['SelectRange']
-        self.model.custom_data['MethodType'] = int(self.model.steps_data['Settings'].get('Pulse and stair', 0))
-        self.model.custom_data['Centering'] = int(self.model.steps_data['Settings'].get('Data centering', 1))
+        settings = Settings.getData(self)
+        self.model.custom_data['DecomposeRange'] = SelectRange.getData(self)
+        self.model.custom_data['MethodType'] = int(settings.get('Pulse and stair', 0))
+        self.model.custom_data['Centering'] = int(settings.get('Data centering', 1))
         self.__perform(self.model.dataset)
         self.model.step = None
         self.model.completed = True

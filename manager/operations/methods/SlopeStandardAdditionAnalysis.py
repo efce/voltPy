@@ -48,7 +48,7 @@ signal analysis in voltammetry" The Analyst, 2017, 142(10), 1729–1734.
         from manager.helpers.prepareStructForSSAA import prepareStructForSSAA
         Param = mmodels.Curve.Param
         self.model.custom_data['selectedIndex'] = \
-            self.model.dataset.curves_data.all()[0].xValue2Index(self.model.steps_data['SelectPoint'])
+            self.model.dataset.curves_data.all()[0].xValue2Index(SelectPoint.getData(self))
         peak = self.model.custom_data.get('selectedIndex', 0)
         X = []
         Conc = []
@@ -137,7 +137,7 @@ signal analysis in voltammetry" The Analyst, 2017, 142(10), 1729–1734.
         xvec2.append(-self.model.custom_data['result'])
         col_cnt = 0
         for k, fe in self.model.custom_data['fitEquation'].items():
-            Y = [fe['slope']*x+fe['intercept'] for x in xvec2]
+            Y = [fe['slope'] * x + fe['intercept'] for x in xvec2]
             p.add(
                 x=xvec2,
                 y=Y,

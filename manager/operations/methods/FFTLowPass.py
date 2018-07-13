@@ -34,10 +34,10 @@ signal back to the original domain.
             newcdConc = dataset.getCurveConcDict(cd)
             yvec = newcd.yVector
             ylen = len(yvec)
-            st = round(self.model.steps_data['SelectFrequency'])
+            st = round(SelectFrequency.getData(self))
             en = ylen - st + 1
             ffty = np.fft.fft(yvec)
-            ffty[st:en] = [0]*(en-st)
+            ffty[st:en] = [0] * (en - st)
             iffty = np.fft.ifft(ffty)
             newcd.yVector = np.real(iffty)
             newcd.save()

@@ -14,6 +14,18 @@ class MethodStep(ABC):
     def __init__(self, initial={}):
         self.initial = initial
 
+    @property
+    def plot_interaction(self) -> str:
+        """
+        Sets the type of interaction with the main_plot,
+        for avaiable options please see PlotManager.
+        """
+        raise NotImplementedError
+
+    @classmethod
+    def getData(cls, method_instance):
+        return method_instance.model.steps_data.get(cls.__name__, None)
+
     @abstractmethod
     def process(self, user, request, model) -> bool:
         """
@@ -30,4 +42,3 @@ class MethodStep(ABC):
         with any forms necessary included.
         """
         return {'head': '', 'body': ''}
-

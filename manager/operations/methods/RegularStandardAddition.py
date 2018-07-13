@@ -63,9 +63,9 @@ has to be included in the dataset.
     def finalize(self, user):
         xvalues = []
         yvalues = []
-        selRange = self.model.steps_data['SelectRange']
+        selRange = SelectRange.getData(self)
         try:
-            analyte = self.model.analytes.get(id=int(self.model.steps_data['SelectAnalyte']))
+            analyte = self.model.analytes.get(id=int(SelectAnalyte.getData(self)))
         except:
             VoltPyFailed('Wrong analyte selected.')
         self.model.custom_data['analyte'] = analyte.name
@@ -152,4 +152,4 @@ has to be included in the dataset.
             ])
         }
 
-main_class = RegularStandardAddition 
+main_class = RegularStandardAddition

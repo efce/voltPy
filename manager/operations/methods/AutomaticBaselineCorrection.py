@@ -72,9 +72,10 @@ baseline correction in voltammetry" Electrochimica Acta, 2014, 136, 195–203.
         dataset.save()
 
     def finalize(self, user):
+        settings = Settings.getData(self)
         try:
-            self.model.custom_data['iterations'] = int(self.model.steps_data['Settings']['Iterations'])
-            self.model.custom_data['degree'] = int(self.model.steps_data['Settings']['Degree'])
+            self.model.custom_data['iterations'] = int(settings['Iterations'])
+            self.model.custom_data['degree'] = int(settings['Degree'])
         except ValueError:
             raise VoltPyFailed('Wrong values for degree or iterations.')
         self.__perform(self.model.dataset)

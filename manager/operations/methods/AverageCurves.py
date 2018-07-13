@@ -41,7 +41,8 @@ plots which should be averaged.
 
     def finalize(self, user):
         cs = self.model.dataset
-        for k, f in self.model.steps_data['TagCurves'].items():
+        tags = TagCurves.getData(self)
+        for k, f in tags.items():
             if (len(f) > 1):
                 cid = f[0]
                 orgcd = cs.curves_data.get(id=cid)

@@ -60,6 +60,7 @@ until the last point is reached. Both the polynomial degree and the window size
             newcdConc = dataset.getCurveConcDict(cd)
             yvec = newcd.yVector
             xvec = newcd.xVector
+            settings = Settings.getData(self)
             newyvec = savgol_filter(
                 yvec,
                 self.model.custom_data['WindowSpan'],
@@ -72,9 +73,10 @@ until the last point is reached. Both the polynomial degree and the window size
         dataset.save()
 
     def finalize(self, user):
+        settings = Settings.getData(self)
         try:
-            self.model.custom_data['WindowSpan'] = int(self.model.steps_data['Settings']['Window Span'])
-            self.model.custom_data['Degree'] = int(self.model.steps_data['Settings']['Degree'])
+            self.model.custom_data['WindowSpan'] = int(settings['Window Span'])
+            self.model.custom_data['Degree'] = int(settings['Degree'])
         except ValueError:
             raise VoltPyFailed('Wrong values for span or degree.')
         self.__perform(self.model.dataset)
