@@ -32,15 +32,10 @@ class MedianFilter(method.ProcessingMethod):
 
     def __perform(self, dataset):
         for cd in dataset.curves_data.all():
-            newcd = cd.getCopy()
-            newcdConc = dataset.getCurveConcDict(cd)
-            yvec = newcd.yVector
-            xvec = newcd.xVector
+            yvec = cd.yVector
+            xvec = cd.xVector
             newyvec = medfilt(yvec)
-            newcd.yVector = newyvec
-            newcd.save()
-            dataset.removeCurve(cd)
-            dataset.addCurve(newcd, newcdConc)
+            dataset.updateCurve(self.model, cd, newyvec)
         dataset.save()
 
     def finalize(self, user):

@@ -60,13 +60,8 @@ in standard addition voltammetry" J. Electroanal. Chem., 2012, 684, 38–46.
         yvecs = yvecs.T
         (no_bkg, bkg) = geneticAlgorithm(yvecs, peak_max_index, peak_start_index, peak_end_index)
         for i, cd in enumerate(dataset.curves_data.all()):
-            newcd = cd.getCopy()
-            newcdConc = dataset.getCurveConcDict(cd)
-            newcd.yVector = no_bkg.T[:, i]
-            newcd.date = timezone.now()
-            newcd.save()
-            dataset.removeCurve(cd)
-            dataset.addCurve(newcd, newcdConc)
+            newyvec = no_bkg.T[:, i]
+            dataset.updateCurve(self.model, cd, newyvec)
         dataset.save()
 
     def finalize(self, user):

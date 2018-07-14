@@ -59,16 +59,11 @@ baseline correction in voltammetry" Electrochimica Acta, 2014, 136, 195–203.
         iterations = self.model.custom_data['iterations']
         degree = self.model.custom_data['degree']
         for cd in dataset.curves_data.all():
-            newcd = cd.getCopy()
-            newcdConc = dataset.getCurveConcDict(cd)
-            yvec = newcd.yVector
+            yvec = cd.yVector
             xvec = range(len(yvec))
             yvec = calc_abc(xvec, yvec, degree, iterations)['yvec']
-            newcd.yVector = yvec
-            newcd.date = timezone.now()
-            newcd.save()
-            dataset.removeCurve(cd)
-            dataset.addCurve(newcd, newcdConc)
+            newyvec = yvec
+            dataset.updateCurve(self.model, cd, newyvec)
         dataset.save()
 
     def finalize(self, user):

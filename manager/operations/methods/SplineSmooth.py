@@ -47,17 +47,12 @@ of points in the signal. With factor = 1 the whole signal is represented as a
     def __perform(self, dataset):
         factor = self.model.custom_data['Factor']
         for cd in dataset.curves_data.all():
-            newcd = cd.getCopy()
-            newcdConc = dataset.getCurveConcDict(cd)
-            yvec = newcd.yVector
-            xvec = newcd.xVector
+            yvec = cd.yVector
+            xvec = cd.xVector
             spline_fit = UnivariateSpline(xvec, yvec)
             spline_fit.set_smoothing_factor(factor)
             newyvec = spline_fit(xvec)
-            newcd.yVector = newyvec
-            newcd.save()
-            dataset.removeCurve(cd)
-            dataset.addCurve(newcd, newcdConc)
+            dataset.updateCurve(self.model, cd, newyvec)
         dataset.save()
 
     def finalize(self, user):

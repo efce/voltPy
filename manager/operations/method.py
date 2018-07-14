@@ -141,12 +141,12 @@ class Method(ABC):
         """
         sid = transaction.savepoint()
         try:
-            isBack = request.POST.get('_voltJS_backButton', 0) 
+            isBack = request.POST.get('_voltJS_backButton', 0)
             if isBack != 0:
                 self.__prevStep()
                 return
 
-            isBack = request.POST.get('_voltJS_backButton', 0) 
+            isBack = request.POST.get('_voltJS_backButton', 0)
             if self.step is None or self.step['object'] is None:
                 self.has_next = False
             elif self.step['object'].process(user=user, request=request, model=self.model):
@@ -157,10 +157,6 @@ class Method(ABC):
                 self.model.active_step_num = None
                 self.model.completed = True
                 self.model.save()
-                if isinstance(self.model, mmodels.Processing):
-                    for cd in self.model.dataset.curves_data.all():
-                        cd.processedWith = self.model
-                        cd.save()
                 self.step = None
         except VoltPyFailed as e:
             transaction.savepoint_rollback(sid)

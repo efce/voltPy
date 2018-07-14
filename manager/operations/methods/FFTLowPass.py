@@ -30,19 +30,15 @@ signal back to the original domain.
 
     def __perform(self, dataset):
         for cd in dataset.curves_data.all():
-            newcd = cd.getCopy()
-            newcdConc = dataset.getCurveConcDict(cd)
-            yvec = newcd.yVector
+            yvec = cd.yVector
             ylen = len(yvec)
             st = round(SelectFrequency.getData(self))
             en = ylen - st + 1
             ffty = np.fft.fft(yvec)
             ffty[st:en] = [0] * (en - st)
             iffty = np.fft.ifft(ffty)
-            newcd.yVector = np.real(iffty)
-            newcd.save()
-            dataset.removeCurve(cd)
-            dataset.addCurve(newcd, newcdConc)
+            newyvec = np.real(iffty)
+            dataset.updateCurve(self.model, cd, newyvec)
         dataset.save()
 
     def apply(self, user, dataset):

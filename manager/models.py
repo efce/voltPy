@@ -401,7 +401,7 @@ class CurveData(VoltPyModel):
     potential = SimpleNumpyField(null=True, default=None)
     current = SimpleNumpyField(null=True, default=None)
     based_on = models.ForeignKey('CurveData', null=True, default=None, on_delete=models.DO_NOTHING)
-    processedWith = models.ForeignKey('Processing', null=True, default=None, on_delete=models.DO_NOTHING)
+    processed_with = models.ForeignKey('Processing', null=True, default=None, on_delete=models.DO_NOTHING)
     _current_samples = models.ForeignKey(SamplingData, on_delete=models.DO_NOTHING, default=None, null=True)
     _crop_beg = models.IntegerField(null=True, default=None)
     _crop_end = models.IntegerField(null=True, default=None)
@@ -448,13 +448,16 @@ class CurveData(VoltPyModel):
 
     @overrides
     def save(self, *args, **kwargs):
-        if self.__current_samples_changed:
-            self._current_samples.save()
-            self.__current_samples_changed = False
-        self.potential = np.array(self.potential)
-        self.current = np.array(self.current)
-        self.time = np.array(self.time)
-        super().save(*args, **kwargs)
+        if self.id is None:
+            if self.__current_samples_changed:
+                self._current_samples.save()
+                self.__current_samples_changed = False
+            self.potential = np.array(self.potential)
+            self.current = np.array(self.current)
+            self.time = np.array(self.time)
+            super().save(*args, **kwargs)
+        else:
+            raise VoltPyNotAllowed("CurveData is read only model. Update CurveData via Dataset.updateCurve method.")
 
     def getCopy(self):
         newcd = copy(self)
@@ -462,15 +465,16 @@ class CurveData(VoltPyModel):
         newcd.pk = None
         newcd.date = None
         newcd.based_on = self
-        newcd.save()
+        newcd._state.adding = True
+        #newcd.save()
         return newcd
 
     def getProcessingHistory(self):
         steps = []
         c = self
         while True:
-            if c.processedWith.deleted is False:
-                steps.append(c.processedWith)
+            if c.processed_with.deleted is False:
+                steps.append(c.processed_with)
             if c.based_on is not None:
                 c = c.based_on
             else:
@@ -629,6 +633,25 @@ class Dataset(VoltPyModel):
         if not self.curves_data.filter(id=cd.id).exists():
             self.curves_data.add(cd)
         self.setCurveConcDict(cd, concValues, conc_dict)
+    
+    def replaceCurve(self, old_cd: CurveData, new_cd: CurveData):
+        if not self.curves_data.filter(id=old_cd.id).exists():
+            raise ValueError("CurveData is a part of this Dataset")
+        old_conc = self.getCurveConcDict(old_cd)
+        self.removeCurve(old_cd)
+        self.addCurve(new_cd, old_conc)
+
+    def updateCurve(self, processing_instance, cd: CurveData, yVector: List, xVector: List = None) -> CurveData:
+        if not self.curves_data.filter(id=cd.id).exists():
+            raise ValueError("CurveData is a part of this Dataset")
+        new_cd = cd.getCopy()
+        new_cd.processed_with = processing_instance
+        new_cd.yVector = yVector
+        if xVector is not None:
+            new_cd.xVector = xVector
+        new_cd.save()
+        self.replaceCurve(cd, new_cd)
+        return new_cd
 
     def setCurveConcDict(self, cd: CurveData, curve_conc_dict: Dict, curve_conc_units: Dict):
         newAnalytes = list(set(curve_conc_dict.keys()) - set(self.analytes_conc.keys()))
