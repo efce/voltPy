@@ -445,16 +445,14 @@ class PlotManager:
         )
         if not self.interaction or self.interaction == 'none':
             w = widgetbox(radio_button_group, height=but_height)
-            actionbar = row([w], sizing_mode='fixed', height=but_height)
         else:
-            w = widgetbox(radio_button_group, height=but_height)
             # actionbar = row([px, w, bback, bforward], width=self.plot_width)
             if self.include_x_switch:
-                actionbar = row([w, bunselect], sizing_mode='fixed', height=but_height)
+                w = widgetbox(radio_button_group, bunselect, height=but_height)
             else:
-                actionbar = row([bunselect], sizing_mode='fixed', height=but_height)
+                w = widgetbox(bunselect, height=but_height)
 
-        return (self.p, actionbar)
+        return (self.p, w)
         """
         if self.include_x_switch:
             layout = column([self.p, actionbar], sizing_mode='stretch_both', width=self.plot_width)
