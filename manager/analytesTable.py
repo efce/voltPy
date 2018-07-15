@@ -18,13 +18,13 @@ def analytesTable(obj, obj_type: str) -> str:
         '<table id="fixed_header" class="analytes_table">',
         '<thead>'
     ]
-    ret.append('<tr><th>Name</th>')
+    ret.append('<tr style="height: auto"><th>Name</th>')
 
     unitsTrans = dict(mmodels.Dataset.CONC_UNITS)
 
     for a in cs.analytes.all():
         ret.append("""
-            <th class="at_hideable _voltJS_changeValue_{an_id}"><button type="button" class="{goTo}"{disabled}> {an_name} [{an_unit}]</button> </th>""".format(
+            <th style="height: inherit; min-height: 35px" class="at_hideable _voltJS_changeValue_{an_id}"><button style="height: auto" type="button" class="{goTo}"{disabled}> {an_name} [{an_unit}]</button> </th>""".format(
                 an_name=a.name,
                 an_id=a.id,
                 an_unit=unitsTrans[cs.analytes_conc_unit[a.id]],
