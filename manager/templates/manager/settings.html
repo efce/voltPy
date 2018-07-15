@@ -10,24 +10,24 @@ Email: {{ user.email }} <button onclick="document.location.href='{% url 'changeE
 </fieldset>
 <fieldset class="mt_rest">
 <legend class="mt_name">Groups</legend>
-<button onclick="document.location.href='{% url 'newGroup' %}'">Create new group</button>
-<ul style="display:block; width: 100%; float: left">
-{% if user.displayable_groups %}
-{% for g in user.displayable_groups %}
-    <li>{{ g | safe }}</li>
-{% endfor %}
+    <button onclick="document.location.href='{% url 'newGroup' %}'">Create new group</button>
+    <ul style="display:block; width: 100%; float: left">
+    {% if user.displayable_groups %}
+    {% for g in user.displayable_groups %}
+        <li>{{ g | safe }}</li>
+    {% endfor %}
 
-{% else %}
-Not belong to any group.
-</ul>
-{% endif %}
-    <fieldset><legend class="mt_name" >Invitations sent</legend>
+    {% else %}
+    Not belong to any group.
+    {% endif %}
+    </ul>
+    <fieldset style="width: 60%" class="mt_rest"><legend class="mt_name" >Invitations sent</legend>
         {% for inv in inv_sent %}
             {{ inv.creation_date | date:"c"}}: invited user {{ inv.invited_user_disp }} to group {{ inv.group.name }} 
             {% if inv.accepted %}(Accepted){% else %}(Pending) <button onclick="document.location.href='{% url 'cancelInvitation' inv.id %}'">Cancel invitation</button>{% endif%} <br />
         {% endfor %}
     </fieldset>
-    <fieldset><legend class="mt_name">Invitations received</legend>
+    <fieldset style="width: 60%" class="mt_rest"><legend class="mt_name">Invitations received</legend>
         {% for inv in inv_recv %}
             {{ inv.creation_date | date:"c"}}: invited to group {{ inv.group.name }} 
             {% if inv.accepted %}(Accepted){% else %}(Pending) <button onclick="document.location.href='{% url 'acceptInvitation' inv.id %}'">Accept invitation</button>{% endif%}
