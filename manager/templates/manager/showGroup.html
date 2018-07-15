@@ -9,12 +9,12 @@
     </legend>
     <fieldset class="mt_rest" style="float: left; width: 45%">
         <legend class="mt_name">Users</legend>
+        <button onclick="document.location.href='{% url 'inviteUser' group.id %}'">Invite user to group</button>
         <ul>
         {% for us in group.user_set.all %}
             <li>{{ us }} {% if us.id != user.id %}<button onclick="document.location.href='{% url 'removeUser' group.id us.id %}'">Remove from group</button>{% endif %}</li>
         {% endfor %}
         </ul>
-        <button onclick="document.location.href='{% url 'inviteUser' group.id %}'">Invite user to group</button>
     </fieldset>
     <fieldset class="mt_rest" style="float: right; width: 45%">
         <legend class="mt_name">Shared resources</legend>
