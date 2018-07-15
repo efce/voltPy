@@ -380,7 +380,7 @@ class CurveIndex(VoltPyModel):
     current_min = models.FloatField()  # in mV
     current_max = models.FloatField()  # in mV
     current_range = models.FloatField()  # in mV
-    sampling_rate = models.IntegerField()  # in kHz
+    sampling_rate = models.FloatField()  # in kHz
 
     class Meta:
         permissions = (

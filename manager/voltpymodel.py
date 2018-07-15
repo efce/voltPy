@@ -17,6 +17,7 @@ class VoltPyModel(models.Model):
     class Meta:
         abstract = True
 
+    @overrides
     def save(self):
         user = manager.helpers.functions.get_user()
         if self.id is None:
@@ -58,6 +59,7 @@ class VoltPyModel(models.Model):
         perms = ('rw', 'ro')
         return get_objects_for_user(user, perms, klass=cls, any_perm=True).filter(deleted=False)
 
+    @overrides
     def delete(self):
         user = manager.helpers.functions.get_user()
         if user.has_perm('del', self):
