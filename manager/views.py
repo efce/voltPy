@@ -607,8 +607,8 @@ def deleteDataset(request, user, dataset_id):
 @redirect_on_voltpyexceptions
 @with_user
 def deleteFromDataset(request, user, dataset_id):
-    cs = mmodels.Dataset.get(id=int(dataset_id))
-    return deleteFromDatasetLike(request, user, cs)
+    ds = mmodels.Dataset.get(id=int(dataset_id))
+    return deleteFromDatasetLike(request, user, ds)
 
 
 @redirect_on_voltpyexceptions
@@ -618,12 +618,15 @@ def deleteFromFile(request, user, file_id):
     return deleteFromDatasetLike(request, user, cs)
 
 
-def deleteFromDatasetLike(request, user, cs):
+def deleteFromDatasetLike(request, user, cs: mmodels.Dataset):
     if request.method == 'POST':
         text = []
         if request.POST.get('confirm', False):
             confForm = mforms.GenericConfirmForm(request.POST)
-            cdids = request.POST.get('cdids', '').split(',')
+            cdids = request.POST.get('cdids', '')
+            if cdids == '':
+                return HttpResponseRedirect(cs.getUrl())
+            cdids = cdids.split(',')
             cdids = list(map(int, cdids))
             if confForm.confirmed():
                 cds = mmodels.CurveData.filter(id__in=cdids)
@@ -656,6 +659,8 @@ def deleteFromDatasetLike(request, user, cs):
                 for cd in cds.all():
                     text.append('<li> %s </li>' % cd.curve.name)
                 text.append('</ul>')
+            else:
+                return HttpResponseRedirect(cs.getUrl())
             extra_data = ''.join([
                 '<input type="hidden" name="cdids" value="',
                 ','.join(map(str, to_del)),
@@ -676,6 +681,7 @@ def deleteFromDatasetLike(request, user, cs):
             template_name='manager/confirmGeneric.html',
             context=context
         )
+    return HttpResponseRedirect(cs.getUrl())
 
 
 @redirect_on_voltpyexceptions
