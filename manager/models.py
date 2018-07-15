@@ -363,7 +363,7 @@ class Curve(VoltPyModel):
             self.comment,
             '">',
             self.name,
-            '</abbr><br /><sup style="font-size: x-small; white-space: nowrap;">',
+            '</abbr><br /><div style="display: inline-block; vertical-align: super; font-size: x-small; white-space: nowrap; text-overflow: ellipsis; overflow: hidden; width: 100%">',
             self.file.__str__(),
             '</sup></div>'
         ])
