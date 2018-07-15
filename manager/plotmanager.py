@@ -436,13 +436,13 @@ class PlotManager:
         #    width=250, 
         #    callback=CustomJS(args=args, code=js_back)
         #)
+        but_height = 35
         bunselect = Button(
             label="Undo selection",
             width=250,
-            height=35,
+            height=but_height,
             callback=CustomJS(args=args, code=js_back)
         )
-        but_height = 35
         if not self.interaction or self.interaction == 'none':
             w = widgetbox(radio_button_group, height=but_height)
             actionbar = row([w], sizing_mode='fixed', height=but_height)
