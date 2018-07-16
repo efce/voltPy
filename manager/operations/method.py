@@ -4,12 +4,11 @@ New procedures should extend either AnalysisMethod or
 ProcessingMethod.
 """
 
-from typing import Dict, Tuple
+from typing import Dict, List
 from abc import ABC, abstractmethod, abstractclassmethod
 import numpy as np
 from django.db import transaction
 from django.db import DatabaseError
-import manager.models as mmodels
 from manager.exceptions import VoltPyFailed
 from manager.helpers.functions import add_notification
 
@@ -25,7 +24,7 @@ class Method(ABC):
     """
 
     @property
-    def _steps(self) -> Tuple:
+    def _steps(self) -> List[Dict]:
         """
         tuple of dicts:
         Each dict defines what steps have to be taken
@@ -57,11 +56,11 @@ class Method(ABC):
         """
         raise NotImplementedError
 
-        """
-        checks described what tests should be made to the dataset in order for procedure
-        to be implemented correctly. Please use procedures from manager.operations.checks.
-        Use partial implementation of function if you need some parameters to be passed.
-        """
+    """
+    checks described what tests should be made to the dataset in order for procedure
+    to be implemented correctly. Please use procedures from manager.operations.checks.
+    Use partial implementation of function if you need some parameters to be passed.
+    """
     checks = ()
     errors = []
 
