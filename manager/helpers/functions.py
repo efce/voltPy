@@ -1,30 +1,35 @@
 import io
 import re
-import numpy as np
-import datetime
 import base64 as b64
-from collections import OrderedDict
+import datetime
 from typing import List
+from typing import Optional
+from typing import Callable
+from typing import Generic
+from collections import OrderedDict
+import numpy as np
 from django.urls import reverse
 from django.conf import settings
 from django.core.mail import send_mail
 from django.http import HttpResponseRedirect
 from django.http import HttpResponse
+from django.http.request import HttpRequest
 from django.shortcuts import render
 from django.template import loader
 from django.db.models import Q
-from django.utils.http import urlsafe_base64_encode
-from django.utils.encoding import force_bytes
 from django.contrib.sites.models import Site
+from django.contrib.auth.models import User
+from django.db.models import QuerySet
 from manager.exceptions import VoltPyNotAllowed
 from manager.exceptions import VoltPyFailed
+import manager
 import manager.plotmanager as mpm
 import manager.forms as mforms
 import manager.models as mmodels
 from manager.helpers.decorators import with_user
 
 
-def voltpy_render(*args, template_name, **kwargs):
+def voltpy_render(*args, template_name: str, **kwargs) -> HttpResponse:
     """
     This is proxy function which sets usually needed context elements.
     It is very much preferred over django default.
@@ -40,8 +45,8 @@ def voltpy_render(*args, template_name, **kwargs):
     ])
     context['bokeh_scripts'] = scr
     context['accepted_cookies'] = accepted_cookies
-    #context['plot_width'] = mpm.PlotManager.plot_width
-    #context['plot_height'] = mpm.PlotManager.plot_height
+    # context['plot_width'] = mpm.PlotManager.plot_width
+    # context['plot_height'] = mpm.PlotManager.plot_height
     notifications = request.session.pop('VOLTPY_notification', [])
     template = loader.get_template(template_name=template_name)
     if len(notifications) > 0:
@@ -56,7 +61,7 @@ def voltpy_render(*args, template_name, **kwargs):
     return HttpResponse(render_str)
 
 
-def voltpy_serve_csv(request, filedata, filename):
+def voltpy_serve_csv(request: HttpRequest, filedata: io.StringIO, filename: str) -> HttpResponse:
     from django.utils.encoding import smart_str
     response = render(
         request=request,
@@ -70,14 +75,20 @@ def voltpy_serve_csv(request, filedata, filename):
     return response
 
 
-def add_notification(request, text, severity=0):
+def add_notification(request: HttpRequest, text: str, severity: int=0) -> None:
     now = datetime.datetime.now().strftime('%H:%M:%S')
     notifications = request.session.get('VOLTPY_notification', [])
     notifications.append({'text': ''.join([now, ': ', text]), 'severity': severity})
     request.session['VOLTPY_notification'] = notifications
 
 
-def delete_helper(request, user, item, delete_fun=None, onSuccessRedirect=None):
+def delete_helper(
+        request: HttpRequest,
+        user: User,
+        item: Generic,
+        delete_fun: Optional[Callable]=None,
+        onSuccessRedirect: Optional[str]=None
+) -> HttpResponse:
     """
     The generic function to which offers ability to delete
     model instance with user confirmation.
@@ -114,7 +125,14 @@ def delete_helper(request, user, item, delete_fun=None, onSuccessRedirect=None):
     )
 
 
-def generate_plot(request, user, to_plot=None, plot_type=None, value_id=None, **kwargs):
+def generate_plot(
+        request: HttpRequest,
+        user: User,
+        to_plot: Optional[str]=None,
+        plot_type: Optional[str]=None,
+        value_id: Optional[int]=None,
+        **kwargs
+) -> List:
     assert (to_plot is not None and plot_type is None) or (to_plot is None and plot_type is not None)
     if to_plot is not None:
         if isinstance(to_plot, mmodels.File):
@@ -127,7 +145,7 @@ def generate_plot(request, user, to_plot=None, plot_type=None, value_id=None, **
             plot_type = 'analysis'
         else:
             raise VoltPyFailed('Could not plot')
-        
+
     allowedTypes = [
         'file',
         'analysis',
@@ -150,7 +168,7 @@ def generate_plot(request, user, to_plot=None, plot_type=None, value_id=None, **
         data = pm.datasetHelper(user, cf)
         pm.xlabel = pm.xLabelHelper(user)
         pm.include_x_switch = True
-    elif (plot_type == 'dataset'):
+    elif plot_type == 'dataset':
         if to_plot is None:
             cs = mmodels.Dataset.get(id=value_id)
         else:
@@ -158,14 +176,14 @@ def generate_plot(request, user, to_plot=None, plot_type=None, value_id=None, **
         data = pm.datasetHelper(user, cs)
         pm.xlabel = pm.xLabelHelper(user)
         pm.include_x_switch = True
-    elif (plot_type == 'analysis'):
+    elif plot_type == 'analysis':
         if to_plot is None:
             data = pm.analysisHelper(user, value_id)
         else:
             data = to_plot
         pm.xlabel = pm.xLabelHelper(user)
         pm.include_x_switch = False
-    elif (plot_type == 'fileset'):
+    elif plot_type == 'fileset':
         if to_plot is None:
             fs = mmodels.Fileset.get(id=value_id)
         else:
@@ -189,7 +207,7 @@ def generate_plot(request, user, to_plot=None, plot_type=None, value_id=None, **
     return pm.getEmbeded(request, user, vtype, vid)
 
 
-def is_number(s):
+def is_number(s: Generic) -> bool:
     try:
         float(s)
         return True
@@ -205,14 +223,14 @@ def is_number(s):
 
 
 def form_helper(
-        user,
-        request,
-        formClass, 
-        submitName='formSubmit', 
-        submitText='Submit', 
-        formExtraData={}, 
-        formTemplate='manager/form_inline.html'
-):
+        request: HttpRequest,
+        user: User,
+        formClass: Callable,
+        submitName: str='formSubmit',
+        submitText: str='Submit',
+        formExtraData: dict={},
+        formTemplate: str='manager/form_inline.html'
+) -> dict:
     if request.method == 'POST':
         if submitName in request.POST:
             formInstance = formClass(request.POST, **formExtraData)
@@ -224,8 +242,8 @@ def form_helper(
         formInstance = formClass(**formExtraData)
 
     loadedTemplate = loader.get_template(formTemplate)
-    form_context = { 
-        'form': formInstance, 
+    form_context = {
+        'form': formInstance,
         'submit': submitName,
         'submit_text': submitText,
     }
@@ -236,12 +254,12 @@ def form_helper(
     return {'html': form_txt, 'instance': formInstance}
 
 
-def get_redirect_class(redirectUrl):
+def get_redirect_class(redirectUrl: str) -> str:
     ret = '_voltJS_urlChanger _voltJS_url@%s'
     return ret % b64.b64encode(redirectUrl.encode()).decode('UTF-8')
 
 
-def check_dataset_integrity(dataset, params_to_check: List):
+def check_dataset_integrity(dataset: mmodels.Dataset, params_to_check: List[int]) -> None:
     if len(dataset.curves_data.all()) < 2:
         return
     cd1 = dataset.curves_data.all()[0]
@@ -251,19 +269,18 @@ def check_dataset_integrity(dataset, params_to_check: List):
                 raise VoltPyFailed('All curves in dataset have to be similar.')
 
 
-def send_change_mail(user):
+def send_change_mail(user: User) -> bool:
     subject = 'Confirm voltammetry.center new email address'
     message = loader.render_to_string('mails/confirm_new_email.html', {
         'user': user,
         'domain': Site.objects.get_current(),
-        'uid': user.id, 
+        'uid': user.id,
         'token': user.profile.new_email_confirmation_hash,
     })
     return send_mail(subject, message, from_email=settings.DEFAULT_FROM_EMAIL, recipient_list=[user.profile.new_email])
 
 
-def generate_share_link(user, perm, obj):
-    import manager.models
+def generate_share_link(user: User, perm: str, obj: Generic) -> str:
     import random
     import string
     if obj.owner != user:
@@ -295,7 +312,7 @@ def generate_share_link(user, perm, obj):
     return sl.getLink()
 
 
-def paginate(request, queryset, sortable_by: List, current_page: int):
+def paginate(request: HttpRequest, queryset: QuerySet, sortable_by: List[str], current_page: int) -> str:
     page_size = 15
     path = request.path
     txt_sort = ''
@@ -336,14 +353,14 @@ def paginate(request, queryset, sortable_by: List, current_page: int):
             queryset = queryset.order_by('-id')
     else:
         raise VoltPyFailed('Error.')
-        
+
     splpath = path.split('/')
     if is_number(splpath[-2]):
         path = '/'.join(splpath[:-2])
         path += '/'
     ret = {}
     elements = len(queryset)
-    ret['number_of_pages'] = int(np.ceil(elements/page_size))
+    ret['number_of_pages'] = int(np.ceil(elements / page_size))
     if current_page <= 0 or current_page > ret['number_of_pages']:
         # TODO: Log wrong page number
         current_page = 1
@@ -373,15 +390,19 @@ def paginate(request, queryset, sortable_by: List, current_page: int):
         '<a href="%s%s/%s">[&lt;]</a>&nbsp;' % (path, str(current_page - 1) if (current_page > 1) else "1", txt_sort),
     ])
     for i in range(ret['number_of_pages']):
-        p = str(i+1)
+        p = str(i + 1)
         if int(p) == current_page:
             ret['paginator'] += '[{num}]&nbsp;'.format(num=p)
-        else: 
-            ret['paginator'] += '<a href="{path}{num}/{sort}">[{num}]</a>&nbsp;'.format(path=path, num=p, sort=txt_sort)
+        else:
+            ret['paginator'] += '<a href="{path}{num}/{sort}">[{num}]</a>&nbsp;'.format(
+                path=path,
+                num=p,
+                sort=txt_sort
+            )
     search_string = search_string.replace('<', '&lt;').replace('>', '&gt;')
     ret['search_results_for'] = (('<span class="css_search">Search results for&nbsp;<i>%s</i>:</span><br />' % search_string) if search_string else '')
     ret['paginator'] += ''.join([
-        '<a href="%s%s/%s">[&gt;]</a>&nbsp;' % (path, str(current_page+1) if (current_page < ret['number_of_pages']) else str(ret['number_of_pages']), txt_sort),
+        '<a href="%s%s/%s">[&gt;]</a>&nbsp;' % (path, str(current_page + 1) if (current_page < ret['number_of_pages']) else str(ret['number_of_pages']), txt_sort),
         '<a href="%s%s/%s">[&gt;&gt;]</a>' % (path, str(ret['number_of_pages']), txt_sort),
         '&nbsp; %d items out of %s ' % (len(ret['current_page_content']), items_count),
         '</div>'
@@ -389,11 +410,11 @@ def paginate(request, queryset, sortable_by: List, current_page: int):
     return ret
 
 
-def get_user():
+def get_user() -> User:
     return with_user._user
 
 
-def export_curves_data_as_csv(cds: List):
+def export_curves_data_as_csv(cds: List[mmodels.CurveData]) -> io.StringIO:
     """
     Turn a list of CurveData instances into CSV file.
     """
@@ -401,7 +422,7 @@ def export_curves_data_as_csv(cds: List):
     explen = len(cds)
     for i, cd in enumerate(cds):
         for x, y in zip(cd.xVector, cd.yVector):
-            tmp = cdict.get(x, [None]*explen)
+            tmp = cdict.get(x, [None] * explen)
             tmp[i] = y
             cdict[x] = tmp
     sortdict = OrderedDict(sorted(cdict.items()))

@@ -3,7 +3,6 @@ This is default template for processing and analysis methods.
 New procedures should extend either AnalysisMethod or
 ProcessingMethod.
 """
-
 from typing import Dict, List
 from abc import ABC, abstractmethod, abstractclassmethod
 import numpy as np

@@ -157,8 +157,8 @@ def changePassword(request, user):
             return HttpResponseRedirect(reverse('settings'))
 
     form_ret = form_helper(
-        user=user,
         request=request,
+        user=user,
         formClass=mforms.ChangePassForm,
         submitName='changePass',
         submitText='Submit',
@@ -188,8 +188,8 @@ def changeEmail(request, user):
             return HttpResponseRedirect(reverse('settings'))
 
     form_ret = form_helper(
-        user=user,
         request=request,
+        user=user,
         formClass=mforms.ChangeEmailForm,
         submitName='changeMail',
         submitText='Submit',
@@ -689,13 +689,13 @@ def deleteFromDatasetLike(request, user, cs: mmodels.Dataset):
 def newGroup(request, user):
     if user.is_temp():
         raise VoltPyNotAllowed('Requires registered user.')
-    if (request.method == 'POST'):
+    if request.method == 'POST':
         if request.POST.get('_voltJS_backButton', False):
             return HttpResponseRedirect(reverse('settings'))
 
     form_ret = form_helper(
-        user=user,
         request=request,
+        user=user,
         formClass=mforms.CreateGroupForm,
         submitName='createGroup',
         submitText='Create',
@@ -798,8 +798,8 @@ def showAnalysis(request, user, analysis_id):
 
     form_data = {'model': an, 'label_name': ''}
     form_ret = form_helper(
-        user=user,
         request=request,
+        user=user,
         formClass=mforms.EditName,
         submitName='anEditName',
         submitText='Save',
@@ -902,8 +902,8 @@ def showFileset(request, user, fileset_id):
 
     form_data = {'model': fs, 'label_name': ''}
     edit_name_form = form_helper(
-        user=user,
         request=request,
+        user=user,
         formClass=mforms.EditName,
         submitName='anEditName',
         submitText='Save',
@@ -1192,8 +1192,8 @@ def showDataset(request, user, dataset_id):
 
     form_data = {'model': cs, 'label_name': ''}
     edit_name_form = form_helper(
-        user=user,
         request=request,
+        user=user,
         formClass=mforms.EditName,
         submitName='anEditName',
         submitText='Save',
@@ -1352,8 +1352,8 @@ def showFile(request, user, file_id):
 
     form_data = {'model': cf, 'label_name': ''}
     edit_name_form = form_helper(
-        user=user,
         request=request,
+        user=user,
         formClass=mforms.EditName,
         submitName='anEditName',
         submitText='Save',
