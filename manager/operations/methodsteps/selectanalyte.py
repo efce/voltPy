@@ -22,7 +22,7 @@ class SelectAnalyte(MethodStep):
             )
             self.fields['analyteId'].widget.attrs['class'] = '_voltJS_ChangeDispValue'
 
-    def getHTML(self, user, request, model):
+    def getHTML(self, request, user, model):
         cs = model.dataset
 
         style = "<style>.at_hideable { display: none !important; };</style>"
@@ -44,7 +44,7 @@ class SelectAnalyte(MethodStep):
         """.format(analyte_sel_disp, at_disp)
         return {'head': style, 'desc': '', 'body': txt}
 
-    def process(self, user, request, model):
+    def process(self, request, user, model):
         cs = model.dataset
 
         analyte_sel = self.AnalyteSelectionForm(request.POST, analytes=cs.analytes)

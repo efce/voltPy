@@ -38,7 +38,7 @@ class TagCurves(ms.MethodStep):
             self.model.steps_data['TagCurves'] = ret
             self.model.save()
 
-    def process(self, user, request, model):
+    def process(self, request, user, model):
         if all([
             request.method == 'POST',
             request.POST.get('tagcurvesform', False) is not False
@@ -48,7 +48,7 @@ class TagCurves(ms.MethodStep):
                 form.process()
                 return True
 
-    def getHTML(self, user, request, model):
+    def getHTML(self, request, user, model):
         if all([
             request.method == 'POST',
             request.POST.get('tagcurvesform', False) is not False

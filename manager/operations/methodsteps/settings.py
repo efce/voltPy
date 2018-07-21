@@ -33,7 +33,7 @@ class Settings(MethodStep):
                             initial=defopt
                         )
 
-    def process(self, user, request, model):
+    def process(self, request, user, model):
         if request.POST.get('confirm', False) == 'Forward':
             form = self.SettingsForm(request.POST, initial=self.initial)
             if form.is_valid() is True:
@@ -48,7 +48,7 @@ class Settings(MethodStep):
         model.save()
         return False
 
-    def getHTML(self, user, request, model):
+    def getHTML(self, request, user, model):
         from django.template import loader
         if request.POST.get('confirm', False) == 'Forward':
             set_form = self.SettingsForm(request.POST, initial=self.initial)

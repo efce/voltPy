@@ -56,7 +56,7 @@ of points in the signal. With factor = 1 the whole signal is represented as a
         dataset.save()
 
     def finalize(self, user):
-        self.model.custom_data['Factor'] = Settings.getData(self)['Smoothing factor']
+        self.model.custom_data['Factor'] = Settings.getData(self.model)['Smoothing factor']
         self.__perform(self.model.dataset)
         self.model.step = None
         self.model.completed = True

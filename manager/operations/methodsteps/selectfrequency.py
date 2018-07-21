@@ -8,7 +8,7 @@ import manager.plotmanager as pm
 class SelectFrequency(MethodStep):
     plot_interaction = 'none'
 
-    def process(self, user, request, model):
+    def process(self, request, user, model):
         cf = CursorsForm(request.POST, cursors_num=1)
         if cf.is_valid():
             cfcd = cf.cleaned_data
@@ -26,7 +26,7 @@ class SelectFrequency(MethodStep):
                 return True
         return False
 
-    def getHTML(self, user, request, model):
+    def getHTML(self, request, user, model):
         from django.template import loader
         cf = CursorsForm(cursors_num=1)
         template = loader.get_template('manager/form.html')

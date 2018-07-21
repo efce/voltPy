@@ -58,7 +58,7 @@ until the last point is reached. Both the polynomial degree and the window size
         for cd in dataset.curves_data.all():
             yvec = cd.yVector
             xvec = cd.xVector
-            settings = Settings.getData(self)
+            settings = Settings.getData(self.model)
             newyvec = savgol_filter(
                 yvec,
                 self.model.custom_data['WindowSpan'],
@@ -68,7 +68,7 @@ until the last point is reached. Both the polynomial degree and the window size
         dataset.save()
 
     def finalize(self, user):
-        settings = Settings.getData(self)
+        settings = Settings.getData(self.model)
         try:
             self.model.custom_data['WindowSpan'] = int(settings['Window Span'])
             self.model.custom_data['Degree'] = int(settings['Degree'])

@@ -79,7 +79,7 @@ redox reaction" Electroanalysis, 2013, 25(9), 2054–2059.
         self.model.custom_data['analyte'] = analyte.name
         unitsTrans = dict(mmodels.Dataset.CONC_UNITS)
         self.model.custom_data['units'] = unitsTrans[self.model.dataset.analytes_conc_unit[analyte.id]]
-        tags = TagCurves.getData(self)
+        tags = TagCurves.getData(self.model)
         if len(set(tags.keys())) <= 2:
             raise VoltPyFailed('Not enough sensitivities to analyze the data.')
         for name, cds in tags.items():
@@ -90,8 +90,8 @@ redox reaction" Electroanalysis, 2013, 25(9), 2054–2059.
                 Y[-1] = cd.yVector
                 CONC.append(self.model.dataset.analytes_conc.get(analyte.id, {}).get(cd.id, 0))
                 rng = [
-                    cd.xValue2Index(SelectRange.getData(self)[0]),
-                    cd.xValue2Index(SelectRange.getData(self)[1])
+                    cd.xValue2Index(SelectRange.getData(self.model)[0]),
+                    cd.xValue2Index(SelectRange.getData(self.model)[1])
                 ]
                 RANGES.append([])
                 RANGES[-1] = rng

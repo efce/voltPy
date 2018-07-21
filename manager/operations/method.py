@@ -151,7 +151,7 @@ class Method(ABC):
             isBack = request.POST.get('_voltJS_backButton', 0)
             if self.step is None or self.step['object'] is None:
                 self.has_next = False
-            elif self.step['object'].process(user=user, request=request, model=self.model):
+            elif self.step['object'].process(request=request, user=user, model=self.model):
                 self.has_next = self.__nextStep()
 
             if not self.has_next:
@@ -182,8 +182,8 @@ class Method(ABC):
         """
         if self.step and self.step.get('object', None):
             stepHTML = self.step['object'].getHTML(
-                user=user,
                 request=request,
+                user=user,
                 model=self.model
             )
             return {

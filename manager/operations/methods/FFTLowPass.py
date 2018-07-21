@@ -32,7 +32,7 @@ signal back to the original domain.
         for cd in dataset.curves_data.all():
             yvec = cd.yVector
             ylen = len(yvec)
-            st = round(SelectFrequency.getData(self))
+            st = round(SelectFrequency.getData(self.model))
             en = ylen - st + 1
             ffty = np.fft.fft(yvec)
             ffty[st:en] = [0] * (en - st)

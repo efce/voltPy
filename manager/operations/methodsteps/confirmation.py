@@ -8,7 +8,7 @@ class Confirmation(MethodStep):
     class ConfirmForm(forms.Form):
         pass
 
-    def process(self, user, request, model):
+    def process(self, request, user, model):
         if request.POST.get('confirm', False) == 'Forward':
             return True
         else:
@@ -16,7 +16,7 @@ class Confirmation(MethodStep):
             model.save()
             return False
 
-    def getHTML(self, user, request, model):
+    def getHTML(self, request, user, model):
         from django.template import loader
         conf_form = self.ConfirmForm()
         template = loader.get_template('manager/form.html')

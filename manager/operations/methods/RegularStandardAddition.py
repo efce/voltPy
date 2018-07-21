@@ -63,9 +63,9 @@ has to be included in the dataset.
     def finalize(self, user):
         xvalues = []
         yvalues = []
-        selRange = SelectRange.getData(self)
+        selRange = SelectRange.getData(self.model)
         try:
-            analyte = self.model.analytes.get(id=int(SelectAnalyte.getData(self)))
+            analyte = self.model.analytes.get(id=int(SelectAnalyte.getData(self.model)))
         except:
             VoltPyFailed('Wrong analyte selected.')
         self.model.custom_data['analyte'] = analyte.name

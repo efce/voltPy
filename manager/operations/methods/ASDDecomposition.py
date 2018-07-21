@@ -233,8 +233,8 @@ doi: 10.1016/S0169-7439(02)00089-8
             raise VoltPyFailed('Computation error.')
 
     def finalize(self, user):
-        settings = Settings.getData(self)
-        self.model.custom_data['DecomposeRange'] = SelectRange.getData(self)
+        settings = Settings.getData(self.model)
+        self.model.custom_data['DecomposeRange'] = SelectRange.getData(self.model)
         self.model.custom_data['MethodType'] = int(settings.get('Pulse and stair', 0))
         self.model.custom_data['Centering'] = int(settings.get('Data centering', 1))
         self.__perform(self.model.dataset)

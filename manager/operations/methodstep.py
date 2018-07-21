@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from typing import Dict, Any
 from django.contrib.auth.models import User
 from django.http.request import HttpRequest
+from manager.models import ModelMethod
 
 
 class MethodStep(ABC):
@@ -27,14 +28,14 @@ class MethodStep(ABC):
         raise NotImplementedError
 
     @classmethod
-    def getData(cls, method_instance) -> Any:
+    def getData(cls, model: ModelMethod) -> Any:
         """
         This should probably remain unchanged. It returns the saved data of the method step.
         """
-        return method_instance.model.steps_data.get(cls.__name__, None)
+        return model.steps_data.get(cls.__name__, None)
 
     @abstractmethod
-    def process(self, user: User, request: HttpRequest, model) -> bool:
+    def process(self, request: HttpRequest, user: User, model: ModelMethod) -> bool:
         """
         Process and verify its results, if user activity
         can be saved, process should save it and return True.
@@ -43,7 +44,7 @@ class MethodStep(ABC):
         pass
 
     @abstractmethod
-    def getHTML(self, user: User, request: HttpRequest, model) -> Dict:
+    def getHTML(self, request: HttpRequest, user: User, model: ModelMethod) -> Dict:
         """
         Should return the html content required to completed the step,
         with any forms necessary included.

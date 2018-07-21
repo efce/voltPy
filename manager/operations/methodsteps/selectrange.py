@@ -5,7 +5,7 @@ from manager.operations.methodstep import MethodStep
 class SelectRange(MethodStep):
     plot_interaction = 'set2cursors'
 
-    def process(self, user, request, model):
+    def process(self, request, user, model):
         cf = CursorsForm(request.POST, cursors_num=2)
         if cf.is_valid():
             cfcd = cf.cleaned_data
@@ -21,7 +21,7 @@ class SelectRange(MethodStep):
                 return True
         return False
 
-    def getHTML(self, user, request, model):
+    def getHTML(self, request, user, model):
         from django.template import loader
         cf = CursorsForm(cursors_num=2)
         template = loader.get_template('manager/form.html')

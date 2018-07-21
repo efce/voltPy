@@ -42,7 +42,7 @@ should be placed before the peak of interest and the second after it.
         self.model.custom_data['fitCoeff'] = []
         if self.model.active_step_num == 2:
             for cd in self.model.dataset.curves_data.all():
-                ranges = SelectTwoRanges.getData(self)
+                ranges = SelectTwoRanges.getData(self.model)
                 v = []
                 v.append(cd.xValue2Index(ranges[0]))
                 v.append(cd.xValue2Index(ranges[1]))
@@ -53,7 +53,7 @@ should be placed before the peak of interest and the second after it.
                 xvec = np.append(cd.xVector[st1:en1], cd.xVector[st2:en2])
                 yvec = np.append(cd.yVector[st1:en1], cd.yVector[st2:en2])
                 try:
-                    degree = int(Settings.getData(self)['Degree'])
+                    degree = int(Settings.getData(self.model)['Degree'])
                 except ValueError:
                     raise VoltPyFailed('Wrong degree of polynomial')
                 p = np.polyfit(xvec, yvec, degree)

@@ -48,7 +48,7 @@ signal analysis in voltammetry" The Analyst, 2017, 142(10), 1729–1734.
         from manager.helpers.prepareStructForSSAA import prepareStructForSSAA
         Param = mmodels.Curve.Param
         self.model.custom_data['selectedIndex'] = \
-            self.model.dataset.curves_data.all()[0].xValue2Index(SelectPoint.getData(self))
+            self.model.dataset.curves_data.all()[0].xValue2Index(SelectPoint.getData(self.model))
         peak = self.model.custom_data.get('selectedIndex', 0)
         X = []
         Conc = []

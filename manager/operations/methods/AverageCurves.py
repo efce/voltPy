@@ -41,7 +41,7 @@ plots which should be averaged.
 
     def finalize(self, user):
         cs = self.model.dataset
-        tags = TagCurves.getData(self)
+        tags = TagCurves.getData(self.model)
         for k, f in tags.items():
             if (len(f) > 1):
                 cid = f[0]
