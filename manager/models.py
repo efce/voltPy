@@ -270,7 +270,7 @@ class Curve(VoltPyModel):
         electr_multi = 6
         electr_multiSolid = 6
 
-        multi = 8   # multielectrode measurement (with m164 electrode stand) -- bitewise description of aquisition channels
+        multi = 8   # multielectrode measurement (with m164 electrode stand) -- bitewise description of acquisition channels
         Ep = 9      # start potential [mV]
         Ek = 10     # end potential [mV]
         Estep = 11   # potential step [mV]

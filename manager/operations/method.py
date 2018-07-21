@@ -3,11 +3,15 @@ This is default template for processing and analysis methods.
 New procedures should extend either AnalysisMethod or
 ProcessingMethod.
 """
-from typing import Dict, List
+from typing import Dict, List, Tuple, Optional
 from abc import ABC, abstractmethod, abstractclassmethod
-import numpy as np
+from django.contrib.auth.models import User
+from django.http.request import HttpRequest
 from django.db import transaction
 from django.db import DatabaseError
+import numpy as np
+from manager.models import ModelMethod
+from manager.models import Dataset
 from manager.exceptions import VoltPyFailed
 from manager.helpers.functions import add_notification
 
@@ -84,7 +88,7 @@ class Method(ABC):
     has_next = True
     video = '<iframe width="300" height="200" src="https://www.youtube-nocookie.com/embed/0gEW_BeGP2U?rel=0&amp;ecver=1" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>'
 
-    def __init__(self, model):
+    def __init__(self, model: ModelMethod):
         if not model:
             raise ValueError('Model has to be set')
         self.model = model
@@ -105,7 +109,7 @@ class Method(ABC):
         else:
             self.step['object'] = None
 
-    def __nextStep(self):
+    def __nextStep(self) -> bool:
         if (self.model.active_step_num + 1) < len(self._steps):
             self.model.active_step_num = self.model.active_step_num + 1
             self.model.save()
@@ -114,7 +118,7 @@ class Method(ABC):
             return True
         return False
 
-    def __prevStep(self):
+    def __prevStep(self) -> None:
         self.model.active_step_num = self.model.active_step_num - 1
         self.model.save()
         if self.model.active_step_num < 0:
@@ -133,7 +137,7 @@ class Method(ABC):
         return None
 
     @transaction.atomic
-    def process(self, user, request):
+    def process(self, request: HttpRequest, user: User) -> None:
         """
         This processes current.active_step_num.
         """
@@ -172,7 +176,7 @@ class Method(ABC):
             raise DatabaseError
         transaction.savepoint_commit(sid)
 
-    def getStepContent(self, user, request) -> Dict:
+    def getStepContent(self, request: HttpRequest, user: User) -> Dict:
         """
         Return the content which steps what to display.
         """
@@ -190,7 +194,7 @@ class Method(ABC):
             }
         return {'head': '', 'body': '', 'desc': ''}
 
-    def addToMainPlot(self) -> Dict:
+    def addToMainPlot(self) -> Optional[Dict]:
         """
         Requires override.
         Is called to prepare main plot, after adding all elements,
@@ -200,7 +204,51 @@ class Method(ABC):
         return None
 
     @abstractmethod
-    def getFinalContent(self, request, user) -> Dict:
+    def finalize(self, user: User) -> None:
+        """
+        This will be used when all defined steps are completed.
+        In case of error with the steps it should raise
+        VoltPyFailed() and provide explanation.
+        """
+        pass
+
+    @abstractmethod
+    def apply(self, user: User, dataset: Dataset) -> None:
+        """
+        This should apply already completed processing/analysis method,
+        to the new dataset with the same settings as original.
+        """
+        pass
+
+    @abstractclassmethod
+    def __str__(cls) -> str:
+        """
+        This is displayed to user as name of method.
+        """
+        pass
+
+    def __repr__(self) -> str:
+        """
+        This should not be reimplemented.
+        """
+        return self.__class__.__name__
+
+
+class AnalysisMethod(Method, ABC):
+    """
+    Should be inherited by classes providing
+    data analysis procedures.
+    """
+    @classmethod
+    def type(cls) -> str:
+        return 'analysis'
+
+    @classmethod
+    def isAnalysis(cls) -> bool:
+        return True
+
+    @abstractmethod
+    def getFinalContent(self, request: HttpRequest, user: User) -> Dict:
         """
         Return content with the final results after the
         analysis if compled. This is not required from
@@ -216,70 +264,20 @@ class Method(ABC):
     def exportableData(self) -> np.matrix:
         """
         This procedure should provide 2d numpy matrix, which
-        includes data presented on the anaysis's final plot.
+        includes data presented on the analysis's final plot.
         """
         pass
-
-    @abstractmethod
-    def finalize(self, user) -> None:
-        """
-        This will be used when all defined steps are completed.
-        In case of error with the steps it should raise
-        VoltPyFailed() and provide explanation.
-        """
-        pass
-
-    @abstractmethod
-    def apply(self, user, dataset):
-        """
-        This should apply already completed processing/analysis method,
-        to the new dataset with the same settings as original.
-        """
-        pass
-
-    @abstractclassmethod
-    def __str__(cls):
-        """
-        This is displayed to user as name of method
-        """
-        pass
-
-    def __repr__(self):
-        """
-        This should not be reimplemented.
-        """
-        return self.__class__.__name__
-
-
-class AnalysisMethod(Method, ABC):
-    """
-    Should be inherited by classes providing
-    data analysis procedures.
-    """
-    @classmethod
-    def type(cls):
-        return 'analysis'
-
-    @classmethod
-    def isAnalysis(cls):
-        return True
 
 
 class ProcessingMethod(Method, ABC):
     """
-    Should be inherted by classes providing
+    Should be inherited by classes providing
     data processing procedures.
     """
     @classmethod
-    def type(cls):
+    def type(cls) -> str:
         return 'processing'
 
     @classmethod
-    def isAnalysis(cls):
+    def isAnalysis(cls) -> bool:
         return False
-
-    def exportableData(self):
-        return None
-
-    def getFinalContent(self, request, user):
-        return None

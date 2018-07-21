@@ -148,8 +148,8 @@ class MethodManager:
 
         if self.__method.step:
             stepText = self.__method.getStepContent(
-                user=user,
-                request=request
+                request=request,
+                user=user
             )
 
             step_numInfo = '{0} out of {1}'.format(

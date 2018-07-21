@@ -7,4 +7,4 @@ The project requirements are in requirements.txt file.
 pip install -r requirements.txt
 ```
 # Usage
-For developement purpose the project start as a regular Django service (with 'python manage.py runserver'), and is available under http://127.0.0.1:8000/manager/. The different test files are included, vol, volt and voltc are from 'EAQt - electrochemical analyzer', which are located in ./test_files/ directory. These files can be uploaded to check the current capabilities of the web service. 
+For development purpose the project start as a regular Django service (with 'python manage.py runserver'), and is available under http://127.0.0.1:8000/manager/. The different test files are included, vol, volt and voltc are from 'EAQt - electrochemical analyzer', which are located in ./test_files/ directory. These files can be uploaded to check the current capabilities of the web service. 
