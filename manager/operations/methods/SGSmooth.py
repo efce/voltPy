@@ -79,5 +79,3 @@ until the last point is reached. Both the polynomial degree and the window size
         self.model.completed = True
         self.model.save()
         return True
-
-main_class = SGSmooth

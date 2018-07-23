@@ -77,5 +77,3 @@ baseline correction in voltammetry" Electrochimica Acta, 2014, 136, 195–203.
         self.model.step = None
         self.model.completed = True
         self.model.save()
-
-main_class = AutomaticBaselineCorrection

@@ -111,5 +111,3 @@ should be placed before the peak of interest and the second after it.
         self.model.completed = True
         self.model.save()
         return True
-
-main_class = PolynomialBackgroundFit

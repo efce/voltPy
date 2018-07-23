@@ -141,5 +141,3 @@ redox reaction" Electroanalysis, 2013, 25(9), 2054–2059.
             'head': '',
             'body': ''.join(info),
         }
-
-main_class = SelfReferencingBackgroundCorrection

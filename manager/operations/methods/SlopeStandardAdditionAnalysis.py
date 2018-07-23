@@ -181,5 +181,3 @@ signal analysis in voltammetry" The Analyst, 2017, 142(10), 1729–1734.
             ok_dist = np.floor(np.multiply(dist, np.divide(expmax, maxdist)))
             ret_dist = [int(x) for x in ok_dist]
             return ret_dist
-
-main_class = SlopeStandardAdditionAnalysis

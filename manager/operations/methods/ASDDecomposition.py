@@ -311,6 +311,3 @@ doi: 10.1016/S0169-7439(02)00089-8
         data[:, 0::2, :] = np.subtract(data[:, 0::2, :], np.median(t1))
         data[:, 1::2, :] = np.subtract(data[:, 1::2, :], np.median(t2))
         return data
-
-
-main_class = ASDDecomposition

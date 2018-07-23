@@ -44,5 +44,3 @@ class MedianFilter(method.ProcessingMethod):
         self.model.completed = True
         self.model.save()
         return True
-
-main_class = MedianFilter
