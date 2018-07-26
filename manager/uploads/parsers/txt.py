@@ -22,7 +22,6 @@ class Txt(Parser):
         'A': 1E6
     }
 
-
     def readPandas(self, fileForPandas, skipRows):
         """
         This function prepare pandas object to be digested by the rest
@@ -80,7 +79,7 @@ class Txt(Parser):
                     Estep = (Ek - Ep) / (ptnr / spp)
                     time = list(np.arange(0, t_E*ptnr/spp, t_E))
                 potential = list(np.arange(Ep, Ek, Estep))
-                return potential, Estep, time
+                return potential, time, Estep
 
             if col1 == 'firstIsE':
                 potential = pdfile[0]

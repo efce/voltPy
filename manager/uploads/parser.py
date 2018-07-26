@@ -34,7 +34,6 @@ class Parser(ABC):
     }
 
     _curves: List[CurveFromFile] = []
-    def cfile()
 
     def saveModels(self, user: User):
         cf = mmodels.File(
@@ -66,7 +65,6 @@ class Parser(ABC):
             )
             cd.save()
             cf.curves_data.add(cd)
-            print(c.vec_time)
 
             ci = mmodels.CurveIndex(
                 curve=cb,
@@ -87,16 +85,19 @@ class Parser(ABC):
         return cf.id
 
     @staticmethod
-    def calculateMethod(yvec:List[float], pointsPerPoint: int, method=Param.method_dpv):
+    def calculateMethod(yvec: List[float], pointsPerPoint: int, method=Param.method_dpv):
         yvec_avg = []
-        for i in range(int(len(yvec) / pointsPerPoint)):
-            yvec_avg.append(np.average(yvec[(i * pointsPerPoint):(i * pointsPerPoint + pointsPerPoint)]))
+        if pointsPerPoint > 1:
+            for i in range(int(len(yvec) / pointsPerPoint)):
+                yvec_avg.append(np.average(yvec[(i * pointsPerPoint):(i * pointsPerPoint + pointsPerPoint)]))
+        else:
+            yvec_avg = yvec
         yvec_res = []
         if method == Param.method_dpv or method == Param.method_npv:
-            for i in np.arange(0, len(yvec_avg), 2):
+            for i in np.arange(0, len(yvec_avg)-2, 2):
                 yvec_res.append(yvec_avg[i + 1] - yvec_avg[i])
         elif method == Param.method_sqw:
-            for i in np.arange(0, len(yvec_avg), 2):
+            for i in np.arange(0, len(yvec_avg)-2, 2):
                 yvec_res.append(yvec_avg[i] - yvec_avg[i + 1])
         else:
             yvec_res = yvec_avg

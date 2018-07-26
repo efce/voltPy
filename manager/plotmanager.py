@@ -305,10 +305,10 @@ class PlotManager:
         self.p.js_on_event('tap', callback)
         # SUPER HACK -- COVER PLOT UNTIL NEW IS READY:
         js_axisSub = """
-        var yheight = (plot.y_range.end - plot.y_range.start);
+        var yheight = (plot.y_range.end - plot.y_range.start)+100;
         var yavg = yheight/2 + plot.y_range.start;
         var source = new Bokeh.ColumnDataSource({ data: {
-                x: [plot.x_range.start, plot.x_range.end],
+                x: [plot.x_range.start-100, plot.x_range.end+100],
                 y: [yavg, yavg]
             }
         });
