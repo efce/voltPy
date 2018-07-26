@@ -120,6 +120,13 @@ doi: 10.1016/S0169-7439(02)00089-8
             centering=centering
         )
 
+        if any([
+            main_data_1.shape[0] < factors,
+            main_data_1.shape[1] < factors,
+            main_data_1.shape[2] < factors,
+        ]):
+            factors = np.min(main_data_1.shape)
+
         X0 = np.random.rand(factors, main_data_1.shape[0])
         Y0 = np.random.rand(factors, main_data_1.shape[1])
 
