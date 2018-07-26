@@ -9,10 +9,10 @@ Param = mcurve.Param
 
 class Txt(Parser):
     """
-    Quite rubust class for parsing and preparing of the
+    Quite robust class for parsing and preparing of the
     generic text based files (such as csv, txt etc.) to be 
     uploaded to database. Can be extended with only readPandas
-    overriden for easyness of implementation.
+    overridden for easyness of implementation.
     """
 
     currentMultiplier = {
