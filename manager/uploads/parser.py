@@ -94,10 +94,10 @@ class Parser(ABC):
             yvec_avg = yvec
         yvec_res = []
         if method == Param.method_dpv or method == Param.method_npv:
-            for i in np.arange(0, len(yvec_avg)-2, 2):
+            for i in np.arange(0, len(yvec_avg)-1, 2):
                 yvec_res.append(yvec_avg[i + 1] - yvec_avg[i])
         elif method == Param.method_sqw:
-            for i in np.arange(0, len(yvec_avg)-2, 2):
+            for i in np.arange(0, len(yvec_avg)-1, 2):
                 yvec_res.append(yvec_avg[i] - yvec_avg[i + 1])
         else:
             yvec_res = yvec_avg

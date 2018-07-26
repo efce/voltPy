@@ -51,6 +51,7 @@ class Txt(Parser):
         method = details.get('voltMethod', 'lsv')
         ptnr = len(pdfile[0])
         cmulti = float(self.currentMultiplier.get(details.get('currentUnit', 'µA'), 1.0))
+        double_sampling_methods = ('npv', 'dpv', 'swv')
 
         if isSampling is None:
             if col1 == 'firstIsE':  # potential in 1st col
@@ -71,26 +72,28 @@ class Txt(Parser):
                 time = list(np.arange(0, t_E*ptnr, t_E))
         else:  # it is sampling data
             def processNonE():
-                lessPtnr = ('npv', 'dpv', 'swv')
-                if method in lessPtnr:
+                if method in double_sampling_methods:
                     Estep = (Ek - Ep) / (ptnr / (2*spp))
                     time = list(np.arange(0, t_E*ptnr/(2*spp), t_E))
                 else:
                     Estep = (Ek - Ep) / (ptnr / spp)
                     time = list(np.arange(0, t_E*ptnr/spp, t_E))
-                potential = list(np.arange(Ep, Ek, Estep))
+                potential = list(np.arange(Ep, Ek-(Estep/2), Estep))  # HACK: Estep/2 because of random rounding errors
                 return potential, time, Estep
 
+            skipper = spp
+            if method in double_sampling_methods:
+                skipper = 2 * spp
             if col1 == 'firstIsE':
-                potential = pdfile[0]
+                potential = pdfile[0][0::skipper].values
                 Ep = potential[0]
                 Ek = potential[len(potential)-1]
                 Estep = potential[1] - potential[1+(2*spp)]
-                time = [(i/samplingFreq) for i in range(len((pdfile[0])/spp))]
+                time = [(i/samplingFreq) for i in range(potential.shape[0])]
                 index = 1
             elif col1 == 'firstIsT':
                 potential, time, Estep = processNonE()
-                time = pdfile[0]
+                time = pdfile[0][0::skipper].values
                 index = 1
             else:
                 potential, time, Estep = processNonE()
