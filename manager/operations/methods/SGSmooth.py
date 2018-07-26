@@ -2,7 +2,6 @@ import numpy as np
 from overrides import overrides
 from scipy.signal import savgol_filter
 import manager.operations.method as method
-from manager.operations.methodsteps.selecttworanges import SelectTwoRanges
 from manager.operations.methodsteps.settings import Settings
 from manager.exceptions import VoltPyNotAllowed
 from manager.exceptions import VoltPyFailed
@@ -39,9 +38,9 @@ until the last point is reached. Both the polynomial degree and the window size
         if step_num == 0:
             return {
                 'Window Span': {
-                    'default': 13, 
+                    'default': 13,
                     'validator': validate_window_span
-                }, 
+                },
                 'Degree': {
                     'default': 3,
                     'validator': validate_polynomial_degree
@@ -57,8 +56,6 @@ until the last point is reached. Both the polynomial degree and the window size
     def __perform(self, dataset):
         for cd in dataset.curves_data.all():
             yvec = cd.yVector
-            xvec = cd.xVector
-            settings = Settings.getData(self.model)
             newyvec = savgol_filter(
                 yvec,
                 self.model.custom_data['WindowSpan'],
@@ -79,5 +76,3 @@ until the last point is reached. Both the polynomial degree and the window size
         self.model.completed = True
         self.model.save()
         return True
-
-main_class = SGSmooth

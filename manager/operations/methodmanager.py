@@ -75,8 +75,10 @@ class MethodManager:
             if not fm == '__init__.py':
                 fname = fm[:-3]
                 fimp = __import__(fname)
-                class_object = fimp.main_class
-                self.__registerMethod(class_object)
+                importlib = __import__('importlib')
+                load_parser = importlib.import_module('manager.operations.methods.' + fname)
+                method_class = getattr(load_parser, fname)
+                self.__registerMethod(method_class)
 
     def __registerMethod(self, mclass):
         if str(mclass.__name__) == self.methods[mclass.type()]:

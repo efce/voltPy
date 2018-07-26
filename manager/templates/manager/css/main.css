@@ -17,6 +17,7 @@ body {
     background-color: #EEE;
     font-family: regular;
     min-width: 820px;
+    overflow: auto !important;
 }
 
 input, button, textarea {

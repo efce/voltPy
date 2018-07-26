@@ -1,5 +1,7 @@
 import numpy as np
 from abc import ABC
+from typing import List
+from django.contrib.auth.models import User
 import manager.models as mmodels
 from manager.models import Curve as mcurve
 Param = mcurve.Param
@@ -11,7 +13,6 @@ class Parser(ABC):
     however, it is recommended to extend the Txt
     parser in case of generic text files.
     """
-    _curves = []
 
     class CurveFromFile():
         name = ''
@@ -32,7 +33,10 @@ class Parser(ABC):
         'chronoamp': -1
     }
 
-    def saveModels(self, user):
+    _curves: List[CurveFromFile] = []
+    def cfile()
+
+    def saveModels(self, user: User):
         cf = mmodels.File(
             name=self.cfile.name,
             filename=self.cfile.name,
@@ -62,18 +66,19 @@ class Parser(ABC):
             )
             cd.save()
             cf.curves_data.add(cd)
+            print(c.vec_time)
 
             ci = mmodels.CurveIndex(
                 curve=cb,
                 potential_min=np.min(c.vec_potential),
                 potential_max=np.max(c.vec_potential),
-                potential_step=c.vec_potential[1]-c.vec_potential[0],
+                potential_step=c.vec_potential[1] - c.vec_potential[0],
                 time_min=np.min(c.vec_time),
                 time_max=np.max(c.vec_time),
-                time_step=c.vec_time[1]-c.vec_time[0],
+                time_step=c.vec_time[1] - c.vec_time[0],
                 current_min=np.min(c.vec_current),
                 current_max=np.max(c.vec_current),
-                current_range=np.max(c.vec_current)-np.min(c.vec_current),
+                current_range=np.max(c.vec_current) - np.min(c.vec_current),
                 sampling_rate=c.vec_param[Param.nonaveragedsampling],
             )
             ci.save()
@@ -82,17 +87,17 @@ class Parser(ABC):
         return cf.id
 
     @staticmethod
-    def calculateMethod(yvec, pointsPerPoint, method=Param.method_dpv):
+    def calculateMethod(yvec:List[float], pointsPerPoint: int, method=Param.method_dpv):
         yvec_avg = []
-        for i in range(int(len(yvec)/pointsPerPoint)):
-            yvec_avg.append(np.average(yvec[i*pointsPerPoint:i*pointsPerPoint+pointsPerPoint]))
+        for i in range(int(len(yvec) / pointsPerPoint)):
+            yvec_avg.append(np.average(yvec[(i * pointsPerPoint):(i * pointsPerPoint + pointsPerPoint)]))
         yvec_res = []
         if method == Param.method_dpv or method == Param.method_npv:
             for i in np.arange(0, len(yvec_avg), 2):
-                yvec_res.append(yvec_avg[i+1]-yvec_avg[i])
+                yvec_res.append(yvec_avg[i + 1] - yvec_avg[i])
         elif method == Param.method_sqw:
             for i in np.arange(0, len(yvec_avg), 2):
-                yvec_res.append(yvec_avg[i]-yvec_avg[i+1])
+                yvec_res.append(yvec_avg[i] - yvec_avg[i + 1])
         else:
             yvec_res = yvec_avg
         return yvec_res

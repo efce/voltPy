@@ -193,6 +193,3 @@ doi: 10.1016/S0169-7439(02)00089-8
                 romci='%.*f' % (sigrom, rom_ci)
             )
         }
-
-
-main_class = ASDCapacitiveEstimation

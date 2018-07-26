@@ -74,5 +74,3 @@ in standard addition voltammetry" J. Electroanal. Chem., 2012, 684, 38–46.
         self.model.step = None
         self.model.completed = True
         self.model.save()
-
-main_class = GeneticAlgorithmBkg

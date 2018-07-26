@@ -151,5 +151,3 @@ has to be included in the dataset.
                 )
             ])
         }
-
-main_class = RegularStandardAddition

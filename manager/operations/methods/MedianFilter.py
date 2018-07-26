@@ -1,5 +1,4 @@
 import numpy as np
-from overrides import overrides
 from scipy.signal import medfilt
 import manager.operations.method as method
 from manager.operations.methodsteps.confirmation import Confirmation
@@ -18,7 +17,7 @@ class MedianFilter(method.ProcessingMethod):
     description = """
     Median filter is smoothing algorithm similar to the Savitzky-Golay, however instead of fitting of the polynomial,
     the middle point of the window is moved to the value of median of the points in the window. The median filter is
-    most usefull for removal of spikes from the signal (single point large amplitude errors).
+    most usefull for removal of spikes from the signal (single point, large amplitude errors).
     """
 
     @classmethod
@@ -33,7 +32,6 @@ class MedianFilter(method.ProcessingMethod):
     def __perform(self, dataset):
         for cd in dataset.curves_data.all():
             yvec = cd.yVector
-            xvec = cd.xVector
             newyvec = medfilt(yvec)
             dataset.updateCurve(self.model, cd, newyvec)
         dataset.save()
@@ -44,5 +42,3 @@ class MedianFilter(method.ProcessingMethod):
         self.model.completed = True
         self.model.save()
         return True
-
-main_class = MedianFilter

@@ -62,5 +62,3 @@ of points in the signal. With factor = 1 the whole signal is represented as a
         self.model.completed = True
         self.model.save()
         return True
-
-main_class = SplineSmooth

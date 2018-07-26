@@ -52,5 +52,3 @@ signal back to the original domain.
         self.model.completed = True
         self.model.save()
         return True
-
-main_class = FFTLowPass
