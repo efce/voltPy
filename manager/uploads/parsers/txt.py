@@ -35,7 +35,8 @@ class Txt(Parser):
         self.names = []
         self._curves = []
         self.cfile = cfile
-        skipRows = int(details.get('skipRows', 0))
+        print(details)
+        skipRows = int(details.get('ignoreRows', 0))
         pdfile = self.readPandas(self.cfile, skipRows)
         potential = []
         time = []
