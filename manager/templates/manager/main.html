@@ -49,7 +49,7 @@
 {% block content %}
 <div id="content">
   {% block navigation %}
-  <div id="topmenu">
+  <nav id="topmenu">
     <ul>
       <li class="topmenu_bkg">
         <img src="{% static '/manager/vc_logo.svg' %}" style="height: {% topmenu_height_logo %}; margin: 3px 3px -2px 3px" />
@@ -80,7 +80,7 @@
       <li class="topmenu_bkg"><a href="{% url 'register' %}">Register</a></li>
     {% endif%}
     </ul>
-  </div>
+  </nav>
  {% endblock %}
   <table class="main_table">
     <tr>
