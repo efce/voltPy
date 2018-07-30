@@ -7,6 +7,7 @@ import manager.plotmanager as pm
 from manager.exceptions import VoltPyFailed
 from manager.operations.checks.check_sampling import check_sampling
 from manager.operations.checks.check_analyte import check_analyte
+from manager.helpers.fithelpers import significant_digit
 
 
 class SlopeStandardAdditionAnalysis(method.AnalysisMethod):
@@ -149,17 +150,18 @@ signal analysis in voltammetry" The Analyst, 2017, 142(10), 1729–1734.
 
         scripts, div, buttons = p.getEmbeded(request, user, 'analysis', self.model.id)
         unitsTrans = dict(mmodels.Dataset.CONC_UNITS)
+        sig_dig = significant_digit(self.model.custom_data['resultStdDev'], 2)
         ret = {
             'head': scripts,
             'body': ''.join([
                 '<table><tr><td style="width: 500px; height: 400px">',
                 div,
                 '</td></tr><tr><td>',
-                '<p>Analyte: {0}<br />Result: {1} {3}<br />STD: {2} {3}</p>'.format(
+                '<p>Analyte: {0}<br />Result (x&#772; &pm; std): {1} &pm; {2} {3}</p>'.format(
                     self.model.custom_data['analyte'],
-                    self.model.custom_data['result'],
-                    self.model.custom_data['resultStdDev'],
-                    self.model.custom_data['units'] 
+                    '%.*f' % (sig_dig, self.model.custom_data['result']),
+                    '%.*f' % (sig_dig, self.model.custom_data['resultStdDev']),
+                    self.model.custom_data['units']
                 ),
                 '</td></tr></table>'
             ])
@@ -175,7 +177,7 @@ signal analysis in voltammetry" The Analyst, 2017, 142(10), 1729–1734.
             return [tptw-4, tptw-10, tptw-15]
         else:
             n = int(np.floor(np.log2(tptw))) - 1
-            dist = [(x**1.7 + 2) for x in range(n)]
+            dist = [(x**1.7 + 4) for x in range(n)]
             expmax = tptw - 5
             maxdist = np.max(dist)
             ok_dist = np.floor(np.multiply(dist, np.divide(expmax, maxdist)))
