@@ -33,7 +33,7 @@ class Parser(ABC):
         'chronoamp': -1
     }
 
-    _curves: List[CurveFromFile] = []
+    _curves = [] #: List[CurveFromFile] = []
 
     def saveModels(self, user: User):
         cf = mmodels.File(

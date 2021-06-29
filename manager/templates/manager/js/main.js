@@ -4,12 +4,12 @@ $( function() {
 
 // Implementation of sleep. Used during reload, to allow the server some time for processing.
 function sleep (time) {
-    return new Promise((resolve) => setTimeout(resolve, time))
+    return new Promise(function (resolve) {setTimeout(resolve, time)});
 };
 
 function searchDataset(txt, funcResults) {
     url = '/manager/ajax/search-dataset/';
-    csfr = $("{% csrf_token %}").val();
+    csfr = $('{% csrf_token %}').val();
     object = {
         'search': txt,
         'csrfmiddlewaretoken': csfr,
@@ -19,7 +19,7 @@ function searchDataset(txt, funcResults) {
 
 function getShareable(txt, funcResults) {
     url = '/manager/ajax/get-shareable/';
-    csfr = $("{% csrf_token %}").val();
+    csfr = $('{% csrf_token %}').val();
     object = {
         'to_share': txt,
         'csrfmiddlewaretoken': csfr,
@@ -260,7 +260,7 @@ $( function() {
 
 function getShareMenu(to_send) {
     url = '/manager/ajax/get-share-menu/';
-    csfr = $("{% csrf_token %}").val();
+    csfr = $('{% csrf_token %}').val();
     object = {
         'share_address': to_send,
         'csrfmiddlewaretoken': csfr,
@@ -280,14 +280,14 @@ function displayAjax(data, element_id) {
     element.append(content);
 }
 function getROShareLink() {
-    csfr = $("{% csrf_token %}").val();
+    csfr = $('{% csrf_token %}').val();
     object = $('#share_menu form');
     object.append($('<input type="hidden" name="share_address" value="' + window.location.href + '" />'));
     object.append($('<input type="hidden" name="submit" value="generate_read_only" />'));
     $.post(url, object.serialize()).done(dispInShareMenu);
 }
 function getRWShareLink() {
-    csfr = $("{% csrf_token %}").val();
+    csfr = $('{% csrf_token %}').val();
     object = $('#share_menu form');
     object.append($('<input type="hidden" name="share_address" value="' + window.location.href + '" />'));
     object.append($('<input type="hidden" name="submit" value="generate_read_write" />'));
@@ -298,7 +298,7 @@ function updateShareMenu(event) {
     event.preventDefault();
     event.stopPropagation();
     url = '/manager/ajax/get-share-menu/';
-    csfr = $("{% csrf_token %}").val();
+    csfr = $('{% csrf_token %}').val();
     object = $('#share_menu form');
     object.append($('<input type="hidden" name="share_address" value="' + window.location.href + '" />'));
     object.append($('<input type="hidden" name="submit" value="update_share" />'));
